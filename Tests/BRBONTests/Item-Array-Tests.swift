@@ -172,7 +172,7 @@ class Item_Array_Tests: XCTestCase {
     
     func testInsert() {
         
-        let array = Item.array(elementType: .string, elementByteCount: 8, fixedByteCount: 40)!
+        let array = Item.array(elementType: .string, elementByteCount: 8, fixedItemByteCount: 40)!
         
         XCTAssertEqual(array.type, .array)
         XCTAssertTrue(array.isArray)
@@ -226,7 +226,7 @@ class Item_Array_Tests: XCTestCase {
     
     func testReplace() {
         
-        let array = Item.array(elementType: .string, elementByteCount: 8, fixedByteCount: 40)!
+        let array = Item.array(elementType: .string, elementByteCount: 8, fixedItemByteCount: 40)!
         
         XCTAssertEqual(array.type, .array)
         XCTAssertTrue(array.isArray)
@@ -261,7 +261,7 @@ class Item_Array_Tests: XCTestCase {
     
     func testRemove() {
         
-        let array = Item.array(elementType: .string, elementByteCount: 8, fixedByteCount: 40)!
+        let array = Item.array(elementType: .string, elementByteCount: 8, fixedItemByteCount: 40)!
         
         XCTAssertEqual(array.type, .array)
         XCTAssertTrue(array.isArray)
@@ -296,7 +296,7 @@ class Item_Array_Tests: XCTestCase {
     
     func testRemoveAll() {
         
-        let array = Item.array(elementType: .string, elementByteCount: 8, fixedByteCount: 40)!
+        let array = Item.array(elementType: .string, elementByteCount: 8, fixedItemByteCount: 40)!
         
         
         XCTAssertTrue(array.append(Item.string("aa")))
@@ -322,7 +322,7 @@ class Item_Array_Tests: XCTestCase {
     
     func testSubscript() {
         
-        let array = Item.array(elementType: .string, elementByteCount: 8, fixedByteCount: 40)!
+        let array = Item.array(elementType: .string, elementByteCount: 8, fixedItemByteCount: 40)!
         
         
         XCTAssertTrue(array.append(Item.string("aa")))

@@ -53,7 +53,7 @@ class Item_UInt8_Tests: XCTestCase {
         XCTAssertEqual(item.endianBytes(.little), Data(bytes: [0x06, 0, 0, 8, 16, 0, 0, 0, 0x25, 0x38, 4, 84, 101, 115, 116, 0, 200, 0, 0, 0, 0, 0, 0, 0]))
 
         
-        item = Item.uint8(200, name: "Test", fixedByteCount: 32)!
+        item = Item.uint8(200, name: "Test", fixedItemByteCount: 32)!
         
         XCTAssertEqual(item.type, .uint8)
         XCTAssertEqual(item.uint8, 200)

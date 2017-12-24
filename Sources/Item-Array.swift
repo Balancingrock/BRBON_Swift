@@ -3,7 +3,7 @@
 //  File:       Item-Array.swift
 //  Project:    BRBON
 //
-//  Version:    0.1.0
+//  Version:    0.2.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -45,6 +45,7 @@
 //
 // History
 //
+// 0.2.0  - Changed init parameter fixedByteCount to fixedItemByteCount
 // 0.1.0  - Initial version
 // =====================================================================================================================
 
@@ -57,7 +58,7 @@ public extension Item {
     /// Create a new .array Item
     
     public static func array(elementType: ItemType, elementByteCount: UInt32) -> Item {
-        return Item(elementType: elementType, elementByteCount: elementByteCount, name: nil, fixedByteCount: nil)!
+        return Item(elementType: elementType, elementByteCount: elementByteCount, name: nil, fixedItemByteCount: nil)!
     }
     
     
@@ -65,15 +66,15 @@ public extension Item {
     ///
     /// Initializer fails when the string cannot be converted into UTF8 or the length > Int32.max.
     
-    public static func array(elementType: ItemType, elementByteCount: UInt32, name: String? = nil, fixedByteCount: UInt32? = nil) -> Item? {
-        return Item(elementType: elementType, elementByteCount: elementByteCount, name: name, fixedByteCount: fixedByteCount)
+    public static func array(elementType: ItemType, elementByteCount: UInt32, name: String? = nil, fixedItemByteCount: UInt32? = nil) -> Item? {
+        return Item(elementType: elementType, elementByteCount: elementByteCount, name: name, fixedItemByteCount: fixedItemByteCount)
     }
     
     
     /// Create a new .array Item
     
     public convenience init(elementType: ItemType, elementByteCount: UInt32) {
-        self.init(elementType: elementType, elementByteCount: elementByteCount, name: nil, fixedByteCount: nil)!
+        self.init(elementType: elementType, elementByteCount: elementByteCount, name: nil, fixedItemByteCount: nil)!
     }
     
     
@@ -82,20 +83,20 @@ public extension Item {
     /// Initializer only fails when the string cannot be converted into UTF8
     
     public convenience init?(elementType: ItemType, elementByteCount: UInt32, name: String) {
-        self.init(elementType: elementType, elementByteCount: elementByteCount, name: name, fixedByteCount: nil)!
+        self.init(elementType: elementType, elementByteCount: elementByteCount, name: name, fixedItemByteCount: nil)!
     }
     
     
     /// Create a new String Item.
     ///
-    /// Initializer only fails when the string cannot be converted into UTF8 or the fixedByteCount > Int32.max.
+    /// Initializer only fails when the string cannot be converted into UTF8 or the fixedItemByteCount > Int32.max.
     
-    public convenience init?(elementType: ItemType, elementByteCount: UInt32, name: String? = nil, fixedByteCount: UInt32?) {
+    public convenience init?(elementType: ItemType, elementByteCount: UInt32, name: String? = nil, fixedItemByteCount: UInt32?) {
         
         
-        // Make sure the fixedByteCount is within limits
+        // Make sure the fixedItemByteCount is within limits
         
-        if let fixedByteCount = fixedByteCount, fixedByteCount > UInt32(Int32.max) { return nil }
+        if let fixedItemByteCount = fixedItemByteCount, fixedItemByteCount > UInt32(Int32.max) { return nil }
         
         
         // Create the value wrapper
@@ -115,7 +116,7 @@ public extension Item {
         
         // Create new Item referencing the created item value
         
-        self.init(itemValue, name: itemName, fixedByteCount: fixedByteCount)
+        self.init(itemValue, name: itemName, fixedItemByteCount: fixedItemByteCount)
     }
     
     

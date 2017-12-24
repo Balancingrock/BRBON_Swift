@@ -3,7 +3,7 @@
 //  File:       Item-Null.swift
 //  Project:    BRBON
 //
-//  Version:    0.1.0
+//  Version:    0.2.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -45,6 +45,7 @@
 //
 // History
 //
+// 0.2.0  - Changed init parameter fixedByteCount to fixedItemByteCount
 // 0.1.0  - Initial version
 // =====================================================================================================================
 
@@ -55,11 +56,11 @@ public extension Item {
     
     public static func null() -> Item { return Item(nil) }
     
-    public static func null(_ name: String?, fixedByteCount: UInt32? = nil) -> Item? {
+    public static func null(_ name: String?, fixedItemByteCount: UInt32? = nil) -> Item? {
 
-        // Make sure the fixedByteCount is within limits
+        // Make sure the fixedItemByteCount is within limits
         
-        if let fixedByteCount = fixedByteCount, fixedByteCount > UInt32(Int32.max) { return nil }
+        if let fixedItemByteCount = fixedItemByteCount, fixedItemByteCount > UInt32(Int32.max) { return nil }
 
         guard let name = name, let iname = ItemName(name) else { return nil }
         
@@ -67,7 +68,7 @@ public extension Item {
         
         let itemValue = ItemValue(null: true)
         
-        return Item(itemValue, name: itemName, fixedByteCount: fixedByteCount)
+        return Item(itemValue, name: itemName, fixedItemByteCount: fixedItemByteCount)
     }
 
     

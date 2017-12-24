@@ -313,7 +313,7 @@ class Item_Tests: XCTestCase {
     
     func testFixedItemSize() {
         
-        var item = Item(ItemValue(true), fixedByteCount: 32)
+        var item = Item(ItemValue(true), fixedItemByteCount: 32)
         
         XCTAssertEqual(item.header.type, .bool)
         XCTAssertNil(item._name)

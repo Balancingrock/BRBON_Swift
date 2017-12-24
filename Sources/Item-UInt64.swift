@@ -3,7 +3,7 @@
 //  File:       Item-UInt64.swift
 //  Project:    BRBON
 //
-//  Version:    0.1.0
+//  Version:    0.2.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -45,6 +45,7 @@
 //
 // History
 //
+// 0.2.0  - Changed init parameter fixedByteCount to fixedItemByteCount
 // 0.1.0  - Initial version
 // =====================================================================================================================
 
@@ -57,23 +58,23 @@ public extension Item {
     /// Create a new UInt64 Item
     
     public static func uint64(_ val: UInt64) -> Item {
-        return Item(val, name: nil, fixedByteCount: nil)!
+        return Item(val, name: nil, fixedItemByteCount: nil)!
     }
     
     
     /// Create a new UInt64 Item
     ///
-    /// Initializer fails when the string cannot be converted into UTF8 or the fixedByteCount > Int32.max.
+    /// Initializer fails when the string cannot be converted into UTF8 or the fixedItemByteCount > Int32.max.
     
-    public static func uint64(_ val: UInt64, name: String? = nil, fixedByteCount: UInt32? = nil) -> Item? {
-        return Item(val, name: name, fixedByteCount: fixedByteCount)
+    public static func uint64(_ val: UInt64, name: String? = nil, fixedItemByteCount: UInt32? = nil) -> Item? {
+        return Item(val, name: name, fixedItemByteCount: fixedItemByteCount)
     }
     
     
     /// Create a new UInt64 Item
     
     public convenience init(_ val: UInt64) {
-        self.init(val, name: nil, fixedByteCount: nil)!
+        self.init(val, name: nil, fixedItemByteCount: nil)!
     }
     
     
@@ -82,20 +83,20 @@ public extension Item {
     /// Initializer only fails when the string cannot be converted into UTF8
     
     public convenience init?(_ val: UInt64, name: String) {
-        self.init(val, name: name, fixedByteCount: nil)
+        self.init(val, name: name, fixedItemByteCount: nil)
     }
     
     
     /// Create a new UInt64 Item
     ///
-    /// Initializer only fails when the string cannot be converted into UTF8 or the fixedByteCount > Int32.max.
+    /// Initializer only fails when the string cannot be converted into UTF8 or the fixedItemByteCount > Int32.max.
     
-    public convenience init?(_ val: UInt64, name: String? = nil, fixedByteCount: UInt32?) {
+    public convenience init?(_ val: UInt64, name: String? = nil, fixedItemByteCount: UInt32?) {
         
         
-        // Make sure the fixedByteCount is within limits
+        // Make sure the fixedItemByteCount is within limits
         
-        if let fixedByteCount = fixedByteCount, fixedByteCount > UInt32(Int32.max) { return nil }
+        if let fixedItemByteCount = fixedItemByteCount, fixedItemByteCount > UInt32(Int32.max) { return nil }
         
         
         // Create value wrapper
@@ -115,7 +116,7 @@ public extension Item {
         
         // Create new Item referencing the created item value
         
-        self.init(itemValue, name: itemName, fixedByteCount: fixedByteCount)
+        self.init(itemValue, name: itemName, fixedItemByteCount: fixedItemByteCount)
     }
     
     

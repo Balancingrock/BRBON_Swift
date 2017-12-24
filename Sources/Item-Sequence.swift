@@ -3,7 +3,7 @@
 //  File:       Item-Sequence.swift
 //  Project:    BRBON
 //
-//  Version:    0.1.0
+//  Version:    0.2.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -45,6 +45,7 @@
 //
 // History
 //
+// 0.2.0  - Changed init parameter fixedByteCount to fixedItemByteCount
 // 0.1.0  - Initial version
 // =====================================================================================================================
 
@@ -55,12 +56,12 @@ extension Item {
     
     /// Creates a new Item of the sequence type.
     
-    public static func sequence(_ name: String? = nil, fixedByteCount: UInt32? = nil) -> Item? {
+    public static func sequence(_ name: String? = nil, fixedItemByteCount: UInt32? = nil) -> Item? {
         
         
-        // Make sure the fixedByteCount is within limits
+        // Make sure the fixedItemByteCount is within limits
         
-        if let fixedByteCount = fixedByteCount, fixedByteCount > UInt32(Int32.max) { return nil }
+        if let fixedItemByteCount = fixedItemByteCount, fixedItemByteCount > UInt32(Int32.max) { return nil }
         
         
         // Create value wrapper
@@ -80,7 +81,7 @@ extension Item {
         
         // Create new Item referencing the created item value
         
-        return self.init(itemValue, name: itemName, fixedByteCount: fixedByteCount)
+        return self.init(itemValue, name: itemName, fixedItemByteCount: fixedItemByteCount)
     }
 
 

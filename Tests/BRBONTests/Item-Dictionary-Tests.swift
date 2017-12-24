@@ -27,7 +27,7 @@ class Item_Dictionary_Tests: XCTestCase {
         
         // Create dictionary
         
-        guard let dict = Item.dictionary(fixedByteCount: 64) else { XCTFail(); return }
+        guard let dict = Item.dictionary(fixedItemByteCount: 64) else { XCTFail(); return }
         
         
         // Test initial state

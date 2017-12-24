@@ -3,7 +3,7 @@
 //  File:       Item.swift
 //  Project:    BRBON
 //
-//  Version:    0.1.0
+//  Version:    0.2.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -45,6 +45,9 @@
 //
 // History
 //
+// 0.2.0  - Changed init parameter fixedByteCount to fixedItemByteCount
+//        - Introduced overheadByteCount to ItemValue
+//        - Bugfix: byteCount for ItemValue binary has 8 bytes overhead instead of 4
 // 0.1.0  - Initial version
 // =====================================================================================================================
 
@@ -308,9 +311,9 @@ public final class Item: EndianBytes {
     /// - Parameters:
     ///   - value: The new item value, if nil then a .null Item is created.
     ///   - name: The name for this item, if any. Note that if the string cannot be converted to a UTF8 sequence the name component for the new item will not be set. Also, the length of the name that is actually used will be truncated to 248 bytes when converted to UTF8 code. (It is guaranteed however that the UTF8 code will be valid)
-    ///   - fixedByteCount: When specified, this will be the size of this item when encoded in a byte stream. If it is specified but too small for the item created, then the size of the item as created will be used instead. It will be rounded up to the next multiple of 8
+    ///   - fixedItemByteCount: When specified, this will be the size of this item when encoded in a byte stream. If it is specified but too small for the item created, then the size of the item as created will be used instead. It will be rounded up to the next multiple of 8
     
-    public init(_ value: ItemValue?, name: ItemName? = nil, fixedByteCount: UInt32? = nil) {
+    public init(_ value: ItemValue?, name: ItemName? = nil, fixedItemByteCount: UInt32? = nil) {
         header = ItemHeader(value?.type ?? .null)
         if let name = name {
             header.nameLength = ItemName.normalizedByteCount(name.byteCount)
@@ -318,8 +321,8 @@ public final class Item: EndianBytes {
         }
         _value = value ?? ItemValue(null: true)
         _fixedItemByteCount = 0
-        if let fixedByteCount = fixedByteCount {
-            _fixedItemByteCount = (fixedByteCount >= byteCount) ? fixedByteCount : byteCount
+        if let fixedItemByteCount = fixedItemByteCount {
+            _fixedItemByteCount = (fixedItemByteCount >= byteCount) ? fixedItemByteCount : byteCount
             if (_fixedItemByteCount & 0x0000_0007) != 0 {
                 _fixedItemByteCount = (_fixedItemByteCount & 0xFFFF_FFF8) + 0x0000_0008
             }
@@ -328,6 +331,33 @@ public final class Item: EndianBytes {
         createChildParentLinks()
     }
     
+    /// Creates a new Item in which a maximum number of bytes can be stored. The size of this item will always be fixed to the storage size specified plus all overhead.
+    ///
+    /// - Parameters:
+    ///   - val: The value to be stored.
+    //    - name: The name to be used for this item. If no name is given here, but the item is given a name later, then the name will occupy part of the storage that was allocated.
+    ///   - fixedStorageArea: The number of bytes available for storage. Note that the fixedItemByteCount is equal to the fixedStorageArea plus the overhead due to the name and item fields. If the name is not set now, but later, then the name will occupy part of the storage area.
+    ///
+    /// - Note: If this item will be stored in a dictionary, then it is recommened to assign a name now. Or make the fixedStorageArea big enough to include a name that is assigned later.
+
+    internal init?(_ value: ItemValue?, name: ItemName? = nil, fixedStorageArea: UInt32) {
+        header = ItemHeader(value?.type ?? .null)
+        if let name = name {
+            header.nameLength = ItemName.normalizedByteCount(name.byteCount)
+            _name = name
+        }
+        _value = value ?? ItemValue(null: true)
+        if (_value.byteCount - _value.overheadByteCount) > fixedStorageArea { return nil }
+        let fixedItemByteCount = fixedStorageArea + UInt32(header.nameLength) + _value.overheadByteCount + 8
+        if (fixedItemByteCount & 0x0000_0007) != 0 {
+            _fixedItemByteCount = (fixedItemByteCount & 0xFFFF_FFF8) + 0x0000_0008
+        } else {
+            _fixedItemByteCount = fixedItemByteCount
+        }
+        header.options.fixedItemByteCount = true
+        createChildParentLinks()
+    }
+
     
     /// For the duplicate operation.
     
@@ -394,19 +424,32 @@ public final class ItemValue {
         case .int16, .uint16: return 2
         case .int32, .uint32, .float32: return 4
         case .int64, .uint64, .float64: return 8
-        case .binary: return 4 + UInt32((any as! Data).count)
+        case .binary: return overheadByteCount + UInt32((any as! Data).count)
         case .array:
-            return 8 + UInt32(array.count) * elementByteCount
+            return overheadByteCount + UInt32(array.count) * elementByteCount
         case .string:
             if let data = (any as! String).data(using: .utf8) {
-                return 4 + UInt32(data.count)
+                return overheadByteCount + UInt32(data.count)
             } else {
-                return 4
+                return overheadByteCount
             }
         case .dictionary, .sequence:
-            var ctr: UInt32 = 8
+            var ctr: UInt32 = overheadByteCount
             array.forEach() { ctr += $0.byteCount }
             return ctr
+        }
+    }
+    
+    
+    /// The number of overhead bytes needed for each type of item
+    
+    public var overheadByteCount: UInt32 {
+        switch type {
+        case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32, .int64, .uint64, .float64: return 0
+        case .binary: return 8 // 4 count bytes + 4 zero bytes
+        case .array: return 8 // 4 element spec bytes + 4 count bytes
+        case .string: return 4 // 4 count bytes
+        case .dictionary, .sequence: return 8 // 4 count bytes + 4 zero bytes
         }
     }
     
@@ -610,6 +653,11 @@ public final class ItemValue {
                 data.append(UInt32(d.count).endianBytes(endianness))
                 
                 
+                // Add zero to even out on 8 byte boundary
+                
+                data.append(UInt32(0).endianBytes(endianness))
+                
+                
                 // Add the bytes
                 
                 data.append(d)
@@ -619,12 +667,6 @@ public final class ItemValue {
                 data = Data()
             }
         }
-        
-        
-        // Make sure its a multiple of 8
-        
-        // let c = UInt32(data.count) & 0x0000_0007
-        // if c != 0 { data.append(Data(count: Int(8 - c))) }
         
         return data
     }
@@ -792,7 +834,9 @@ public final class ItemValue {
             
             guard count >= 4 else { return nil }
             let elementCount = bytePtr.advanceUInt32(endianness: endianness)
-            count -= 4
+            let zero = bytePtr.advanceUInt32(endianness: endianness)
+            guard zero == 0 else { return nil }
+            count -= 8
 
             any = Data.init(bytes: bytePtr, count: Int(elementCount))
         }

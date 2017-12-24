@@ -3,7 +3,7 @@
 //  File:       Item-String.swift
 //  Project:    BRBON
 //
-//  Version:    0.1.0
+//  Version:    0.2.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -45,6 +45,8 @@
 //
 // History
 //
+// 0.2.0  - Added operations to specify a maximum storage size for the string itself.
+//          Changed init parameter fixedByteCount to fixedItemByteCount
 // 0.1.0  - Initial version
 // =====================================================================================================================
 
@@ -57,23 +59,32 @@ public extension Item {
     /// Create a new String Item
     
     public static func string(_ val: String) -> Item {
-        return Item(val, name: nil, fixedByteCount: nil)!
+        return Item(val, name: nil, fixedItemByteCount: nil)!
     }
     
     
     /// Create a new String Item
     ///
-    /// Initializer fails when the string cannot be converted into UTF8 or the fixedByteCount > Int32.max.
+    /// Initializer fails when the string cannot be converted into UTF8 or the fixedItemByteCount > Int32.max.
     
-    public static func string(_ val: String, name: String? = nil, fixedByteCount: UInt32? = nil) -> Item? {
-        return Item(val, name: name, fixedByteCount: fixedByteCount)
+    public static func string(_ val: String, name: String? = nil, fixedItemByteCount: UInt32? = nil) -> Item? {
+        return Item(val, name: name, fixedItemByteCount: fixedItemByteCount)
+    }
+    
+    
+    /// Creates a new String Item in which a maximum of (UTF8 encoded) string bytes can be stored.
+    ///
+    /// Initializer fails when the string cannot be converted into UTF8 or the total storage would be > Int32.max.
+    
+    public static func string(_ val: String, name: String? = nil, fixedStorageArea: UInt32) -> Item? {
+        return Item(val, name: name, fixedStorageArea: fixedStorageArea)
     }
     
     
     /// Create a new String Item
     
     public convenience init(_ val: String) {
-        self.init(val, name: nil, fixedByteCount: nil)!
+        self.init(val, name: nil, fixedItemByteCount: nil)!
     }
     
     
@@ -82,20 +93,20 @@ public extension Item {
     /// Initializer only fails when the string cannot be converted into UTF8
     
     public convenience init?(_ val: String, name: String) {
-        self.init(val, name: name, fixedByteCount: nil)
+        self.init(val, name: name, fixedItemByteCount: nil)
     }
     
     
     /// Create a new String Item.
     ///
-    /// Initializer only fails when the string cannot be converted into UTF8 or the fixedByteCount > Int32.max.
+    /// Initializer only fails when the string cannot be converted into UTF8 or the fixedItemByteCount > Int32.max.
     
-    public convenience init?(_ val: String, name: String? = nil, fixedByteCount: UInt32?) {
+    public convenience init?(_ val: String, name: String? = nil, fixedItemByteCount: UInt32?) {
         
         
-        // Make sure the fixedByteCount is within limits
+        // Make sure the fixedItemByteCount is within limits
         
-        if let fixedByteCount = fixedByteCount, fixedByteCount > UInt32(Int32.max) { return nil }
+        if let fixedItemByteCount = fixedItemByteCount, fixedItemByteCount > UInt32(Int32.max) { return nil }
         
         
         // Create the value wrapper
@@ -103,7 +114,7 @@ public extension Item {
         let itemValue = ItemValue(val)
         
         
-        // Create the item name (if nay)
+        // Create the item name (if any)
         
         var itemName: ItemName?
         
@@ -115,7 +126,34 @@ public extension Item {
         
         // Create new Item referencing the created item value
         
-        self.init(itemValue, name: itemName, fixedByteCount: fixedByteCount)
+        self.init(itemValue, name: itemName, fixedItemByteCount: fixedItemByteCount)
+    }
+    
+    
+    /// Creates a new String Item in which a maximum number of (UTF8 encoded) bytes can be stored. The size of this item will always be fixed to the storage size specified plus all overhead.
+    ///
+    /// Initializer fails when the string cannot be converted into UTF8 or the total storage would be > Int32.max.
+    ///
+    /// - Parameters:
+    ///   - val: The string to be stored. Must be convertable to UTF8 code units. Operation fails if the string cannot be converted.
+    //    - name: The name to be used for this item. If no name is given here, but the item is given a name later, then the name will occupy part of the storage that was allocated. The name must be convertible to UTF8. Operation fails if the name cannot be converted.
+    ///   - fixedStorageArea: The number of bytes available to store the UTF8 representation of the string in. Note that the fixedItemByteCount is equal to the fixedStorageArea plus the overhead due to the name and item fields. If the name is not set now, but later, then the name will occupy part of the storage area.
+    ///
+    /// - Note: If this item will be stored in a dictionary, then it is recommened to assign a name now. Or make the fixedStorageArea big enough to include a name that is assigned later.
+    
+    public convenience init?(_ val: String, name: String? = nil, fixedStorageArea: UInt32) {
+        
+        if fixedStorageArea > UInt32(Int32.max) { return nil }
+
+        let itemValue = ItemValue(val)
+        var itemName: ItemName?
+        
+        if let name = name {
+            guard let n = ItemName(name) else { return nil }
+            itemName = n
+        }
+
+        self.init(itemValue, name: itemName, fixedStorageArea: fixedStorageArea)
     }
     
     
