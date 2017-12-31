@@ -106,6 +106,35 @@ public extension Data {
         guard let bytes = bytes else { return }
         increaseSize(to: UInt32(bytes))
     }
+}
 
+internal extension UInt32 {
+    
+    func roundUpToNearestMultipleOf8() -> UInt32 {
+        if self < 0xffff_fff8 {
+            if self & 0x0000_0007 != 0 {
+                return (self & 0xffff_fff8) + 8
+            } else {
+                return self
+            }
+        } else {
+            return 0xffff_fff8
+        }
+    }
+}
+
+internal extension UInt8 {
+    
+    func roundUpToNearestMultipleOf8() -> UInt8 {
+        if self < 0b1111_1000 {
+            if self & 0b0000_0111 != 0 {
+                return (self & 0b1111_1000) + 8
+            } else {
+                return self
+            }
+        } else {
+            return 0b1111_1000
+        }
+    }
 }
 

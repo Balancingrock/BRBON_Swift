@@ -54,7 +54,7 @@ import BRUtils
 
 /// The identifier that describes the actual value.
 
-public enum ItemType: UInt8, EndianBytes {
+public enum ItemType: UInt8 {
     
     
     /// A null/nil item.
@@ -147,9 +147,7 @@ public enum ItemType: UInt8, EndianBytes {
         return Data(bytes: [self.rawValue])
     }
     
-    public init?(_ bytePtr: inout UnsafeRawPointer, count: inout UInt32, endianness: Endianness) {
-        guard count >= 1 else { return nil }
-        self.init(rawValue: bytePtr.advanceUInt8())
-        count -= 1
+    public init?(_ bytePtr: UnsafeRawPointer) {
+        self.init(rawValue: bytePtr.assumingMemoryBound(to: UInt8.self).pointee)
     }
 }

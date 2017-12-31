@@ -66,20 +66,37 @@ public protocol EndianBytes {
     func endianBytes(_ endianness: Endianness) -> Data
     
     
+    /// Encodes a type to a stream of bytes in either big or little endian coding and returns an unowned buffer with these bytes in it.
+    ///
+    /// - Parameters:
+    ///   - endianness: Specifies the endianness of the bytes.
+    ///   - toPointer: The pointer at which the first byte will be stored. On return the pointer will be incremented for the number of bytes stored.
+    
+    func endianBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer)
+
+    
+    /// - Returns: The number of bytes needed to encode self into an endianBytes stream
+    
+    func endianCount() -> UInt32
+    
+    
     /// Decode a type from the given bytes.
     ///
     /// - Parameters:
     ///   - bytePtr: A pointer to the bytes that need to be decoded.
-    ///   - count: The maximum number of bytes usable for decoding.
     ///   - endianess: Specifies how the bytes are ordered.
+    ///   - count: The number of bytes to be used for decoding, only used for tpyes with a variable length. Disregarded for fixed-length types.
     
-    init?(_ bytePtr: inout UnsafeRawPointer, count: inout UInt32, endianness: Endianness)
+    init(_ bytePtr: UnsafeRawPointer, endianness: Endianness, count: UInt32)
 }
+
 
 
 /// Adds the EndianBytes protocol to Bool
 
 extension Bool: EndianBytes {
+    
+    public func endianCount() -> UInt32 { return 1 }
     
     public func endianBytes(_ endianness: Endianness) -> Data {
         if self {
@@ -89,18 +106,22 @@ extension Bool: EndianBytes {
         }
     }
     
-    public init?(_ bytePtr: inout UnsafeRawPointer, count: inout UInt32, endianness: Endianness) {
-        guard count > 0 else { return nil }
+    public func endianBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+        if self {
+            toPointer.storeBytes(of: 1, as: UInt8.self)
+        } else {
+            toPointer.storeBytes(of: 1, as: UInt8.self)
+        }
+        toPointer = toPointer.advanced(by: 1)
+    }
+
+    public init(_ bytePtr: UnsafeRawPointer, endianness: Endianness, count: UInt32 = 0) {
         if bytePtr.assumingMemoryBound(to: UInt8.self).pointee == 0 {
             self = false
-            bytePtr = bytePtr.advanced(by: 1)
-            count -= 1
         } else if bytePtr.assumingMemoryBound(to: UInt8.self).pointee == 1 {
             self = true
-            bytePtr = bytePtr.advanced(by: 1)
-            count -= 1
         } else {
-            return nil
+            self = false
         }
     }
 }
@@ -110,14 +131,19 @@ extension Bool: EndianBytes {
 
 extension UInt8: EndianBytes {
     
+    public func endianCount() -> UInt32 { return 1 }
+
     public func endianBytes(_ endianness: Endianness) -> Data {
         return Data(bytes: [self])
     }
     
-    public init?(_ bytePtr: inout UnsafeRawPointer, count: inout UInt32, endianness: Endianness) {
-        guard count > 0 else { return nil }
-        self = bytePtr.advanceUInt8()
-        count -= 1
+    public func endianBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+        toPointer.storeBytes(of: self, as: UInt8.self)
+        toPointer = toPointer.advanced(by: 1)
+    }
+    
+    public init(_ bytePtr: UnsafeRawPointer, endianness: Endianness, count: UInt32 = 0) {
+        self = bytePtr.assumingMemoryBound(to: UInt8.self).pointee
     }
 }
 
@@ -126,15 +152,20 @@ extension UInt8: EndianBytes {
 
 extension Int8: EndianBytes {
     
+    public func endianCount() -> UInt32 { return 1 }
+
     public func endianBytes(_ endianness: Endianness) -> Data {
         var val = self
         return Data(bytes: &val, count: 1)
     }
     
-    public init?(_ bytePtr: inout UnsafeRawPointer, count: inout UInt32, endianness: Endianness) {
-        guard count > 0 else { return nil }
-        self = bytePtr.advanceInt8()
-        count -= 1
+    public func endianBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+        toPointer.storeBytes(of: self, as: Int8.self)
+        toPointer = toPointer.advanced(by: 1)
+    }
+
+    public init(_ bytePtr: UnsafeRawPointer, endianness: Endianness, count: UInt32 = 0) {
+        self = bytePtr.assumingMemoryBound(to: Int8.self).pointee
     }
 }
 
@@ -143,16 +174,30 @@ extension Int8: EndianBytes {
 
 extension UInt16: EndianBytes {
     
+    public func endianCount() -> UInt32 { return 2 }
+
     public func endianBytes(_ endianness: Endianness) -> Data {
         var val = self
         if endianness != machineEndianness { val = val.byteSwapped }
         return Data(bytes: &val, count: 2)
     }
     
-    public init?(_ bytePtr: inout UnsafeRawPointer, count: inout UInt32, endianness: Endianness) {
-        guard count >= 2 else { return nil }
-        self = bytePtr.advanceUInt16(endianness: endianness)
-        count -= 2
+    public func endianBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+        if endianness == machineEndianness {
+            toPointer.storeBytes(of: self, as: UInt16.self)
+        } else {
+            toPointer.storeBytes(of: self.byteSwapped, as: UInt16.self)
+        }
+        toPointer = toPointer.advanced(by: 2)
+    }
+
+    public init(_ bytePtr: UnsafeRawPointer, endianness: Endianness, count: UInt32 = 0) {
+        let i = bytePtr.assumingMemoryBound(to: UInt16.self).pointee
+        if endianness == machineEndianness {
+            self = i
+        } else {
+            self = i.byteSwapped
+        }
     }
 }
 
@@ -161,16 +206,30 @@ extension UInt16: EndianBytes {
 
 extension Int16: EndianBytes {
     
+    public func endianCount() -> UInt32 { return 2 }
+
     public func endianBytes(_ endianness: Endianness) -> Data {
         var val = self
         if endianness != machineEndianness { val = val.byteSwapped }
         return Data(bytes: &val, count: 2)
     }
     
-    public init?(_ bytePtr: inout UnsafeRawPointer, count: inout UInt32, endianness: Endianness) {
-        guard count >= 2 else { return nil }
-        self = bytePtr.advanceInt16(endianness: endianness)
-        count -= 2
+    public func endianBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+        if endianness == machineEndianness {
+            toPointer.storeBytes(of: self, as: Int16.self)
+        } else {
+            toPointer.storeBytes(of: self.byteSwapped, as: Int16.self)
+        }
+        toPointer = toPointer.advanced(by: 2)
+    }
+
+    public init(_ bytePtr: UnsafeRawPointer, endianness: Endianness, count: UInt32 = 0) {
+        let i = bytePtr.assumingMemoryBound(to: Int16.self).pointee
+        if endianness == machineEndianness {
+            self = i
+        } else {
+            self = i.byteSwapped
+        }
     }
 }
 
@@ -179,16 +238,30 @@ extension Int16: EndianBytes {
 
 extension UInt32: EndianBytes {
     
+    public func endianCount() -> UInt32 { return 4 }
+
     public func endianBytes(_ endianness: Endianness) -> Data {
         var val = self
         if endianness != machineEndianness { val = val.byteSwapped }
         return Data(bytes: &val, count: 4)
     }
     
-    public init?(_ bytePtr: inout UnsafeRawPointer, count: inout UInt32, endianness: Endianness) {
-        guard count >= 4 else { return nil }
-        self = bytePtr.advanceUInt32(endianness: endianness)
-        count -= 4
+    public func endianBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+        if endianness == machineEndianness {
+            toPointer.storeBytes(of: self, as: UInt32.self)
+        } else {
+            toPointer.storeBytes(of: self.byteSwapped, as: UInt32.self)
+        }
+        toPointer = toPointer.advanced(by: 4)
+    }
+
+    public init(_ bytePtr: UnsafeRawPointer, endianness: Endianness, count: UInt32 = 0) {
+        let i = bytePtr.assumingMemoryBound(to: UInt32.self).pointee
+        if endianness == machineEndianness {
+            self = i
+        } else {
+            self = i.byteSwapped
+        }
     }
 }
 
@@ -197,16 +270,30 @@ extension UInt32: EndianBytes {
 
 extension Int32: EndianBytes {
     
+    public func endianCount() -> UInt32 { return 4 }
+
     public func endianBytes(_ endianness: Endianness) -> Data {
         var val = self
         if endianness != machineEndianness { val = val.byteSwapped }
         return Data(bytes: &val, count: 4)
     }
     
-    public init?(_ bytePtr: inout UnsafeRawPointer, count: inout UInt32, endianness: Endianness) {
-        guard count >= 4 else { return nil }
-        self = bytePtr.advanceInt32(endianness: endianness)
-        count -= 4
+    public func endianBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+        if endianness == machineEndianness {
+            toPointer.storeBytes(of: self, as: Int32.self)
+        } else {
+            toPointer.storeBytes(of: self.byteSwapped, as: Int32.self)
+        }
+        toPointer = toPointer.advanced(by: 4)
+    }
+
+    public init(_ bytePtr: UnsafeRawPointer, endianness: Endianness, count: UInt32 = 0) {
+        let i = bytePtr.assumingMemoryBound(to: Int32.self).pointee
+        if endianness == machineEndianness {
+            self = i
+        } else {
+            self = i.byteSwapped
+        }
     }
 }
 
@@ -215,16 +302,30 @@ extension Int32: EndianBytes {
 
 extension UInt64: EndianBytes {
     
+    public func endianCount() -> UInt32 { return 8 }
+
     public func endianBytes(_ endianness: Endianness) -> Data {
         var val = self
         if endianness != machineEndianness { val = val.byteSwapped }
         return Data(bytes: &val, count: 8)
     }
     
-    public init?(_ bytePtr: inout UnsafeRawPointer, count: inout UInt32, endianness: Endianness) {
-        guard count >= 8 else { return nil }
-        self = bytePtr.advanceUInt64(endianness: endianness)
-        count -= 8
+    public func endianBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+        if endianness == machineEndianness {
+            toPointer.storeBytes(of: self, as: UInt64.self)
+        } else {
+            toPointer.storeBytes(of: self.byteSwapped, as: UInt64.self)
+        }
+        toPointer = toPointer.advanced(by: 8)
+    }
+
+    public init(_ bytePtr: UnsafeRawPointer, endianness: Endianness, count: UInt32 = 0) {
+        let i = bytePtr.assumingMemoryBound(to: UInt64.self).pointee
+        if endianness == machineEndianness {
+            self = i
+        } else {
+            self = i.byteSwapped
+        }
     }
 }
 
@@ -233,16 +334,30 @@ extension UInt64: EndianBytes {
 
 extension Int64: EndianBytes {
     
+    public func endianCount() -> UInt32 { return 8 }
+
     public func endianBytes(_ endianness: Endianness) -> Data {
         var val = self
         if endianness != machineEndianness { val = val.byteSwapped }
         return Data(bytes: &val, count: 8)
     }
     
-    public init?(_ bytePtr: inout UnsafeRawPointer, count: inout UInt32, endianness: Endianness) {
-        guard count >= 8 else { return nil }
-        self = bytePtr.advanceInt64(endianness: endianness)
-        count -= 8
+    public func endianBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+        if endianness == machineEndianness {
+            toPointer.storeBytes(of: self, as: Int64.self)
+        } else {
+            toPointer.storeBytes(of: self.byteSwapped, as: Int64.self)
+        }
+        toPointer = toPointer.advanced(by: 8)
+    }
+
+    public init(_ bytePtr: UnsafeRawPointer, endianness: Endianness, count: UInt32 = 0) {
+        let i = bytePtr.assumingMemoryBound(to: Int64.self).pointee
+        if endianness == machineEndianness {
+            self = i
+        } else {
+            self = i.byteSwapped
+        }
     }
 }
 
@@ -251,17 +366,30 @@ extension Int64: EndianBytes {
 
 extension Float32: EndianBytes {
     
+    public func endianCount() -> UInt32 { return 4 }
+
     public func endianBytes(_ endianness: Endianness) -> Data {
         var val = self.bitPattern
         if endianness != machineEndianness { val = val.byteSwapped }
         return Data(bytes: &val, count: 4)
     }
     
-    public init?(_ bytePtr: inout UnsafeRawPointer, count: inout UInt32, endianness: Endianness) {
-        guard count >= 4 else { return nil }
-        let val = bytePtr.advanceUInt32(endianness: endianness)
-        self = Float32.init(bitPattern: val)
-        count -= 4
+    public func endianBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+        if endianness == machineEndianness {
+            toPointer.storeBytes(of: self, as: Float32.self)
+        } else {
+            toPointer.storeBytes(of: self.bitPattern.byteSwapped, as: UInt32.self)
+        }
+        toPointer = toPointer.advanced(by: 4)
+    }
+
+    public init(_ bytePtr: UnsafeRawPointer, endianness: Endianness, count: UInt32 = 0) {
+        let i = bytePtr.assumingMemoryBound(to: UInt32.self).pointee
+        if endianness == machineEndianness {
+            self = Float32.init(bitPattern: i)
+        } else {
+            self = Float32.init(bitPattern: i.byteSwapped)
+        }
     }
 }
 
@@ -270,16 +398,74 @@ extension Float32: EndianBytes {
 
 extension Float64: EndianBytes {
     
+    public func endianCount() -> UInt32 { return 8 }
+
     public func endianBytes(_ endianness: Endianness) -> Data {
         var val = self.bitPattern
         if endianness != machineEndianness { val = val.byteSwapped }
         return Data(bytes: &val, count: 8)
     }
     
-    public init?(_ bytePtr: inout UnsafeRawPointer, count: inout UInt32, endianness: Endianness) {
-        guard count >= 8 else { return nil }
-        let val = bytePtr.advanceUInt64(endianness: endianness)
-        self = Float64.init(bitPattern: val)
-        count -= 8
+    public func endianBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+        if endianness == machineEndianness {
+            toPointer.storeBytes(of: self, as: Float64.self)
+        } else {
+            toPointer.storeBytes(of: self.bitPattern.byteSwapped, as: UInt64.self)
+        }
+        toPointer = toPointer.advanced(by: 8)
+    }
+
+    public init(_ bytePtr: UnsafeRawPointer, endianness: Endianness, count: UInt32 = 0) {
+        let i = bytePtr.assumingMemoryBound(to: UInt64.self).pointee
+        if endianness == machineEndianness {
+            self = Float64.init(bitPattern: i)
+        } else {
+            self = Float64.init(bitPattern: i.byteSwapped)
+        }
+    }
+}
+
+
+/// Adds the EndianBytes protocol to Data
+
+extension Data: EndianBytes {
+    
+    public func endianCount() -> UInt32 { return UInt32(self.count) }
+
+    public func endianBytes(_ endianness: Endianness) -> Data {
+        return self
+    }
+    
+    public func endianBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+        self.withUnsafeBytes({ toPointer.copyBytes(from: $0, count: self.count)})
+        toPointer = toPointer.advanced(by: self.count)
+    }
+        
+    public init(_ bytePtr: UnsafeRawPointer, endianness: Endianness, count: UInt32) {
+        self.init(bytes: bytePtr, count: Int(count))
+    }
+}
+
+
+/// Adds the EndianBytes protocol to String
+
+extension String: EndianBytes {
+    
+    public func endianCount() -> UInt32 { return UInt32(self.data(using: .utf8)?.count ?? 0) }
+    
+    public func endianBytes(_ endianness: Endianness) -> Data {
+        return self.data(using: .utf8) ?? Data()
+    }
+    
+    public func endianBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+        if let data = self.data(using: .utf8) {
+            data.endianBytes(endianness, toPointer: &toPointer)
+            toPointer = toPointer.advanced(by: data.count)
+        }
+    }
+    
+    public init(_ bytePtr: UnsafeRawPointer, endianness: Endianness, count: UInt32) {
+        let data = Data(bytePtr, endianness: endianness, count: count)
+        self = String(bytes: data, encoding: .utf8) ?? ""
     }
 }
