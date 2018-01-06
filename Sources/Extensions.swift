@@ -60,15 +60,16 @@ internal extension String {
     ///
     /// - Parameter maxBytes: The maximum number of bytes to be returned.
     ///
-    /// - Returns: Nil if self cannot be converted to UTF8 code. Otherwise the requested bytes.
+    /// - Returns: The requested bytes and a flag that is true when characters were discarded false when all characters are included. Nil if conversion to utf8 is not possible.
     
-    internal func utf8CodeMaxBytes(_ maxBytes: Int) -> Data? {
+    internal func utf8CodeMaxBytes(_ maxBytes: Int) -> (Data, Bool)? {
         
         // Early exit if the string cannot be converted to UTF8
         guard var utf8Code = self.data(using: .utf8) else { return nil }
         
         // Need a mutable copy of self
         var str = self
+        var charactersWereRemoved = false
         
         // Quick limit to 'byte' characters
         if (str.characters.count > maxBytes) {
@@ -79,10 +80,11 @@ internal extension String {
         // Fine tune down to 'bytes' code units
         while utf8Code.count > maxBytes {
             _ = str.remove(at: str.index(before: str.endIndex))
+            charactersWereRemoved = true
             utf8Code = str.data(using: .utf8)!
         }
         
-        return utf8Code
+        return (utf8Code, charactersWereRemoved)
     }
 }
 

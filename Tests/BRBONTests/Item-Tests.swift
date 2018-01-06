@@ -9,17 +9,6 @@
 import XCTest
 @testable import BRBON
 
-extension Data {
-    
-    func printBytes() {
-        
-        let str = self.reduce("") {
-            return $0 + "0x\(String($1, radix: 16, uppercase: false)), "
-        }
-        print(str)
-    }
-}
-
 class Item_Tests: XCTestCase {
 
     override func setUp() {

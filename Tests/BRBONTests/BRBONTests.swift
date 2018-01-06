@@ -15,3 +15,14 @@ class BRBONTests: XCTestCase {
         ]
     }
 }
+
+extension Data {
+    
+    func printBytes() {
+        
+        let str = self.reduce("") {
+            return $0 + "0x\(String($1, radix: 16, uppercase: false)), "
+        }
+        print(str)
+    }
+}

@@ -1,6 +1,6 @@
 // =====================================================================================================================
 //
-//  File:       Protocols.swift
+//  File:       BrbonBytes.swift
 //  Project:    BRBON
 //
 //  Version:    0.1.0
@@ -54,7 +54,7 @@ import BRUtils
 
 /// This protocol is used to encode/decode types from a byte stream.
 
-public protocol EndianBytes {
+public protocol BrbonBytes {
     
     
     /// Encodes a type to a stream of bytes in either big or little endian coding.
@@ -63,7 +63,7 @@ public protocol EndianBytes {
     ///
     /// - Returns: A Data structure containg the bytes that encode the basic type.
     
-    func endianBytes(_ endianness: Endianness) -> Data
+    func brbonBytes(_ endianness: Endianness) -> Data
     
     
     /// Encodes a type to a stream of bytes in either big or little endian coding and returns an unowned buffer with these bytes in it.
@@ -72,12 +72,17 @@ public protocol EndianBytes {
     ///   - endianness: Specifies the endianness of the bytes.
     ///   - toPointer: The pointer at which the first byte will be stored. On return the pointer will be incremented for the number of bytes stored.
     
-    func endianBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer)
+    func brbonBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer)
 
     
-    /// - Returns: The number of bytes needed to encode self into an endianBytes stream
+    /// - Returns: The number of bytes needed to encode self into an BrbonBytes stream
     
-    func endianCount() -> UInt32
+    func brbonCount() -> UInt32
+    
+    
+    /// - Returns: The ItemType for this value
+    
+    func brbonType() -> ItemType
     
     
     /// Decode a type from the given bytes.
@@ -91,14 +96,15 @@ public protocol EndianBytes {
 }
 
 
+/// Adds the BrbonBytes protocol to Bool
 
-/// Adds the EndianBytes protocol to Bool
+extension Bool: BrbonBytes {
+    
+    public func brbonType() -> ItemType { return .bool }
 
-extension Bool: EndianBytes {
+    public func brbonCount() -> UInt32 { return 1 }
     
-    public func endianCount() -> UInt32 { return 1 }
-    
-    public func endianBytes(_ endianness: Endianness) -> Data {
+    public func brbonBytes(_ endianness: Endianness) -> Data {
         if self {
             return Data(bytes: [1])
         } else {
@@ -106,11 +112,11 @@ extension Bool: EndianBytes {
         }
     }
     
-    public func endianBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+    public func brbonBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
         if self {
             toPointer.storeBytes(of: 1, as: UInt8.self)
         } else {
-            toPointer.storeBytes(of: 1, as: UInt8.self)
+            toPointer.storeBytes(of: 0, as: UInt8.self)
         }
         toPointer = toPointer.advanced(by: 1)
     }
@@ -127,17 +133,19 @@ extension Bool: EndianBytes {
 }
 
 
-/// Adds the EndianBytes protocol to UInt8
+/// Adds the BrbonBytes protocol to UInt8
 
-extension UInt8: EndianBytes {
+extension UInt8: BrbonBytes {
     
-    public func endianCount() -> UInt32 { return 1 }
+    public func brbonType() -> ItemType { return .uint8 }
+    
+    public func brbonCount() -> UInt32 { return 1 }
 
-    public func endianBytes(_ endianness: Endianness) -> Data {
+    public func brbonBytes(_ endianness: Endianness) -> Data {
         return Data(bytes: [self])
     }
     
-    public func endianBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+    public func brbonBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
         toPointer.storeBytes(of: self, as: UInt8.self)
         toPointer = toPointer.advanced(by: 1)
     }
@@ -148,18 +156,20 @@ extension UInt8: EndianBytes {
 }
 
 
-/// Adds the EndianBytes protocol to Int8
+/// Adds the BrbonBytes protocol to Int8
 
-extension Int8: EndianBytes {
+extension Int8: BrbonBytes {
     
-    public func endianCount() -> UInt32 { return 1 }
+    public func brbonType() -> ItemType { return .int8 }
+    
+    public func brbonCount() -> UInt32 { return 1 }
 
-    public func endianBytes(_ endianness: Endianness) -> Data {
+    public func brbonBytes(_ endianness: Endianness) -> Data {
         var val = self
         return Data(bytes: &val, count: 1)
     }
     
-    public func endianBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+    public func brbonBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
         toPointer.storeBytes(of: self, as: Int8.self)
         toPointer = toPointer.advanced(by: 1)
     }
@@ -170,19 +180,21 @@ extension Int8: EndianBytes {
 }
 
 
-/// Adds the EndianBytes protocol to UInt16
+/// Adds the BrbonBytes protocol to UInt16
 
-extension UInt16: EndianBytes {
+extension UInt16: BrbonBytes {
     
-    public func endianCount() -> UInt32 { return 2 }
+    public func brbonType() -> ItemType { return .uint16 }
+    
+    public func brbonCount() -> UInt32 { return 2 }
 
-    public func endianBytes(_ endianness: Endianness) -> Data {
+    public func brbonBytes(_ endianness: Endianness) -> Data {
         var val = self
         if endianness != machineEndianness { val = val.byteSwapped }
         return Data(bytes: &val, count: 2)
     }
     
-    public func endianBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+    public func brbonBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
         if endianness == machineEndianness {
             toPointer.storeBytes(of: self, as: UInt16.self)
         } else {
@@ -202,19 +214,21 @@ extension UInt16: EndianBytes {
 }
 
 
-/// Adds the EndianBytes protocol to Int16
+/// Adds the BrbonBytes protocol to Int16
 
-extension Int16: EndianBytes {
+extension Int16: BrbonBytes {
     
-    public func endianCount() -> UInt32 { return 2 }
+    public func brbonType() -> ItemType { return .int16 }
+    
+    public func brbonCount() -> UInt32 { return 2 }
 
-    public func endianBytes(_ endianness: Endianness) -> Data {
+    public func brbonBytes(_ endianness: Endianness) -> Data {
         var val = self
         if endianness != machineEndianness { val = val.byteSwapped }
         return Data(bytes: &val, count: 2)
     }
     
-    public func endianBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+    public func brbonBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
         if endianness == machineEndianness {
             toPointer.storeBytes(of: self, as: Int16.self)
         } else {
@@ -234,19 +248,21 @@ extension Int16: EndianBytes {
 }
 
 
-/// Adds the EndianBytes protocol to UInt32
+/// Adds the BrbonBytes protocol to UInt32
 
-extension UInt32: EndianBytes {
+extension UInt32: BrbonBytes {
     
-    public func endianCount() -> UInt32 { return 4 }
+    public func brbonType() -> ItemType { return .uint32 }
+    
+    public func brbonCount() -> UInt32 { return 4 }
 
-    public func endianBytes(_ endianness: Endianness) -> Data {
+    public func brbonBytes(_ endianness: Endianness) -> Data {
         var val = self
         if endianness != machineEndianness { val = val.byteSwapped }
         return Data(bytes: &val, count: 4)
     }
     
-    public func endianBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+    public func brbonBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
         if endianness == machineEndianness {
             toPointer.storeBytes(of: self, as: UInt32.self)
         } else {
@@ -266,19 +282,21 @@ extension UInt32: EndianBytes {
 }
 
 
-/// Adds the EndianBytes protocol to Int32
+/// Adds the BrbonBytes protocol to Int32
 
-extension Int32: EndianBytes {
+extension Int32: BrbonBytes {
     
-    public func endianCount() -> UInt32 { return 4 }
+    public func brbonType() -> ItemType { return .int32 }
+    
+    public func brbonCount() -> UInt32 { return 4 }
 
-    public func endianBytes(_ endianness: Endianness) -> Data {
+    public func brbonBytes(_ endianness: Endianness) -> Data {
         var val = self
         if endianness != machineEndianness { val = val.byteSwapped }
         return Data(bytes: &val, count: 4)
     }
     
-    public func endianBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+    public func brbonBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
         if endianness == machineEndianness {
             toPointer.storeBytes(of: self, as: Int32.self)
         } else {
@@ -298,19 +316,21 @@ extension Int32: EndianBytes {
 }
 
 
-/// Adds the EndianBytes protocol to UInt64
+/// Adds the BrbonBytes protocol to UInt64
 
-extension UInt64: EndianBytes {
+extension UInt64: BrbonBytes {
     
-    public func endianCount() -> UInt32 { return 8 }
+    public func brbonType() -> ItemType { return .uint64 }
+    
+    public func brbonCount() -> UInt32 { return 8 }
 
-    public func endianBytes(_ endianness: Endianness) -> Data {
+    public func brbonBytes(_ endianness: Endianness) -> Data {
         var val = self
         if endianness != machineEndianness { val = val.byteSwapped }
         return Data(bytes: &val, count: 8)
     }
     
-    public func endianBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+    public func brbonBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
         if endianness == machineEndianness {
             toPointer.storeBytes(of: self, as: UInt64.self)
         } else {
@@ -330,19 +350,21 @@ extension UInt64: EndianBytes {
 }
 
 
-/// Adds the EndianBytes protocol to Int64
+/// Adds the BrbonBytes protocol to Int64
 
-extension Int64: EndianBytes {
+extension Int64: BrbonBytes {
     
-    public func endianCount() -> UInt32 { return 8 }
+    public func brbonType() -> ItemType { return .int64 }
+    
+    public func brbonCount() -> UInt32 { return 8 }
 
-    public func endianBytes(_ endianness: Endianness) -> Data {
+    public func brbonBytes(_ endianness: Endianness) -> Data {
         var val = self
         if endianness != machineEndianness { val = val.byteSwapped }
         return Data(bytes: &val, count: 8)
     }
     
-    public func endianBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+    public func brbonBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
         if endianness == machineEndianness {
             toPointer.storeBytes(of: self, as: Int64.self)
         } else {
@@ -362,19 +384,21 @@ extension Int64: EndianBytes {
 }
 
 
-/// Adds the EndianBytes protocol to Float32
+/// Adds the BrbonBytes protocol to Float32
 
-extension Float32: EndianBytes {
+extension Float32: BrbonBytes {
     
-    public func endianCount() -> UInt32 { return 4 }
+    public func brbonType() -> ItemType { return .float32 }
+    
+    public func brbonCount() -> UInt32 { return 4 }
 
-    public func endianBytes(_ endianness: Endianness) -> Data {
+    public func brbonBytes(_ endianness: Endianness) -> Data {
         var val = self.bitPattern
         if endianness != machineEndianness { val = val.byteSwapped }
         return Data(bytes: &val, count: 4)
     }
     
-    public func endianBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+    public func brbonBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
         if endianness == machineEndianness {
             toPointer.storeBytes(of: self, as: Float32.self)
         } else {
@@ -394,19 +418,21 @@ extension Float32: EndianBytes {
 }
 
 
-/// Adds the EndianBytes protocol to Float64
+/// Adds the BrbonBytes protocol to Float64
 
-extension Float64: EndianBytes {
+extension Float64: BrbonBytes {
     
-    public func endianCount() -> UInt32 { return 8 }
+    public func brbonType() -> ItemType { return .float64 }
+    
+    public func brbonCount() -> UInt32 { return 8 }
 
-    public func endianBytes(_ endianness: Endianness) -> Data {
+    public func brbonBytes(_ endianness: Endianness) -> Data {
         var val = self.bitPattern
         if endianness != machineEndianness { val = val.byteSwapped }
         return Data(bytes: &val, count: 8)
     }
     
-    public func endianBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+    public func brbonBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
         if endianness == machineEndianness {
             toPointer.storeBytes(of: self, as: Float64.self)
         } else {
@@ -426,17 +452,19 @@ extension Float64: EndianBytes {
 }
 
 
-/// Adds the EndianBytes protocol to Data
+/// Adds the BrbonBytes protocol to Data
 
-extension Data: EndianBytes {
+extension Data: BrbonBytes {
     
-    public func endianCount() -> UInt32 { return UInt32(self.count) }
+    public func brbonType() -> ItemType { return .binary }
+    
+    public func brbonCount() -> UInt32 { return UInt32(self.count) }
 
-    public func endianBytes(_ endianness: Endianness) -> Data {
+    public func brbonBytes(_ endianness: Endianness) -> Data {
         return self
     }
     
-    public func endianBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+    public func brbonBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
         self.withUnsafeBytes({ toPointer.copyBytes(from: $0, count: self.count)})
         toPointer = toPointer.advanced(by: self.count)
     }
@@ -447,20 +475,21 @@ extension Data: EndianBytes {
 }
 
 
-/// Adds the EndianBytes protocol to String
+/// Adds the BrbonBytes protocol to String
 
-extension String: EndianBytes {
+extension String: BrbonBytes {
     
-    public func endianCount() -> UInt32 { return UInt32(self.data(using: .utf8)?.count ?? 0) }
+    public func brbonType() -> ItemType { return .string }
     
-    public func endianBytes(_ endianness: Endianness) -> Data {
+    public func brbonCount() -> UInt32 { return UInt32(self.data(using: .utf8)?.count ?? 0) }
+    
+    public func brbonBytes(_ endianness: Endianness) -> Data {
         return self.data(using: .utf8) ?? Data()
     }
     
-    public func endianBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+    public func brbonBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
         if let data = self.data(using: .utf8) {
-            data.endianBytes(endianness, toPointer: &toPointer)
-            toPointer = toPointer.advanced(by: data.count)
+            data.brbonBytes(endianness, toPointer: &toPointer)
         }
     }
     

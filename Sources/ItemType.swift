@@ -57,97 +57,135 @@ import BRUtils
 public enum ItemType: UInt8 {
     
     
-    /// A null/nil item.
-    
-    case null           = 0x00
-    
-    
-    /// A boolean
-    
-    case bool           = 0x01
-    
-    
-    /// An integer of 8 bits
-    
-    case int8           = 0x02
-
-    
-    /// An integer of 16 bits
-
-    case int16          = 0x03
-    
-    
-    /// An integer of 32 bits
-
-    case int32          = 0x04
+    /// ============================================
+    /// These types do not use the count/value field
+    /// ============================================
     
     
     /// An integer of 64 bits
 
-    case int64          = 0x05
-    
-    
-    // An unsigned integer of 8 bits (a byte)
-    
-    case uint8          = 0x06
-    
-    
-    // An unsigned integer of 16 bits
-
-    case uint16         = 0x07
-    
-    
-    // An unsigned integer of 32 bits
-
-    case uint32         = 0x08
-    
-    
-    // An unsigned integer of 64 bits
-
-    case uint64         = 0x09
-    
-    
-    // Floating point value represented in 32 bits
-    
-    case float32        = 0x0A
+    case int64          = 0x00
 
     
-    // Floating point value represented in 64 bits (Called a Double in Swift)
+    /// An unsigned integer of 64 bits
 
-    case float64        = 0x0B
+    case uint64         = 0x01
+    
+    
+    /// Floating point value represented in 64 bits (Called a Double in Swift)
+
+    case float64        = 0x02
     
 
+    /// =====================================================
+    /// These types do use the count/value field as a counter
+    /// =====================================================
+
+    
     /// A string coded in UTF8 of N bytes with space available for M bytes where M >= N.
     
-    case string         = 0x0C
+    case string         = 0x40
     
     
     /// A sequence of items of the same type and length
     
-    case array          = 0x0D
+    case array          = 0x41
     
 
     /// Sequence of named items. These items may vary in type, options and length but are identifyable by their (unique) name.
     
-    case dictionary     = 0x0E
+    case dictionary     = 0x42
 
     
     /// A sequence of other items that may or may not have a name and can be of different types.
     
-    case sequence       = 0x0F
+    case sequence       = 0x43
 
     
     /// A sequence of bytes (UInt8)
     
-    case binary         = 0x10
+    case binary         = 0x44
     
 
+    /// ===================================================
+    /// These types do use the count/value field as a value
+    /// ===================================================
+
+    /// A null/nil item.
     
-    public func endianBytes(_ endianness: Endianness) -> Data {
+    case null           = 0x80
+    
+    
+    /// A boolean
+    
+    case bool           = 0x81
+    
+    
+    /// An integer of 8 bits
+    
+    case int8           = 0x82
+
+    
+    /// An integer of 16 bits
+
+    case int16          = 0x83
+    
+    
+    /// An integer of 32 bits
+
+    case int32          = 0x84
+    
+    
+    // An unsigned integer of 8 bits (a byte)
+    
+    case uint8          = 0x85
+    
+    
+    // An unsigned integer of 16 bits
+
+    case uint16         = 0x86
+    
+    
+    // An unsigned integer of 32 bits
+
+    case uint32         = 0x87
+    
+    
+    // Floating point value represented in 32 bits
+    
+    case float32        = 0x88
+
+    
+    public func brbonBytes(_ endianness: Endianness) -> Data {
         return Data(bytes: [self.rawValue])
     }
     
+    public var useCountField: Bool { return (self.rawValue & 0x40) != 0 }
+    
+    public var useValueField: Bool { return (self.rawValue & 0x80) != 0 }
+    
     public init?(_ bytePtr: UnsafeRawPointer) {
         self.init(rawValue: bytePtr.assumingMemoryBound(to: UInt8.self).pointee)
+    }
+    
+    public static func typeFor(_ value: BrbonBytes) -> ItemType? {
+        switch value {
+        case is Bool: return .bool
+        case is Int8: return .int8
+        case is UInt8: return .uint8
+        case is Int16: return .int16
+        case is UInt16: return .uint16
+        case is Int32: return .int32
+        case is UInt32: return .uint32
+        case is Int64: return .int64
+        case is UInt64: return .uint64
+        case is Float32: return .float32
+        case is Float64: return .float64
+        case is String: return .string
+        case is Array<BrbonBytes>: return .array
+        case is Dictionary<String, BrbonBytes>: return .dictionary
+        case is Data: return .binary
+        default: return nil
+        }
     }
 }
