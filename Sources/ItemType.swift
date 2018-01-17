@@ -64,17 +64,17 @@ public enum ItemType: UInt8 {
     
     /// An integer of 64 bits
 
-    case int64          = 0x00
+    case int64          = 0x01
 
     
     /// An unsigned integer of 64 bits
 
-    case uint64         = 0x01
+    case uint64         = 0x02
     
     
     /// Floating point value represented in 64 bits (Called a Double in Swift)
 
-    case float64        = 0x02
+    case float64        = 0x03
     
 
     /// =====================================================
@@ -160,9 +160,9 @@ public enum ItemType: UInt8 {
         return Data(bytes: [self.rawValue])
     }
     
-    public var useCountField: Bool { return (self.rawValue & 0x40) != 0 }
+    public var useValueCountFieldAsCount: Bool { return (self.rawValue & 0x40) != 0 }
     
-    public var useValueField: Bool { return (self.rawValue & 0x80) != 0 }
+    public var useValueCountFieldAsValue: Bool { return (self.rawValue & 0x80) != 0 }
     
     public init?(_ bytePtr: UnsafeRawPointer) {
         self.init(rawValue: bytePtr.assumingMemoryBound(to: UInt8.self).pointee)

@@ -72,8 +72,411 @@ internal func nameFieldDescriptor(for name: String?, fixedLength: UInt8?) -> (da
 
 /// Extends the manager with pointer manipulation operations.
 
-internal struct ValueItem {
+public class ValueItem: Item {
     
+    
+    /// - Returns: True if the item still refers to a valid memory area. False otherwise.
+    
+    public internal(set) var isValid: Bool = true
+    
+    
+    /// - Returns: True if this item contains a Null, false otherwise.
+    
+    public var isNull: Bool { return type == .null }
+
+    
+    /// - Returns: True if this item contains a Bool, false otherwise.
+    
+    public var isBool: Bool { return type == .bool }
+    
+    
+    /// - Returns: The Bool value. Nil if it does not contain a Bool.
+    
+    public var bool: Bool? {
+        get {
+            guard isValid && (type == .bool) else { return nil }
+            return Bool(ptr.advanced(by: itemValueCountOffset), endianness: endianness)
+        }
+        set {
+            guard isValid else { return }
+            if let newValue = newValue {
+                if type == .null {
+                    var tptr = ptr.advanced(by: itemTypeOffset)
+                    ItemType.bool.rawValue.brbonBytes(endianness, toPointer: &tptr)
+                }
+                guard type == .bool else { return }
+                var vptr = valuePtr
+                newValue.brbonBytes(endianness, toPointer: &vptr)
+            } else {
+                var tptr = ptr.advanced(by: itemTypeOffset)
+                ItemType.null.rawValue.brbonBytes(endianness, toPointer: &tptr)
+            }
+        }
+    }
+    
+    
+    /// - Returns: True if this item contains an UInt8, false otherwise.
+    
+    public var isUInt8: Bool { return type == .uint8 }
+    
+    
+    /// - Returns: The UInt8 value of self. Nil if it does not contain an UInt8.
+    
+    public var uint8: UInt8? {
+        get {
+            guard isValid && (type == .uint8) else { return nil }
+            return ptr.advanced(by: itemValueCountOffset).assumingMemoryBound(to: UInt8.self).pointee
+        }
+        set {
+            guard isValid else { return }
+            if let newValue = newValue {
+                if type == .null {
+                    var tptr = ptr.advanced(by: itemTypeOffset)
+                    ItemType.uint8.rawValue.brbonBytes(endianness, toPointer: &tptr)
+                }
+                guard type == .uint8 else { return }
+                var vptr = valuePtr
+                newValue.brbonBytes(endianness, toPointer: &vptr)
+            } else {
+                var tptr = ptr.advanced(by: itemTypeOffset)
+                ItemType.null.rawValue.brbonBytes(endianness, toPointer: &tptr)
+            }
+        }
+    }
+
+    
+    /// - Returns: True if this item contains an Int8, false otherwise.
+    
+    public var isInt8: Bool { return type == .int8 }
+    
+    
+    /// - Returns: The Int8 value of self. Nil if it does not contain an Int8.
+    
+    public var int8: Int8? {
+        get {
+            guard isValid && (type == .int8) else { return nil }
+            return ptr.advanced(by: itemValueCountOffset).assumingMemoryBound(to: Int8.self).pointee
+        }
+        set {
+            guard isValid else { return }
+            if let newValue = newValue {
+                if type == .null {
+                    var tptr = ptr.advanced(by: itemTypeOffset)
+                    ItemType.int8.rawValue.brbonBytes(endianness, toPointer: &tptr)
+                }
+                guard type == .int8 else { return }
+                var vptr = valuePtr
+                newValue.brbonBytes(endianness, toPointer: &vptr)
+            } else {
+                var tptr = ptr.advanced(by: itemTypeOffset)
+                ItemType.null.rawValue.brbonBytes(endianness, toPointer: &tptr)
+            }
+        }
+    }
+    
+    
+    /// - Returns: True if this item contains an UInt16, false otherwise.
+    
+    public var isUInt16: Bool { return type == .uint16 }
+    
+    
+    /// - Returns: The UInt16 value of self. Nil if it does not contain an UInt16.
+    
+    public var uint16: UInt16? {
+        get {
+            guard isValid && (type == .uint16) else { return nil }
+            return UInt16(valuePtr, endianness: endianness)
+        }
+        set {
+            guard isValid else { return }
+            if let newValue = newValue {
+                if type == .null {
+                    var tptr = ptr.advanced(by: itemTypeOffset)
+                    ItemType.uint16.rawValue.brbonBytes(endianness, toPointer: &tptr)
+                }
+                guard type == .uint16 else { return }
+                var vptr = valuePtr
+                newValue.brbonBytes(endianness, toPointer: &vptr)
+            } else {
+                var tptr = ptr.advanced(by: itemTypeOffset)
+                ItemType.null.rawValue.brbonBytes(endianness, toPointer: &tptr)
+            }
+        }
+    }
+    
+    
+    /// - Returns: True if this item contains an Int16, false otherwise.
+    
+    public var isInt16: Bool { return type == .int16 }
+    
+    
+    /// - Returns: The Int16 value of self. Nil if it does not contain an Int16.
+    
+    public var int16: Int16? {
+        get {
+            guard isValid && (type == .int16) else { return nil }
+            return Int16(valuePtr, endianness: endianness)
+        }
+        set {
+            guard isValid else { return }
+            if let newValue = newValue {
+                if type == .null {
+                    var tptr = ptr.advanced(by: itemTypeOffset)
+                    ItemType.int16.rawValue.brbonBytes(endianness, toPointer: &tptr)
+                }
+                guard type == .int16 else { return }
+                var vptr = valuePtr
+                newValue.brbonBytes(endianness, toPointer: &vptr)
+            } else {
+                var tptr = ptr.advanced(by: itemTypeOffset)
+                ItemType.null.rawValue.brbonBytes(endianness, toPointer: &tptr)
+            }
+        }
+    }
+    
+    
+    /// - Returns: True if this item contains an UInt32?, false otherwise.
+    
+    public var isUInt32: Bool { return type == .uint32 }
+    
+    
+    /// - Returns: The UInt32 value of self. Nil if it does not contain an UInt32.
+    
+    public var uint32: UInt32? {
+        get {
+            guard isValid && (type == .uint32) else { return nil }
+            return UInt32(valuePtr, endianness: endianness)
+        }
+        set {
+            guard isValid else { return }
+            if let newValue = newValue {
+                if type == .null {
+                    var tptr = ptr.advanced(by: itemTypeOffset)
+                    ItemType.uint32.rawValue.brbonBytes(endianness, toPointer: &tptr)
+                }
+                guard type == .uint32 else { return }
+                var vptr = valuePtr
+                newValue.brbonBytes(endianness, toPointer: &vptr)
+            } else {
+                var tptr = ptr.advanced(by: itemTypeOffset)
+                ItemType.null.rawValue.brbonBytes(endianness, toPointer: &tptr)
+            }
+        }
+    }
+    
+    
+    /// - Returns: True if this item contains an Int32, false otherwise.
+    
+    public var isInt32: Bool { return type == .int32 }
+    
+    
+    /// - Returns: The Int32 value of the designated item or nil if it does not contain an Int32.
+    
+    public var int32: Int32? {
+        get {
+            guard isValid && (type == .int32) else { return nil }
+            return Int32(valuePtr, endianness: endianness)
+        }
+        set {
+            guard isValid else { return }
+            if let newValue = newValue {
+                if type == .null {
+                    var tptr = ptr.advanced(by: itemTypeOffset)
+                    ItemType.int32.rawValue.brbonBytes(endianness, toPointer: &tptr)
+                }
+                guard type == .int32 else { return }
+                var vptr = valuePtr
+                newValue.brbonBytes(endianness, toPointer: &vptr)
+            } else {
+                var tptr = ptr.advanced(by: itemTypeOffset)
+                ItemType.null.rawValue.brbonBytes(endianness, toPointer: &tptr)
+            }
+        }
+
+    }
+    
+    
+    /// - Returns: True if this item contains a UInt64, false otherwise.
+    
+    public var isUInt64: Bool { return type == .uint64 }
+    
+    
+    /// - Returns: The UInt64 value of self. Nil if it does not contain an UInt64.
+    
+    public var uint64: UInt64? {
+        get {
+            guard isValid && (type == .uint64) else { return nil }
+            return UInt64(valuePtr, endianness: endianness)
+        }
+        set {
+            guard isValid else { return }
+            if let newValue = newValue {
+                if type == .null {
+                    var tptr = ptr.advanced(by: itemTypeOffset)
+                    ItemType.uint64.rawValue.brbonBytes(endianness, toPointer: &tptr)
+                }
+                guard type == .uint64 else { return }
+                var vptr = valuePtr
+                newValue.brbonBytes(endianness, toPointer: &vptr)
+            } else {
+                var tptr = ptr.advanced(by: itemTypeOffset)
+                ItemType.null.rawValue.brbonBytes(endianness, toPointer: &tptr)
+            }
+        }
+    }
+    
+    
+    /// - Returns: True if this item contains an Int64, false otherwise.
+    
+    public var isInt64: Bool { return type == .int64 }
+    
+    
+    /// - Returns: The Int64 value of self. Nil if it does not contain an Int64.
+    
+    public var int64: Int64? {
+        get {
+            guard isValid && (type == .int64) else { return nil }
+            return Int64(valuePtr, endianness: endianness)
+        }
+        set {
+            guard isValid else { return }
+            if let newValue = newValue {
+                if type == .null {
+                    var tptr = ptr.advanced(by: itemTypeOffset)
+                    ItemType.int64.rawValue.brbonBytes(endianness, toPointer: &tptr)
+                }
+                guard type == .int64 else { return }
+                var vptr = valuePtr
+                newValue.brbonBytes(endianness, toPointer: &vptr)
+            } else {
+                var tptr = ptr.advanced(by: itemTypeOffset)
+                ItemType.null.rawValue.brbonBytes(endianness, toPointer: &tptr)
+            }
+        }
+    }
+    
+    
+    /// - Returns: True if this item contains a Float32, false otherwise.
+    
+    public var isFloat32: Bool { return type == .float32 }
+    
+    
+    /// - Returns: The Float32 value of self. Nil if it does not contain a Float32.
+    
+    public var float32: Float32? {
+        get {
+            guard isValid && (type == .float32) else { return nil }
+            return Float32(valuePtr, endianness: endianness)
+        }
+        set {
+            guard isValid else { return }
+            if let newValue = newValue {
+                if type == .null {
+                    var tptr = ptr.advanced(by: itemTypeOffset)
+                    ItemType.float32.rawValue.brbonBytes(endianness, toPointer: &tptr)
+                }
+                guard type == .float32 else { return }
+                var vptr = valuePtr
+                newValue.brbonBytes(endianness, toPointer: &vptr)
+            } else {
+                var tptr = ptr.advanced(by: itemTypeOffset)
+                ItemType.null.rawValue.brbonBytes(endianness, toPointer: &tptr)
+            }
+        }
+    }
+    
+    
+    /// - Returns: True if this item contains a Float64, false otherwise.
+    
+    public var isFloat64: Bool { return type == .float64 }
+    
+    
+    /// - Returns: The Float64 value of self. Nil if it does not contain a Float64.
+    
+    public var float64: Float64? {
+        get {
+            guard isValid && (type == .float64) else { return nil }
+            return Float64(valuePtr, endianness: endianness)
+        }
+        set {
+            guard isValid else { return }
+            if let newValue = newValue {
+                if type == .null {
+                    var tptr = ptr.advanced(by: itemTypeOffset)
+                    ItemType.float64.rawValue.brbonBytes(endianness, toPointer: &tptr)
+                }
+                guard type == .float64 else { return }
+                var vptr = valuePtr
+                newValue.brbonBytes(endianness, toPointer: &vptr)
+            } else {
+                var tptr = ptr.advanced(by: itemTypeOffset)
+                ItemType.null.rawValue.brbonBytes(endianness, toPointer: &tptr)
+            }
+        }
+    }
+    
+    
+    /// - Returns: True if this item contains a Binary, false otherwise.
+    
+    public var isBinary: Bool { return type == .binary }
+    
+    
+    /// - Returns: The Binary value of self. Nil if it does not contain a Binary.
+    
+    public var binary: Data? {
+        get {
+            guard isValid && (type == .binary) else { return nil }
+            let length = UInt32(ptr.advanced(by: itemValueCountOffset), endianness: endianness)
+            return Data(valuePtr, endianness: endianness, count: length)
+        }
+        set {
+            guard isValid else { return }
+            if let newValue = newValue {
+                if type == .null {
+                    var tptr = ptr.advanced(by: itemTypeOffset)
+                    ItemType.binary.rawValue.brbonBytes(endianness, toPointer: &tptr)
+                }
+                guard type == .binary else { return }
+                var vptr = valuePtr
+                newValue.brbonBytes(endianness, toPointer: &vptr)
+            } else {
+                var tptr = ptr.advanced(by: itemTypeOffset)
+                ItemType.null.rawValue.brbonBytes(endianness, toPointer: &tptr)
+            }
+        }
+    }
+    
+    
+    /// - Returns: True if this item contains a String, false otherwise.
+    
+    public var isString: Bool { return type == .string }
+    
+    
+    /// - Returns: The String value of self. Nil if it does not contain a String.
+    
+    public var string: String? {
+        get {
+            guard isValid && (type == .string) else { return nil }
+            let length = UInt32(ptr.advanced(by: itemValueCountOffset), endianness: endianness)
+            return String(valuePtr, endianness: endianness, count: length)
+        }
+        set {
+            guard isValid else { return }
+            if let newValue = newValue {
+                if type == .null {
+                    var tptr = ptr.advanced(by: itemTypeOffset)
+                    ItemType.string.rawValue.brbonBytes(endianness, toPointer: &tptr)
+                }
+                guard type == .string else { return }
+                var vptr = valuePtr
+                newValue.brbonBytes(endianness, toPointer: &vptr)
+            } else {
+                var tptr = ptr.advanced(by: itemTypeOffset)
+                ItemType.null.rawValue.brbonBytes(endianness, toPointer: &tptr)
+            }
+        }
+    }
+
     
     /// Returns the necessary length for the nvr field.
     
@@ -82,7 +485,7 @@ internal struct ValueItem {
         
         // Size needed for the value
         
-        var length: UInt32 = value.brbonType().useValueField ? 0 : value.brbonCount()
+        var length: UInt32 = value.brbonType().useValueCountFieldAsValue ? 0 : value.brbonCount()
 
         
         // If the fixed length is larger, use that.
@@ -114,16 +517,32 @@ internal struct ValueItem {
     ///   - fixedItemValueLength: The number of bytes to allocate for the value of the item.
     ///   - endianness: The endianness to be used.
     ///
-    /// - Returns: A buffer with the byte representation or nil when the conversion could not be made. The callee must deallocate the buffer when done.
-    
-    internal static func createInBuffer(
-        _ value: BrbonBytes,
+    /// - Returns: A buffer with a null value item in it. The buffer must be deallocated by the callee.
+
+    internal static func createNull(
         name: String? = nil,
         fixedNameFieldLength: UInt8? = nil,
         fixedItemValueLength: UInt32? = nil,
-        endianness: Endianness
-        ) -> UnsafeRawBufferPointer? {
+        endianness: Endianness = machineEndianness
+        ) -> UnsafeMutableRawBufferPointer? {
 
+        
+        /// Dummy value used as helper
+        
+        struct NullValueItem: BrbonBytes {
+            func brbonCount() -> UInt32 { return 0 }
+            func brbonBytes(_ endianness: Endianness) -> Data { return Data() }
+            func brbonType() -> ItemType { return .null }
+            func brbonBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) { }
+            init(_ bytePtr: UnsafeRawPointer, endianness: Endianness, count: UInt32) { }
+            init() { }
+        }
+
+        
+        /// Create
+        
+        let value = NullValueItem()
+        
         
         // Determine the name field info
         
@@ -137,7 +556,7 @@ internal struct ValueItem {
         
         // Size of the item
         
-        let itemLength = nvrLength + lengthOfFixedItemPart
+        let itemLength = nvrLength + minimumItemLength
         
         
         // Allocate the buffer
@@ -146,9 +565,9 @@ internal struct ValueItem {
         var ptr = tmpBuffer.baseAddress!
 
         
-        // Serialize the item
+        // Serialize a null item
         
-        value.brbonType().rawValue.brbonBytes(endianness, toPointer: &ptr)          // Item-Header - type
+        ItemType.null.rawValue.brbonBytes(endianness, toPointer: &ptr)              // Item-Header - type
         UInt8(0).brbonBytes(endianness, toPointer: &ptr)                            // Item-Header - options
         UInt8(0).brbonBytes(endianness, toPointer: &ptr)                            // Item-Header - flags
         UInt8(nameFieldDescriptor.length).brbonBytes(endianness, toPointer: &ptr)   // Item-Header - name length
@@ -156,27 +575,7 @@ internal struct ValueItem {
         itemLength.brbonBytes(endianness, toPointer: &ptr)                          // Item-Length
         UInt32(0).brbonBytes(endianness, toPointer: &ptr)                           // Parent-Offset
         
-        switch value.brbonType() {                                                  // Value of value/count field
-        
-        case .bool, .int8, .uint8:
-            value.brbonBytes(endianness, toPointer: &ptr)
-            UInt8(0).brbonBytes(endianness, toPointer: &ptr)
-            UInt16(0).brbonBytes(endianness, toPointer: &ptr)
-
-        case .int16, .uint16:
-            value.brbonBytes(endianness, toPointer: &ptr)
-            UInt16(0).brbonBytes(endianness, toPointer: &ptr)
-            
-        case .int32, .uint32, .float32:
-            value.brbonBytes(endianness, toPointer: &ptr)
-
-        default:
-            if value.brbonType().useCountField {
-                value.brbonCount().brbonBytes(endianness, toPointer: &ptr)
-            } else {
-                UInt32(0).brbonBytes(endianness, toPointer: &ptr)
-            }
-        }
+        UInt32(0).brbonBytes(endianness, toPointer: &ptr)                           // Value of value/count field
         
         if nameFieldDescriptor.length > 0 {
             nameFieldDescriptor.crc.brbonBytes(endianness, toPointer: &ptr)                         // Name area hash
@@ -185,28 +584,97 @@ internal struct ValueItem {
             let filler = Data(count: Int(nameFieldDescriptor.length) - nameFieldDescriptor.data!.count - 3)
             if filler.count > 0 { filler.brbonBytes(endianness, toPointer: &ptr) }                  // Name area filler bytes
         }
-        
-        switch value.brbonType() {                                                                  // Value
-        case .uint64, .int64, .float64, .string, .binary:
-            value.brbonBytes(endianness, toPointer: &ptr)
-        default: break
-        }
-        
+                
         let fillerSize = Int(itemLength) - tmpBuffer.baseAddress!.distance(to: ptr)
         if fillerSize > 0 { Data(count: fillerSize).brbonBytes(endianness, toPointer: &ptr) }       // Filler/Reserved
         
-        return UnsafeRawBufferPointer(tmpBuffer)
+        return tmpBuffer
     }
     
     
-    /// Pointer to a ValueItem (is contained in a dictionary or sequence)
-    
-    internal let ptr: UnsafeMutableRawPointer
+    internal init?(
+        _ value: BrbonBytes,
+        name: String? = nil,
+        fixedNameFieldLength: UInt8? = nil,
+        fixedItemValueLength: UInt32? = nil,
+        endianness: Endianness = machineEndianness
+        ) {
+        
+        self.endianness = endianness
+        
+        
+        // Determine the name field info
+        
+        guard let nameFieldDescriptor = nameFieldDescriptor(for: name, fixedLength: fixedNameFieldLength) else { return nil }
+        
+        
+        // Determine size of the value field
+        
+        guard let nvrLength = ValueItem.nvrLength(for: value, nameFieldLength: nameFieldDescriptor.length, fixedItemValueLength: fixedItemValueLength) else { return nil }
+        
+        
+        // Size of the item
+        
+        let itemLength = nvrLength + minimumItemLength
+        
+        
+        // Allocate the buffer
+        
+        buffer = UnsafeMutableRawBufferPointer.allocate(count: Int(itemLength))
+        self.ptr = buffer!.baseAddress!
+        
+        
+        // Serialize the item
+        
+        var pointer = ptr
 
-    
-    /// The endianness of the ValueItem bytes
-    
-    internal let endianness: Endianness
+        value.brbonType().rawValue.brbonBytes(endianness, toPointer: &pointer)          // Item-Header - type
+        UInt8(0).brbonBytes(endianness, toPointer: &pointer)                            // Item-Header - options
+        UInt8(0).brbonBytes(endianness, toPointer: &pointer)                            // Item-Header - flags
+        UInt8(nameFieldDescriptor.length).brbonBytes(endianness, toPointer: &pointer)   // Item-Header - name length
+        
+        itemLength.brbonBytes(endianness, toPointer: &pointer)                          // Item-Length
+        UInt32(0).brbonBytes(endianness, toPointer: &pointer)                           // Parent-Offset
+        
+        switch value.brbonType() {                                                      // Value of value/count field
+            
+        case .bool, .int8, .uint8:
+            value.brbonBytes(endianness, toPointer: &pointer)
+            UInt8(0).brbonBytes(endianness, toPointer: &pointer)
+            UInt16(0).brbonBytes(endianness, toPointer: &pointer)
+            
+        case .int16, .uint16:
+            value.brbonBytes(endianness, toPointer: &pointer)
+            UInt16(0).brbonBytes(endianness, toPointer: &pointer)
+            
+        case .int32, .uint32, .float32:
+            value.brbonBytes(endianness, toPointer: &pointer)
+            
+        default:
+            if value.brbonType().useValueCountFieldAsCount {
+                value.brbonCount().brbonBytes(endianness, toPointer: &pointer)
+            } else {
+                UInt32(0).brbonBytes(endianness, toPointer: &pointer)
+            }
+        }
+        
+        if nameFieldDescriptor.length > 0 {
+            nameFieldDescriptor.crc.brbonBytes(endianness, toPointer: &pointer)                         // Name area hash
+            UInt8(nameFieldDescriptor.data!.count).brbonBytes(endianness, toPointer: &pointer)          // Name area string length
+            nameFieldDescriptor.data!.brbonBytes(endianness, toPointer: &pointer)                       // Name area string bytes
+            let filler = Data(count: Int(nameFieldDescriptor.length) - nameFieldDescriptor.data!.count - 3)
+            if filler.count > 0 { filler.brbonBytes(endianness, toPointer: &pointer) }                  // Name area filler bytes
+        }
+        
+        switch value.brbonType() {                                                                      // Value
+        case .uint64, .int64, .float64, .string, .binary:
+            value.brbonBytes(endianness, toPointer: &pointer)
+        default: break
+        }
+        
+        let fillerSize = Int(itemLength) - ptr.distance(to: pointer)
+        if fillerSize > 0 { Data(count: fillerSize).brbonBytes(endianness, toPointer: &pointer) }       // Filler/Reserved
+    }
     
     
     /// Creates a new ValueItem
@@ -215,82 +683,49 @@ internal struct ValueItem {
     ///   - ptr: The pointer to the first byte of ValueItem.
     ///   - endianness: The endianness of the ValueItem bytes.
     
-    internal init(_ ptr: UnsafeMutableRawPointer, endianness: Endianness) {
+    internal init(_ ptr: UnsafeMutableRawPointer, _ endianness: Endianness, _ dictionaryManager: DictionaryManager) {
         self.ptr = ptr
         self.endianness = endianness
+        self.dictionaryManager = dictionaryManager
     }
     
-    var type: ItemType? {
-        get {
-            return ItemType(ptr.advanced(by: itemTypeOffset))
-        }
-        set {
-            var tptr = ptr.advanced(by: itemTypeOffset)
-            newValue?.rawValue.brbonBytes(endianness, toPointer: &tptr)
-        }
-    }
     
-    var nameFieldLength: UInt8 {
-        get {
-            return UInt8(ptr.advanced(by: itemNameFieldLengthOffset), endianness: endianness)
-        }
-        set {
-            var nptr = ptr.advanced(by: itemNameFieldLengthOffset)
-            newValue.brbonBytes(endianness, toPointer: &nptr)
-        }
-    }
+    /// The buffer with the item
     
-    var itemLength: UInt32 {
-        get {
-            return UInt32(ptr.advanced(by: itemLengthOffset), endianness: endianness)
-        }
-        set {
-            var iptr = ptr.advanced(by: itemLengthOffset)
-            newValue.brbonBytes(endianness, toPointer: &iptr)
-        }
-    }
+    internal var buffer: UnsafeMutableRawBufferPointer?
     
-    var parentOffset: UInt32 {
-        get {
-            return UInt32(ptr.advanced(by: itemParentOffsetOffset), endianness: endianness)
-        }
-        set {
-            var pptr = ptr.advanced(by: itemParentOffsetOffset)
-            newValue.brbonBytes(endianness, toPointer: &pptr)
-        }
-    }
-
-    var nameHash: UInt16 {
-        get {
-            return UInt16(ptr.advanced(by: nameHashOffset), endianness: endianness)
-        }
-        set {
-            var pptr = ptr.advanced(by: nameHashOffset)
-            newValue.brbonBytes(endianness, toPointer: &pptr)
-        }
-    }
     
-    var nameCount: UInt8 {
-        get {
-            return UInt8(ptr.advanced(by: nameCountOffset), endianness: endianness)
-        }
-        set {
-            var pptr = ptr.advanced(by: nameCountOffset)
-            newValue.brbonBytes(endianness, toPointer: &pptr)
-        }
-    }
+    /// Pointer to a ValueItem (is contained in a dictionary or sequence)
     
-    var nameData: Data {
-        get {
-            return Data(ptr.advanced(by: nameDataOffset), endianness: endianness, count: UInt32(nameCount))
-        }
-        set {
-            var pptr = ptr.advanced(by: nameDataOffset)
-            newValue.brbonBytes(endianness, toPointer: &pptr)
-        }
-    }
+    internal var ptr: UnsafeMutableRawPointer
 
     
+    /// The endianness of the ValueItem bytes
+    
+    internal let endianness: Endianness
+
+    
+    /// The dictionary manager
+    
+    internal var dictionaryManager: DictionaryManager?
+    
+    
+    deinit {
+        buffer?.deallocate()
+        dictionaryManager?.unsubscribe(item: self)
+    }
+    
+    
+    /// Returns a pointer to the value field.
+    ///
+    /// - Note: The type must be a valid type
+    
+    internal var valuePtr: UnsafeMutableRawPointer {
+        if type!.useValueCountFieldAsValue { return ptr.advanced(by: itemValueCountOffset) }
+        return ptr.advanced(by: itemNvrFieldOffset + Int(nameFieldLength))
+    }
+    
+        
     /// Returns true if the name of the item equals the given information.
     ///
     /// - Parameters:
@@ -307,39 +742,22 @@ internal struct ValueItem {
     }
 
     
-    /// Increments the buffer size by bufferIncrements bytes.
-    ///
-    /// Note that this involves a memory allocation, copy and deallocation operations which can be costly.
-    ///
-    /// - Returns: True on success, false on failure.
-    /*
-    internal func incrementBufferSize() -> Bool {
-        if bufferIncrements == 0 { return false }
-        let newSize = buffer.count + Int(bufferIncrements)
-        let newBuffer = UnsafeMutableRawBufferPointer.allocate(count: newSize)
-        let byteCount = buffer.baseAddress!.distance(to: entryPtr)
-        _ = Darwin.memcpy(newBuffer.baseAddress!, buffer.baseAddress!, byteCount)
-        buffer.deallocate()
-        buffer = newBuffer
-        entryPtr = buffer.baseAddress!.advanced(by: byteCount)
-        rootItem = Item(buffer.baseAddress!, endianness)
-        return true
+    /// When the dictionary manager updates its data structure in a way that affects the pointer of this value item, this operation is called to update its pointer. If the memory area is no longer available, the isValid flag is reset and the item is no longer subscribed to the dictionary manager.
+    
+    internal func updateFromDictionaryManager(isValid: Bool, oldPtr: UnsafeMutableRawPointer, newPtr: UnsafeMutableRawPointer) {
+        if oldPtr == ptr {
+            if isValid {
+                self.ptr = newPtr
+            } else {
+                self.isValid = false
+                dictionaryManager?.unsubscribe(item: self)
+                dictionaryManager = nil
+            }
+        }
     }
-
-    
-    /// Make space for a new dictionary (or sequence) item.
-    ///
-    /// - Parameters:
-    ///   - at: The pointer to the first byte of the area that must be freed.
-    ///   - for: The number of bytes that must be freed.
-    
-    //internal func makeSpaceForNewDictionaryItem(at srcPtr: UnsafeMutableRawPointer, for nofBytes: UInt32) {
-    //    let dstPtr = srcPtr.advanced(by: Int(nofBytes))
-    //    let count = srcPtr.distance(to: entryPtr)
-    //    _ = Darwin.memmove(dstPtr, srcPtr, count)
-    //}
     
     
+    /*
     /// Insert the buffer content at the end of the given parent which should be a dictionary or sequence.
     ///
     /// - Parameters:
@@ -497,8 +915,6 @@ internal struct ValueItem {
         }
     }*/
 }
-
-
 
 
 
