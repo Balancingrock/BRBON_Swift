@@ -220,7 +220,7 @@ public class DictionaryManager: Item {
     ///
     /// - Returns: Nil if there no errors were found. Otherwise an error message.
     
-    public func brbonStructureCheck() -> String? {
+    public func structureCheck() -> String? {
         
         if let type = ItemType(ptr), type == .dictionary {} else { return "Not a dictionary" }
         
@@ -245,9 +245,9 @@ public class DictionaryManager: Item {
         
         if nameFieldLength > 0 {
             let crc = UInt16(ptr.advanced(by: itemNvrFieldOffset), endianness: endianness)
-            let dcnt = UInt8(ptr.advanced(by: itemNvrFieldOffset + nameCountOffset), endianness: endianness)
-            let nameData = Data(ptr.advanced(by: itemNvrFieldOffset + nameDataOffset), endianness: endianness, count: UInt32(dcnt))
-            let str = String(ptr.advanced(by: itemNvrFieldOffset + nameDataOffset), endianness: endianness, count: UInt32(dcnt))
+            let dcnt = UInt8(ptr.advanced(by: nameCountOffset), endianness: endianness)
+            let nameData = Data(ptr.advanced(by: nameDataOffset), endianness: endianness, count: UInt32(dcnt))
+            let str = String(ptr.advanced(by: nameDataOffset), endianness: endianness, count: UInt32(dcnt))
             if str.isEmpty { return "Could not convert dictionary name into a string" }
             if nameData.crc16() != crc { return "Crc of dictionary name does not match the calculated crc" }
         }
@@ -281,9 +281,9 @@ public class DictionaryManager: Item {
 
             if $0.nameFieldLength > 0 {
                 let crc = UInt16($0.ptr.advanced(by: itemNvrFieldOffset), endianness: endianness)
-                let dcnt = UInt8($0.ptr.advanced(by: itemNvrFieldOffset + nameCountOffset), endianness: endianness)
-                let nameData = Data($0.ptr.advanced(by: itemNvrFieldOffset + nameDataOffset), endianness: endianness, count: UInt32(dcnt))
-                let str = String($0.ptr.advanced(by: itemNvrFieldOffset + nameDataOffset), endianness: endianness, count: UInt32(dcnt))
+                let dcnt = UInt8($0.ptr.advanced(by: nameCountOffset), endianness: endianness)
+                let nameData = Data($0.ptr.advanced(by: nameDataOffset), endianness: endianness, count: UInt32(dcnt))
+                let str = String($0.ptr.advanced(by: nameDataOffset), endianness: endianness, count: UInt32(dcnt))
                 if str.isEmpty { error = "Could not convert item name into a string for item \($0.ptr)"; return true }
                 if nameData.crc16() != crc { error = "Crc of item name does not match the calculated crc for item \($0.ptr)"; return true }
             }
@@ -430,14 +430,8 @@ public class DictionaryManager: Item {
         get { return nil }
         set {
             guard let newValue = newValue else { return }
-            if let found = findItem(for: name) {
-                found.bool = newValue
-            } else {
-                _ = addNull(name: name)
-                if let found = findItem(for: name) {
-                    found.bool = newValue
-                }
-            }
+            // Note: The (nvr) value length is zero because the value is stored in the value/count field.
+            fixedValueLengthSubscriptAssignment(for: name, valueLength: 0, assignment: { $0.bool = newValue })
         }
     }
     
@@ -445,14 +439,7 @@ public class DictionaryManager: Item {
         get { return nil }
         set {
             guard let newValue = newValue else { return }
-            if let found = findItem(for: name) {
-                found.uint8 = newValue
-            } else {
-                _ = addNull(name: name)
-                if let found = findItem(for: name) {
-                    found.uint8 = newValue
-                }
-            }
+            fixedValueLengthSubscriptAssignment(for: name, valueLength: 0, assignment: { $0.uint8 = newValue })
         }
     }
     
@@ -460,14 +447,7 @@ public class DictionaryManager: Item {
         get { return nil }
         set {
             guard let newValue = newValue else { return }
-            if let found = findItem(for: name) {
-                found.int8 = newValue
-            } else {
-                _ = addNull(name: name)
-                if let found = findItem(for: name) {
-                    found.int8 = newValue
-                }
-            }
+            fixedValueLengthSubscriptAssignment(for: name, valueLength: 0, assignment: { $0.int8 = newValue })
         }
     }
     
@@ -475,14 +455,7 @@ public class DictionaryManager: Item {
         get { return nil }
         set {
             guard let newValue = newValue else { return }
-            if let found = findItem(for: name) {
-                found.uint16 = newValue
-            } else {
-                _ = addNull(name: name)
-                if let found = findItem(for: name) {
-                    found.uint16 = newValue
-                }
-            }
+            fixedValueLengthSubscriptAssignment(for: name, valueLength: 0, assignment: { $0.uint16 = newValue })
         }
     }
     
@@ -490,14 +463,7 @@ public class DictionaryManager: Item {
         get { return nil }
         set {
             guard let newValue = newValue else { return }
-            if let found = findItem(for: name) {
-                found.int16 = newValue
-            } else {
-                _ = addNull(name: name)
-                if let found = findItem(for: name) {
-                    found.int16 = newValue
-                }
-            }
+            fixedValueLengthSubscriptAssignment(for: name, valueLength: 0, assignment: { $0.int16 = newValue })
         }
     }
     
@@ -505,14 +471,7 @@ public class DictionaryManager: Item {
         get { return nil }
         set {
             guard let newValue = newValue else { return }
-            if let found = findItem(for: name) {
-                found.uint32 = newValue
-            } else {
-                _ = addNull(name: name)
-                if let found = findItem(for: name) {
-                    found.uint32 = newValue
-                }
-            }
+            fixedValueLengthSubscriptAssignment(for: name, valueLength: 0, assignment: { $0.uint32 = newValue })
         }
     }
     
@@ -520,14 +479,7 @@ public class DictionaryManager: Item {
         get { return nil }
         set {
             guard let newValue = newValue else { return }
-            if let found = findItem(for: name) {
-                found.int32 = newValue
-            } else {
-                _ = addNull(name: name)
-                if let found = findItem(for: name) {
-                    found.int32 = newValue
-                }
-            }
+            fixedValueLengthSubscriptAssignment(for: name, valueLength: 0, assignment: { $0.int32 = newValue })
         }
     }
     
@@ -535,14 +487,7 @@ public class DictionaryManager: Item {
         get { return nil }
         set {
             guard let newValue = newValue else { return }
-            if let found = findItem(for: name) {
-                found.uint64 = newValue
-            } else {
-                _ = addNull(name: name, fixedItemValueLength: 8)
-                if let found = findItem(for: name) {
-                    found.uint64 = newValue
-                }
-            }
+            fixedValueLengthSubscriptAssignment(for: name, valueLength: 8, assignment: { $0.uint64 = newValue })
         }
     }
     
@@ -550,14 +495,7 @@ public class DictionaryManager: Item {
         get { return nil }
         set {
             guard let newValue = newValue else { return }
-            if let found = findItem(for: name) {
-                found.int64 = newValue
-            } else {
-                _ = addNull(name: name, fixedItemValueLength: 8)
-                if let found = findItem(for: name) {
-                    found.int64 = newValue
-                }
-            }
+            fixedValueLengthSubscriptAssignment(for: name, valueLength: 8, assignment: { $0.int64 = newValue })
         }
     }
     
@@ -565,14 +503,7 @@ public class DictionaryManager: Item {
         get { return nil }
         set {
             guard let newValue = newValue else { return }
-            if let found = findItem(for: name) {
-                found.float32 = newValue
-            } else {
-                _ = addNull(name: name)
-                if let found = findItem(for: name) {
-                    found.float32 = newValue
-                }
-            }
+            fixedValueLengthSubscriptAssignment(for: name, valueLength: 0, assignment: { $0.float32 = newValue })
         }
     }
     
@@ -580,14 +511,7 @@ public class DictionaryManager: Item {
         get { return nil }
         set {
             guard let newValue = newValue else { return }
-            if let found = findItem(for: name) {
-                found.float64 = newValue
-            } else {
-                _ = addNull(name: name, fixedItemValueLength: 8)
-                if let found = findItem(for: name) {
-                    found.float64 = newValue
-                }
-            }
+            fixedValueLengthSubscriptAssignment(for: name, valueLength: 8, assignment: { $0.float64 = newValue })
         }
     }
     
@@ -595,15 +519,8 @@ public class DictionaryManager: Item {
         get { return nil }
         set {
             guard let newValue = newValue else { return }
-            if let found = findItem(for: name) {
-                found.string = newValue
-            } else {
-                guard let strLen = newValue.data(using: .utf8)?.count, strLen < Int(Int32.max) else { return }
-                _ = addNull(name: name, fixedItemValueLength: UInt32(strLen))
-                if let found = findItem(for: name) {
-                    found.string = newValue
-                }
-            }
+            guard let strLen = newValue.data(using: .utf8)?.count, strLen < Int(Int32.max) else { return }
+            variableLengthSubscriptAssignment(for: name, value: newValue, assignment: { $0.string = newValue })
         }
     }
     
@@ -611,15 +528,8 @@ public class DictionaryManager: Item {
         get { return nil }
         set {
             guard let newValue = newValue else { return }
-            if let found = findItem(for: name) {
-                found.binary = newValue
-            } else {
-                guard newValue.count < Int(Int32.max) else { return }
-                _ = addNull(name: name, fixedItemValueLength: UInt32(newValue.count))
-                if let found = findItem(for: name) {
-                    found.binary = newValue
-                }
-            }
+            guard newValue.brbonCount() < UInt32(Int32.max) else { return }
+            variableLengthSubscriptAssignment(for: name, value: newValue, assignment: { $0.binary = newValue })
         }
     }
     
@@ -660,6 +570,44 @@ public class DictionaryManager: Item {
         }
     }
     
+    
+    /// Helper for subscript assignment
+    
+    internal func fixedValueLengthSubscriptAssignment(for name: String, valueLength: UInt32, assignment: (ValueItem) -> ()) {
+        if let found = findItem(for: name) {
+            assignment(found)
+        } else {
+            _ = addNull(name: name, fixedItemValueLength: valueLength)
+            if let found = findItem(for: name) {
+                assignment(found)
+            }
+        }
+    }
+
+    
+    /// Helper for subscript assignment
+    
+    internal func variableLengthSubscriptAssignment(for name: String, value: BrbonBytes, assignment: (ValueItem)->() ) {
+        if let found = findItem(for: name) {
+            let newValueLength = value.brbonCount()
+            if found.maxValueLength < newValueLength {
+                let newItemLength = (found.itemLength + (newValueLength - found.maxValueLength)).roundUpToNearestMultipleOf8()
+                let itemLengthIncrease = newItemLength - found.itemLength
+                if availableBytes < itemLengthIncrease {
+                    guard mutableItemLength && (bufferIncrements > 0) else { return }
+                    increaseBufferSize(by: Int(itemLengthIncrease))
+                }
+                resize(found, by: Int(itemLengthIncrease))
+            }
+            assignment(found)
+        } else {
+            _ = addNull(name: name, fixedItemValueLength: UInt32(value.brbonCount()))
+            if let found = findItem(for: name) {
+                assignment(found)
+            }
+        }
+    }
+
     
     /// The array with all active value items.
     
@@ -750,26 +698,52 @@ public class DictionaryManager: Item {
     
     /// Resizes an item.
     ///
-    /// The data after the item will be shifted according to the new size of the item. No internal data will be updated. Neither of the item, nor of the dictionary.
+    /// The data after the item will be shifted according to the new size of the item. Both the item and dictionary internals will be updated to reflect the new size. Subscribers will be notified.
     ///
     /// - Parameters:
     ///   - item: The descriptor for the item to be resized.
-    ///   - by: The number of bytes to either add or substract from the item.
-    /*
+    ///   - by: The number of bytes to either add or substract from the item. Must be a multiple of 8. (This is not checked)
+
     internal func resize(_ item: Item, by amount: Int) {
+        
+        
+        // Prepare for subscriber updates
+        
+        var preItems: Array<UnsafeMutableRawPointer> = []
+        forEachAbortOnTrue({ preItems.append($0.ptr) ; return false })
+
+        
+        // Shift the data
         
         let srcPtr = item.ptr.advanced(by: Int(item.itemLength))
         let bytesToShift = srcPtr.distance(to: entryPtr)
-        let dstPtr = item.ptr.advanced(by: amount)
+        let dstPtr = srcPtr.advanced(by: amount)
         
         _ = Darwin.memmove(dstPtr, srcPtr, bytesToShift)
+        
+        
+        // Update size of the item
+        
+        let newLength = UInt32(Int(item.itemLength) + amount)
+        var lptr = item.ptr.advanced(by: itemLengthOffset)
+        newLength.brbonBytes(endianness, toPointer: &lptr)
+        
+        
+        // Update the entry pointer
+        
+        entryPtr = entryPtr.advanced(by: amount)
+        
+        
+        // Update subscribers
+        
+        processSubscribers(preItems, changed: item.ptr)
     }
     
     
     /// Replace an item. No checks are made, assumes that the buffer is large enough.
     ///
     /// - Note: updates the internal members: itemSize and entryPtr.
-    
+    /*
      internal func replaceItem(_ item: Item, with newItem: Item) {
      
         let oldSize = item.itemLength

@@ -219,13 +219,13 @@ class DictionaryManager_Tests: XCTestCase {
         XCTAssertEqual(dict["twelve"]?.string, "twelve")
         XCTAssertEqual(dict["thirtheen"]?.binary, Data(count: 13))
 
-        // These updates should fail because they are larger than will fit the existing item
+        // These updated should increase the length of the target item
         
-        dict["twelve"] = "twelvetwelve"
+        dict["twelve"] = "abcdefghijklmnopqrstuvwxyz"
         dict["thirtheen"] = Data(count: 20)
         
-        XCTAssertEqual(dict["twelve"]?.string, "twelve")
-        XCTAssertEqual(dict["thirtheen"]?.binary, Data(count: 13))
+        XCTAssertEqual(dict["twelve"]?.string, "abcdefghijklmnopqrstuvwxyz")
+        XCTAssertEqual(dict["thirtheen"]?.binary, Data(count: 20))
         
         
         /// Creation through subscript
@@ -379,4 +379,38 @@ class DictionaryManager_Tests: XCTestCase {
         XCTAssertEqual(dict.count, 0)
     }
     
+    func testFileWriteAndRead() {
+        
+        let wdict = DictionaryManager()!
+        wdict["one"] = false
+        wdict["two"] = UInt8(3)
+        wdict["three"] = UInt16(4)
+
+        let file = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("dictionaryManager_testFileWriteAndRead")
+        
+        XCTAssertTrue(wdict.write(to: file))
+        
+        guard let rdict = DictionaryManager(file: file) else { XCTFail(); return }
+        
+        XCTAssertNil(rdict.structureCheck())
+        
+        XCTAssertEqual(rdict.count, 3)
+
+        guard let d1: ValueItem = rdict["one"] else { XCTFail(); return }
+        guard let d2: ValueItem = rdict["two"] else { XCTFail(); return }
+        guard let d3: ValueItem = rdict["three"] else { XCTFail(); return }
+        
+        XCTAssertTrue(d1.isValid)
+        XCTAssertTrue(d2.isValid)
+        XCTAssertTrue(d3.isValid)
+        
+        XCTAssertEqual(d1.bool, false)
+        XCTAssertEqual(d2.uint8, 3)
+        XCTAssertEqual(d3.uint16, 4)
+
+        rdict["four"] = "four"
+        
+        XCTAssertEqual(rdict.count, 4)
+        XCTAssertEqual(rdict["four"]?.string ?? "", "four")
+    }
 }

@@ -437,6 +437,8 @@ public class ValueItem: Item {
                     ItemType.binary.rawValue.brbonBytes(endianness, toPointer: &tptr)
                 }
                 guard type == .binary else { return }
+                var cptr = ptr.advanced(by: itemValueCountOffset)
+                newValue.brbonCount().brbonBytes(endianness, toPointer: &cptr)
                 var vptr = valuePtr
                 newValue.brbonBytes(endianness, toPointer: &vptr)
             } else {
@@ -468,6 +470,8 @@ public class ValueItem: Item {
                     ItemType.string.rawValue.brbonBytes(endianness, toPointer: &tptr)
                 }
                 guard type == .string else { return }
+                var cptr = ptr.advanced(by: itemValueCountOffset)
+                newValue.brbonCount().brbonBytes(endianness, toPointer: &cptr)
                 var vptr = valuePtr
                 newValue.brbonBytes(endianness, toPointer: &vptr)
             } else {
