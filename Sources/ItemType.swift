@@ -3,7 +3,7 @@
 //  File:       ItemType.swift
 //  Project:    BRBON
 //
-//  Version:    0.1.0
+//  Version:    0.3.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -45,6 +45,7 @@
 //
 // History
 //
+// 0.3.0  - Changed raw values
 // 0.1.0  - Initial version
 // =====================================================================================================================
 
@@ -156,16 +157,20 @@ public enum ItemType: UInt8 {
     case float32        = 0x88
 
     
-    public func brbonBytes(_ endianness: Endianness) -> Data {
-        return Data(bytes: [self.rawValue])
-    }
-    
     public var useValueCountFieldAsCount: Bool { return (self.rawValue & 0x40) != 0 }
     
     public var useValueCountFieldAsValue: Bool { return (self.rawValue & 0x80) != 0 }
     
-    public init?(_ bytePtr: UnsafeRawPointer) {
-        self.init(rawValue: bytePtr.assumingMemoryBound(to: UInt8.self).pointee)
+    public var defaultByteSize: UInt32 {
+        switch self {
+        case .null: return 0
+        case .bool, .int8, .uint8: return 1
+        case .int16, .uint16: return 2
+        case .int32, .uint32, .float32: return 4
+        case .int64, .uint64, .float64: return 8
+        case .string, .binary: return 256
+        case .array, .dictionary, .sequence: return 1024
+        }
     }
     
     public static func typeFor(_ value: BrbonBytes) -> ItemType? {
@@ -187,5 +192,32 @@ public enum ItemType: UInt8 {
         case is Data: return .binary
         default: return nil
         }
+    }
+}
+
+
+// Extend the enum with the brbon protocol
+
+extension ItemType: BrbonBytes {
+    
+    public func brbonCount() -> UInt32 {
+        return 1
+    }
+    
+    public func brbonType() -> ItemType {
+        return .null
+    }
+    
+    public func brbonBytes(_ endianness: Endianness) -> Data {
+        return Data(bytes: [self.rawValue])
+    }
+    
+    public func brbonBytes(toPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+        self.rawValue.brbonBytes(toPtr: toPtr, endianness)
+    }
+    
+    public init?(_ fromPtr: UnsafeRawPointer, _ endianness: Endianness) {
+        let v = UInt8.init(fromPtr, endianness)
+        self.init(rawValue: v)
     }
 }

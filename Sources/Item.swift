@@ -1,53 +1,10 @@
-// =====================================================================================================================
 //
-//  File:       BrbonBytes.swift
-//  Project:    Item
+//  Item.swift
+//  BRBON
 //
-//  Version:    0.2.0
+//  Created by Marinus van der Lugt on 20/01/18.
 //
-//  Author:     Marinus van der Lugt
-//  Company:    http://balancingrock.nl
-//  Blog:       http://swiftrien.blogspot.com
-//  Git:        https://github.com/Balancingrock/BRBON
 //
-//  Copyright:  (c) 2017-2018 Marinus van der Lugt, All rights reserved.
-//
-//  License:    Use or redistribute this code any way you like with the following two provision:
-//
-//  1) You ACCEPT this source code AS IS without any guarantees that it will work as intended. Any liability from its
-//  use is YOURS.
-//
-//  2) You WILL NOT seek damages from the author or balancingrock.nl.
-//
-//  I also ask you to please leave this header with the source code.
-//
-//  I strongly believe that voluntarism is the way for societies to function optimally. Thus I have choosen to leave it
-//  up to you to determine the price for this code. You pay me whatever you think this code is worth to you.
-//
-//   - You can send payment via paypal to: sales@balancingrock.nl
-//   - Or wire bitcoins to: 1GacSREBxPy1yskLMc9de2nofNv2SNdwqH
-//
-//  I prefer the above two, but if these options don't suit you, you might also send me a gift from my amazon.co.uk
-//  wishlist: http://www.amazon.co.uk/gp/registry/wishlist/34GNMPZKAQ0OO/ref=cm_sw_em_r_wsl_cE3Tub013CKN6_wb
-//
-//  If you like to pay in another way, please contact me at rien@balancingrock.nl
-//
-//  (It is always a good idea to check the website http://www.balancingrock.nl before payment)
-//
-//  For private and non-profit use the suggested price is the price of 1 good cup of coffee, say $4.
-//  For commercial use the suggested price is the price of 1 good meal, say $20.
-//
-//  You are however encouraged to pay more ;-)
-//
-//  Prices/Quotes for support, modifications or enhancements can be obtained from: rien@balancingrock.nl
-//
-// =====================================================================================================================
-//
-// History
-//
-// 0.2.0  - Completely recoded
-// 0.1.0  - Initial version
-// =====================================================================================================================
 
 import Foundation
 import BRUtils
@@ -56,8 +13,10 @@ import BRUtils
 // Offsets in the item data structure
 
 internal let itemTypeOffset = 0
-internal let itemNameFieldLengthOffset = 3
-internal let itemLengthOffset = 4
+internal let itemOptionsOffset = 1
+internal let itemFlagsOffset = 2
+internal let itemNameFieldByteCountOffset = 3
+internal let itemByteCountOffset = 4
 internal let itemParentOffsetOffset = 8
 internal let itemValueCountOffset = 12
 internal let itemNvrFieldOffset = 16
@@ -71,167 +30,279 @@ internal let nameCountOffset = itemNameFieldOffset + 2
 internal let nameDataOffset = itemNameFieldOffset + 3
 
 
-// The smallest possible item length
+// The smallest possible item size
 
-internal let minimumItemLength: UInt32 = 16
+internal let minimumItemByteCount: UInt32 = 16
 
 
-// Accessors for the different fields in the item.
+// This structure controls the access to a memory area that contains a BRBON compatible data structure
 
-internal protocol Item {
-
-    
-    /// Points to the first byte of an item structure
-    
-    var ptr: UnsafeMutableRawPointer { get }
+struct Item: ItemProtocol {
     
     
-    /// The endianness of the data stored in the item
+    /// The pointer to the memory area where the bytes containing the value are stored. For array elements it points to the element.
     
-    var endianness: Endianness { get }
-    
-    
-    /// The type of the item
-    
-    var type: ItemType? { get set }
+    let ptr: UnsafeMutableRawPointer
     
     
-    /// The length of the name field inside the NVR field. When there is no name, this length is zero.
+    /// A pointer to the parent of this item/element
     
-    var nameFieldLength: UInt8 { get set }
-    
-    
-    /// The total length of the item in bytes.
-    
-    var itemLength: UInt32 { get set }
+    let parentPtr: UnsafeMutableRawPointer?
     
     
-    /// The offset of the parent in which this item is contained. Zero is there is no parent.
+    /// The endianness with which to read/write the memory structure and item values.
     
-    var parentOffset: UInt32 { get set }
-    
-    
-    /// The UInt32 value of the value/count field.
-    
-    var valueCount: UInt32 { get set }
+    let endianness: Endianness
     
     
-    /// The hash of the name, only if a name field is present
+    /// Create a new item accessor.
     
-    var nameHash: UInt16 { get set }
-    
-    
-    /// The number of bytes in the data area of the name.
-    
-    var nameCount: UInt8 { get set }
-    
-    
-    /// The utf8 coded bytes of the name.
-    
-    var nameData: Data { get set }
-    
-    
-    /// The maximum possible length of the value bytes.
-    
-    var maxValueLength: UInt32 { get }
+    init(ptr: UnsafeMutableRawPointer, parentPtr: UnsafeMutableRawPointer?, endianness: Endianness = machineEndianness) {
+        self.ptr = ptr
+        self.parentPtr = parentPtr
+        self.endianness = endianness
+    }
 }
 
 
-/// Default implementations for the accessors.
+extension Item {
+    
+    var typePtr: UnsafeMutableRawPointer {
+        guard let parentPtr = parentPtr else { return ptr }
+        if UInt8(parentPtr, endianness) == ItemType.array.rawValue {
+            let nameFieldByteCount = UInt8(parentPtr.advanced(by: itemNameFieldOffset), endianness)
+            return parentPtr.advanced(by: itemNvrFieldOffset + Int(nameFieldByteCount))
+        } else {
+            return ptr
+        }
+    }
 
-internal extension Item {
+    var optionsPtr: UnsafeMutableRawPointer {
+        guard let parentPtr = parentPtr else { return ptr.advanced(by: itemOptionsOffset) }
+        if UInt8(parentPtr, endianness) == ItemType.array.rawValue {
+            let nameFieldByteCount = UInt8(parentPtr.advanced(by: itemNameFieldOffset), endianness)
+            return parentPtr.advanced(by: itemNvrFieldOffset + Int(nameFieldByteCount) + itemOptionsOffset)
+        } else {
+            return ptr.advanced(by: itemOptionsOffset)
+        }
+    }
+    
+    var flagsPtr: UnsafeMutableRawPointer {
+        guard let parentPtr = parentPtr else { return ptr.advanced(by: itemFlagsOffset) }
+        if UInt8(parentPtr, endianness) == ItemType.array.rawValue {
+            let nameFieldByteCount = UInt8(parentPtr.advanced(by: itemNameFieldOffset), endianness)
+            return parentPtr.advanced(by: itemNvrFieldOffset + Int(nameFieldByteCount) + itemFlagsOffset)
+        } else {
+            return ptr.advanced(by: itemFlagsOffset)
+        }
+    }
+    
+    var nameFieldByteCountPtr: UnsafeMutableRawPointer {
+        guard let parentPtr = parentPtr else { return ptr.advanced(by: itemNameFieldByteCountOffset) }
+        if UInt8(parentPtr, endianness) == ItemType.array.rawValue {
+            let nameFieldByteCount = UInt8(parentPtr.advanced(by: itemNameFieldOffset), endianness)
+            return parentPtr.advanced(by: itemNvrFieldOffset + Int(nameFieldByteCount) + itemNameFieldByteCountOffset)
+        } else {
+            return ptr.advanced(by: itemNameFieldByteCountOffset)
+        }
+    }
+
+    var itemByteCountPtr: UnsafeMutableRawPointer {
+        guard let parentPtr = parentPtr else { return ptr.advanced(by: itemByteCountOffset) }
+        if UInt8(parentPtr, endianness) == ItemType.array.rawValue {
+            let nameFieldByteCount = UInt8(parentPtr.advanced(by: itemNameFieldOffset), endianness)
+            return parentPtr.advanced(by: itemNvrFieldOffset + Int(nameFieldByteCount) + itemByteCountOffset)
+        } else {
+            return ptr.advanced(by: itemByteCountOffset)
+        }
+    }
+    
+    var parentOffsetPtr: UnsafeMutableRawPointer {
+        guard let parentPtr = parentPtr else { return ptr.advanced(by: itemParentOffsetOffset) }
+        if UInt8(parentPtr, endianness) == ItemType.array.rawValue {
+            let nameFieldByteCount = UInt8(parentPtr.advanced(by: itemNameFieldOffset), endianness)
+            return parentPtr.advanced(by: itemNvrFieldOffset + Int(nameFieldByteCount) + itemParentOffsetOffset)
+        } else {
+            return ptr.advanced(by: itemParentOffsetOffset)
+        }
+    }
+
+    var childCountPtr: UnsafeMutableRawPointer {
+        guard let parentPtr = parentPtr else { return ptr.advanced(by: itemValueCountOffset) }
+        if UInt8(parentPtr, endianness) == ItemType.array.rawValue {
+            return ptr
+        } else {
+            return ptr.advanced(by: itemValueCountOffset)
+        }
+    }
+    
+    var nameHashPtr: UnsafeMutableRawPointer {
+        return ptr.advanced(by: nameHashOffset)
+    }
+    
+    var nameCountPtr: UnsafeMutableRawPointer {
+        return ptr.advanced(by: nameCountOffset)
+    }
+    
+    var nameDataPtr: UnsafeMutableRawPointer {
+        return ptr.advanced(by: nameDataOffset)
+    }
+
+}
+
+// MARK: - Accessors to fields in the item.
+
+extension Item {
     
     var type: ItemType? {
-        get {
-            return ItemType(ptr.advanced(by: itemTypeOffset))
-        }
-        set {
-            var tptr = ptr.advanced(by: itemTypeOffset)
-            newValue?.rawValue.brbonBytes(endianness, toPointer: &tptr)
-        }
+        get { return ItemType(typePtr, endianness) }
+        set { newValue?.rawValue.brbonBytes(toPtr: typePtr, endianness) }
     }
     
-    var nameFieldLength: UInt8 {
-        get {
-            return UInt8(ptr.advanced(by: itemNameFieldLengthOffset), endianness: endianness)
-        }
-        set {
-            var nptr = ptr.advanced(by: itemNameFieldLengthOffset)
-            newValue.brbonBytes(endianness, toPointer: &nptr)
-        }
+    var options: ItemOptions? {
+        get { return ItemOptions(optionsPtr, endianness) }
+        set { newValue?.rawValue.brbonBytes(toPtr: optionsPtr, endianness) }
     }
     
-    var itemLength: UInt32 {
-        get {
-            return UInt32(ptr.advanced(by: itemLengthOffset), endianness: endianness)
-        }
-        set {
-            var iptr = ptr.advanced(by: itemLengthOffset)
-            newValue.brbonBytes(endianness, toPointer: &iptr)
-        }
+    var flags: ItemFlags? {
+        get { return ItemFlags(flagsPtr, endianness) }
+        set { newValue?.rawValue.brbonBytes(toPtr: flagsPtr, endianness) }
+    }
+
+    var nameFieldByteCount: UInt8 {
+        get { return UInt8(nameFieldByteCountPtr, endianness) }
+        set { newValue.brbonBytes(toPtr: nameFieldByteCountPtr, endianness) }
+    }
+    
+    var itemByteCount: UInt32 {
+        get { return UInt32(itemByteCountPtr, endianness) }
+        set { newValue.brbonBytes(toPtr: itemByteCountPtr, endianness) }
     }
     
     var parentOffset: UInt32 {
-        get {
-            return UInt32(ptr.advanced(by: itemParentOffsetOffset), endianness: endianness)
-        }
-        set {
-            var pptr = ptr.advanced(by: itemParentOffsetOffset)
-            newValue.brbonBytes(endianness, toPointer: &pptr)
-        }
+        get { return UInt32(parentOffsetPtr, endianness) }
+        set { newValue.brbonBytes(toPtr: parentOffsetPtr, endianness) }
     }
     
-    var valueCount: UInt32 {
-        get {
-            return UInt32(ptr.advanced(by: itemValueCountOffset), endianness: endianness)
-        }
-        set {
-            var pptr = ptr.advanced(by: itemValueCountOffset)
-            newValue.brbonBytes(endianness, toPointer: &pptr)
-        }
+    var childCount: UInt32 {
+        get { return UInt32(childCountPtr, endianness) }
+        set { newValue.brbonBytes(toPtr: childCountPtr, endianness) }
     }
     
     var nameHash: UInt16 {
-        get {
-            return UInt16(ptr.advanced(by: nameHashOffset), endianness: endianness)
-        }
-        set {
-            var pptr = ptr.advanced(by: nameHashOffset)
-            newValue.brbonBytes(endianness, toPointer: &pptr)
-        }
+        get { return UInt16(nameHashPtr, endianness) }
+        set { newValue.brbonBytes(toPtr: nameHashPtr, endianness) }
     }
     
     var nameCount: UInt8 {
-        get {
-            return UInt8(ptr.advanced(by: nameCountOffset), endianness: endianness)
-        }
-        set {
-            var pptr = ptr.advanced(by: nameCountOffset)
-            newValue.brbonBytes(endianness, toPointer: &pptr)
-        }
+        get { return UInt8(nameCountPtr, endianness) }
+        set { newValue.brbonBytes(toPtr: nameCountPtr, endianness) }
     }
     
-    var nameData: Data {
+    var name: String? {
         get {
-            return Data(ptr.advanced(by: nameDataOffset), endianness: endianness, count: UInt32(nameCount))
+            let data = Data(bytes: nameDataPtr, count: Int(nameCount))
+            return String.init(data: data, encoding: .utf8)
         }
         set {
-            var pptr = ptr.advanced(by: nameDataOffset)
-            newValue.brbonBytes(endianness, toPointer: &pptr)
-        }
-    }
-    
-    var maxValueLength: UInt32 {
-        get {
-            return itemLength - minimumItemLength - UInt32(nameFieldLength)
+            guard let (data, discarded) = newValue?.utf8CodeMaxBytes(248), !discarded else { return }
+            let hash = data.crc16()
+            let byteCount = UInt8(data.count)
+            hash.brbonBytes(toPtr: nameHashPtr, endianness)
+            byteCount.brbonBytes(toPtr: nameCountPtr, endianness)
+            data.withUnsafeBytes({ nameDataPtr.copyBytes(from: $0, count: data.count)})
         }
     }
 }
 
 
-// A default item structure.
+// MARK: - Derived values from field values 
 
-internal struct UniversalItem: Item {
-    let ptr: UnsafeMutableRawPointer
-    let endianness: Endianness
+extension Item {
+    
+    
+    /// Returns the parent as a new Item
+    
+    var parentItem: Item? {
+        guard let parentPtr = parentPtr else { return nil }
+        let parentParentOffsetPtr = parentPtr.advanced(by: Int(itemParentOffsetOffset))
+        let parentParentOffset = UInt32(parentParentOffsetPtr, endianness)
+        if parentParentOffset == 0 {
+            return Item.init(ptr: parentPtr, parentPtr: nil, endianness: endianness)
+        } else {
+            return Item.init(ptr: parentPtr, parentPtr: parentPtr.advanced(by: Int(parentParentOffset)), endianness: endianness)
+        }
+    }
+    
+    
+    /// Return true if the bytes of this item are stored sequentially. (I.e. if the parent is not an array)
+    
+    var isContiguous: Bool {
+        if parentPtr == nil { return true }
+        return UInt8(typePtr, endianness) != ItemType.array.rawValue
+    }
+    
+    
+    /// Return a pointer to the first value byte of this item.
+    
+    var valuePtr: UnsafeMutableRawPointer {
+        guard let type = type else {
+            // Note this error should be prevented by tests before this member is ever read. Because when this happens, the data that is beiing processed is corrupt and we cannot proceed at all.
+            fatalError("Cannot construct type for BRBON.Item.valuePtr")
+        }
+        if isContiguous {
+            switch type {
+            case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32:
+                return ptr.advanced(by: itemValueCountOffset)
+            case .int64, .uint64, .float64, .string, .binary, .array, .dictionary, .sequence:
+                return ptr.advanced(by: itemNvrFieldOffset + Int(nameFieldByteCount))
+            }
+        } else { // self is contained in an array
+            switch type {
+            case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32, .int64, .uint64, .float64, .string, .binary:
+                // The value starts immediately at the first byte of the value field. There is no name.
+                return ptr
+            case .array, .dictionary, .sequence:
+                // The value starts after the count field
+                return ptr.advanced(by: 4)
+            }
+            return ptr
+        }
+    }
+    
+    
+    /// Return the number of bytes that are unused in the value field.
+    
+    var unusedValueByteCount: UInt32 {
+        guard let type = type else {
+            // Note this error should be prevented by tests before this member is ever read. Because when this happens, the data that is beiing processed is corrupt and we cannot proceed at all.
+            fatalError("Cannot construct type for BRBON.Item.valuePtr")
+        }
+        switch type {
+        case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32: return maximumValueByteCount
+        case .int64, .uint64, .float64: return maximumValueByteCount - 8
+        case .string, .binary: return maximumValueByteCount - 4 - UInt32(valuePtr, endianness)
+        case .array: return maximumValueByteCount - childCount * UInt32(valuePtr.advanced(by: 4), endianness)
+        case .dictionary, .sequence:
+            let unusedByteCount = itemByteCount - minimumItemByteCount
+//            forEach({ unusedByteCount -= $0.itemByteCount })
+            return unusedByteCount
+        }
+    }
+    
+    var maximumValueByteCount: UInt32 {
+        return itemByteCount - minimumItemByteCount - UInt32(nameFieldByteCount)
+    }
+    
+    
+    @discardableResult
+    func fatalOrNil(_ message: String) -> Item? {
+        if true {
+            fatalError(message)
+        } else {
+            return nil
+        }
+    }
 }
+
+

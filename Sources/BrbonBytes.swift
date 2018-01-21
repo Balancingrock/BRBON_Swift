@@ -70,9 +70,9 @@ public protocol BrbonBytes {
     ///
     /// - Parameters:
     ///   - endianness: Specifies the endianness of the bytes.
-    ///   - toPointer: The pointer at which the first byte will be stored. On return the pointer will be incremented for the number of bytes stored.
+    ///   - toPtr: The pointer at which the first byte will be stored. On return the pointer will be incremented for the number of bytes stored.
     
-    func brbonBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer)
+    func brbonBytes(toPtr: UnsafeMutableRawPointer, _ endianness: Endianness)
 
     
     /// - Returns: The number of bytes needed to encode self into an BrbonBytes stream
@@ -88,11 +88,10 @@ public protocol BrbonBytes {
     /// Decode a type from the given bytes.
     ///
     /// - Parameters:
-    ///   - bytePtr: A pointer to the bytes that need to be decoded.
+    ///   - fromPtr: A pointer to the bytes that need to be decoded.
     ///   - endianess: Specifies how the bytes are ordered.
-    ///   - count: The number of bytes to be used for decoding, only used for tpyes with a variable length. Disregarded for fixed-length types.
     
-    init(_ bytePtr: UnsafeRawPointer, endianness: Endianness, count: UInt32)
+    init?(_ fromPtr: UnsafeRawPointer, _ endianness: Endianness)
 }
 
 
@@ -112,19 +111,18 @@ extension Bool: BrbonBytes {
         }
     }
     
-    public func brbonBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+    public func brbonBytes(toPtr: UnsafeMutableRawPointer, _ endianness: Endianness = machineEndianness) {
         if self {
-            toPointer.storeBytes(of: 1, as: UInt8.self)
+            toPtr.storeBytes(of: 1, as: UInt8.self)
         } else {
-            toPointer.storeBytes(of: 0, as: UInt8.self)
+            toPtr.storeBytes(of: 0, as: UInt8.self)
         }
-        toPointer = toPointer.advanced(by: 1)
     }
 
-    public init(_ bytePtr: UnsafeRawPointer, endianness: Endianness, count: UInt32 = 0) {
-        if bytePtr.assumingMemoryBound(to: UInt8.self).pointee == 0 {
+    public init(_ fromPtr: UnsafeRawPointer, _ endianness: Endianness = machineEndianness) {
+        if fromPtr.assumingMemoryBound(to: UInt8.self).pointee == 0 {
             self = false
-        } else if bytePtr.assumingMemoryBound(to: UInt8.self).pointee == 1 {
+        } else if fromPtr.assumingMemoryBound(to: UInt8.self).pointee == 1 {
             self = true
         } else {
             self = false
@@ -145,13 +143,12 @@ extension UInt8: BrbonBytes {
         return Data(bytes: [self])
     }
     
-    public func brbonBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
-        toPointer.storeBytes(of: self, as: UInt8.self)
-        toPointer = toPointer.advanced(by: 1)
+    public func brbonBytes(toPtr: UnsafeMutableRawPointer, _ endianness: Endianness = machineEndianness) {
+        toPtr.storeBytes(of: self, as: UInt8.self)
     }
     
-    public init(_ bytePtr: UnsafeRawPointer, endianness: Endianness, count: UInt32 = 0) {
-        self = bytePtr.assumingMemoryBound(to: UInt8.self).pointee
+    public init(_ fromPtr: UnsafeRawPointer, _ endianness: Endianness = machineEndianness) {
+        self = fromPtr.assumingMemoryBound(to: UInt8.self).pointee
     }
 }
 
@@ -169,13 +166,12 @@ extension Int8: BrbonBytes {
         return Data(bytes: &val, count: 1)
     }
     
-    public func brbonBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
-        toPointer.storeBytes(of: self, as: Int8.self)
-        toPointer = toPointer.advanced(by: 1)
+    public func brbonBytes(toPtr: UnsafeMutableRawPointer, _ endianness: Endianness = machineEndianness) {
+        toPtr.storeBytes(of: self, as: Int8.self)
     }
 
-    public init(_ bytePtr: UnsafeRawPointer, endianness: Endianness, count: UInt32 = 0) {
-        self = bytePtr.assumingMemoryBound(to: Int8.self).pointee
+    public init(_ fromPtr: UnsafeRawPointer, _ endianness: Endianness = machineEndianness) {
+        self = fromPtr.assumingMemoryBound(to: Int8.self).pointee
     }
 }
 
@@ -194,17 +190,16 @@ extension UInt16: BrbonBytes {
         return Data(bytes: &val, count: 2)
     }
     
-    public func brbonBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+    public func brbonBytes(toPtr: UnsafeMutableRawPointer, _ endianness: Endianness = machineEndianness) {
         if endianness == machineEndianness {
-            toPointer.storeBytes(of: self, as: UInt16.self)
+            toPtr.storeBytes(of: self, as: UInt16.self)
         } else {
-            toPointer.storeBytes(of: self.byteSwapped, as: UInt16.self)
+            toPtr.storeBytes(of: self.byteSwapped, as: UInt16.self)
         }
-        toPointer = toPointer.advanced(by: 2)
     }
 
-    public init(_ bytePtr: UnsafeRawPointer, endianness: Endianness, count: UInt32 = 0) {
-        let i = bytePtr.assumingMemoryBound(to: UInt16.self).pointee
+    public init(_ fromPtr: UnsafeRawPointer, _ endianness: Endianness = machineEndianness) {
+        let i = fromPtr.assumingMemoryBound(to: UInt16.self).pointee
         if endianness == machineEndianness {
             self = i
         } else {
@@ -228,17 +223,16 @@ extension Int16: BrbonBytes {
         return Data(bytes: &val, count: 2)
     }
     
-    public func brbonBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+    public func brbonBytes(toPtr: UnsafeMutableRawPointer, _ endianness: Endianness = machineEndianness) {
         if endianness == machineEndianness {
-            toPointer.storeBytes(of: self, as: Int16.self)
+            toPtr.storeBytes(of: self, as: Int16.self)
         } else {
-            toPointer.storeBytes(of: self.byteSwapped, as: Int16.self)
+            toPtr.storeBytes(of: self.byteSwapped, as: Int16.self)
         }
-        toPointer = toPointer.advanced(by: 2)
     }
 
-    public init(_ bytePtr: UnsafeRawPointer, endianness: Endianness, count: UInt32 = 0) {
-        let i = bytePtr.assumingMemoryBound(to: Int16.self).pointee
+    public init(_ fromPtr: UnsafeRawPointer, _ endianness: Endianness = machineEndianness) {
+        let i = fromPtr.assumingMemoryBound(to: Int16.self).pointee
         if endianness == machineEndianness {
             self = i
         } else {
@@ -262,17 +256,16 @@ extension UInt32: BrbonBytes {
         return Data(bytes: &val, count: 4)
     }
     
-    public func brbonBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+    public func brbonBytes(toPtr: UnsafeMutableRawPointer, _ endianness: Endianness = machineEndianness) {
         if endianness == machineEndianness {
-            toPointer.storeBytes(of: self, as: UInt32.self)
+            toPtr.storeBytes(of: self, as: UInt32.self)
         } else {
-            toPointer.storeBytes(of: self.byteSwapped, as: UInt32.self)
+            toPtr.storeBytes(of: self.byteSwapped, as: UInt32.self)
         }
-        toPointer = toPointer.advanced(by: 4)
     }
 
-    public init(_ bytePtr: UnsafeRawPointer, endianness: Endianness, count: UInt32 = 0) {
-        let i = bytePtr.assumingMemoryBound(to: UInt32.self).pointee
+    public init(_ fromPtr: UnsafeRawPointer, _ endianness: Endianness = machineEndianness) {
+        let i = fromPtr.assumingMemoryBound(to: UInt32.self).pointee
         if endianness == machineEndianness {
             self = i
         } else {
@@ -296,17 +289,16 @@ extension Int32: BrbonBytes {
         return Data(bytes: &val, count: 4)
     }
     
-    public func brbonBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+    public func brbonBytes(toPtr: UnsafeMutableRawPointer, _ endianness: Endianness = machineEndianness) {
         if endianness == machineEndianness {
-            toPointer.storeBytes(of: self, as: Int32.self)
+            toPtr.storeBytes(of: self, as: Int32.self)
         } else {
-            toPointer.storeBytes(of: self.byteSwapped, as: Int32.self)
+            toPtr.storeBytes(of: self.byteSwapped, as: Int32.self)
         }
-        toPointer = toPointer.advanced(by: 4)
     }
 
-    public init(_ bytePtr: UnsafeRawPointer, endianness: Endianness, count: UInt32 = 0) {
-        let i = bytePtr.assumingMemoryBound(to: Int32.self).pointee
+    public init(_ fromPtr: UnsafeRawPointer, _ endianness: Endianness = machineEndianness) {
+        let i = fromPtr.assumingMemoryBound(to: Int32.self).pointee
         if endianness == machineEndianness {
             self = i
         } else {
@@ -330,17 +322,16 @@ extension UInt64: BrbonBytes {
         return Data(bytes: &val, count: 8)
     }
     
-    public func brbonBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+    public func brbonBytes(toPtr: UnsafeMutableRawPointer, _ endianness: Endianness = machineEndianness) {
         if endianness == machineEndianness {
-            toPointer.storeBytes(of: self, as: UInt64.self)
+            toPtr.storeBytes(of: self, as: UInt64.self)
         } else {
-            toPointer.storeBytes(of: self.byteSwapped, as: UInt64.self)
+            toPtr.storeBytes(of: self.byteSwapped, as: UInt64.self)
         }
-        toPointer = toPointer.advanced(by: 8)
     }
 
-    public init(_ bytePtr: UnsafeRawPointer, endianness: Endianness, count: UInt32 = 0) {
-        let i = bytePtr.assumingMemoryBound(to: UInt64.self).pointee
+    public init(_ fromPtr: UnsafeRawPointer, _ endianness: Endianness = machineEndianness) {
+        let i = fromPtr.assumingMemoryBound(to: UInt64.self).pointee
         if endianness == machineEndianness {
             self = i
         } else {
@@ -364,17 +355,16 @@ extension Int64: BrbonBytes {
         return Data(bytes: &val, count: 8)
     }
     
-    public func brbonBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+    public func brbonBytes(toPtr: UnsafeMutableRawPointer, _ endianness: Endianness = machineEndianness) {
         if endianness == machineEndianness {
-            toPointer.storeBytes(of: self, as: Int64.self)
+            toPtr.storeBytes(of: self, as: Int64.self)
         } else {
-            toPointer.storeBytes(of: self.byteSwapped, as: Int64.self)
+            toPtr.storeBytes(of: self.byteSwapped, as: Int64.self)
         }
-        toPointer = toPointer.advanced(by: 8)
     }
 
-    public init(_ bytePtr: UnsafeRawPointer, endianness: Endianness, count: UInt32 = 0) {
-        let i = bytePtr.assumingMemoryBound(to: Int64.self).pointee
+    public init(_ fromPtr: UnsafeRawPointer, _ endianness: Endianness = machineEndianness) {
+        let i = fromPtr.assumingMemoryBound(to: Int64.self).pointee
         if endianness == machineEndianness {
             self = i
         } else {
@@ -398,17 +388,16 @@ extension Float32: BrbonBytes {
         return Data(bytes: &val, count: 4)
     }
     
-    public func brbonBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+    public func brbonBytes(toPtr: UnsafeMutableRawPointer, _ endianness: Endianness = machineEndianness) {
         if endianness == machineEndianness {
-            toPointer.storeBytes(of: self, as: Float32.self)
+            toPtr.storeBytes(of: self, as: Float32.self)
         } else {
-            toPointer.storeBytes(of: self.bitPattern.byteSwapped, as: UInt32.self)
+            toPtr.storeBytes(of: self.bitPattern.byteSwapped, as: UInt32.self)
         }
-        toPointer = toPointer.advanced(by: 4)
     }
 
-    public init(_ bytePtr: UnsafeRawPointer, endianness: Endianness, count: UInt32 = 0) {
-        let i = bytePtr.assumingMemoryBound(to: UInt32.self).pointee
+    public init(_ fromPtr: UnsafeRawPointer, _ endianness: Endianness = machineEndianness) {
+        let i = fromPtr.assumingMemoryBound(to: UInt32.self).pointee
         if endianness == machineEndianness {
             self = Float32.init(bitPattern: i)
         } else {
@@ -432,17 +421,16 @@ extension Float64: BrbonBytes {
         return Data(bytes: &val, count: 8)
     }
     
-    public func brbonBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+    public func brbonBytes(toPtr: UnsafeMutableRawPointer, _ endianness: Endianness = machineEndianness) {
         if endianness == machineEndianness {
-            toPointer.storeBytes(of: self, as: Float64.self)
+            toPtr.storeBytes(of: self, as: Float64.self)
         } else {
-            toPointer.storeBytes(of: self.bitPattern.byteSwapped, as: UInt64.self)
+            toPtr.storeBytes(of: self.bitPattern.byteSwapped, as: UInt64.self)
         }
-        toPointer = toPointer.advanced(by: 8)
     }
 
-    public init(_ bytePtr: UnsafeRawPointer, endianness: Endianness, count: UInt32 = 0) {
-        let i = bytePtr.assumingMemoryBound(to: UInt64.self).pointee
+    public init(_ fromPtr: UnsafeRawPointer, _ endianness: Endianness = machineEndianness) {
+        let i = fromPtr.assumingMemoryBound(to: UInt64.self).pointee
         if endianness == machineEndianness {
             self = Float64.init(bitPattern: i)
         } else {
@@ -464,13 +452,14 @@ extension Data: BrbonBytes {
         return self
     }
     
-    public func brbonBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
-        self.withUnsafeBytes({ toPointer.copyBytes(from: $0, count: self.count)})
-        toPointer = toPointer.advanced(by: self.count)
+    public func brbonBytes(toPtr: UnsafeMutableRawPointer, _ endianness: Endianness = machineEndianness) {
+        UInt32(self.count).brbonBytes(toPtr: toPtr, endianness)
+        self.withUnsafeBytes({ toPtr.copyBytes(from: $0, count: self.count)})
     }
         
-    public init(_ bytePtr: UnsafeRawPointer, endianness: Endianness, count: UInt32) {
-        self.init(bytes: bytePtr, count: Int(count))
+    public init(_ fromPtr: UnsafeRawPointer, _ endianness: Endianness = machineEndianness) {
+        let count = UInt32(fromPtr, endianness)
+        self.init(bytes: fromPtr, count: Int(count))
     }
 }
 
@@ -487,14 +476,14 @@ extension String: BrbonBytes {
         return self.data(using: .utf8) ?? Data()
     }
     
-    public func brbonBytes(_ endianness: Endianness, toPointer: inout UnsafeMutableRawPointer) {
+    public func brbonBytes(toPtr: UnsafeMutableRawPointer, _ endianness: Endianness = machineEndianness) {
         if let data = self.data(using: .utf8) {
-            data.brbonBytes(endianness, toPointer: &toPointer)
+            data.brbonBytes(toPtr: toPtr, endianness)
         }
     }
     
-    public init(_ bytePtr: UnsafeRawPointer, endianness: Endianness, count: UInt32) {
-        let data = Data(bytePtr, endianness: endianness, count: count)
+    public init(_ fromPtr: UnsafeRawPointer, _ endianness: Endianness = machineEndianness) {
+        let data = Data(fromPtr, endianness)
         self = String(bytes: data, encoding: .utf8) ?? ""
     }
 }
