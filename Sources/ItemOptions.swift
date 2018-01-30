@@ -21,11 +21,11 @@ public enum ItemOptions: UInt8 {
 
 extension ItemOptions: BrbonBytes {
     
-    public func brbonCount() -> UInt32 {
+    public var brbonCount: UInt32 {
         return 1
     }
     
-    public func brbonType() -> ItemType {
+    public var brbonType: ItemType {
         return .null
     }
     

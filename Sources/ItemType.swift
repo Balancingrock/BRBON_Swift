@@ -173,6 +173,20 @@ public enum ItemType: UInt8 {
         }
     }
     
+    public var isVariableLength: Bool {
+        switch self {
+        case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32, .int64, .uint64, .float64: return false
+        case .string, .binary, .array, .dictionary, .sequence: return true
+        }
+    }
+    
+    public var isContainer: Bool {
+        switch self {
+        case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32, .int64, .uint64, .float64, .string, .binary: return false
+        case .array, .dictionary, .sequence: return true
+        }
+    }
+    
     public static func typeFor(_ value: BrbonBytes) -> ItemType? {
         switch value {
         case is Bool: return .bool
@@ -200,11 +214,11 @@ public enum ItemType: UInt8 {
 
 extension ItemType: BrbonBytes {
     
-    public func brbonCount() -> UInt32 {
+    public var brbonCount: UInt32 {
         return 1
     }
     
-    public func brbonType() -> ItemType {
+    public var brbonType: ItemType {
         return .null
     }
     

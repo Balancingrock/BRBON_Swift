@@ -2,7 +2,7 @@
 //  ArrayManager.swift
 //  BRBON
 //
-//  Created by Marinus van der Lugt on 17/01/18.
+//  Created by Marinus van der Lugt on 25/01/18.
 //
 //
 
@@ -10,71 +10,20 @@ import Foundation
 import BRUtils
 
 
-// ******************************************************************
-// **                                                              **
-// ** INTERNAL OPERATIONS ARE NOT PROTECTED AGAINST ILLEGAL VALUES **
-// **                                                              **
-// ******************************************************************
+public class ArrayManager {
+    
+    internal var buffer: UnsafeMutableRawBufferPointer
+    
+    internal(set) var endianness: Endianness
+    
+    public var bufferIncrements: UInt32
+    
+    internal var basePtr: UnsafeMutableRawPointer
+    internal var rootItem: Item!
+    internal var elementType: ItemType // Cached
+    
+    internal(set) var mutableItemLength: Bool
 
-
-/// The manager of a BRBON data area
-
-public class ArrayManager: _Item {
-    
-    
-    /// The number of bytes not yet used in the current buffer
-    
-    public var availableBufferBytes: UInt32 {
-        return UInt32(buffer.count) - itemLength
-    }
-    
-    
-    /// The number of bytes not yet used in the array item
-    
-    public var availableItemBytes: UInt32 {
-        return itemLength - UInt32(count) * elementLength - minimumItemLength - 8
-    }
-    
-    
-    /// The endianness of the root item and all child items
-    
-    public let endianness: Endianness
-    
-    
-    /// The number of bytes with which to increment the buffer size if there is insufficient free space available.
-    
-    public let bufferIncrements: UInt32
-    
-    
-    /// The number of elements in the array
-    
-    public var count: Int {
-        return Int(valueCount)
-    }
-    
-    
-    /// The type of element in the array.
-    ///
-    /// May be unknown until the first element is added.
-    
-    public private(set) var elementType: ItemType
-
-    
-    /// The length of each element.
-    ///
-    /// May be unknown (i.e. zero) until the first element is added.
-    
-    public var elementLength: UInt32 {
-        return UInt32(ptr.advanced(by: itemNvrFieldOffset + 4), endianness: endianness)
-    }
-    
-    
-    /// Returns the buffer as a Data object. The buffer will not be copied, but wrapped in a data object.
-    
-    public var asData: Data {
-        return Data(bytesNoCopy: ptr, count: Int(itemLength), deallocator: Data.Deallocator.none)
-    }
-    
     
     /// Create a new ArrayManager.
     ///
@@ -92,6 +41,7 @@ public class ArrayManager: _Item {
     public init?(
         elementType: ItemType,
         initialCount: UInt32 = 0,
+        initialValue: BrbonBytes? = 0,
         elementValueLength: UInt32? = nil,
         name: String? = nil,
         nameFieldLength: UInt8? = nil,
@@ -99,13 +49,12 @@ public class ArrayManager: _Item {
         initialBufferSize: UInt32 = 1024,
         bufferIncrements: UInt32 = 1024,
         endianness: Endianness = machineEndianness) {
-
+        
         
         guard elementType != .null else { return nil }
         
-        
-        self.endianness = endianness
         self.elementType = elementType
+        self.endianness = endianness
         
         
         // Create local variables because the input parameters cannot be changed and the self members are let members.
@@ -116,22 +65,23 @@ public class ArrayManager: _Item {
         
         // Create the name field info
         
-        guard let nameFieldDescriptor = nameFieldDescriptor(for: name, fixedLength: nameFieldLength) else { return nil }
+        guard let nameFieldDescriptor = NameFieldDescriptor(name, nameFieldLength) else { return nil }
         
         
         // Determine size of the value field
         // =================================
         
-        var itemLength: UInt32 = minimumItemLength + UInt32(nameFieldDescriptor.length) + 8
+        var itemSize: UInt32 = minimumItemByteCount + UInt32(nameFieldDescriptor.byteCount) + 8
         
-
+        
         // Add the initial allocation for the elements
         
-        if let elementLength = elementValueLength, initialCount > 0 {
-            itemLength += elementLength * initialCount
-            bufferSize = max(itemLength, bufferSize) // Up the buffer size if the initial elements don't fit.
+        let elementSize = elementValueLength ?? elementType.defaultByteSize
+        if initialCount > 0 {
+            itemSize += (elementSize * initialCount).roundUpToNearestMultipleOf8()
+            bufferSize = max(itemSize, bufferSize) // Up the buffer size if the initial elements don't fit.
         }
-
+        
         
         if let fixedItemLength = fixedItemLength {
             
@@ -143,24 +93,24 @@ public class ArrayManager: _Item {
             
             // If specified, the fixed item length must at least be large enough for the name field
             
-            guard fixedItemLength >= itemLength else { return nil }
+            guard fixedItemLength >= itemSize else { return nil }
             
             
             // Make the itemLength the fixed item length, but ensure that it is a multiple of 8 bytes.
             
-            itemLength = fixedItemLength.roundUpToNearestMultipleOf8()
+            itemSize = fixedItemLength.roundUpToNearestMultipleOf8()
             
             
             // If the item length is bigger than the buffersize and the increments are zero, then the item cannot be constructed
             
-            if itemLength > bufferSize {
+            if itemSize > bufferSize {
                 
                 guard increments > 0 else { return nil }
                 
                 increments = 0// Set to zero to prevent further increases in size
             }
             
-            bufferSize = itemLength
+            bufferSize = itemSize
         }
         
         
@@ -172,7 +122,7 @@ public class ArrayManager: _Item {
         // Allocate the buffer
         
         self.buffer = UnsafeMutableRawBufferPointer.allocate(count: Int(bufferSize))
-        self.ptr = buffer.baseAddress!
+        self.basePtr = buffer.baseAddress!
         
         
         // Set item length mutability
@@ -182,498 +132,173 @@ public class ArrayManager: _Item {
         
         // Create the array structure
         
-        var dptr = buffer.baseAddress!
+        guard Item.createArray(
+            atPtr: basePtr,
+            elementType: elementType,
+            initialCount: initialCount,
+            nameFieldDescriptor: nameFieldDescriptor,
+            parentOffset: 0,
+            elementValueLength: elementValueLength,
+            fixedItemLength: fixedItemLength,
+            endianness: endianness) else { self.buffer.deallocate(); return nil }
         
-        ItemType.array.rawValue.brbonBytes(endianness, toPointer: &dptr)                    // Type
-        UInt8(0).brbonBytes(endianness, toPointer: &dptr)                                   // Options
-        UInt8(0).brbonBytes(endianness, toPointer: &dptr)                                   // Flags
-        nameFieldDescriptor.length.brbonBytes(endianness, toPointer: &dptr)                 // Name field length
         
-        itemLength.brbonBytes(endianness, toPointer: &dptr)                                 // Item length
+        // The root item
         
-        UInt32(0).brbonBytes(endianness, toPointer: &dptr)                                  // Parent offset
-        
-        UInt32(0).brbonBytes(endianness, toPointer: &dptr)                                  // Count
-        
-        if nameFieldDescriptor.length > 0 {
-            nameFieldDescriptor.crc.brbonBytes(endianness, toPointer: &dptr)                // Name hash
-            UInt8(nameFieldDescriptor.data!.count).brbonBytes(endianness, toPointer: &dptr) // Name length
-            nameFieldDescriptor.data!.brbonBytes(endianness, toPointer: &dptr)              // Name bytes
-        }
-        
-        elementType.rawValue.brbonBytes(endianness, toPointer: &dptr)                       // Element type
-        UInt8(0).brbonBytes(endianness, toPointer: &dptr)                                   // Element Options -> always 0
-        UInt8(0).brbonBytes(endianness, toPointer: &dptr)                                   // Element Flags -> always 0
-        UInt8(0).brbonBytes(endianness, toPointer: &dptr)                                   // Element namelength -> always 0
-            
-        let evLength = elementValueLength ?? elementType.defaultByteSize
-        evLength.brbonBytes(endianness, toPointer: &dptr)                                   // Element length
+        self.rootItem = Item(basePtr: self.basePtr, parentPtr: nil, manager: self, endianness: endianness)
 
-
+        
         // Zero the remainder of the buffer
         
-        let zeroingLength = (Int(bufferSize) - ptr.distance(to: dptr))/4
-        
-        _ = Darwin.memset(dptr, 0, zeroingLength)
-        
-        
-        // The pointer to the first element
-        
-        self.element0Ptr = ptr.advanced(by: itemNvrFieldOffset + Int(nameFieldDescriptor.length) + 8)
+        let zeroingLength = Int(bufferSize - rootItem.byteCount)/4
+        let startPtr = basePtr.advanced(by: Int(rootItem.byteCount))
+        _ = Darwin.memset(startPtr, 0, zeroingLength)
     }
-    
-    
-    /// Adds a new value to the array.
-    
-    @discardableResult
-    public func append(element: BrbonBytes) -> Result {
-        
-        
-        // Check type conformance
-        
-        guard element.brbonType() == elementType else { return .typeConflict }
-        
-        
-        // Convert the value into its brbon representation
-        
-        var elementData = element.brbonBytes(endianness)
-        guard elementData.count > 0 else { return .brbonBytesToDataFailed }
-        
-        
-        // Check the size of the element
-        
-        switch elementType {
-        case .binary, .string:
-            guard (elementData.count + 4) <= Int(elementLength) else { return .elementToLarge }
-        default:
-            guard elementData.count <= Int(elementLength) else { return .elementToLarge }
-        }
-
-        
-        // Check for storage area
-        
-        guard ensureNewItemSpace() else { return .outOfStorageSpace }
-        
-        
-        // Check offset for new element
-        
-        guard (UInt32(count) * elementLength) < brbonUInt32Max else { return .indexOutOfHighLimit }
-        
-        
-        // Add the element value
-        
-        var eptr = elementPtr(for: count)
-        switch elementType {
-        case .binary, .string:
-            UInt32(elementData.count).brbonBytes(endianness, toPointer: &eptr)
-            fallthrough
-        default:
-            elementData.brbonBytes(endianness, toPointer: &eptr)
-        }
-        
-        return .success
-    }
-    
-    
-    /// Create a new entry at the given index.
-    
-    @discardableResult
-    public func insert(at index: Int, element: BrbonBytes) -> Result {
 
 
-        // Check type conformance
-        
-        guard element.brbonType() == elementType else { return .typeConflict }
-        
-        
-        // Check the index
-        
-        guard index < count else { return .indexOutOfHighLimit }
-        guard index >= 0 else { return .indexLessThanZero }
-        
-        
-        // Convert the value into its brbon representation
-        
-        var elementData = element.brbonBytes(endianness)
-        guard elementData.count > 0 else { return .brbonBytesToDataFailed }
-        
-        
-        // Check the size of the element
-        
-        switch elementType {
-        case .binary, .string:
-            guard (elementData.count + 4) <= Int(elementLength) else { return .elementToLarge }
-        default:
-            guard elementData.count <= Int(elementLength) else { return .elementToLarge }
-        }
-        
-        
-        // Check for storage area
-        
-        guard ensureNewItemSpace() else { return .outOfStorageSpace }
-
-        
-        // Shift data to make place for the new element
-        
-        let dstPtr = elementPtr(for: index + 1)
-        let srcPtr = elementPtr(for: index)
-        let len = (count - index) * Int(elementLength)
-        
-        _ = Darwin.memmove(dstPtr, srcPtr, len)
-        
-        
-        // Add the new element
-        
-        var tptr = srcPtr
-        switch elementType {
-        case .binary, .string: UInt32(elementData.count).brbonBytes(endianness, toPointer: &tptr)
-        default: break
-        }
-        elementData.brbonBytes(endianness, toPointer: &tptr)
-        
-        
-        // Increase the item length (if mutable)
-        
-        if mutableItemLength { itemLength += elementLength }
-        
-        
-        // Increase the element counter
-        
-        elementCount += 1
-        
-        
-        return .success
-    }
+    /// - Returns: The number of elements in the array.
+    
+    public var count: Int { return rootItem.count }
     
     
-    /// Removes a value from the array.
+    /// - Returns: The number of bytes the (root) array item will occupy when written or transferred.
     
-    public func remove(at index: Int) -> Result {
-        
-        
-        // Check index
-        
-        guard index < count else { return .indexOutOfHighLimit }
-        guard index >= 0 else { return .indexLessThanZero }
-
-        
-        // Get the pointer to the item to be removed
-            
-        let dstPtr = elementPtr(for: index)
-            
-            
-        // Get the pointer to the first item after it
-            
-        let srcPtr = elementPtr(for: index + 1)
-            
-            
-        // Get the number of bytes to move
-            
-        let nofBytes = (count - 1 - index) * Int(elementLength)
-
-        
-        // Move the bytes after the item to be removed forward
-        
-        _ = Darwin.memmove(dstPtr, srcPtr, nofBytes)
-        
-
-        // Decrement the counter of the number of children.
-
-        var vptr = ptr.advanced(by: itemValueCountOffset)
-        UInt32(count - 1).brbonBytes(endianness, toPointer: &vptr)
-
-        
-        // Only decrement the item length if it is mutable
-        
-        if mutableItemLength {
-            var iptr = ptr.advanced(by: itemLengthOffset)
-            (itemLength - elementLength).brbonBytes(endianness, toPointer: &iptr)
-        }
-        
-        return .success
-    }
+    public var byteCount: UInt32 { return rootItem.byteCount }
     
     
-    /// Subscript access
+    /// - Returns: The name of the array (if any).
     
-    public subscript(index: Int) -> Element? {
+    public var name: String? { return rootItem.name }
+    
+    
+    /// Subscript accessors.
+    
+    public subscript(index: Int) -> Item {
         get {
-            
-        }
-        set {
-            
+            let item: Item = rootItem[index]
+            item.manager = self
+            return item
         }
     }
     
     public subscript(index: Int) -> Bool? {
-        get {
-            guard elementType == .bool else { return nil }
-            guard index < count, index >= 0 else { return nil }
-            return Bool(elementPtr(for: index), endianness: endianness)
-        }
-        set {
-            guard elementType == .bool else { return }
-            guard index < count, index >= 0 else { return }
-            var vptr = elementPtr(for: index)
-            newValue?.brbonBytes(endianness, toPointer: &vptr)
-        }
+        get { return rootItem[index].bool }
+        set { rootItem[index] = newValue }
     }
     
     public subscript(index: Int) -> Int8? {
-        get {
-            guard elementType == .int8 else { return nil }
-            guard index < count, index >= 0 else { return nil }
-            return Int8(elementPtr(for: index), endianness: endianness)
-        }
-        set {
-            guard elementType == .int8 else { return }
-            guard index < count, index >= 0 else { return }
-            var vptr = elementPtr(for: index)
-            newValue?.brbonBytes(endianness, toPointer: &vptr)
-        }
+        get { return rootItem[index].int8 }
+        set { rootItem[index] = newValue }
+    }
+    
+    public subscript(index: Int) -> Int16? {
+        get { return rootItem[index].int16 }
+        set { rootItem[index] = newValue }
+    }
+    
+    public subscript(index: Int) -> Int32? {
+        get { return rootItem[index].int32 }
+        set { rootItem[index] = newValue }
+    }
+    
+    public subscript(index: Int) -> Int64? {
+        get { return rootItem[index].int64 }
+        set { rootItem[index] = newValue }
     }
     
     public subscript(index: Int) -> UInt8? {
-        get {
-            guard elementType == .uint8 else { return nil }
-            guard index < count, index >= 0 else { return nil }
-            return UInt8(elementPtr(for: index), endianness: endianness)
-        }
-        set {
-            guard elementType == .uint8 else { return }
-            guard index < count, index >= 0 else { return }
-            var vptr = elementPtr(for: index)
-            newValue?.brbonBytes(endianness, toPointer: &vptr)
-        }
-    }
-
-    public subscript(index: Int) -> Int16? {
-        get {
-            guard elementType == .int16 else { return nil }
-            guard index < count, index >= 0 else { return nil }
-            return Int16(elementPtr(for: index), endianness: endianness)
-        }
-        set {
-            guard elementType == .int16 else { return }
-            guard index < count, index >= 0 else { return }
-            var vptr = elementPtr(for: index)
-            newValue?.brbonBytes(endianness, toPointer: &vptr)
-        }
+        get { return rootItem[index].uint8 }
+        set { rootItem[index] = newValue }
     }
     
     public subscript(index: Int) -> UInt16? {
-        get {
-            guard elementType == .uint16 else { return nil }
-            guard index < count, index >= 0 else { return nil }
-            return UInt16(elementPtr(for: index), endianness: endianness)
-        }
-        set {
-            guard elementType == .uint16 else { return }
-            guard index < count, index >= 0 else { return }
-            var vptr = elementPtr(for: index)
-            newValue?.brbonBytes(endianness, toPointer: &vptr)
-        }
-    }
-
-    public subscript(index: Int) -> Int32? {
-        get {
-            guard elementType == .int32 else { return nil }
-            guard index < count, index >= 0 else { return nil }
-            return Int32(elementPtr(for: index), endianness: endianness)
-        }
-        set {
-            guard elementType == .int32 else { return }
-            guard index < count, index >= 0 else { return }
-            var vptr = elementPtr(for: index)
-            newValue?.brbonBytes(endianness, toPointer: &vptr)
-        }
+        get { return rootItem[index].uint16 }
+        set { rootItem[index] = newValue }
     }
     
     public subscript(index: Int) -> UInt32? {
-        get {
-            guard elementType == .uint32 else { return nil }
-            guard index < count, index >= 0 else { return nil }
-            return UInt32(elementPtr(for: index), endianness: endianness)
-        }
-        set {
-            guard elementType == .uint32 else { return }
-            guard index < count, index >= 0 else { return }
-            var vptr = elementPtr(for: index)
-            newValue?.brbonBytes(endianness, toPointer: &vptr)
-        }
-    }
-
-    public subscript(index: Int) -> Int64? {
-        get {
-            guard elementType == .int64 else { return nil }
-            guard index < count, index >= 0 else { return nil }
-            return Int64(elementPtr(for: index), endianness: endianness)
-        }
-        set {
-            guard elementType == .int64 else { return }
-            guard index < count, index >= 0 else { return }
-            var vptr = elementPtr(for: index)
-            newValue?.brbonBytes(endianness, toPointer: &vptr)
-        }
+        get { return rootItem[index].uint32 }
+        set { rootItem[index] = newValue }
     }
     
     public subscript(index: Int) -> UInt64? {
-        get {
-            guard elementType == .uint64 else { return nil }
-            guard index < count, index >= 0 else { return nil }
-            return UInt64(elementPtr(for: index), endianness: endianness)
-        }
-        set {
-            guard elementType == .uint64 else { return }
-            guard index < count, index >= 0 else { return }
-            var vptr = elementPtr(for: index)
-            newValue?.brbonBytes(endianness, toPointer: &vptr)
-        }
+        get { return rootItem[index].uint64 }
+        set { rootItem[index] = newValue }
     }
-
+    
     public subscript(index: Int) -> Float32? {
-        get {
-            guard elementType == .float32 else { return nil }
-            guard index < count, index >= 0 else { return nil }
-            return Float32(elementPtr(for: index), endianness: endianness)
-        }
-        set {
-            guard elementType == .float32 else { return }
-            guard index < count, index >= 0 else { return }
-            var vptr = elementPtr(for: index)
-            newValue?.brbonBytes(endianness, toPointer: &vptr)
-        }
+        get { return rootItem[index].float32 }
+        set { rootItem[index] = newValue }
     }
     
     public subscript(index: Int) -> Float64? {
-        get {
-            guard elementType == .float64 else { return nil }
-            guard index < count, index >= 0 else { return nil }
-            return Float64(elementPtr(for: index), endianness: endianness)
-        }
-        set {
-            guard elementType == .float64 else { return }
-            guard index < count, index >= 0 else { return }
-            var vptr = elementPtr(for: index)
-            newValue?.brbonBytes(endianness, toPointer: &vptr)
-        }
+        get { return rootItem[index].float64 }
+        set { rootItem[index] = newValue }
     }
-
+    
     public subscript(index: Int) -> String? {
-        get {
-            guard elementType == .string else { return nil }
-            guard index < count, index >= 0 else { return nil }
-            let sptr = elementPtr(for: index)
-            let strLen = UInt32.init(sptr, endianness: endianness)
-            return String(sptr.advanced(by: 4), endianness: endianness, count: strLen)
-        }
-        set {
-            guard let newValue = newValue else { return }
-            guard elementType == .string else { return }
-            guard index < count, index >= 0 else { return }
-            var vptr = elementPtr(for: index)
-            let newCount = newValue.brbonCount()
-            guard newCount + 4 <= elementLength else { return }
-            newValue.brbonCount().brbonBytes(endianness, toPointer: &vptr)
-            newValue.brbonBytes(endianness, toPointer: &vptr)
-        }
+        get { return rootItem[index].string }
+        set { rootItem[index] = newValue }
     }
     
     public subscript(index: Int) -> Data? {
-        get {
-            guard elementType == .binary else { return nil }
-            guard index < count, index >= 0 else { return nil }
-            let bptr = elementPtr(for: index)
-            let binlen = UInt32.init(bptr, endianness: endianness)
-            return Data(bptr.advanced(by: 4), endianness: endianness, count: binlen)
-        }
-        set {
-            guard let newValue = newValue else { return }
-            guard elementType == .binary else { return }
-            guard index < count, index >= 0 else { return }
-            var bptr = elementPtr(for: index)
-            let newCount = newValue.brbonCount()
-            guard newCount + 4 <= elementLength else { return }
-            newValue.brbonCount().brbonBytes(endianness, toPointer: &bptr)
-            newValue.brbonBytes(endianness, toPointer: &bptr)
-        }
+        get { return rootItem[index].binary }
+        set { rootItem[index] = newValue }
     }
 
     
-    // ****************
-    // MARK: - Internal
-    // ****************
-    
-    internal var buffer: UnsafeMutableRawBufferPointer
-    internal var ptr: UnsafeMutableRawPointer
-    internal var element0Ptr: UnsafeMutableRawPointer
-    internal let mutableItemLength: Bool
-
-    internal var itemLength: UInt32 {
-        get {
-            return UInt32.init(ptr.advanced(by: itemLengthOffset), endianness: endianness)
-        }
-        set {
-            var lptr = ptr.advanced(by: itemLengthOffset)
-            newValue.brbonBytes(endianness, toPointer: &lptr)
-        }
-    }
-    internal var elementCount: UInt32 {
-        get {
-            return UInt32.init(ptr.advanced(by: itemValueCountOffset), endianness: endianness)
-        }
-        set {
-            var cptr = ptr.advanced(by: itemValueCountOffset)
-            newValue.brbonBytes(endianness, toPointer: &cptr)
-        }
-    }
-    
-    deinit {
-        buffer.deallocate()
-    }
-    
-    
-    /// - Returns: A pointer to the memory area where the element for the given index is located.
-    
-    internal func elementPtr(for index: Int) -> UnsafeMutableRawPointer {
-        return element0Ptr.advanced(by: Int(elementLength) * index)
-    }
-    
-    
-    /// Ensures that a new item can be placed in the array, or returns false.
+    /// Adds a new item to the end of the array.
     ///
-    /// - Returns: True if the item can be placed, false otherwise.
-    
-    internal func ensureNewItemSpace() -> Bool {
-        
-        if availableItemBytes >= elementLength { return true }
-        
-        return increaseItemLength(by: elementLength)
-    }
-    
-    
-    /// Increase the item length of the array by at least the given amount of bytes.
+    /// The array will grow by one item on success. If the array cannot grow or if the value is not of the expected type, then the operation will fail. The byte count of the array can increase as a result. Notice that any byte count increase will always be in a multiple of 8 bytes.
     ///
-    /// The item length will only be incremented if it has a mutable length (_mutableItemLength_ is true) and if -when necessary- the buffer size can be increased as well.
+    /// - Note: Works only on an item of the type aray.
     ///
-    /// __Side effects__: Will call _increaseBufferSize_ when necessary. The _itemLength_ field will be updated if the length increase was successful.
+    /// - Parameter value: A value that can implements the BrbonBytes protocol.
+    ///
+    /// - Returns: An ignorable result, .success if the append worked, a failure indicator if not.
+    
+    @discardableResult
+    public func append(_ value: BrbonBytes) -> Result { return rootItem.append(value) }
+    
+    
+    /// Removes an item from the array.
+    ///
+    /// The array will decrease by item as a result. If the index is out of bounds the operation will fail. Notice that the bytecount of the array will not decrease. To remove unnecessary bytes use the "minimizeByteCount" operation.
+    ///
+    /// - Parameter index: The index of the element to remove.
+    ///
+    /// - Returns: An ignorable result, .success if the remove worked, a failure indicator if not.
+    
+    @discardableResult
+    public func remove(at index: Int) -> Result { return rootItem.remove(at: index) }
+    
+    
+    /// Creates 1 or a number of new elements at the end of the array. If a default value is given, it will be used. If no default value is specified the content bytes will be set to zero.
     ///
     /// - Parameters:
-    ///   - by: The minimum number of bytes by which to increase the item length. This will be rounded up to the nearest multiple of 8 if it is not a multiple of 8.
+    ///   - amount: The number of elements to create, default = 1.
+    ///   - value: The default value for the new elements, default = nil.
     ///
-    /// - Returns: True on success, false on failure.
+    /// - Returns: .success or an error indicator.
     
-    internal func increaseItemLength(by bytes: UInt32) -> Bool {
-        guard mutableItemLength else { return false }
-        let currentSize = itemLength
-        if currentSize + bytes.roundUpToNearestMultipleOf8() > availableBufferBytes {
-            guard bufferIncrements > 0 else { return false }
-            guard increaseBufferSize(by: bytes.roundUpToNearestMultipleOf8()) else { return false }
-        }
-        var lptr = ptr.advanced(by: itemLengthOffset)
-        (currentSize + bytes.roundUpToNearestMultipleOf8()).brbonBytes(endianness, toPointer: &lptr)
-        return true
+    @discardableResult
+    public func createNewElements(amount: UInt32 = 1, value: BrbonBytes? = nil) -> Result {
+        return rootItem.createNewElements(amount: amount, value: value)
     }
+    
+    
+    /// Inserts a new element at the given position.
+    
+    @discardableResult
+    public func insert(_ value: BrbonBytes, at index: Int) -> Result { return rootItem.insert(value, at: index) }
+}
+
+extension ArrayManager: BufferManagerProtocol {
+
+    
+    /// BufferManagerProtocol
+    
+    var unusedByteCount: UInt32 { return UInt32(buffer.count) - rootItem.byteCount }
     
     
     /// Increases the size of the buffer by at least the given amount of bytes.
@@ -695,11 +320,25 @@ public class ArrayManager: _Item {
         let newBuffer = UnsafeMutableRawBufferPointer.allocate(count: buffer.count + increase)
         
         _ = Darwin.memmove(newBuffer.baseAddress!, buffer.baseAddress!, buffer.count)
+        print("TBD: Add updating of item pointers for items that have been exposed to the API user")
         
+        buffer.deallocate()
         buffer = newBuffer
-        ptr = newBuffer.baseAddress!
-        element0Ptr = ptr.advanced(by: itemNvrFieldOffset + Int(nameFieldLength) + 8)
+        basePtr = newBuffer.baseAddress!
+        rootItem.basePtr = newBuffer.baseAddress!
         
         return true
+    }
+    
+    internal func moveBlock(_ dstPtr: UnsafeMutableRawPointer, _ srcPtr: UnsafeMutableRawPointer, _ length: Int) {
+        _ = Darwin.memmove(dstPtr, srcPtr, length)
+        print("TBD: Add updating of item pointers for items that have been exposed to the API user")
+    }
+
+    internal func moveEndBlock(_ dstPtr: UnsafeMutableRawPointer, _ srcPtr: UnsafeMutableRawPointer) {
+        let lastBytePtr = basePtr.advanced(by: Int(rootItem.byteCount))
+        let length = srcPtr.distance(to: lastBytePtr)
+        _ = Darwin.memmove(dstPtr, srcPtr, length)
+        print("TBD: Add updating of item pointers for items that have been exposed to the API user")
     }
 }

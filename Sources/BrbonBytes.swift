@@ -47,7 +47,7 @@
 //
 // 0.1.0  - Initial version
 // =====================================================================================================================
-
+ 
 import Foundation
 import BRUtils
 
@@ -75,14 +75,14 @@ public protocol BrbonBytes {
     func brbonBytes(toPtr: UnsafeMutableRawPointer, _ endianness: Endianness)
 
     
-    /// - Returns: The number of bytes needed to encode self into an BrbonBytes stream
+    /// The number of bytes needed to encode self into an BrbonBytes stream
     
-    func brbonCount() -> UInt32
+    var brbonCount: UInt32 { get }
     
     
-    /// - Returns: The ItemType for this value
+    /// The ItemType for this value
     
-    func brbonType() -> ItemType
+    var brbonType: ItemType { get }
     
     
     /// Decode a type from the given bytes.
@@ -99,9 +99,9 @@ public protocol BrbonBytes {
 
 extension Bool: BrbonBytes {
     
-    public func brbonType() -> ItemType { return .bool }
+    public var brbonType: ItemType { return .bool }
 
-    public func brbonCount() -> UInt32 { return 1 }
+    public var brbonCount: UInt32 { return 1 }
     
     public func brbonBytes(_ endianness: Endianness) -> Data {
         if self {
@@ -135,9 +135,9 @@ extension Bool: BrbonBytes {
 
 extension UInt8: BrbonBytes {
     
-    public func brbonType() -> ItemType { return .uint8 }
+    public var brbonType: ItemType { return .uint8 }
     
-    public func brbonCount() -> UInt32 { return 1 }
+    public var brbonCount: UInt32 { return 1 }
 
     public func brbonBytes(_ endianness: Endianness) -> Data {
         return Data(bytes: [self])
@@ -157,9 +157,9 @@ extension UInt8: BrbonBytes {
 
 extension Int8: BrbonBytes {
     
-    public func brbonType() -> ItemType { return .int8 }
+    public var brbonType: ItemType { return .int8 }
     
-    public func brbonCount() -> UInt32 { return 1 }
+    public var brbonCount: UInt32 { return 1 }
 
     public func brbonBytes(_ endianness: Endianness) -> Data {
         var val = self
@@ -180,9 +180,9 @@ extension Int8: BrbonBytes {
 
 extension UInt16: BrbonBytes {
     
-    public func brbonType() -> ItemType { return .uint16 }
+    public var brbonType: ItemType { return .uint16 }
     
-    public func brbonCount() -> UInt32 { return 2 }
+    public var brbonCount: UInt32 { return 2 }
 
     public func brbonBytes(_ endianness: Endianness) -> Data {
         var val = self
@@ -213,9 +213,9 @@ extension UInt16: BrbonBytes {
 
 extension Int16: BrbonBytes {
     
-    public func brbonType() -> ItemType { return .int16 }
+    public var brbonType: ItemType { return .int16 }
     
-    public func brbonCount() -> UInt32 { return 2 }
+    public var brbonCount: UInt32 { return 2 }
 
     public func brbonBytes(_ endianness: Endianness) -> Data {
         var val = self
@@ -246,9 +246,9 @@ extension Int16: BrbonBytes {
 
 extension UInt32: BrbonBytes {
     
-    public func brbonType() -> ItemType { return .uint32 }
+    public var brbonType: ItemType { return .uint32 }
     
-    public func brbonCount() -> UInt32 { return 4 }
+    public var brbonCount: UInt32 { return 4 }
 
     public func brbonBytes(_ endianness: Endianness) -> Data {
         var val = self
@@ -279,9 +279,9 @@ extension UInt32: BrbonBytes {
 
 extension Int32: BrbonBytes {
     
-    public func brbonType() -> ItemType { return .int32 }
+    public var brbonType: ItemType { return .int32 }
     
-    public func brbonCount() -> UInt32 { return 4 }
+    public var brbonCount: UInt32 { return 4 }
 
     public func brbonBytes(_ endianness: Endianness) -> Data {
         var val = self
@@ -312,9 +312,9 @@ extension Int32: BrbonBytes {
 
 extension UInt64: BrbonBytes {
     
-    public func brbonType() -> ItemType { return .uint64 }
+    public var brbonType: ItemType { return .uint64 }
     
-    public func brbonCount() -> UInt32 { return 8 }
+    public var brbonCount: UInt32 { return 8 }
 
     public func brbonBytes(_ endianness: Endianness) -> Data {
         var val = self
@@ -345,9 +345,9 @@ extension UInt64: BrbonBytes {
 
 extension Int64: BrbonBytes {
     
-    public func brbonType() -> ItemType { return .int64 }
+    public var brbonType: ItemType { return .int64 }
     
-    public func brbonCount() -> UInt32 { return 8 }
+    public var brbonCount: UInt32 { return 8 }
 
     public func brbonBytes(_ endianness: Endianness) -> Data {
         var val = self
@@ -378,9 +378,9 @@ extension Int64: BrbonBytes {
 
 extension Float32: BrbonBytes {
     
-    public func brbonType() -> ItemType { return .float32 }
+    public var brbonType: ItemType { return .float32 }
     
-    public func brbonCount() -> UInt32 { return 4 }
+    public var brbonCount: UInt32 { return 4 }
 
     public func brbonBytes(_ endianness: Endianness) -> Data {
         var val = self.bitPattern
@@ -411,9 +411,9 @@ extension Float32: BrbonBytes {
 
 extension Float64: BrbonBytes {
     
-    public func brbonType() -> ItemType { return .float64 }
+    public var brbonType: ItemType { return .float64 }
     
-    public func brbonCount() -> UInt32 { return 8 }
+    public var brbonCount: UInt32 { return 8 }
 
     public func brbonBytes(_ endianness: Endianness) -> Data {
         var val = self.bitPattern
@@ -444,9 +444,9 @@ extension Float64: BrbonBytes {
 
 extension Data: BrbonBytes {
     
-    public func brbonType() -> ItemType { return .binary }
+    public var brbonType: ItemType { return .binary }
     
-    public func brbonCount() -> UInt32 { return UInt32(self.count) }
+    public var brbonCount: UInt32 { return UInt32(self.count) }
 
     public func brbonBytes(_ endianness: Endianness) -> Data {
         return self
@@ -454,7 +454,8 @@ extension Data: BrbonBytes {
     
     public func brbonBytes(toPtr: UnsafeMutableRawPointer, _ endianness: Endianness = machineEndianness) {
         UInt32(self.count).brbonBytes(toPtr: toPtr, endianness)
-        self.withUnsafeBytes({ toPtr.copyBytes(from: $0, count: self.count)})
+        let ptr = toPtr.advanced(by: 4).assumingMemoryBound(to: UInt8.self)
+        self.copyBytes(to: ptr, count: self.count)
     }
         
     public init(_ fromPtr: UnsafeRawPointer, _ endianness: Endianness = machineEndianness) {
@@ -468,9 +469,9 @@ extension Data: BrbonBytes {
 
 extension String: BrbonBytes {
     
-    public func brbonType() -> ItemType { return .string }
+    public var brbonType: ItemType { return .string }
     
-    public func brbonCount() -> UInt32 { return UInt32(self.data(using: .utf8)?.count ?? 0) }
+    public var brbonCount: UInt32 { return UInt32(self.data(using: .utf8)?.count ?? 0) }
     
     public func brbonBytes(_ endianness: Endianness) -> Data {
         return self.data(using: .utf8) ?? Data()

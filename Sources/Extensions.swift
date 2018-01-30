@@ -139,4 +139,3 @@ internal extension UInt8 {
         }
     }
 }
-
