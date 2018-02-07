@@ -110,6 +110,15 @@ public extension Data {
     }
 }
 
+internal extension Int {
+    
+    func roundUpToNearestMultipleOf8() -> Int {
+        var a = self
+        while a % 8 > 0 { a += 1 }
+        return a
+    }
+}
+
 internal extension UInt32 {
     
     func roundUpToNearestMultipleOf8() -> UInt32 {

@@ -55,16 +55,16 @@ class ArrayManager_Tests: XCTestCase {
         XCTAssertEqual(am.count, 0)       // Number of items should be zero
         XCTAssertEqual(am.byteCount, 24)    // 16 bytes + 2x4 bytes
         
-        XCTAssertEqual(am.append(UInt8(1)), Result.wrongType)
-        XCTAssertEqual(am.append(UInt16(1)), Result.wrongType)
-        XCTAssertEqual(am.append(UInt32(1)), Result.wrongType)
-        XCTAssertEqual(am.append(UInt64(1)), Result.wrongType)
-        XCTAssertEqual(am.append(Int8(1)), Result.wrongType)
-        XCTAssertEqual(am.append(Int16(1)), Result.wrongType)
-        XCTAssertEqual(am.append(Int32(1)), Result.wrongType)
-        XCTAssertEqual(am.append(Int64(1)), Result.wrongType)
-        XCTAssertEqual(am.append("test"), Result.wrongType)
-        XCTAssertEqual(am.append(Data(count: 10)), Result.wrongType)
+        XCTAssertEqual(am.append(UInt8(1)), Result.typeConflict)
+        XCTAssertEqual(am.append(UInt16(1)), Result.typeConflict)
+        XCTAssertEqual(am.append(UInt32(1)), Result.typeConflict)
+        XCTAssertEqual(am.append(UInt64(1)), Result.typeConflict)
+        XCTAssertEqual(am.append(Int8(1)), Result.typeConflict)
+        XCTAssertEqual(am.append(Int16(1)), Result.typeConflict)
+        XCTAssertEqual(am.append(Int32(1)), Result.typeConflict)
+        XCTAssertEqual(am.append(Int64(1)), Result.typeConflict)
+        XCTAssertEqual(am.append("test"), Result.typeConflict)
+        XCTAssertEqual(am.append(Data(count: 10)), Result.typeConflict)
         
         XCTAssertEqual(am.count, 0)
         XCTAssertEqual(am.byteCount, 24)

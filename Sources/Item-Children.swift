@@ -20,9 +20,9 @@ extension Item {
     internal func forEachAbortOnTrue(_ closure: (Item) -> Bool) {
         if isArray {
             let elementPtr = valuePtr.advanced(by: 8)
-            let nofChildren = Int(count)
+            let nofChildren = count
             var index = 0
-            let ebc = Int(elementByteCount)
+            let ebc = elementByteCount
             while index < nofChildren {
                 let item = Item(basePtr: elementPtr.advanced(by: index * ebc), parentPtr: basePtr, endianness: endianness)
                 if closure(item) { return }
@@ -36,7 +36,7 @@ extension Item {
             while remainder > 0 {
                 let item = Item(basePtr: itemPtr, parentPtr: basePtr, endianness: endianness)
                 if closure(item) { return }
-                itemPtr = itemPtr.advanced(by: Int(item.byteCount))
+                itemPtr = itemPtr.advanced(by: item.byteCount)
                 remainder -= 1
             }
         }

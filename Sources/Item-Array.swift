@@ -23,138 +23,151 @@ public extension Item {
     public subscript(index: Int) -> Bool? {
         get { return self[index].bool }
         set {
-            guard let item = element(at: index) else { return }
-            if let newValue = newValue { item.bool = newValue }
+            guard index >= 0, index < count else { return }
+            let ptr = elementPtr(for: index)
+            newValue?.storeAsElement(atPtr: ptr, endianness)
         }
     }
     
     public subscript(index: Int) -> UInt8? {
         get { return self[index].uint8 }
         set {
-            guard let item = element(at: index) else { return }
-            if let newValue = newValue { item.uint8 = newValue }
+            guard index >= 0, index < count else { return }
+            let ptr = elementPtr(for: index)
+            newValue?.storeAsElement(atPtr: ptr, endianness)
         }
     }
     
     public subscript(index: Int) -> UInt16? {
         get { return self[index].uint16 }
         set {
-            guard let item = element(at: index) else { return }
-            if let newValue = newValue { item.uint16 = newValue }
+            guard index >= 0, index < count else { return }
+            let ptr = elementPtr(for: index)
+            newValue?.storeAsElement(atPtr: ptr, endianness)
         }
     }
 
     public subscript(index: Int) -> UInt32? {
         get { return self[index].uint32 }
         set {
-            guard let item = element(at: index) else { return }
-            if let newValue = newValue { item.uint32 = newValue }
+            guard index >= 0, index < count else { return }
+            let ptr = elementPtr(for: index)
+            newValue?.storeAsElement(atPtr: ptr, endianness)
         }
     }
     
     public subscript(index: Int) -> UInt64? {
         get { return self[index].uint64 }
         set {
-            guard let item = element(at: index) else { return }
-            if let newValue = newValue { item.uint64 = newValue }
+            guard index >= 0, index < count else { return }
+            let ptr = elementPtr(for: index)
+            newValue?.storeAsElement(atPtr: ptr, endianness)
         }
     }
     
     public subscript(index: Int) -> Int8? {
         get { return self[index].int8 }
         set {
-            guard let item = element(at: index) else { return }
-            if let newValue = newValue { item.int8 = newValue }
+            guard index >= 0, index < count else { return }
+            let ptr = elementPtr(for: index)
+            newValue?.storeAsElement(atPtr: ptr, endianness)
         }
     }
     
     public subscript(index: Int) -> Int16? {
         get { return self[index].int16 }
         set {
-            guard let item = element(at: index) else { return }
-            if let newValue = newValue { item.int16 = newValue }
+            guard index >= 0, index < count else { return }
+            let ptr = elementPtr(for: index)
+            newValue?.storeAsElement(atPtr: ptr, endianness)
         }
     }
     
     public subscript(index: Int) -> Int32? {
         get { return self[index].int32 }
         set {
-            guard let item = element(at: index) else { return }
-            if let newValue = newValue { item.int32 = newValue }
+            guard index >= 0, index < count else { return }
+            let ptr = elementPtr(for: index)
+            newValue?.storeAsElement(atPtr: ptr, endianness)
         }
     }
     
     public subscript(index: Int) -> Int64? {
         get { return self[index].int64 }
         set {
-            guard let item = element(at: index) else { return }
-            if let newValue = newValue { item.int64 = newValue }
+            guard index >= 0, index < count else { return }
+            let ptr = elementPtr(for: index)
+            newValue?.storeAsElement(atPtr: ptr, endianness)
         }
     }
     
     public subscript(index: Int) -> Float32? {
         get { return self[index].float32 }
         set {
-            guard let item = element(at: index) else { return }
-            if let newValue = newValue { item.float32 = newValue }
+            guard index >= 0, index < count else { return }
+            let ptr = elementPtr(for: index)
+            newValue?.storeAsElement(atPtr: ptr, endianness)
         }
     }
     
     public subscript(index: Int) -> Float64? {
         get { return self[index].float64 }
         set {
-            guard let item = element(at: index) else { return }
-            if let newValue = newValue { item.float64 = newValue }
+            guard index >= 0, index < count else { return }
+            let ptr = elementPtr(for: index)
+            newValue?.storeAsElement(atPtr: ptr, endianness)
         }
     }
     
     public subscript(index: Int) -> String? {
         get { return self[index].string }
         set {
-            guard let item = element(at: index) else { return }
-            if let newValue = newValue { item.string = newValue }
+            guard index >= 0, index < count else { return }
+            let ptr = elementPtr(for: index)
+            newValue?.storeAsElement(atPtr: ptr, endianness)
         }
     }
     
     public subscript(index: Int) -> Data? {
         get { return self[index].binary }
         set {
-            guard let item = element(at: index) else { return }
-            if let newValue = newValue { item.binary = newValue }
+            guard index >= 0, index < count else { return }
+            let ptr = elementPtr(for: index)
+            newValue?.storeAsElement(atPtr: ptr, endianness)
         }
     }
     
     
-    /// Adds a new element with the given value, to the end of the array.
+    /// Adds a new bool value to the end of the array.
     ///
     /// - Parameter value: The value to be added to the array.
     ///
-    /// - Returns: The result fo the operation, .success when the operation was succesful.
+    /// - Returns: success or an error indicator.
     
     @discardableResult
-    public func append(_ value: BrbonBytes) -> Result {
+    public func append<T>(_ value: T) -> Result where T:BrbonCoder {
         
         
         // Prevent errors
         
         guard isArray else { return .onlySupportedOnArray }
-        guard value.brbonType == elementType else { return .typeConflict }
-
-        
-        // Not implemented yet
-        
-        guard !value.brbonType.isContainer else { fatalOrNil("Not implemented"); return .wrongType }
+        guard elementType == ItemType.bool else { return .typeConflict }
         
         
         // Store element
-
-        guard ensureValueStorage(for: value.brbonCount) == .success else { return .outOfStorage }
-        value.brbonBytes(toPtr: elementPtr(for: count32), endianness)
-        count32 += 1
+        
+        guard ensureValueStorage(for: value.elementByteCount) == .success else { return .outOfStorage }
+        value.storeAsElement(atPtr: elementPtr(for: count), endianness)
+        
+        
+        // Increase child counter
+        
+        count += 1
+        
         
         return .success
     }
-    
+
     
     /// Removes an item from the array.
     ///
@@ -162,19 +175,18 @@ public extension Item {
     ///
     /// - Parameter index: The index of the element to remove.
     ///
-    /// - Returns: An ignorable result, .success if the remove worked, a failure indicator if not.
+    /// - Returns: success or an error indicator.
     
     @discardableResult
     public func remove(at index: Int) -> Result {
-        let index = UInt32(index)
         guard isArray else { return .onlySupportedOnArray }
         guard index >= 0 else { return .indexBelowLowerBound }
-        guard index < count32 else { return .indexAboveHigherBound }
+        guard index < count else { return .indexAboveHigherBound }
         let srcPtr = elementPtr(for: index + 1)
         let dstPtr = elementPtr(for: index)
-        let len = Int((count32 - 1 - index) * elementByteCount)
+        let len = (count - 1 - index) * elementByteCount
         moveBlock(dstPtr, srcPtr, len)
-        count32 -= 1
+        count -= 1
         return .success
     }
 
@@ -188,7 +200,7 @@ public extension Item {
     /// - Returns: .success or an error indicator.
     
     @discardableResult
-    public func createNewElements(amount: UInt32 = 1, value: BrbonBytes? = nil) -> Result {
+    public func createNewElements<T>(amount: Int = 1, value: T? = nil) -> Result where T:BrbonCoder {
         
         guard isArray else { return .onlySupportedOnArray }
         
@@ -201,12 +213,12 @@ public extension Item {
         
         // Not implemented yet
         
-        guard !elementType!.isContainer else { fatalOrNil("Not implemented"); return .wrongType }
+        guard !elementType!.isContainer else { fatalOrNil("Not implemented"); return .typeConflict }
 
 
         // Ensure storage area
         
-        let bytesNeeded = amount * (value?.brbonCount ?? elementType!.brbonCount)
+        let bytesNeeded = amount * (value?.elementByteCount ?? elementType!.assumedValueByteCount)
         guard ensureValueStorage(for: bytesNeeded) == .success else { return .outOfStorage }
         
         
@@ -219,7 +231,7 @@ public extension Item {
             
             var loopCount = amount
             repeat {
-                value.brbonBytes(toPtr: elementPtr(for: count32 + loopCount - 1), endianness)
+                value.storeValue(atPtr: elementPtr(for: count + loopCount - 1), endianness)
                 loopCount -= 1
             } while loopCount > 0
             
@@ -228,14 +240,14 @@ public extension Item {
             
             // No default value, set the whole area to zero
             
-            let ptr = elementPtr(for: count32).assumingMemoryBound(to: UInt8.self)
+            let ptr = elementPtr(for: count).assumingMemoryBound(to: UInt8.self)
             Data(count: Int(bytesNeeded)).copyBytes(to: ptr, count: self.count)
         }
         
         
         // Increment the number of elements
 
-        count32 += amount
+        count += amount
         
         
         return .success
@@ -245,7 +257,7 @@ public extension Item {
     /// Inserts a new element at the given position.
     
     @discardableResult
-    public func insert(_ value: BrbonBytes, at index: Int) -> Result {
+    public func insert<T>(_ value: T, at index: Int) -> Result where T:BrbonCoder {
 
         
         // Prevent errors
@@ -258,45 +270,35 @@ public extension Item {
         
         // Not implemented yet
         
-        guard !value.brbonType.isContainer else { fatalOrNil("Not implemented"); return .wrongType }
+        guard !value.brbonType.isContainer else { fatalOrNil("Not implemented"); return .typeConflict }
         
         
         // Store element
         
-        guard ensureValueStorage(for: value.brbonCount) == .success else { return .outOfStorage }
+        guard ensureValueStorage(for: value.elementByteCount) == .success else { return .outOfStorage }
         
         
         // Copy the existing elements upward
         
-        let dstPtr = elementPtr(for: UInt32(index) + 1)
-        let srcPtr = elementPtr(for: UInt32(index))
-        let length = (count - index) * Int(elementByteCount)
+        let dstPtr = elementPtr(for: index + 1)
+        let srcPtr = elementPtr(for: index)
+        let length = (count - index) * elementByteCount
         moveBlock(dstPtr, srcPtr, length)
         
         
         // Insert the new element
         
-        value.brbonBytes(toPtr: elementPtr(for: UInt32(index)), endianness)
+        value.storeValue(atPtr: elementPtr(for: index), endianness)
         
         
         // Increase the number of elements
         
-        count32 += 1
+        count += 1
         
         
         return .success
     }
 
-    
-    /// Returns the type of the elements in this array.
-    ///
-    /// - Returns: The type of the elements or nil when this is not an array or the type is invalid.
-    
-    public var elementType: ItemType? {
-        guard isArray else { return nil }
-        return ItemType(valuePtr, endianness)
-    }
-    
     
     // *********************************
     // MARK: - Internal
@@ -316,17 +318,17 @@ public extension Item {
     ///   - bufferIncrements: The number of bytes with which to increment the buffer if it is too small.
     ///   - endianness: The endianness to be used in this dictionary manager.
     
-    internal static func createArray(
+    internal static func createArray<T>(
         atPtr: UnsafeMutableRawPointer,
         elementType: ItemType,
-        initialCount: UInt32 = 0,
-        initialValue: BrbonBytes? = nil,
+        initialCount: Int = 0,
+        initialValue: T? = nil,
         nameFieldDescriptor: NameFieldDescriptor,
-        parentOffset: UInt32,
-        elementValueLength: UInt32? = nil,
-        fixedItemLength: UInt32? = nil,
-        endianness: Endianness = machineEndianness) -> Bool {
-        
+        parentOffset: Int,
+        elementValueLength: Int? = nil,
+        fixedItemLength: Int? = nil,
+        endianness: Endianness = machineEndianness) -> Bool where T:BrbonCoder {
+    
         
         guard elementType != .null else { return false }
         if let initialValue = initialValue {
@@ -337,12 +339,12 @@ public extension Item {
         // Determine size of the value field
         // =================================
         
-        var itemSize: UInt32 = minimumItemByteCount + UInt32(nameFieldDescriptor.byteCount) + 8
+        var itemSize: Int = minimumItemByteCount + nameFieldDescriptor.byteCount + 8
         
         
         // Add the initial allocation for the elements
         
-        let elementSize = elementValueLength ?? elementType.defaultByteSize
+        let elementSize = elementValueLength ?? elementType.assumedValueByteCount
         if initialCount > 0 {
             itemSize += (elementSize * initialCount).roundUpToNearestMultipleOf8()
         }
@@ -353,7 +355,7 @@ public extension Item {
             
             // Range limit
             
-            guard fixedItemLength <= UInt32(Int32.max) else { return false }
+            guard fixedItemLength <= Int(Int32.max) else { return false }
             
             
             // If specified, the fixed item length must at least be large enough for the name field
@@ -371,105 +373,84 @@ public extension Item {
         
         var p = atPtr
         
-        ItemType.array.rawValue.brbonBytes(toPtr: p, endianness)
+        ItemType.array.storeValue(atPtr: p)
         p = p.advanced(by: 1)
         
-        UInt8(0).brbonBytes(toPtr: p, endianness)
+        ItemOptions.none.storeValue(atPtr: p)
         p = p.advanced(by: 1)
         
-        UInt8(0).brbonBytes(toPtr: p, endianness)
+        ItemFlags.none.storeValue(atPtr: p)
         p = p.advanced(by: 1)
         
-        nameFieldDescriptor.byteCount.brbonBytes(toPtr: p, endianness)
+        UInt8(nameFieldDescriptor.byteCount).storeValue(atPtr: p, endianness)
         p = p.advanced(by: 1)
         
-        itemSize.brbonBytes(toPtr: p, endianness)
+        UInt32(itemSize).storeValue(atPtr: p, endianness)
         p = p.advanced(by: 4)
         
-        parentOffset.brbonBytes(toPtr: p, endianness)
+        UInt32(parentOffset).storeValue(atPtr: p, endianness)
         p = p.advanced(by: 4)
         
-        initialCount.brbonBytes(toPtr: p, endianness)
+        UInt32(initialCount).storeValue(atPtr: p, endianness)
         p = p.advanced(by: 4)
         
         
         if nameFieldDescriptor.byteCount > 0 {
-            nameFieldDescriptor.brbonBytes(toPtr: p, endianness)
+            nameFieldDescriptor.storeValue(atPtr: p, endianness)
             p = p.advanced(by: Int(nameFieldDescriptor.byteCount))
         }
         
-        elementType.rawValue.brbonBytes(toPtr: p, endianness)
+        elementType.storeValue(atPtr: p)
         p = p.advanced(by: 1)
         
-        UInt8(0).brbonBytes(toPtr: p, endianness)
+        UInt8(0).storeValue(atPtr: p, endianness)
         p = p.advanced(by: 1)
         
-        UInt8(0).brbonBytes(toPtr: p, endianness)
+        UInt8(0).storeValue(atPtr: p, endianness)
         p = p.advanced(by: 1)
         
-        UInt8(0).brbonBytes(toPtr: p, endianness)
+        UInt8(0).storeValue(atPtr: p, endianness)
         p = p.advanced(by: 1)
         
-        let evLength = elementValueLength ?? elementType.defaultByteSize
-        evLength.brbonBytes(toPtr: p, endianness)
+        let evLength = elementValueLength ?? elementType.assumedValueByteCount
+        UInt32(evLength).storeValue(atPtr: p, endianness)
         p = p.advanced(by: 4)
         
-        var ecount = initialCount
-        while ecount > 0 {
+        let startOfElementsPtr = p
+        
+        var ecount = 0
+        while ecount < initialCount {
             
-            switch elementType {
-            
-            case .null, .array, .dictionary, .sequence: break
+            if let initialValue = initialValue {
                 
-            case .bool:
-                (initialValue ?? false).brbonBytes(toPtr: p, endianness)
-                p = p.advanced(by: 1)
+                initialValue.storeAsElement(atPtr: startOfElementsPtr.advanced(by: evLength * ecount), endianness)
                 
-            case .uint8, .int8:
-                (initialValue ?? 0).brbonBytes(toPtr: p, endianness)
-                p = p.advanced(by: 1)
+                let remainder = evLength - initialValue.elementByteCount
+                if remainder > 0 {
+                    Data(count: remainder).storeValue(atPtr: startOfElementsPtr.advanced(by: evLength * ecount).advanced(by: initialValue.elementByteCount), endianness)
+                }
                 
-            case .uint16, .int16:
-                (initialValue ?? 0).brbonBytes(toPtr: p, endianness)
-                p = p.advanced(by: 2)
                 
-            case .uint32, .int32:
-                (initialValue ?? 0).brbonBytes(toPtr: p, endianness)
-                p = p.advanced(by: 4)
+            } else {
                 
-            case .float32:
-                (initialValue ?? Float32(0)).brbonBytes(toPtr: p, endianness)
-                p = p.advanced(by: 4)
-                
-            case .uint64, .int64, .float64:
-                (initialValue ?? 0).brbonBytes(toPtr: p, endianness)
-                p = p.advanced(by: 8)
-                
-            case .string:
-                (initialValue ?? "").brbonBytes(toPtr: p, endianness)
-                p = p.advanced(by: Int((initialValue ?? "").brbonCount))
-                
-            case .binary:
-                (initialValue ?? Data()).brbonBytes(toPtr: p, endianness)
-                p = p.advanced(by: Int((initialValue ?? Data()).brbonCount))
+                Data(count: evLength).storeValue(atPtr: startOfElementsPtr.advanced(by: evLength * ecount), endianness)
             }
             
-            ecount -= 1
+            ecount += 1
         }
+        
+        
+        let remainder = itemSize - atPtr.distance(to: startOfElementsPtr.advanced(by: evLength * ecount))
+        if remainder > 0 {
+            Data(count: remainder).storeValue(atPtr: startOfElementsPtr.advanced(by: evLength * ecount), endianness)
+        }
+
         
         // Success
         
         return true
     }
 
-    
-    /// The number of bytes in an element
-    
-    internal var elementByteCount: UInt32 {
-        get { return UInt32(valuePtr.advanced(by: 4), endianness) }
-        set { newValue.brbonBytes(toPtr: valuePtr.advanced(by: 4), endianness) }
-    }
-    
     
     /// The offset from the first byte of the first element to the indexed element.
     ///
@@ -479,8 +460,8 @@ public extension Item {
     ///
     /// - Returns: The offset.
     
-    internal func elementOffset(for index: UInt32) -> UInt32 {
-        return UInt32(index) * elementByteCount
+    internal func elementOffset(for index: Int) -> Int {
+        return index * elementByteCount
     }
     
     
@@ -492,16 +473,16 @@ public extension Item {
     ///
     /// - Returns: The pointer.
 
-    internal func elementPtr(for index: UInt32) -> UnsafeMutableRawPointer {
-        return valuePtr.advanced(by: 8 + Int(elementOffset(for: index)))
+    internal func elementPtr(for index: Int) -> UnsafeMutableRawPointer {
+        return valuePtr.advanced(by: 8 + elementOffset(for: index))
     }
     
     private func element(at index: Int) -> Item? {
         guard isArray else { return fatalOrNil("Subscript with Int on non-array") }
-        guard index >= 0 && index < Int(count) else {
+        guard index >= 0 && index < count else {
             let range = Range(uncheckedBounds: (lower: 0, upper: count))
             return fatalOrNil("Index (\(index)) out of range \(range)")
         }
-        return Item.init(basePtr: elementPtr(for: UInt32(index)), parentPtr: basePtr, endianness: endianness)
+        return Item.init(basePtr: elementPtr(for: index), parentPtr: basePtr, endianness: endianness)
     }
 }

@@ -14,31 +14,13 @@ import BRUtils
 
 public enum ItemOptions: UInt8 {
     case none = 0
-}
-
-
-// Extend the enum with the brbon protocol
-
-extension ItemOptions: BrbonBytes {
     
-    public var brbonCount: UInt32 {
-        return 1
+    internal func storeValue(atPtr: UnsafeMutableRawPointer) {
+        self.rawValue.storeValue(atPtr: atPtr, machineEndianness)
     }
     
-    public var brbonType: ItemType {
-        return .null
-    }
-    
-    public func brbonBytes(_ endianness: Endianness) -> Data {
-        return Data(bytes: [self.rawValue])
-    }
-    
-    public func brbonBytes(toPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        self.rawValue.brbonBytes(toPtr: toPtr, endianness)
-    }
-    
-    public init?(_ fromPtr: UnsafeRawPointer, _ endianness: Endianness) {
-        let v = UInt8.init(fromPtr, endianness)
-        self.init(rawValue: v)
+    internal static func readValue(atPtr: UnsafeMutableRawPointer) -> ItemOptions? {
+        let v = UInt8.readValue(atPtr: atPtr, machineEndianness)
+        return self.init(rawValue: v)
     }
 }

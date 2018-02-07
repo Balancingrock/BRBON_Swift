@@ -261,6 +261,13 @@ public class DictionaryManager {
     public func remove(_ name: String) -> Result {
         return rootItem.remove(name)
     }
+    
+    
+    /// Update an item or add a new item.
+    
+    public func updateValue<T>(_ value: T, forName name: String) -> Result where T:BrbonCoder {
+        return rootItem.updateValue(value, forName: name)
+    }
 }
 
 extension DictionaryManager: BufferManagerProtocol {
@@ -282,11 +289,11 @@ extension DictionaryManager: BufferManagerProtocol {
     ///
     /// - Returns: True on success, false on failure.
     
-    internal func increaseBufferSize(by bytes: UInt32) -> Bool {
+    internal func increaseBufferSize(by bytes: Int) -> Bool {
         
         guard bufferIncrements > 0 else { return false }
         
-        let increase = Int(max(bytes, bufferIncrements))
+        let increase = max(bytes, Int(bufferIncrements))
         let newBuffer = UnsafeMutableRawBufferPointer.allocate(count: buffer.count + increase)
         
         _ = Darwin.memmove(newBuffer.baseAddress!, buffer.baseAddress!, buffer.count)

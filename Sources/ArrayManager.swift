@@ -16,7 +16,7 @@ public class ArrayManager {
     
     internal(set) var endianness: Endianness
     
-    public var bufferIncrements: UInt32
+    public var bufferIncrements: Int
     
     internal var basePtr: UnsafeMutableRawPointer
     internal var rootItem: Item!
@@ -38,18 +38,18 @@ public class ArrayManager {
     ///   - bufferIncrements: The number of bytes with which to increment the buffer if it is too small.
     ///   - endianness: The endianness to be used in this dictionary manager.
     
-    public init?(
+    public init?<T>(
         elementType: ItemType,
         initialCount: UInt32 = 0,
-        initialValue: BrbonBytes? = 0,
+        initialValue: T? = nil,
         elementValueLength: UInt32? = nil,
         name: String? = nil,
         nameFieldLength: UInt8? = nil,
         fixedItemLength: UInt32? = nil,
-        initialBufferSize: UInt32 = 1024,
-        bufferIncrements: UInt32 = 1024,
-        endianness: Endianness = machineEndianness) {
-        
+        initialBufferSize: Int = 1024,
+        bufferIncrements: Int = 1024,
+        endianness: Endianness = machineEndianness) where T: BrbonCoder {
+    
         
         guard elementType != .null else { return nil }
         
@@ -76,7 +76,7 @@ public class ArrayManager {
         
         // Add the initial allocation for the elements
         
-        let elementSize = elementValueLength ?? elementType.defaultByteSize
+        let elementSize = elementValueLength ?? elementType.assumedValueByteCount
         if initialCount > 0 {
             itemSize += (elementSize * initialCount).roundUpToNearestMultipleOf8()
             bufferSize = max(itemSize, bufferSize) // Up the buffer size if the initial elements don't fit.
@@ -121,7 +121,7 @@ public class ArrayManager {
         
         // Allocate the buffer
         
-        self.buffer = UnsafeMutableRawBufferPointer.allocate(count: Int(bufferSize))
+        self.buffer = UnsafeMutableRawBufferPointer.allocate(count: bufferSize)
         self.basePtr = buffer.baseAddress!
         
         
@@ -258,7 +258,7 @@ public class ArrayManager {
     /// - Returns: An ignorable result, .success if the append worked, a failure indicator if not.
     
     @discardableResult
-    public func append(_ value: BrbonBytes) -> Result { return rootItem.append(value) }
+    public func append<T>(_ value: T) -> Result where T:BrbonCoder { return rootItem.append(value) }
     
     
     /// Removes an item from the array.
@@ -282,7 +282,7 @@ public class ArrayManager {
     /// - Returns: .success or an error indicator.
     
     @discardableResult
-    public func createNewElements(amount: UInt32 = 1, value: BrbonBytes? = nil) -> Result {
+    public func createNewElements<T>(amount: UInt32 = 1, value: T? = nil) -> Result where T:BrbonCoder {
         return rootItem.createNewElements(amount: amount, value: value)
     }
     
@@ -290,7 +290,7 @@ public class ArrayManager {
     /// Inserts a new element at the given position.
     
     @discardableResult
-    public func insert(_ value: BrbonBytes, at index: Int) -> Result { return rootItem.insert(value, at: index) }
+    public func insert<T>(_ value: T, at index: Int) -> Result where T:BrbonCoder { return rootItem.insert(value, at: index) }
 }
 
 extension ArrayManager: BufferManagerProtocol {
@@ -298,7 +298,7 @@ extension ArrayManager: BufferManagerProtocol {
     
     /// BufferManagerProtocol
     
-    var unusedByteCount: UInt32 { return UInt32(buffer.count) - rootItem.byteCount }
+    var unusedByteCount: Int { return buffer.count - rootItem.byteCount }
     
     
     /// Increases the size of the buffer by at least the given amount of bytes.
@@ -312,11 +312,11 @@ extension ArrayManager: BufferManagerProtocol {
     ///
     /// - Returns: True on success, false on failure.
     
-    internal func increaseBufferSize(by bytes: UInt32) -> Bool {
+    internal func increaseBufferSize(by bytes: Int) -> Bool {
         
         guard bufferIncrements > 0 else { return false }
         
-        let increase = Int(max(bytes, bufferIncrements))
+        let increase = max(bytes, Int(bufferIncrements))
         let newBuffer = UnsafeMutableRawBufferPointer.allocate(count: buffer.count + increase)
         
         _ = Darwin.memmove(newBuffer.baseAddress!, buffer.baseAddress!, buffer.count)

@@ -161,7 +161,7 @@ public enum ItemType: UInt8 {
     
     public var useValueCountFieldAsValue: Bool { return (self.rawValue & 0x80) != 0 }
     
-    public var defaultByteSize: UInt32 {
+    public var assumedValueByteCount: Int {
         switch self {
         case .null: return 0
         case .bool, .int8, .uint8: return 1
@@ -173,7 +173,7 @@ public enum ItemType: UInt8 {
         }
     }
     
-    public var isVariableLength: Bool {
+    public var hasVariableLength: Bool {
         switch self {
         case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32, .int64, .uint64, .float64: return false
         case .string, .binary, .array, .dictionary, .sequence: return true
@@ -186,52 +186,19 @@ public enum ItemType: UInt8 {
         case .array, .dictionary, .sequence: return true
         }
     }
-    
-    public static func typeFor(_ value: BrbonBytes) -> ItemType? {
-        switch value {
-        case is Bool: return .bool
-        case is Int8: return .int8
-        case is UInt8: return .uint8
-        case is Int16: return .int16
-        case is UInt16: return .uint16
-        case is Int32: return .int32
-        case is UInt32: return .uint32
-        case is Int64: return .int64
-        case is UInt64: return .uint64
-        case is Float32: return .float32
-        case is Float64: return .float64
-        case is String: return .string
-        case is Array<BrbonBytes>: return .array
-        case is Dictionary<String, BrbonBytes>: return .dictionary
-        case is Data: return .binary
-        default: return nil
-        }
-    }
 }
 
 
 // Extend the enum with the brbon protocol
 
-extension ItemType: BrbonBytes {
+extension ItemType {
     
-    public var brbonCount: UInt32 {
-        return 1
+    internal func storeValue(atPtr: UnsafeMutableRawPointer) {
+        self.rawValue.storeValue(atPtr: atPtr, machineEndianness)
     }
     
-    public var brbonType: ItemType {
-        return .null
-    }
-    
-    public func brbonBytes(_ endianness: Endianness) -> Data {
-        return Data(bytes: [self.rawValue])
-    }
-    
-    public func brbonBytes(toPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        self.rawValue.brbonBytes(toPtr: toPtr, endianness)
-    }
-    
-    public init?(_ fromPtr: UnsafeRawPointer, _ endianness: Endianness) {
-        let v = UInt8.init(fromPtr, endianness)
-        self.init(rawValue: v)
+    internal static func readValue(atPtr: UnsafeMutableRawPointer) -> ItemType? {
+        let v = UInt8.readValue(atPtr: atPtr, machineEndianness)
+        return ItemType(rawValue: v)
     }
 }

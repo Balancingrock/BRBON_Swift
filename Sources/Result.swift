@@ -12,7 +12,7 @@ import Foundation
 public enum Result: Int {
 
     case success = 0
-    case wrongType = 1
+//    case wrongType = 1
     case outOfStorage = 2
     case dataInconsistency = 3
     case onlySupportedOnArray = 4
@@ -28,7 +28,7 @@ public enum Result: Int {
     public var description: String {
         switch self {
         case .success: return "Succesful execution"
-        case .wrongType: return "Wrong type"
+//        case .wrongType: return "Wrong type"
         case .outOfStorage: return "Out of storage"
         case .dataInconsistency: return "Data inconsistency"
         case .onlySupportedOnArray: return "Operation only supported on arrays"

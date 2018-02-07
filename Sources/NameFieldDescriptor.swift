@@ -10,15 +10,16 @@ import Foundation
 import BRUtils
 
 
-internal struct NameFieldDescriptor {
+public struct NameFieldDescriptor {
     
-    let data: Data?
-    let crc: UInt16
-    let byteCount: UInt8
+    internal let data: Data?
+    internal let crc: UInt16
+    internal let byteCount: Int
     
-    init?(_ name: String?, _ fixedLength: UInt8? = nil) {
+    internal init?(_ name: String?, _ fixedLength: Int? = nil) {
         
-        var length: UInt8 = 0
+        var length: Int = 0
+        
         
         // Create a data object from the name with maximal 245 bytes
         
@@ -36,10 +37,9 @@ internal struct NameFieldDescriptor {
         if let fixedLength = fixedLength {
             guard fixedLength <= 245 else { return nil }
             if Int(fixedLength) < (data?.count ?? 0) { return nil }
-            length = fixedLength
+            length = Int(fixedLength)
         } else {
-            let tmp = self.data?.count ?? 0
-            length = UInt8(tmp)
+            length = self.data?.count ?? 0
         }
         
         
@@ -53,23 +53,30 @@ internal struct NameFieldDescriptor {
         self.crc = data?.crc16() ?? 0
     }
     
-    init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        crc = UInt16(fromPtr, endianness)
-        let count = UInt8(fromPtr.advanced(by: 2), endianness)
-        byteCount = 3 + count
-        data = Data(bytes: fromPtr.advanced(by: 3), count: Int(count))
+    fileprivate init(data: Data?, crc: UInt16, byteCount: Int) {
+        self.data = data
+        self.crc = crc
+        self.byteCount = byteCount
     }
     
-    func brbonBytes(toPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+    internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         guard let data = data else { return }
-        crc.brbonBytes(toPtr: toPtr, endianness)
-        (byteCount - 3).brbonBytes(toPtr: toPtr.advanced(by: 2), endianness)
-        let dataPtr = toPtr.advanced(by: 3).assumingMemoryBound(to: UInt8.self)
+        crc.storeValue(atPtr: atPtr, endianness)
+        UInt8(data.count).storeValue(atPtr: atPtr.advanced(by: 2), endianness)
+        let dataPtr = atPtr.advanced(by: 3).assumingMemoryBound(to: UInt8.self)
         data.copyBytes(to: dataPtr, count: data.count)
-        let remainder = Int(byteCount - 3 - UInt8(data.count))
+        let remainder = byteCount - 3 - data.count
         if remainder > 0 {
-            let remainderPtr = toPtr.advanced(by: Int(byteCount) - remainder).assumingMemoryBound(to: UInt8.self)
+            let remainderPtr = atPtr.advanced(by: Int(byteCount) - remainder).assumingMemoryBound(to: UInt8.self)
             Data(count: remainder).copyBytes(to: remainderPtr, count: remainder)
         }
+    }
+
+    internal static func readValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) -> NameFieldDescriptor {
+        let crc = UInt16.readValue(atPtr: atPtr, endianness)
+        let count = Int(UInt8.readValue(atPtr: atPtr.advanced(by: 2), endianness))
+        let byteCount = 3 + count
+        let data = Data(bytes: atPtr.advanced(by: 3), count: Int(count))
+        return NameFieldDescriptor(data: data, crc: crc, byteCount: byteCount)
     }
 }

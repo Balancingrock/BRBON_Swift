@@ -27,7 +27,7 @@ extension Item {
     /// - Returns: .success, or a failure code.
     
     @discardableResult
-    public func addNull(name: String, nameFieldByteCount: UInt8? = nil, valueByteCount: UInt32? = nil) -> Result {
+    public func addNull(name: String, nameFieldByteCount: Int? = nil, valueByteCount: Int? = nil) -> Result {
         
         guard isDictionary else { return .onlySupportedOnDictionary }
         
@@ -41,7 +41,7 @@ extension Item {
         
         guard let nfd = NameFieldDescriptor(name, nameFieldByteCount) else { return .illegalNameField }
         
-        let bytes = minimumItemByteCount + UInt32(nfd.byteCount) + (valueByteCount ?? 0)
+        let bytes = minimumItemByteCount + nfd.byteCount + (valueByteCount ?? 0)
 
         guard ensureValueStorage(for: bytes) == .success else { return .outOfStorage }
         
@@ -53,7 +53,7 @@ extension Item {
         
         // Increment the number of children
         
-        count32 += 1
+        count += 1
         
         return .success
     }
@@ -160,7 +160,7 @@ extension Item {
         set {
             guard let newValue = newValue else { return }
             guard let strLen = newValue.data(using: .utf8)?.count, strLen < Int(Int32.max) else { return }
-            subscriptAssignment(for: name, valueByteCount: newValue.brbonCount, assignment: { $0.string = newValue })
+            subscriptAssignment(for: name, valueByteCount: newValue.byteCountItem(), assignment: { $0.string = newValue })
         }
     }
     
@@ -168,8 +168,8 @@ extension Item {
         get { return self[name].binary }
         set {
             guard let newValue = newValue else { return }
-            guard newValue.brbonCount < UInt32(Int32.max) else { return }
-            subscriptAssignment(for: name, valueByteCount: newValue.brbonCount, assignment: { $0.binary = newValue })
+            guard newValue.byteCountItem() < Int(Int32.max) else { return }
+            subscriptAssignment(for: name, valueByteCount: newValue.byteCountItem(), assignment: { $0.binary = newValue })
         }
     }
     
@@ -186,16 +186,44 @@ extension Item {
         guard let item = findItem(for: name) else { return .itemNotFound }
         
         let dstPtr = item.basePtr
-        let srcPtr = item.basePtr.advanced(by: Int(item.byteCount))
+        let srcPtr = item.basePtr.advanced(by: item.byteCount)
         let len = srcPtr.distance(to: newItemPtr)
         
         moveBlock(dstPtr, srcPtr, len)
         
-        count32 -= 1
+        count -= 1
         
         return .success
     }
     
+    
+    /// Updates the value or adds a new value for the given name
+    
+    @discardableResult
+    public func updateValue<T>(_ value: T, forName name: String) -> Result where T:BrbonCoder {
+        
+        guard isDictionary else { return .onlySupportedOnDictionary }
+        
+        guard let nfd = NameFieldDescriptor(name, nameFieldByteCount), nfd.data != nil else { return .illegalNameField }
+
+        if let item = findItem(with: nfd.crc, stringData: nfd.data!) {
+            
+            // Replace value
+            
+            // Ensure enough space is available
+            
+            let availableByteCount = byteCount
+            let neededByteCount = minimumItemByteCount + nfd.byteCount + value.byteCountItem(nfd)
+            
+            
+            
+        } else {
+            
+            // Add new value
+        }
+        
+        return .success
+    }
     
     
     // *****************
@@ -205,7 +233,7 @@ extension Item {
     
     /// Helper for subscript assignment
     
-    fileprivate func subscriptAssignment(for name: String, valueByteCount: UInt32, assignment: (Item) -> ()) {
+    fileprivate func subscriptAssignment(for name: String, valueByteCount: Int, assignment: (Item) -> ()) {
         if let found = findItem(for: name) {
             assignment(found)
         } else {
@@ -223,7 +251,7 @@ extension Item {
         var p = valuePtr
         var remainder = count
         while remainder > 0 {
-            let byteCount = Int(UInt32(p.advanced(by: itemByteCountOffset)))
+            let byteCount = Int(UInt32.readValue(atPtr: p.advanced(by: itemByteCountOffset), endianness))
             p = p.advanced(by: byteCount)
             remainder -= 1
         }
@@ -245,16 +273,16 @@ extension Item {
     internal static func createDictionary(
         atPtr: UnsafeMutableRawPointer,
         nameFieldDescriptor: NameFieldDescriptor,
-        parentOffset: UInt32,
-        elementValueLength: UInt32? = nil,
-        fixedItemLength: UInt32? = nil,
+        parentOffset: Int,
+        elementValueLength: Int? = nil,
+        fixedItemLength: Int? = nil,
         endianness: Endianness = machineEndianness) -> Bool {
         
         
         // Determine size of the value field
         // =================================
         
-        var itemSize: UInt32 = minimumItemByteCount + UInt32(nameFieldDescriptor.byteCount)
+        var itemSize: Int = minimumItemByteCount + nameFieldDescriptor.byteCount
         
         
         if let fixedItemLength = fixedItemLength {
@@ -262,7 +290,7 @@ extension Item {
             
             // Range limit
             
-            guard fixedItemLength <= UInt32(Int32.max) else { return false }
+            guard fixedItemLength <= Int(Int32.max) else { return false }
             
             
             // If specified, the fixed item length must at least be large enough for the name field
@@ -281,30 +309,30 @@ extension Item {
         
         var p = atPtr
         
-        ItemType.dictionary.rawValue.brbonBytes(toPtr: p, endianness)
+        ItemType.dictionary.storeValue(atPtr: p)
         p = p.advanced(by: 1)
         
-        UInt8(0).brbonBytes(toPtr: p, endianness)
+        ItemOptions.none.storeValue(atPtr: p)
         p = p.advanced(by: 1)
         
-        UInt8(0).brbonBytes(toPtr: p, endianness)
+        ItemFlags.none.storeValue(atPtr: p)
         p = p.advanced(by: 1)
         
-        nameFieldDescriptor.byteCount.brbonBytes(toPtr: p, endianness)
+        UInt8(nameFieldDescriptor.byteCount).storeValue(atPtr: p, endianness)
         p = p.advanced(by: 1)
         
-        itemSize.brbonBytes(toPtr: p, endianness)
+        UInt32(itemSize).storeValue(atPtr: p, endianness)
         p = p.advanced(by: 4)
         
-        parentOffset.brbonBytes(toPtr: p, endianness)
+        UInt32(parentOffset).storeValue(atPtr: p, endianness)
         p = p.advanced(by: 4)
         
-        UInt32(0).brbonBytes(toPtr: p, endianness)
+        UInt32(0).storeValue(atPtr: p, endianness)
         p = p.advanced(by: 4)
         
         
         if nameFieldDescriptor.byteCount > 0 {
-            nameFieldDescriptor.brbonBytes(toPtr: p, endianness)
+            nameFieldDescriptor.storeValue(atPtr: p, endianness)
             p = p.advanced(by: Int(nameFieldDescriptor.byteCount))
         }
                 
@@ -345,7 +373,7 @@ extension Item {
         
         forEachAbortOnTrue() {
             if $0.nameHash != hash { return false }
-            if $0.nameCount != UInt8(stringData.count) { return false }
+            if $0.nameCount != stringData.count { return false }
             if $0.nameData != stringData { return false }
             ptrFound = $0.basePtr
             return true

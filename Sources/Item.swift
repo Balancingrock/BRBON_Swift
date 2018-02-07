@@ -41,12 +41,7 @@ internal let elementByteCountOffset = 4
 
 // The smallest possible item size
 
-internal let minimumItemByteCount: UInt32 = 16
-
-
-// The maximum accepted value for UInt32
-
-internal let UInt32Max = UInt32(Int32.max)
+internal let minimumItemByteCount: Int = 16
 
 
 /// If this variable is set to 'true', some imposible-to-reach code parts will raise the fatal error instead of returning nil.
@@ -59,8 +54,8 @@ public var brbonAllowFatalError: Bool = true
 /// The buffer manager protocol
 
 internal protocol BufferManagerProtocol {
-    var unusedByteCount: UInt32 { get }
-    func increaseBufferSize(by bytes: UInt32) -> Bool
+    var unusedByteCount: Int { get }
+    func increaseBufferSize(by bytes: Int) -> Bool
     func moveBlock(_ dstPtr: UnsafeMutableRawPointer, _ srcPtr: UnsafeMutableRawPointer, _ length: Int)
     func moveEndBlock(_ dstPtr: UnsafeMutableRawPointer, _ srcPtr: UnsafeMutableRawPointer)
 }
@@ -86,7 +81,12 @@ public class Item {
     let endianness: Endianness
     
     
-    /// A reference back to a manager
+    /// Reads as true if the item is an element (i.e. an item inside an array)
+    
+    let isElement: Bool
+
+    
+    /// A reference back to a buffer manager
     
     internal var manager: BufferManagerProtocol?
     
@@ -98,177 +98,11 @@ public class Item {
         self.parentPtr = parentPtr
         self.manager = manager
         self.endianness = endianness
+        self.isElement = (parentPtr != nil) ? (parentPtr!.assumingMemoryBound(to: UInt8.self).pointee == ItemType.array.rawValue) : false
     }
     
     
-    /// These accessors must be in the main class because they are overriden in the NullItem class.
-    
-    var bool: Bool? {
-        get {
-            guard isBool else { return nil }
-            return Bool(valuePtr, endianness)
-        }
-        set {
-            if isNull && !(parentItem?.isArray ?? false) { type = .bool }
-            guard isBool else { return }
-            newValue?.brbonBytes(toPtr: valuePtr, endianness)
-        }
-    }
-    
-    var uint8: UInt8? {
-        get {
-            guard isUInt8 else { return nil }
-            return UInt8(valuePtr, endianness)
-        }
-        set {
-            if isNull && !(parentItem?.isArray ?? false) { type = .uint8 }
-            guard isUInt8 else { return }
-            newValue?.brbonBytes(toPtr: valuePtr, endianness)
-        }
-    }
-    
-    var uint16: UInt16? {
-        get {
-            guard isUInt16 else { return nil }
-            return UInt16(valuePtr, endianness)
-        }
-        set {
-            if isNull && !(parentItem?.isArray ?? false) { type = .uint16 }
-            guard isUInt16 else { return }
-            newValue?.brbonBytes(toPtr: valuePtr, endianness)
-        }
-    }
-    
-    var uint32: UInt32? {
-        get {
-            guard isUInt32 else { return nil }
-            return UInt32(valuePtr, endianness)
-        }
-        set {
-            if isNull && !(parentItem?.isArray ?? false) { type = .uint32 }
-            guard isUInt32 else { return }
-            newValue?.brbonBytes(toPtr: valuePtr, endianness)
-        }
-    }
-    
-    var uint64: UInt64? {
-        get {
-            guard isUInt64 else { return nil }
-            return UInt64(valuePtr, endianness)
-        }
-        set {
-            if isNull && !(parentItem?.isArray ?? false) { type = .uint64 }
-            guard isUInt64 else { return }
-            newValue?.brbonBytes(toPtr: valuePtr, endianness)
-        }
-    }
-    
-    var int8: Int8? {
-        get {
-            guard isInt8 else { return nil }
-            return Int8(valuePtr, endianness)
-        }
-        set {
-            if isNull && !(parentItem?.isArray ?? false) { type = .int8 }
-            guard isInt8 else { return }
-            newValue?.brbonBytes(toPtr: valuePtr, endianness)
-        }
-    }
-    
-    var int16: Int16? {
-        get {
-            guard isInt16 else { return nil }
-            return Int16(valuePtr, endianness)
-        }
-        set {
-            if isNull && !(parentItem?.isArray ?? false) { type = .int16 }
-            guard isInt16 else { return }
-            newValue?.brbonBytes(toPtr: valuePtr, endianness)
-        }
-    }
-    
-    var int32: Int32? {
-        get {
-            guard isInt32 else { return nil }
-            return Int32(valuePtr, endianness)
-        }
-        set {
-            if isNull && !(parentItem?.isArray ?? false) { type = .int32 }
-            guard isInt32 else { return }
-            newValue?.brbonBytes(toPtr: valuePtr, endianness)
-        }
-    }
-    
-    var int64: Int64? {
-        get {
-            guard isInt64 else { return nil }
-            return Int64(valuePtr, endianness)
-        }
-        set {
-            if isNull && !(parentItem?.isArray ?? false) {
-                guard ensureValueStorage(for: 8) == .success else { return }
-                type = .int64
-            }
-            guard isInt64 else { return }
-            newValue?.brbonBytes(toPtr: valuePtr, endianness)
-        }
-    }
-    
-    var float32: Float32? {
-        get {
-            guard isFloat32 else { return nil }
-            return Float32(valuePtr, endianness)
-        }
-        set {
-            if isNull && !(parentItem?.isArray ?? false) { type = .float32 }
-            guard isFloat32 else { return }
-            newValue?.brbonBytes(toPtr: valuePtr, endianness)
-        }
-    }
-    
-    var float64: Float64? {
-        get {
-            guard isFloat64 else { return nil }
-            return Float64(valuePtr, endianness)
-        }
-        set {
-            if isNull && !(parentItem?.isArray ?? false) {
-                guard ensureValueStorage(for: 8) == .success else { return }
-                type = .float64
-            }
-            guard isFloat64 else { return }
-            newValue?.brbonBytes(toPtr: valuePtr, endianness)
-        }
-    }
-    
-    var string: String? {
-        get {
-            guard isString else { return nil }
-            return String(valuePtr, endianness)
-        }
-        set {
-            if isNull { type = .string }
-            guard isString else { return }
-            guard ensureValueStorage(for: newValue?.brbonCount ?? 0) == .success else { return }
-            newValue?.brbonBytes(toPtr: valuePtr, endianness)
-        }
-    }
-    
-    var binary: Data? {
-        get {
-            guard isBinary else { return nil }
-            return Data(valuePtr, endianness)
-        }
-        set {
-            if isNull { type = .binary }
-            guard isBinary else { return }
-            guard ensureValueStorage(for: newValue?.brbonCount ?? 0) == .success else { return }
-            newValue?.brbonBytes(toPtr: valuePtr, endianness)
-        }
-    }
-}
-
-internal extension Item {
+    /// This null type is used when a requested item does not exists but an item must be returned.
     
     internal static let nullItem: NullItem = {
         let nullItemBuffer = UnsafeMutableRawBufferPointer.allocate(count: Int(minimumItemByteCount))
@@ -278,14 +112,306 @@ internal extension Item {
             parentOffset: 0)
         return NullItem(basePtr: nullItemBuffer.baseAddress!, parentPtr: nil)
     }()
+
+    
+    /// These accessors must be in the main class because they are overriden in the NullItem class.
+    
+    var bool: Bool? {
+        get {
+            guard isBool else { return nil }
+            return Bool.readValue(atPtr: valuePtr, endianness)
+        }
+        set {
+            if isElement {
+                guard isBool else { return }
+                newValue?.storeAsElement(atPtr: basePtr, endianness)
+            } else {
+                if let newValue = newValue {
+                    if isNull { type = .bool }
+                    guard isBool else { return }
+                    newValue.storeValue(atPtr: valuePtr, endianness)
+                } else {
+                    type = .null
+                }
+            }
+        }
+    }
+    
+    var uint8: UInt8? {
+        get {
+            guard isUInt8 else { return nil }
+            return UInt8.readValue(atPtr: valuePtr, endianness)
+        }
+        set {
+            if isElement {
+                guard isUInt8 else { return }
+                newValue?.storeAsElement(atPtr: basePtr, endianness)
+            } else {
+                if let newValue = newValue {
+                    if isNull { type = .uint8 }
+                    guard isUInt8 else { return }
+                    newValue.storeValue(atPtr: valuePtr, endianness)
+                } else {
+                    type = .null
+                }
+            }
+        }
+    }
+    
+    var uint16: UInt16? {
+        get {
+            guard isUInt16 else { return nil }
+            return UInt16.readValue(atPtr: valuePtr, endianness)
+        }
+        set {
+            if isElement {
+                guard isUInt16 else { return }
+                newValue?.storeAsElement(atPtr: basePtr, endianness)
+            } else {
+                if let newValue = newValue {
+                    if isNull { type = .uint16 }
+                    guard isUInt16 else { return }
+                    newValue.storeValue(atPtr: valuePtr, endianness)
+                } else {
+                    type = .null
+                }
+            }
+        }
+    }
+    
+    var uint32: UInt32? {
+        get {
+            guard isUInt32 else { return nil }
+            return UInt32.readValue(atPtr: valuePtr, endianness)
+        }
+        set {
+            if isElement {
+                guard isUInt32 else { return }
+                newValue?.storeAsElement(atPtr: basePtr, endianness)
+            } else {
+                if let newValue = newValue {
+                    if isNull { type = .uint32 }
+                    guard isUInt32 else { return }
+                    newValue.storeValue(atPtr: valuePtr, endianness)
+                } else {
+                    type = .null
+                }
+            }
+        }
+    }
+    
+    var uint64: UInt64? {
+        get {
+            guard isUInt64 else { return nil }
+            return UInt64.readValue(atPtr: valuePtr, endianness)
+        }
+        set {
+            if isElement {
+                guard isUInt64 else { return }
+                newValue?.storeAsElement(atPtr: basePtr, endianness)
+            } else {
+                if let newValue = newValue {
+                    if isNull {
+                        guard ensureValueStorage(for: newValue.valueByteCount) == .success else { return }
+                        type = .uint64
+                    }
+                    guard isUInt64 else { return }
+                    newValue.storeValue(atPtr: valuePtr, endianness)
+                } else {
+                    type = .null
+                }
+            }
+        }
+    }
+    
+    var int8: Int8? {
+        get {
+            guard isInt8 else { return nil }
+            return Int8.readValue(atPtr: valuePtr, endianness)
+        }
+        set {
+            if isElement {
+                guard isInt8 else { return }
+                newValue?.storeAsElement(atPtr: basePtr, endianness)
+            } else {
+                if let newValue = newValue {
+                    if isNull { type = .int8 }
+                    guard isInt8 else { return }
+                    newValue.storeValue(atPtr: valuePtr, endianness)
+                } else {
+                    type = .null
+                }
+            }
+        }
+    }
+    
+    var int16: Int16? {
+        get {
+            guard isInt16 else { return nil }
+            return Int16.readValue(atPtr: valuePtr, endianness)
+        }
+        set {
+            if isElement {
+                guard isInt16 else { return }
+                newValue?.storeAsElement(atPtr: basePtr, endianness)
+            } else {
+                if let newValue = newValue {
+                    if isNull { type = .int16 }
+                    guard isInt16 else { return }
+                    newValue.storeValue(atPtr: valuePtr, endianness)
+                } else {
+                    type = .null
+                }
+            }
+        }
+    }
+    
+    var int32: Int32? {
+        get {
+            guard isInt32 else { return nil }
+            return Int32.readValue(atPtr: valuePtr, endianness)
+        }
+        set {
+            if isElement {
+                guard isInt32 else { return }
+                newValue?.storeAsElement(atPtr: basePtr, endianness)
+            } else {
+                if let newValue = newValue {
+                    if isNull { type = .int32 }
+                    guard isInt32 else { return }
+                    newValue.storeValue(atPtr: valuePtr, endianness)
+                } else {
+                    type = .null
+                }
+            }
+        }
+    }
+    
+    var int64: Int64? {
+        get {
+            guard isInt64 else { return nil }
+            return Int64.readValue(atPtr: valuePtr, endianness)
+        }
+        set {
+            if isElement {
+                guard isInt64 else { return }
+                newValue?.storeAsElement(atPtr: basePtr, endianness)
+            } else {
+                if let newValue = newValue {
+                    if isNull {
+                        guard ensureValueStorage(for: newValue.valueByteCount) == .success else { return }
+                        type = .int64
+                    }
+                    guard isInt64 else { return }
+                    newValue.storeValue(atPtr: valuePtr, endianness)
+                } else {
+                    type = .null
+                }
+            }
+        }
+    }
+    
+    var float32: Float32? {
+        get {
+            guard isFloat32 else { return nil }
+            return Float32.readValue(atPtr: valuePtr, endianness)
+        }
+        set {
+            if isElement {
+                guard isFloat32 else { return }
+                newValue?.storeAsElement(atPtr: basePtr, endianness)
+            } else {
+                if let newValue = newValue {
+                    if isNull { type = .float32 }
+                    guard isFloat32 else { return }
+                    newValue.storeValue(atPtr: valuePtr, endianness)
+                } else {
+                    type = .null
+                }
+            }
+        }
+    }
+    
+    var float64: Float64? {
+        get {
+            guard isFloat64 else { return nil }
+            return Float64.readValue(atPtr: valuePtr, endianness)
+        }
+        set {
+            if isElement {
+                guard isFloat64 else { return }
+                newValue?.storeAsElement(atPtr: basePtr, endianness)
+            } else {
+                if let newValue = newValue {
+                    if isNull {
+                        guard ensureValueStorage(for: newValue.valueByteCount) == .success else { return }
+                        type = .float64
+                    }
+                    guard isFloat64 else { return }
+                    newValue.storeValue(atPtr: valuePtr, endianness)
+                } else {
+                    type = .null
+                }
+            }
+        }
+    }
+    
+    var string: String? {
+        get {
+            guard isString else { return nil }
+            return String.readValue(atPtr: valuePtr, endianness)
+        }
+        set {
+            if isElement {
+                guard isString else { return }
+                newValue?.storeAsElement(atPtr: basePtr, endianness)
+            } else {
+                if let newValue = newValue {
+                    if isNull {
+                        guard ensureValueStorage(for: newValue.valueByteCount) == .success else { return }
+                        type = .string
+                    }
+                    guard isString else { return }
+                    newValue.storeValue(atPtr: valuePtr, endianness)
+                } else {
+                    type = .null
+                }
+            }
+        }
+    }
+    
+    var binary: Data? {
+        get {
+            guard isBinary else { return nil }
+            return Data.readValue(atPtr: valuePtr, endianness)
+        }
+        set {
+            if isElement {
+                guard isBinary else { return }
+                newValue?.storeAsElement(atPtr: basePtr, endianness)
+            } else {
+                if let newValue = newValue {
+                    if isNull {
+                        guard ensureValueStorage(for: newValue.valueByteCount) == .success else { return }
+                        type = .binary
+                    }
+                    guard isBinary else { return }
+                    newValue.storeValue(atPtr: valuePtr, endianness)
+                } else {
+                    type = .null
+                }
+            }
+        }
+    }
 }
+
 
 internal extension Item {
     
     internal var typePtr: UnsafeMutableRawPointer {
         guard let parentPtr = parentPtr else { return basePtr }
-        if UInt8(parentPtr, endianness) == ItemType.array.rawValue {
-            let nameFieldByteCount = UInt8(parentPtr.advanced(by: itemNameFieldByteCountOffset), endianness)
+        if UInt8.readValue(atPtr: parentPtr, endianness) == ItemType.array.rawValue {
+            let nameFieldByteCount = UInt8.readValue(atPtr: parentPtr.advanced(by: itemNameFieldByteCountOffset), endianness)
             return parentPtr.advanced(by: itemNvrFieldOffset + Int(nameFieldByteCount))
         } else {
             return basePtr
@@ -294,8 +420,8 @@ internal extension Item {
 
     internal var optionsPtr: UnsafeMutableRawPointer {
         guard let parentPtr = parentPtr else { return basePtr.advanced(by: itemOptionsOffset) }
-        if UInt8(parentPtr, endianness) == ItemType.array.rawValue {
-            let nameFieldByteCount = UInt8(parentPtr.advanced(by: nameFieldOffset), endianness)
+        if UInt8.readValue(atPtr: parentPtr, endianness) == ItemType.array.rawValue {
+            let nameFieldByteCount = UInt8.readValue(atPtr: parentPtr.advanced(by: nameFieldOffset), endianness)
             return parentPtr.advanced(by: itemNvrFieldOffset + Int(nameFieldByteCount) + itemOptionsOffset)
         } else {
             return basePtr.advanced(by: itemOptionsOffset)
@@ -304,8 +430,8 @@ internal extension Item {
     
     internal var flagsPtr: UnsafeMutableRawPointer {
         guard let parentPtr = parentPtr else { return basePtr.advanced(by: itemFlagsOffset) }
-        if UInt8(parentPtr, endianness) == ItemType.array.rawValue {
-            let nameFieldByteCount = UInt8(parentPtr.advanced(by: nameFieldOffset), endianness)
+        if UInt8.readValue(atPtr: parentPtr, endianness) == ItemType.array.rawValue {
+            let nameFieldByteCount = UInt8.readValue(atPtr: parentPtr.advanced(by: nameFieldOffset), endianness)
             return parentPtr.advanced(by: itemNvrFieldOffset + Int(nameFieldByteCount) + itemFlagsOffset)
         } else {
             return basePtr.advanced(by: itemFlagsOffset)
@@ -314,8 +440,8 @@ internal extension Item {
     
     internal var nameFieldByteCountPtr: UnsafeMutableRawPointer {
         guard let parentPtr = parentPtr else { return basePtr.advanced(by: itemNameFieldByteCountOffset) }
-        if UInt8(parentPtr, endianness) == ItemType.array.rawValue {
-            let nameFieldByteCount = UInt8(parentPtr.advanced(by: nameFieldOffset), endianness)
+        if UInt8.readValue(atPtr: parentPtr, endianness) == ItemType.array.rawValue {
+            let nameFieldByteCount = UInt8.readValue(atPtr: parentPtr.advanced(by: nameFieldOffset), endianness)
             return parentPtr.advanced(by: itemNvrFieldOffset + Int(nameFieldByteCount) + itemNameFieldByteCountOffset)
         } else {
             return basePtr.advanced(by: itemNameFieldByteCountOffset)
@@ -324,8 +450,8 @@ internal extension Item {
 
     internal var itemByteCountPtr: UnsafeMutableRawPointer {
         guard let parentPtr = parentPtr else { return basePtr.advanced(by: itemByteCountOffset) }
-        if UInt8(parentPtr, endianness) == ItemType.array.rawValue {
-            let nameFieldByteCount = UInt8(parentPtr.advanced(by: nameFieldOffset), endianness)
+        if UInt8.readValue(atPtr: parentPtr, endianness) == ItemType.array.rawValue {
+            let nameFieldByteCount = UInt8.readValue(atPtr: parentPtr.advanced(by: nameFieldOffset), endianness)
             return parentPtr.advanced(by: itemNvrFieldOffset + Int(nameFieldByteCount) + itemByteCountOffset)
         } else {
             return basePtr.advanced(by: itemByteCountOffset)
@@ -334,8 +460,8 @@ internal extension Item {
     
     internal var parentOffsetPtr: UnsafeMutableRawPointer {
         guard let parentPtr = parentPtr else { return basePtr.advanced(by: itemParentOffsetOffset) }
-        if UInt8(parentPtr, endianness) == ItemType.array.rawValue {
-            let nameFieldByteCount = UInt8(parentPtr.advanced(by: nameFieldOffset), endianness)
+        if UInt8.readValue(atPtr: parentPtr, endianness) == ItemType.array.rawValue {
+            let nameFieldByteCount = UInt8.readValue(atPtr: parentPtr.advanced(by: nameFieldOffset), endianness)
             return parentPtr.advanced(by: itemNvrFieldOffset + Int(nameFieldByteCount) + itemParentOffsetOffset)
         } else {
             return basePtr.advanced(by: itemParentOffsetOffset)
@@ -344,7 +470,7 @@ internal extension Item {
 
     internal var childCountPtr: UnsafeMutableRawPointer {
         guard let parentPtr = parentPtr else { return basePtr.advanced(by: itemValueCountOffset) }
-        if UInt8(parentPtr, endianness) == ItemType.array.rawValue {
+        if UInt8.readValue(atPtr: parentPtr, endianness) == ItemType.array.rawValue {
             return basePtr
         } else {
             return basePtr.advanced(by: itemValueCountOffset)
@@ -362,83 +488,174 @@ internal extension Item {
     internal var nameDataPtr: UnsafeMutableRawPointer {
         return basePtr.advanced(by: nameDataOffset)
     }
+    
+    
+    /// Return a pointer to the first value byte of this item.
+    
+    internal var valuePtr: UnsafeMutableRawPointer {
+        
+        if isElement {
+            
+            return basePtr
+            
+        } else {
+            
+            switch type! {
+                
+            case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32:
+                return basePtr.advanced(by: itemValueCountOffset)
+                
+            case .int64, .uint64, .float64, .string, .binary, .array, .dictionary, .sequence:
+                return basePtr.advanced(by: itemNvrFieldOffset + nameFieldByteCount)
+            }
+        }
+    }
 }
 
 
-// MARK: - Accessors to fields in the item.
+// MARK: - Accessors to item properties.
 
 public extension Item {
     
     internal(set) var type: ItemType? {
-        get { return ItemType(typePtr, endianness) }
-        set { newValue?.rawValue.brbonBytes(toPtr: typePtr, endianness) }
+        get {
+            if isElement {
+                return ItemType.readValue(atPtr: parentItem!.valuePtr)
+            } else {
+                return ItemType.readValue(atPtr: typePtr)
+            }
+        }
+        set {
+            if isElement { return } // Not for array's
+            newValue?.rawValue.storeValue(atPtr: typePtr, endianness)
+        }
     }
     
     internal(set) var options: ItemOptions? {
-        get { return ItemOptions(optionsPtr, endianness) }
-        set { newValue?.rawValue.brbonBytes(toPtr: optionsPtr, endianness) }
+        get {
+            if isElement {
+                return ItemOptions.readValue(atPtr: parentItem!.valuePtr.advanced(by: itemOptionsOffset))
+            } else {
+                return ItemOptions.readValue(atPtr: optionsPtr)
+            }
+        }
+        set {
+            if isElement { return } // Not for array's
+            newValue?.rawValue.storeValue(atPtr: optionsPtr, endianness)
+        }
     }
     
     internal(set) var flags: ItemFlags? {
-        get { return ItemFlags(flagsPtr, endianness) }
-        set { newValue?.rawValue.brbonBytes(toPtr: flagsPtr, endianness) }
+        get {
+            if isElement {
+                return ItemFlags.readValue(atPtr: parentItem!.valuePtr.advanced(by: itemFlagsOffset))
+            } else {
+                return ItemFlags.readValue(atPtr: flagsPtr)
+            }
+        }
+        set {
+            if isElement { return } // Not for array's
+            newValue?.rawValue.storeValue(atPtr: flagsPtr, endianness)
+        }
     }
     
-    internal(set) var nameFieldByteCount: UInt8 {
-        get { return UInt8(nameFieldByteCountPtr, endianness) }
-        set { newValue.brbonBytes(toPtr: nameFieldByteCountPtr, endianness) }
+    internal(set) var nameFieldByteCount: Int {
+        get {
+            if isElement { return 0 }
+            return Int(UInt8.readValue(atPtr: nameFieldByteCountPtr, endianness))
+        }
+        set {
+            if isElement { return } // Not for array's
+            UInt8(newValue).storeValue(atPtr: nameFieldByteCountPtr, endianness)
+        }
     }
 
-    internal var byteCount: UInt32 {
-        get { return UInt32(itemByteCountPtr, endianness) }
-        set { newValue.brbonBytes(toPtr: itemByteCountPtr, endianness) }
+    internal var byteCount: Int {
+        get {
+            if isElement {
+                return Int(UInt32.readValue(atPtr: parentItem!.valuePtr.advanced(by: 4), endianness))
+            } else {
+                return Int(UInt32.readValue(atPtr: itemByteCountPtr, endianness))
+            }
+        }
+        set {
+            if isElement {
+                UInt32(newValue).storeValue(atPtr: parentItem!.valuePtr.advanced(by: 4), endianness)
+            } else {
+                UInt32(newValue).storeValue(atPtr: itemByteCountPtr, endianness)
+            }
+        }
     }
     
-    internal var parentOffset: UInt32 {
-        get { return UInt32(parentOffsetPtr, endianness) }
-        set { newValue.brbonBytes(toPtr: parentOffsetPtr, endianness) }
+    internal var parentOffset: Int {
+        get {
+            if isElement { return 0 }
+            return Int(UInt32.readValue(atPtr: parentOffsetPtr, endianness))
+        }
+        set {
+            if isElement { return }
+            UInt32(newValue).storeValue(atPtr: parentOffsetPtr, endianness)
+        }
     }
 
     public var count: Int {
-        return Int(UInt32(childCountPtr, endianness))
-    }
-
-    internal var count32: UInt32 {
-        get { return UInt32(childCountPtr, endianness) }
-        set { newValue.brbonBytes(toPtr: childCountPtr, endianness) }
+        get {
+            if isElement { return 0 }
+            return Int(UInt32.readValue(atPtr: childCountPtr, endianness))
+        }
+        set {
+            if isElement { return }
+            UInt32(newValue).storeValue(atPtr: childCountPtr, endianness)
+        }
     }
     
     internal(set) var nameHash: UInt16 {
-        get { return UInt16(nameHashPtr, endianness) }
-        set { newValue.brbonBytes(toPtr: nameHashPtr, endianness) }
+        get {
+            if nameFieldByteCount == 0 { return 0 }
+            return UInt16.readValue(atPtr: nameHashPtr, endianness)
+        }
+        set {
+            if isElement { return }
+            newValue.storeValue(atPtr: nameHashPtr, endianness)
+        }
     }
     
-    internal(set) var nameCount: UInt8 {
-        get { return UInt8(nameCountPtr, endianness) }
-        set { newValue.brbonBytes(toPtr: nameCountPtr, endianness) }
+    internal(set) var nameCount: Int {
+        get {
+            if nameFieldByteCount == 0 { return 0 }
+            return Int(UInt8.readValue(atPtr: nameCountPtr, endianness))
+        }
+        set {
+            if isElement { return }
+            UInt8(newValue).storeValue(atPtr: nameCountPtr, endianness)
+        }
     }
     
     internal(set) var nameData: Data {
         get {
-            return Data(bytes: nameDataPtr, count: Int(nameCount))
+            if nameFieldByteCount == 0 { return Data() }
+            return Data(bytes: nameDataPtr, count: nameCount)
         }
         set {
-            guard newValue.count <= Int(nameFieldByteCount - 3) else { return }
+            if isElement { return }
+            guard newValue.count <= (nameFieldByteCount - 3) else { return }
             newValue.withUnsafeBytes({ nameDataPtr.copyBytes(from: $0, count: newValue.count)})
         }
     }
     
     internal(set) var name: String? {
         get {
-            let data = Data(bytes: nameDataPtr, count: Int(nameCount))
-            return String.init(data: data, encoding: .utf8)
+            if nameFieldByteCount == 0 { return "" }
+            return String.init(data: nameData, encoding: .utf8)
         }
         set {
+            if isElement { return }
             guard let (data, discarded) = newValue?.utf8CodeMaxBytes(248), !discarded else { return }
+            guard data.count <= (nameFieldByteCount - 3) else { return }
             let hash = data.crc16()
-            let byteCount = UInt8(data.count)
-            hash.brbonBytes(toPtr: nameHashPtr, endianness)
-            byteCount.brbonBytes(toPtr: nameCountPtr, endianness)
+            let byteCount = data.count
+            hash.storeValue(atPtr: nameHashPtr, endianness)
+            UInt8(byteCount).storeValue(atPtr: nameCountPtr, endianness)
             data.withUnsafeBytes({ nameDataPtr.copyBytes(from: $0, count: data.count)})
         }
     }
@@ -450,75 +667,102 @@ public extension Item {
 internal extension Item {
     
     
+    var isNull: Bool { return type == .null }
+    
+    var isBool: Bool { return type == .bool }
+    
+    var isUInt8: Bool { return type == .uint8 }
+    
+    var isUInt16: Bool { return type == .uint16 }
+    
+    var isUInt32: Bool { return type == .uint32 }
+    
+    var isUInt64: Bool { return type == .uint64 }
+    
+    var isInt8: Bool { return type == .int8 }
+    
+    var isInt16: Bool { return type == .int16 }
+    
+    var isInt32: Bool { return type == .int32 }
+    
+    var isInt64: Bool { return type == .int64 }
+    
+    var isFloat32: Bool { return type == .float32 }
+    
+    var isFloat64: Bool { return type == .float64 }
+    
+    var isString: Bool { return type == .string }
+    
+    var isBinary: Bool { return type == .binary }
+    
+    var isArray: Bool { return type == .array }
+    
+    var isDictionary: Bool { return type == .dictionary }
+    
+    var isSequence: Bool { return type == .sequence }
+
+    
     /// Returns the parent as a new Item
     
     internal var parentItem: Item? {
         guard let parentPtr = parentPtr else { return nil }
-        let parentParentOffsetPtr = parentPtr.advanced(by: Int(itemParentOffsetOffset))
-        let parentParentOffset = UInt32(parentParentOffsetPtr, endianness)
+        let parentParentOffsetPtr = parentPtr.advanced(by: itemParentOffsetOffset)
+        let parentParentOffset = Int(UInt32.readValue(atPtr: parentParentOffsetPtr, endianness))
         if parentParentOffset == 0 {
             return Item.init(basePtr: parentPtr, parentPtr: nil, endianness: endianness)
         } else {
-            return Item.init(basePtr: parentPtr, parentPtr: parentPtr.advanced(by: Int(parentParentOffset)), endianness: endianness)
+            return Item.init(basePtr: parentPtr, parentPtr: parentPtr.advanced(by: parentParentOffset), endianness: endianness)
         }
     }
     
     
-    /// Return true if the bytes of this item are stored sequentially. (I.e. if the parent is not an array)
+    /// Returns the length of a child item in an array
     
-    internal var isContiguous: Bool {
-        guard let parentPtr = parentPtr else { return true }
-        return UInt8(parentPtr, endianness) != ItemType.array.rawValue
-    }
-    
-    
-    /// Return a pointer to the first value byte of this item.
-    
-    internal var valuePtr: UnsafeMutableRawPointer {
-        guard let type = type else {
-            // Note this error should be prevented by tests before this member is ever read. Because when this happens, the data that is beiing processed is corrupt and we cannot proceed at all.
-            fatalError("Cannot construct type for BRBON.Item.valuePtr")
+    internal var elementByteCount: Int {
+        get {
+            return Int(UInt32.readValue(atPtr: parentItem!.valuePtr.advanced(by: 4), endianness))
         }
-        if isContiguous {
-            switch type {
-            case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32:
-                return basePtr.advanced(by: itemValueCountOffset)
-            case .int64, .uint64, .float64, .string, .binary, .array, .dictionary, .sequence:
-                return basePtr.advanced(by: itemNvrFieldOffset + Int(nameFieldByteCount))
-            }
-        } else { // self is contained in an array
-            switch type {
-            case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32, .int64, .uint64, .float64, .string, .binary:
-                // The value starts immediately at the first byte of the value field. There is no name.
-                return basePtr
-            case .array, .dictionary, .sequence:
-                // The value starts after the count field
-                return basePtr.advanced(by: 4)
-            }
+        set {
+            UInt32(newValue).storeValue(atPtr: parentItem!.valuePtr.advanced(by: 4), endianness)
         }
     }
     
     
-    /// Returns the number of bytes that are currently unused in the item.
-    ///
-    /// - Note: These bytes may be unusable, for example an Int16 that has N bytes unused will never be able to use those bytes. (However by cycling the item through the null type, and then to a variable length type these bytes can become usable)
+    /// Returns the type of a child in an array
+    
+    internal var elementType: ItemType? {
+        get {
+            return ItemType.readValue(atPtr: parentItem!.valuePtr)
+        }
+        set {
+            guard let newValue = newValue else { return }
+            newValue.storeValue(atPtr: parentItem!.valuePtr)
+        }
+    }
+    
+    
+    /// Returns the number of bytes that are currently available for the value in this item.
 
-    internal var maximumValueByteCount: UInt32 {
-        return byteCount - minimumItemByteCount - UInt32(nameFieldByteCount)
+    internal var availableValueByteCount: Int {
+        if isElement {
+            return Int(UInt32.readValue(atPtr: parentItem!.valuePtr.advanced(by: 4), endianness))
+        } else {
+            return byteCount - minimumItemByteCount - nameFieldByteCount
+        }
     }
 
     
     /// Returns the number of bytes that are currently needed to represent the value in an item.
-    
-    internal var minimumValueByteCount: UInt32 {
+
+    internal var usedValueByteCount: Int {
         switch type! {
         case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32: return 0
         case .int64, .uint64, .float64: return 8
-        case .string, .binary: return 4 + UInt32(valuePtr, endianness)
-        case .array: return 8 + count32 * elementByteCount
+        case .string, .binary: return Int(4 + UInt32.readValue(atPtr: valuePtr, endianness))
+        case .array: return 8 + count * Int(UInt32.readValue(atPtr: valuePtr.advanced(by: 4), endianness))
         case .dictionary, .sequence:
-            var usedByteCount: UInt32 = 0
-            forEachAbortOnTrue({ usedByteCount += $0.minimumValueByteCount ; return false })
+            var usedByteCount: Int = 0
+            forEachAbortOnTrue({ usedByteCount += Int($0.byteCount) ; return false })
             return usedByteCount
         }
     }
@@ -554,14 +798,14 @@ internal extension Item {
     
     /// The offset for the given pointer from the start of the buffer.
     
-    internal func offsetInBuffer(for aptr: UnsafeMutableRawPointer) -> UInt32 {
+    internal func offsetInBuffer(for aptr: UnsafeMutableRawPointer) -> Int {
         var pit = parentItem
         var ptr = basePtr
         while pit != nil {
             ptr = pit!.basePtr      // The base pointer of the first item is the buffer base address
             pit = pit!.parentItem   // Go up the parent/child chain
         }
-        return UInt32(ptr.distance(to: aptr))
+        return ptr.distance(to: aptr)
     }
 
     
@@ -573,6 +817,18 @@ internal extension Item {
             fatalError(message)
         } else {
             return nil
+        }
+    }
+    
+    
+    /// An intermediate error handler. Raises the fatal error if triggered. But an API use may decide to have a NOP instead.
+    
+    @discardableResult
+    internal func fatalOrNull(_ message: String) -> Item? {
+        if brbonAllowFatalError {
+            fatalError(message)
+        } else {
+            return Item.nullItem
         }
     }
 }
