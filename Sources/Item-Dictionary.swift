@@ -39,7 +39,7 @@ extension Item {
         
         // Make sure there is enough free space available
         
-        guard let nfd = NameFieldDescriptor(name, nameFieldByteCount) else { return .illegalNameField }
+        guard let nfd = NameFieldDescriptor(name, fixedLength: nameFieldByteCount) else { return .illegalNameField }
         
         let bytes = minimumItemByteCount + nfd.byteCount + (valueByteCount ?? 0)
 
@@ -160,7 +160,7 @@ extension Item {
         set {
             guard let newValue = newValue else { return }
             guard let strLen = newValue.data(using: .utf8)?.count, strLen < Int(Int32.max) else { return }
-            subscriptAssignment(for: name, valueByteCount: newValue.byteCountItem(), assignment: { $0.string = newValue })
+            subscriptAssignment(for: name, valueByteCount: newValue.itemByteCount(), assignment: { $0.string = newValue })
         }
     }
     
@@ -168,8 +168,8 @@ extension Item {
         get { return self[name].binary }
         set {
             guard let newValue = newValue else { return }
-            guard newValue.byteCountItem() < Int(Int32.max) else { return }
-            subscriptAssignment(for: name, valueByteCount: newValue.byteCountItem(), assignment: { $0.binary = newValue })
+            guard newValue.itemByteCount() < Int(Int32.max) else { return }
+            subscriptAssignment(for: name, valueByteCount: newValue.itemByteCount(), assignment: { $0.binary = newValue })
         }
     }
     
@@ -204,7 +204,7 @@ extension Item {
         
         guard isDictionary else { return .onlySupportedOnDictionary }
         
-        guard let nfd = NameFieldDescriptor(name, nameFieldByteCount), nfd.data != nil else { return .illegalNameField }
+        guard let nfd = NameFieldDescriptor(name, fixedLength: nameFieldByteCount), nfd.data != nil else { return .illegalNameField }
 
         if let item = findItem(with: nfd.crc, stringData: nfd.data!) {
             
@@ -213,7 +213,7 @@ extension Item {
             // Ensure enough space is available
             
             let availableByteCount = byteCount
-            let neededByteCount = minimumItemByteCount + nfd.byteCount + value.byteCountItem(nfd)
+            let neededByteCount = minimumItemByteCount + nfd.byteCount + value.itemByteCount(nfd)
             
             
             

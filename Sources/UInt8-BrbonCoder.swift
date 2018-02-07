@@ -24,7 +24,7 @@ extension UInt8: BrbonCoder {
     
     public var valueByteCount: Int { return 1 }
     
-    public func byteCountItem(_ nfd: NameFieldDescriptor? = nil) -> Int { return minimumItemByteCount + (nfd?.byteCount ?? 0) }
+    public func itemByteCount(_ nfd: NameFieldDescriptor? = nil) -> Int { return minimumItemByteCount + (nfd?.byteCount ?? 0) }
     
     public var elementByteCount: Int { return valueByteCount }
     
@@ -34,7 +34,7 @@ extension UInt8: BrbonCoder {
     
     public func storeAsItem(atPtr: UnsafeMutableRawPointer, nameField nfd: NameFieldDescriptor? = nil, parentOffset: Int, valueByteCount: Int? = nil, _ endianness: Endianness) {
         
-        var byteCount: Int = byteCountItem(nfd).roundUpToNearestMultipleOf8()
+        var byteCount: Int = itemByteCount(nfd)
         
         if let valueByteCount = valueByteCount {
             let alternateByteCount = (minimumItemByteCount + (nfd?.byteCount ?? 0) + valueByteCount).roundUpToNearestMultipleOf8()
@@ -68,7 +68,7 @@ extension UInt8: BrbonCoder {
         ptr = ptr.advanced(by: 1)
         
         UInt16(0).storeValue(atPtr: ptr, endianness)
-        ptr = ptr.advanced(by: 1)
+        ptr = ptr.advanced(by: 2)
         
         nfd?.storeValue(atPtr: ptr, endianness)
         ptr = ptr.advanced(by: Int(nfd?.byteCount ?? 0))

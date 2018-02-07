@@ -24,7 +24,7 @@ extension Int64: BrbonCoder {
     
     public var valueByteCount: Int { return 8 }
     
-    public func byteCountItem(_ nfd: NameFieldDescriptor? = nil) -> Int { return minimumItemByteCount + (nfd?.byteCount ?? 0) + valueByteCount }
+    public func itemByteCount(_ nfd: NameFieldDescriptor? = nil) -> Int { return minimumItemByteCount + (nfd?.byteCount ?? 0) + valueByteCount }
     
     public var elementByteCount: Int { return valueByteCount }
     
@@ -38,7 +38,7 @@ extension Int64: BrbonCoder {
     
     public func storeAsItem(atPtr: UnsafeMutableRawPointer, nameField nfd: NameFieldDescriptor? = nil, parentOffset: Int, valueByteCount: Int? = nil, _ endianness: Endianness) {
         
-        var byteCount: Int = byteCountItem(nfd).roundUpToNearestMultipleOf8()
+        var byteCount: Int = itemByteCount(nfd)
         
         if let valueByteCount = valueByteCount {
             let alternateByteCount = (minimumItemByteCount + (nfd?.byteCount ?? 0) + valueByteCount).roundUpToNearestMultipleOf8()
@@ -72,7 +72,7 @@ extension Int64: BrbonCoder {
         ptr = ptr.advanced(by: Int(nfd?.byteCount ?? 0))
         
         self.storeValue(atPtr: ptr, endianness)
-        ptr = ptr.advanced(by: 4)
+        ptr = ptr.advanced(by: 8)
         
         let remainderByteCount = ptr.distance(to: atPtr.advanced(by: Int(byteCount)))
         if remainderByteCount > 0 {
@@ -95,7 +95,7 @@ extension Int64: BrbonCoder {
     
     public static func readFromItem(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) -> T {
         let nameFieldByteCount = Int(UInt8.readValue(atPtr: atPtr.advanced(by: itemNameFieldByteCountOffset), endianness))
-        let ptr = atPtr.advanced(by: itemValueCountOffset + nameFieldByteCount)
+        let ptr = atPtr.advanced(by: itemNvrFieldOffset + nameFieldByteCount)
         return readValue(atPtr: ptr, endianness)
     }
     

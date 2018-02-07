@@ -68,7 +68,7 @@ public protocol BrbonCoder {
     
     var valueByteCount: Int { get }
     
-    func byteCountItem(_ nfd: NameFieldDescriptor?) -> Int
+    func itemByteCount(_ nfd: NameFieldDescriptor?) -> Int
     
     var elementByteCount: Int { get }
 

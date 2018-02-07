@@ -24,7 +24,7 @@ extension Float32: BrbonCoder {
     
     public var valueByteCount: Int { return 4 }
     
-    public func byteCountItem(_ nfd: NameFieldDescriptor? = nil) -> Int { return minimumItemByteCount + (nfd?.byteCount ?? 0) }
+    public func itemByteCount(_ nfd: NameFieldDescriptor? = nil) -> Int { return minimumItemByteCount + (nfd?.byteCount ?? 0) }
     
     public var elementByteCount: Int { return valueByteCount }
     
@@ -38,7 +38,7 @@ extension Float32: BrbonCoder {
     
     public func storeAsItem(atPtr: UnsafeMutableRawPointer, nameField nfd: NameFieldDescriptor? = nil, parentOffset: Int, valueByteCount: Int? = nil, _ endianness: Endianness) {
         
-        var byteCount: Int = byteCountItem(nfd).roundUpToNearestMultipleOf8()
+        var byteCount: Int = itemByteCount(nfd)
         
         if let valueByteCount = valueByteCount {
             let alternateByteCount = (minimumItemByteCount + (nfd?.byteCount ?? 0) + valueByteCount).roundUpToNearestMultipleOf8()

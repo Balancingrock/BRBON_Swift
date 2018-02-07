@@ -16,7 +16,7 @@ public struct NameFieldDescriptor {
     internal let crc: UInt16
     internal let byteCount: Int
     
-    internal init?(_ name: String?, _ fixedLength: Int? = nil) {
+    internal init?(_ name: String?, fixedLength: Int? = nil) {
         
         var length: Int = 0
         

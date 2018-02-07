@@ -24,7 +24,7 @@ extension String: BrbonCoder {
     
     public var valueByteCount: Int { return (self.data(using: .utf8)?.count ?? 0) }
     
-    public func byteCountItem(_ nfd: NameFieldDescriptor? = nil) -> Int { return minimumItemByteCount + (nfd?.byteCount ?? 0) + valueByteCount }
+    public func itemByteCount(_ nfd: NameFieldDescriptor? = nil) -> Int { return minimumItemByteCount + (nfd?.byteCount ?? 0) + valueByteCount.roundUpToNearestMultipleOf8() }
     
     public var elementByteCount: Int { return valueByteCount + 4 }
     
@@ -37,7 +37,7 @@ extension String: BrbonCoder {
         
         guard let data = self.data(using: .utf8) else { return }
 
-        var byteCount: Int = (minimumItemByteCount + (nfd?.byteCount ?? 0) + data.count).roundUpToNearestMultipleOf8()
+        var byteCount = itemByteCount(nfd)
         
         if let valueByteCount = valueByteCount {
             let alternateByteCount = (minimumItemByteCount + (nfd?.byteCount ?? 0) + valueByteCount).roundUpToNearestMultipleOf8()
@@ -92,14 +92,14 @@ extension String: BrbonCoder {
     }
     
     public static func readFromItem(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) -> T {
-        let byteCount = Int(UInt32.readValue(atPtr: atPtr.advanced(by: itemValueCountOffset), endianness))
+        let bytes = Int(UInt32.readValue(atPtr: atPtr.advanced(by: itemValueCountOffset), endianness))
         let nameFieldByteCount = Int(UInt8.readValue(atPtr: atPtr.advanced(by: itemNameFieldByteCountOffset), endianness))
-        let ptr = atPtr.advanced(by: itemValueCountOffset + nameFieldByteCount)
-        return readValue(atPtr: ptr, count: byteCount, endianness)
+        let ptr = atPtr.advanced(by: itemNvrFieldOffset + nameFieldByteCount)
+        return readValue(atPtr: ptr, count: bytes, endianness)
     }
     
     public static func readFromElement(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) -> T {
-        let byteCount = Int(UInt32.readValue(atPtr: atPtr, endianness))
-        return readValue(atPtr: atPtr, count: byteCount, endianness)
+        let bytes = Int(UInt32.readValue(atPtr: atPtr, endianness))
+        return readValue(atPtr: atPtr.advanced(by: 4), count: bytes, endianness)
     }
 }

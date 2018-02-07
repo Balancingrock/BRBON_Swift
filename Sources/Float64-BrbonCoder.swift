@@ -22,9 +22,9 @@ extension Float64: BrbonCoder {
     public var brbonType: ItemType { return ItemType.float64 }
     
     
-    public var valueByteCount: Int { return 4 }
+    public var valueByteCount: Int { return 8 }
     
-    public func byteCountItem(_ nfd: NameFieldDescriptor? = nil) -> Int { return minimumItemByteCount + (nfd?.byteCount ?? 0) }
+    public func itemByteCount(_ nfd: NameFieldDescriptor? = nil) -> Int { return minimumItemByteCount + (nfd?.byteCount ?? 0) + valueByteCount }
     
     public var elementByteCount: Int { return valueByteCount }
     
@@ -38,7 +38,7 @@ extension Float64: BrbonCoder {
     
     public func storeAsItem(atPtr: UnsafeMutableRawPointer, nameField nfd: NameFieldDescriptor? = nil, parentOffset: Int, valueByteCount: Int? = nil, _ endianness: Endianness) {
         
-        var byteCount: Int = byteCountItem(nfd).roundUpToNearestMultipleOf8()
+        var byteCount = itemByteCount(nfd)
         
         if let valueByteCount = valueByteCount {
             let alternateByteCount = (minimumItemByteCount + (nfd?.byteCount ?? 0) + valueByteCount).roundUpToNearestMultipleOf8()
@@ -65,13 +65,16 @@ extension Float64: BrbonCoder {
         UInt32(parentOffset).storeValue(atPtr: ptr, endianness)
         ptr = ptr.advanced(by: 4)
         
-        self.storeValue(atPtr: ptr, endianness)
+        UInt32(0).storeValue(atPtr: ptr, endianness)
         ptr = ptr.advanced(by: 4)
         
         nfd?.storeValue(atPtr: ptr, endianness)
-        ptr = ptr.advanced(by: Int(nfd?.byteCount ?? 0))
+        ptr = ptr.advanced(by: (nfd?.byteCount ?? 0))
+
+        self.storeValue(atPtr: ptr, endianness)
+        ptr = ptr.advanced(by: 8)
         
-        let remainderByteCount = ptr.distance(to: atPtr.advanced(by: Int(byteCount)))
+        let remainderByteCount = ptr.distance(to: atPtr.advanced(by: byteCount))
         if remainderByteCount > 0 {
             Data(count: remainderByteCount).storeValue(atPtr: ptr, endianness)
         }
@@ -91,7 +94,8 @@ extension Float64: BrbonCoder {
     }
     
     public static func readFromItem(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) -> T {
-        let ptr = atPtr.advanced(by: itemValueCountOffset)
+        let nameFieldByteCount = Int(UInt8.readValue(atPtr: atPtr.advanced(by: itemNameFieldByteCountOffset), endianness))
+        let ptr = atPtr.advanced(by: itemNvrFieldOffset + nameFieldByteCount)
         return readValue(atPtr: ptr, endianness)
     }
     

@@ -103,7 +103,7 @@ public enum ItemType: UInt8 {
     case sequence       = 0x43
 
     
-    /// A sequence of bytes (UInt8)
+    /// A sequence of bytes
     
     case binary         = 0x44
     
@@ -189,7 +189,7 @@ public enum ItemType: UInt8 {
 }
 
 
-// Extend the enum with the brbon protocol
+// Extend the enum with some brbon coder operations
 
 extension ItemType {
     

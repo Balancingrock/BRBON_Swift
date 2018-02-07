@@ -19,12 +19,12 @@ extension Int16: BrbonCoder {
     
     /// The BRBON Item type of the item this value will be stored into.
     
-    public var brbonType: ItemType { return ItemType.uint8 }
+    public var brbonType: ItemType { return ItemType.int16 }
     
     
     public var valueByteCount: Int { return 2 }
     
-    public func byteCountItem(_ nfd: NameFieldDescriptor? = nil) -> Int { return minimumItemByteCount + (nfd?.byteCount ?? 0) }
+    public func itemByteCount(_ nfd: NameFieldDescriptor? = nil) -> Int { return minimumItemByteCount + (nfd?.byteCount ?? 0) }
     
     public var elementByteCount: Int { return valueByteCount }
     
@@ -38,7 +38,7 @@ extension Int16: BrbonCoder {
     
     public func storeAsItem(atPtr: UnsafeMutableRawPointer, nameField nfd: NameFieldDescriptor? = nil, parentOffset: Int, valueByteCount: Int? = nil, _ endianness: Endianness) {
         
-        var byteCount: Int = byteCountItem(nfd).roundUpToNearestMultipleOf8()
+        var byteCount: Int = itemByteCount(nfd)
         
         if let valueByteCount = valueByteCount {
             let alternateByteCount = (minimumItemByteCount + (nfd?.byteCount ?? 0) + valueByteCount).roundUpToNearestMultipleOf8()
@@ -56,7 +56,7 @@ extension Int16: BrbonCoder {
         ItemFlags.none.storeValue(atPtr: ptr)
         ptr = ptr.advanced(by: 1)
         
-        UInt32(nfd?.byteCount ?? 0).storeValue(atPtr: ptr, endianness)
+        UInt8(nfd?.byteCount ?? 0).storeValue(atPtr: ptr, endianness)
         ptr = ptr.advanced(by: 1)
         
         UInt32(byteCount).storeValue(atPtr: ptr, endianness)
