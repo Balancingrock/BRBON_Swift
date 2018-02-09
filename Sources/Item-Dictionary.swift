@@ -48,7 +48,7 @@ extension Item {
         
         // Add the null at the end
         
-        Item.createNull(atPtr: newItemPtr, nameFieldDescriptor: nfd, parentOffset: offsetInBuffer(for: basePtr), valueByteCount: valueByteCount, endianness: endianness)
+        Null().storeAsItem(atPtr: newItemPtr, nameField: nfd, parentOffset: offsetInBuffer(for: basePtr), valueByteCount: valueByteCount, endianness)
         
         
         // Increment the number of children

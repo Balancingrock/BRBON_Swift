@@ -106,10 +106,7 @@ public class Item {
     
     internal static let nullItem: NullItem = {
         let nullItemBuffer = UnsafeMutableRawBufferPointer.allocate(count: Int(minimumItemByteCount))
-        Item.createNull(
-            atPtr: nullItemBuffer.baseAddress!,
-            nameFieldDescriptor: NameFieldDescriptor(nil)!,
-            parentOffset: 0)
+        Null().storeAsItem(atPtr: nullItemBuffer.baseAddress!, parentOffset: 0, machineEndianness)
         return NullItem(basePtr: nullItemBuffer.baseAddress!, parentPtr: nil)
     }()
 
@@ -119,7 +116,11 @@ public class Item {
     var bool: Bool? {
         get {
             guard isBool else { return nil }
-            return Bool.readValue(atPtr: valuePtr, endianness)
+            if isElement {
+                return Bool.readFromElement(atPtr: basePtr, endianness)
+            } else {
+                return Bool.readFromItem(atPtr: basePtr, endianness)
+            }
         }
         set {
             if isElement {
@@ -140,7 +141,11 @@ public class Item {
     var uint8: UInt8? {
         get {
             guard isUInt8 else { return nil }
-            return UInt8.readValue(atPtr: valuePtr, endianness)
+            if isElement {
+                return UInt8.readFromElement(atPtr: basePtr, endianness)
+            } else {
+                return UInt8.readFromItem(atPtr: basePtr, endianness)
+            }
         }
         set {
             if isElement {
@@ -161,7 +166,11 @@ public class Item {
     var uint16: UInt16? {
         get {
             guard isUInt16 else { return nil }
-            return UInt16.readValue(atPtr: valuePtr, endianness)
+            if isElement {
+                return UInt16.readFromElement(atPtr: basePtr, endianness)
+            } else {
+                return UInt16.readFromItem(atPtr: basePtr, endianness)
+            }
         }
         set {
             if isElement {
@@ -182,7 +191,11 @@ public class Item {
     var uint32: UInt32? {
         get {
             guard isUInt32 else { return nil }
-            return UInt32.readValue(atPtr: valuePtr, endianness)
+            if isElement {
+                return UInt32.readFromElement(atPtr: basePtr, endianness)
+            } else {
+                return UInt32.readFromItem(atPtr: basePtr, endianness)
+            }
         }
         set {
             if isElement {
@@ -203,7 +216,11 @@ public class Item {
     var uint64: UInt64? {
         get {
             guard isUInt64 else { return nil }
-            return UInt64.readValue(atPtr: valuePtr, endianness)
+            if isElement {
+                return UInt64.readFromElement(atPtr: basePtr, endianness)
+            } else {
+                return UInt64.readFromItem(atPtr: basePtr, endianness)
+            }
         }
         set {
             if isElement {
@@ -227,7 +244,11 @@ public class Item {
     var int8: Int8? {
         get {
             guard isInt8 else { return nil }
-            return Int8.readValue(atPtr: valuePtr, endianness)
+            if isElement {
+                return Int8.readFromElement(atPtr: basePtr, endianness)
+            } else {
+                return Int8.readFromItem(atPtr: basePtr, endianness)
+            }
         }
         set {
             if isElement {
@@ -248,7 +269,11 @@ public class Item {
     var int16: Int16? {
         get {
             guard isInt16 else { return nil }
-            return Int16.readValue(atPtr: valuePtr, endianness)
+            if isElement {
+                return Int16.readFromElement(atPtr: basePtr, endianness)
+            } else {
+                return Int16.readFromItem(atPtr: basePtr, endianness)
+            }
         }
         set {
             if isElement {
@@ -269,7 +294,11 @@ public class Item {
     var int32: Int32? {
         get {
             guard isInt32 else { return nil }
-            return Int32.readValue(atPtr: valuePtr, endianness)
+            if isElement {
+                return Int32.readFromElement(atPtr: basePtr, endianness)
+            } else {
+                return Int32.readFromItem(atPtr: basePtr, endianness)
+            }
         }
         set {
             if isElement {
@@ -290,7 +319,11 @@ public class Item {
     var int64: Int64? {
         get {
             guard isInt64 else { return nil }
-            return Int64.readValue(atPtr: valuePtr, endianness)
+            if isElement {
+                return Int64.readFromElement(atPtr: basePtr, endianness)
+            } else {
+                return Int64.readFromItem(atPtr: basePtr, endianness)
+            }
         }
         set {
             if isElement {
@@ -314,7 +347,11 @@ public class Item {
     var float32: Float32? {
         get {
             guard isFloat32 else { return nil }
-            return Float32.readValue(atPtr: valuePtr, endianness)
+            if isElement {
+                return Float32.readFromElement(atPtr: basePtr, endianness)
+            } else {
+                return Float32.readFromItem(atPtr: basePtr, endianness)
+            }
         }
         set {
             if isElement {
@@ -335,7 +372,11 @@ public class Item {
     var float64: Float64? {
         get {
             guard isFloat64 else { return nil }
-            return Float64.readValue(atPtr: valuePtr, endianness)
+            if isElement {
+                return Float64.readFromElement(atPtr: basePtr, endianness)
+            } else {
+                return Float64.readFromItem(atPtr: basePtr, endianness)
+            }
         }
         set {
             if isElement {
@@ -359,7 +400,11 @@ public class Item {
     var string: String? {
         get {
             guard isString else { return nil }
-            return String.readValue(atPtr: valuePtr, endianness)
+            if isElement {
+                return String.readFromElement(atPtr: basePtr, endianness)
+            } else {
+                return String.readFromItem(atPtr: basePtr, endianness)
+            }
         }
         set {
             if isElement {
@@ -367,11 +412,11 @@ public class Item {
                 newValue?.storeAsElement(atPtr: basePtr, endianness)
             } else {
                 if let newValue = newValue {
-                    if isNull {
+                    if isNull || isString {
                         guard ensureValueStorage(for: newValue.valueByteCount) == .success else { return }
                         type = .string
                     }
-                    guard isString else { return }
+                    UInt32(newValue.valueByteCount).storeValue(atPtr: childCountPtr, endianness)
                     newValue.storeValue(atPtr: valuePtr, endianness)
                 } else {
                     type = .null
@@ -383,7 +428,11 @@ public class Item {
     var binary: Data? {
         get {
             guard isBinary else { return nil }
-            return Data.readValue(atPtr: valuePtr, endianness)
+            if isElement {
+                return Data.readFromElement(atPtr: basePtr, endianness)
+            } else {
+                return Data.readFromItem(atPtr: basePtr, endianness)
+            }
         }
         set {
             if isElement {
@@ -391,11 +440,11 @@ public class Item {
                 newValue?.storeAsElement(atPtr: basePtr, endianness)
             } else {
                 if let newValue = newValue {
-                    if isNull {
+                    if isNull || isBinary {
                         guard ensureValueStorage(for: newValue.valueByteCount) == .success else { return }
                         type = .binary
                     }
-                    guard isBinary else { return }
+                    UInt32(newValue.count).storeValue(atPtr: childCountPtr, endianness)
                     newValue.storeValue(atPtr: valuePtr, endianness)
                 } else {
                     type = .null
@@ -758,7 +807,7 @@ internal extension Item {
         switch type! {
         case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32: return 0
         case .int64, .uint64, .float64: return 8
-        case .string, .binary: return Int(4 + UInt32.readValue(atPtr: valuePtr, endianness))
+        case .string, .binary: return count
         case .array: return 8 + count * Int(UInt32.readValue(atPtr: valuePtr.advanced(by: 4), endianness))
         case .dictionary, .sequence:
             var usedByteCount: Int = 0
@@ -767,47 +816,6 @@ internal extension Item {
         }
     }
     
-    
-    /// Moves a block of memory from the source pointer to the destination pointer.
-    ///
-    /// This operation is passed on to the buffer manager to allow updating of pointer values in items that the API has made visible.
-    
-    internal func moveBlock(_ dstPtr: UnsafeMutableRawPointer, _ srcPtr: UnsafeMutableRawPointer, _ length: Int) {
-        if let parent = parentItem {
-            return parent.moveBlock(dstPtr, srcPtr, length)
-        } else {
-            guard let manager = manager else { return }
-            manager.moveBlock(dstPtr, srcPtr, length)
-        }
-    }
-    
-
-    /// Moves a block of memory from the source pointer to the destination pointer. The size of the block is given by the distance from the source pointer to the last byte used in the buffer area.
-    ///
-    /// This operation is passed on to the buffer manager to allow updating of pointer values in items that the API has made visible.
-    
-    internal func moveEndBlock(_ dstPtr: UnsafeMutableRawPointer, _ srcPtr: UnsafeMutableRawPointer) {
-        if let parent = parentItem {
-            return parent.moveEndBlock(dstPtr, srcPtr)
-        } else {
-            guard let manager = manager else { return }
-            manager.moveEndBlock(dstPtr, srcPtr)
-        }
-    }
-    
-    
-    /// The offset for the given pointer from the start of the buffer.
-    
-    internal func offsetInBuffer(for aptr: UnsafeMutableRawPointer) -> Int {
-        var pit = parentItem
-        var ptr = basePtr
-        while pit != nil {
-            ptr = pit!.basePtr      // The base pointer of the first item is the buffer base address
-            pit = pit!.parentItem   // Go up the parent/child chain
-        }
-        return ptr.distance(to: aptr)
-    }
-
     
     /// An intermediate error handler. Raises the fatal error if triggered. But an API use may decide to have a NOP instead.
     
@@ -837,10 +845,280 @@ internal extension Item {
 public extension Item {
     
     
+    /// Ensures that an item can accomodate a value of the given length. If necessary it will try to increase the size of the item. Note that increasing the size is only possible for contiguous items and for variable length elements.
+    ///
+    /// - Parameter for: The number of bytes needed.
+    ///
+    /// - Returns: True if the item or element has sufficient bytes available.
+    
+    internal func ensureValueStorage(for bytes: Int) -> Result {
+        if availableValueByteCount >= bytes { return .success }
+        if !isElement || type!.hasVariableLength {
+            var recursiveItems: Array<Item> = [self]
+            return increaseItemByteCount(by: (bytes - availableValueByteCount), recursiveItems: &recursiveItems)
+        }
+        return .outOfStorage
+    }
+    
+    
+    /// Increases the byte count of the item if possible.
+    ///
+    /// This operation is recursive back to the top level and the buffer manager. Also, if the operation affects an item that is contained in an array or sequence the change will be applied to all elements of that array. Hence a minimum increase of 8 bytes can (worst case) result in a multi megabyte increase in total.
+    ///
+    /// - Parameters:
+    ///   - by: The number by which to increase the size of an item. Note that the actual size increase will happen in multiples of 8 bytes.
+    ///   - recursiveItems: A list of items that may need their pointers to be updated. This list is in the order of the recursivity of calls. I.e. initially this list is empty and then a new item is added at the end for each recursive call.
+    ///
+    /// - Returns: .noManager or .increaseFailed if the increase failed, .success if it was successful.
+    
+    internal func increaseItemByteCount(by bytes: Int, recursiveItems: inout Array<Item>) -> Result {
+        
+        
+        if parentPtr == nil {
+            
+            
+            // If there is no buffer manager, the size cannot be changed.
+            
+            guard let manager = manager else { return .noManager }
+            
+            
+            // If the buffer manager cannot accomodate the increase of the item, then increase the buffer size.
+            
+            if manager.unusedByteCount < bytes {
+                
+                
+                // Continue only when the buffer manager has increased its size.
+                
+                let oldPtr = basePtr
+                guard manager.increaseBufferSize(by: bytes.roundUpToNearestMultipleOf8()) else { return .increaseFailed }
+                
+                
+                // All pointers must be updated
+                
+                let offset = basePtr.distance(to: oldPtr)
+                for item in recursiveItems {
+                    item.basePtr = item.basePtr.advanced(by: offset)
+                    if item.parentPtr != nil {
+                        item.parentPtr = item.parentPtr?.advanced(by: offset)
+                    }
+                }
+            }
+            
+            
+            // No matter what this item is, its value area can be increased. Update the byte count
+            
+            byteCount += bytes.roundUpToNearestMultipleOf8()
+            
+            
+            return .success
+            
+            
+        } else {
+            
+            
+            // There is a parent item, get it.
+            
+            let parent = parentItem!
+            
+            
+            // Ensure the multiple-of-8 boundaries for non-elements
+            
+            let increase: Int
+            if parent.isArray {
+                increase = bytes
+            } else {
+                increase = bytes.roundUpToNearestMultipleOf8()
+            }
+            
+            
+            // The number of bytes the parent item has available for child byte count increases
+            
+            let freeByteCount = parent.availableValueByteCount - parent.usedValueByteCount
+            
+            
+            // The number of bytes needed for the increase in the parent item
+            
+            let needed: Int
+            
+            if isArray {
+                needed = (count * increase).roundUpToNearestMultipleOf8()
+            } else {
+                needed = increase
+            }
+            
+            
+            // If more is needed than available, then ask the parent to increase the available byte count
+            
+            if needed > freeByteCount {
+                recursiveItems.append(self)
+                let result = parent.increaseItemByteCount(by: needed, recursiveItems: &recursiveItems)
+                guard result == .success else { return .increaseFailed }
+                _ = recursiveItems.popLast()
+            }
+            
+            
+            // The parent is big enough.
+            
+            if parent.isArray {
+                
+                // Increase the size of all elements by the same amount
+                
+                var index = parent.count
+                while index > 0 {
+                    
+                    let srcPtr = parent.valuePtr.advanced(by: 8 + (index - 1) * parent.elementByteCount)
+                    let dstPtr = parent.valuePtr.advanced(by: 8 + (index - 1) * parent.elementByteCount + increase)
+                    let length = parent.elementByteCount
+                    
+                    moveBlock(dstPtr, srcPtr, length)
+                    
+                    
+                    // Check if the point to self has to be updated
+                    
+                    if basePtr == srcPtr {
+                        
+                        
+                        // Yes, self must be updated.
+                        
+                        basePtr = dstPtr
+                        
+                        
+                        // Also update the pointer values in the recursiveItems by the same offset
+                        
+                        let offset = srcPtr.distance(to: dstPtr)
+                        for item in recursiveItems {
+                            if item.basePtr > srcPtr { item.basePtr = item.basePtr.advanced(by: offset) }
+                            if item.parentPtr! > srcPtr { item.parentPtr = item.parentPtr!.advanced(by: offset) }
+                        }
+                    }
+                    
+                    index -= 1
+                }
+                
+                // Update the size of the elements in the parent
+                
+                parent.elementByteCount += increase
+                
+                return .success
+            }
+            
+            
+            if parent.isDictionary || parent.isSequence {
+                
+                // Shift all the items after self by the amount of increase of self.
+                
+                var srcPtr: UnsafeMutableRawPointer?
+                var length: Int = 0
+                
+                var itemPtr = parent.valuePtr
+                var childCount = parent.count
+                while childCount > 0 {
+                    
+                    if (srcPtr == nil) && (itemPtr > basePtr) {
+                        srcPtr = itemPtr
+                    }
+                    if srcPtr != nil {
+                        length += Int(UInt32.readValue(atPtr: itemPtr.advanced(by: itemByteCountOffset), endianness))
+                    }
+                    itemPtr = itemPtr.advanced(by: Int(UInt32.readValue(atPtr: itemPtr.advanced(by: itemByteCountOffset), endianness)))
+                    childCount -= 1
+                }
+                if srcPtr == nil { srcPtr = itemPtr }
+                
+                if byteCount > 0 {
+                    let dstPtr = srcPtr!.advanced(by: Int(increase))
+                    moveBlock(dstPtr, srcPtr!, length)
+                }
+                
+                
+                // Update the item size of self
+                
+                byteCount += increase
+                
+                
+                return .success
+            }
+            
+            fatalError("No other parent possible")
+        }
+    }    
+
+    
+    /// Moves a block of memory from the source pointer to the destination pointer.
+    ///
+    /// This operation is passed on to the buffer manager to allow updating of pointer values in items that the API has made visible.
+    
+    internal func moveBlock(_ dstPtr: UnsafeMutableRawPointer, _ srcPtr: UnsafeMutableRawPointer, _ length: Int) {
+        if let parent = parentItem {
+            return parent.moveBlock(dstPtr, srcPtr, length)
+        } else {
+            guard let manager = manager else { return }
+            manager.moveBlock(dstPtr, srcPtr, length)
+        }
+    }
+    
+    
+    /// Moves a block of memory from the source pointer to the destination pointer. The size of the block is given by the distance from the source pointer to the last byte used in the buffer area.
+    ///
+    /// This operation is passed on to the buffer manager to allow updating of pointer values in items that the API has made visible.
+    
+    internal func moveEndBlock(_ dstPtr: UnsafeMutableRawPointer, _ srcPtr: UnsafeMutableRawPointer) {
+        if let parent = parentItem {
+            return parent.moveEndBlock(dstPtr, srcPtr)
+        } else {
+            guard let manager = manager else { return }
+            manager.moveEndBlock(dstPtr, srcPtr)
+        }
+    }
+    
+    
+    /// The offset for the given pointer from the start of the buffer.
+    
+    internal func offsetInBuffer(for aptr: UnsafeMutableRawPointer) -> Int {
+        var pit = parentItem
+        var ptr = basePtr
+        while pit != nil {
+            ptr = pit!.basePtr      // The base pointer of the first item is the buffer base address
+            pit = pit!.parentItem   // Go up the parent/child chain
+        }
+        return ptr.distance(to: aptr)
+    }
+    
+    
     /// Reduces the byte count of this item to the minimal possible
     
     public func minimizeByteCount() {
         print("Not implemented yet")
+    }
+    
+    
+    /// The closure is called for each child item or until the closure returns true.
+    ///
+    /// - Parameter closure: The closure that is called for each item in the dictionary. If the closure returns true then the processing of further items is aborted.
+    
+    internal func forEachAbortOnTrue(_ closure: (Item) -> Bool) {
+        if isArray {
+            let elementPtr = valuePtr.advanced(by: 8)
+            let nofChildren = count
+            var index = 0
+            let ebc = elementByteCount
+            while index < nofChildren {
+                let item = Item(basePtr: elementPtr.advanced(by: index * ebc), parentPtr: basePtr, endianness: endianness)
+                if closure(item) { return }
+                index += 1
+            }
+            return
+        }
+        if isDictionary {
+            var itemPtr = valuePtr
+            var remainder = count
+            while remainder > 0 {
+                let item = Item(basePtr: itemPtr, parentPtr: basePtr, endianness: endianness)
+                if closure(item) { return }
+                itemPtr = itemPtr.advanced(by: item.byteCount)
+                remainder -= 1
+            }
+        }
     }
 }
 

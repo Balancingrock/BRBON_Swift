@@ -114,7 +114,7 @@ class String_BrbonCoder_Tests: XCTestCase {
         
         // Instance
         
-        let s = "test" // 0x74 0x65 0x73 0x74
+        let s = "testtest" // 0x74 0x65 0x73 0x74 0x74 0x65 0x73 0x74
         
         
         // The name field to be used
@@ -125,9 +125,9 @@ class String_BrbonCoder_Tests: XCTestCase {
         // Properties
         
         XCTAssertEqual(s.brbonType, ItemType.string)
-        XCTAssertEqual(s.valueByteCount, 4)
+        XCTAssertEqual(s.valueByteCount, 8)
         XCTAssertEqual(s.itemByteCount(), 24)
-        XCTAssertEqual(s.elementByteCount, 8)
+        XCTAssertEqual(s.elementByteCount, 12)
         
         
         // Storing
@@ -150,11 +150,11 @@ class String_BrbonCoder_Tests: XCTestCase {
             0x40, 0x00, 0x00, 0x08,
             0x20, 0x00, 0x00, 0x00,
             0x78, 0x56, 0x34, 0x12,
-            0x04, 0x00, 0x00, 0x00,
+            0x08, 0x00, 0x00, 0x00,
             0xdc, 0x56, 0x03, 0x6F,
             0x6E, 0x65, 0x00, 0x00,
             0x74, 0x65, 0x73, 0x74,
-            0x00, 0x00, 0x00, 0x00
+            0x74, 0x65, 0x73, 0x74
             ])
         
         XCTAssertEqual(data, exp)
@@ -167,11 +167,11 @@ class String_BrbonCoder_Tests: XCTestCase {
             0x40, 0x00, 0x00, 0x08,
             0x28, 0x00, 0x00, 0x00,
             0x78, 0x56, 0x34, 0x12,
-            0x04, 0x00, 0x00, 0x00,
+            0x08, 0x00, 0x00, 0x00,
             0xdc, 0x56, 0x03, 0x6F,
             0x6E, 0x65, 0x00, 0x00,
             0x74, 0x65, 0x73, 0x74,
-            0x00, 0x00, 0x00, 0x00,
+            0x74, 0x65, 0x73, 0x74,
             0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00
             ])
@@ -180,7 +180,7 @@ class String_BrbonCoder_Tests: XCTestCase {
         
         s.storeAsElement(atPtr: buffer.baseAddress!, machineEndianness)
         
-        XCTAssertEqual(buffer.baseAddress!.assumingMemoryBound(to: UInt32.self).pointee, 4)
+        XCTAssertEqual(buffer.baseAddress!.assumingMemoryBound(to: UInt32.self).pointee, 8)
         XCTAssertEqual(buffer.baseAddress!.advanced(by: 4).assumingMemoryBound(to: UInt8.self).pointee, 0x74)
         XCTAssertEqual(buffer.baseAddress!.advanced(by: 5).assumingMemoryBound(to: UInt8.self).pointee, 0x65)
         XCTAssertEqual(buffer.baseAddress!.advanced(by: 6).assumingMemoryBound(to: UInt8.self).pointee, 0x73)
@@ -189,19 +189,19 @@ class String_BrbonCoder_Tests: XCTestCase {
         
         // Reading
         
-        buffer.copyBytes(from: [0x74, 0x65, 0x73, 0x74])
+        buffer.copyBytes(from: [0x74, 0x65, 0x73, 0x74, 0x74, 0x65, 0x73, 0x74])
         
-        var str = String.readValue(atPtr: buffer.baseAddress!, count: 4, machineEndianness)
-        XCTAssertEqual(str, "test")
+        var str = String.readValue(atPtr: buffer.baseAddress!, count: 8, machineEndianness)
+        XCTAssertEqual(str, "testtest")
         
         buffer.copyBytes(from: exp)
         
         str = String.readFromItem(atPtr: buffer.baseAddress!, machineEndianness)
-        XCTAssertEqual(str, "test")
+        XCTAssertEqual(str, "testtest")
         
-        buffer.copyBytes(from: [0x04, 0, 0, 0, 0x74, 0x65, 0x73, 0x74])
+        buffer.copyBytes(from: [0x08, 0, 0, 0, 0x74, 0x65, 0x73, 0x74, 0x74, 0x65, 0x73, 0x74])
         
         str = String.readFromElement(atPtr: buffer.baseAddress!, machineEndianness)
-        XCTAssertEqual(str, "test")
+        XCTAssertEqual(str, "testtest")
     }
 }

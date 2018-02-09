@@ -7,12 +7,13 @@
 //
 
 import Foundation
+import BRUtils
 
 
 // This class is used for an immutable null-item singleton. By using this singleton as a return paremeter in subscript operations the force-unwrap can be avoided.
 
 internal class NullItem: Item {
-    
+
     override var manager: BufferManagerProtocol? {
         get { return nil }
         set { return }
@@ -83,3 +84,4 @@ internal class NullItem: Item {
         set { return }
     }
 }
+

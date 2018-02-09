@@ -71,7 +71,7 @@ extension String: BrbonCoder {
         ptr = ptr.advanced(by: Int(nfd?.byteCount ?? 0))
         
         data.storeValue(atPtr: ptr, endianness)
-        ptr = ptr.advanced(by: 4)
+        ptr = ptr.advanced(by: data.count)
         
         let remainderByteCount = ptr.distance(to: atPtr.advanced(by: Int(byteCount)))
         if remainderByteCount > 0 {
