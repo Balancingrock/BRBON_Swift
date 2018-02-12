@@ -1,5 +1,5 @@
 //
-//  UInt64-BrbonCoder.swift
+//  Int64-BrbonCoder.swift
 //  BRBON
 //
 //  Created by Marinus van der Lugt on 03/02/18.
@@ -12,31 +12,38 @@ import BRUtils
 
 /// Adds the BrbonCoder protocol
 
-extension UInt64: BrbonCoder {
-    
-    public typealias T = UInt64
+extension Int64: Coder {
     
     
     /// The BRBON Item type of the item this value will be stored into.
     
-    public var brbonType: ItemType { return ItemType.uint64 }
+    var brbonType: ItemType { return ItemType.int64 }
     
     
-    public var valueByteCount: Int { return 8 }
+    var valueByteCount: Int { return 8 }
     
-    public func itemByteCount(_ nfd: NameFieldDescriptor? = nil) -> Int { return minimumItemByteCount + (nfd?.byteCount ?? 0) + valueByteCount }
+    func itemByteCount(_ nfd: NameFieldDescriptor? = nil) -> Int { return minimumItemByteCount + (nfd?.byteCount ?? 0) + valueByteCount }
     
-    public var elementByteCount: Int { return valueByteCount }
+    var elementByteCount: Int { return valueByteCount }
     
-    public func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+    @discardableResult
+    func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Result {
         if endianness == machineEndianness {
-            atPtr.storeBytes(of: self, as: UInt64.self)
+            atPtr.storeBytes(of: self, as: Int64.self)
         } else {
-            atPtr.storeBytes(of: self.byteSwapped, as: UInt64.self)
+            atPtr.storeBytes(of: self.byteSwapped, as: Int64.self)
         }
+        return .success
     }
     
-    public func storeAsItem(atPtr: UnsafeMutableRawPointer, nameField nfd: NameFieldDescriptor? = nil, parentOffset: Int, valueByteCount: Int? = nil, _ endianness: Endianness) {
+    @discardableResult
+    func storeAsItem(
+        atPtr: UnsafeMutableRawPointer,
+        bufferPtr: UnsafeMutableRawPointer,
+        parentPtr: UnsafeMutableRawPointer,
+        nameField nfd: NameFieldDescriptor? = nil,
+        valueByteCount: Int? = nil,
+        _ endianness: Endianness) -> Result {
         
         var byteCount: Int = itemByteCount(nfd)
         
@@ -62,7 +69,7 @@ extension UInt64: BrbonCoder {
         UInt32(byteCount).storeValue(atPtr: ptr, endianness)
         ptr = ptr.advanced(by: 4)
         
-        UInt32(parentOffset).storeValue(atPtr: ptr, endianness)
+        UInt32(bufferPtr.distance(to: parentPtr)).storeValue(atPtr: ptr, endianness)
         ptr = ptr.advanced(by: 4)
         
         UInt32(0).storeValue(atPtr: ptr, endianness)
@@ -78,28 +85,33 @@ extension UInt64: BrbonCoder {
         if remainderByteCount > 0 {
             Data(count: remainderByteCount).storeValue(atPtr: ptr, endianness)
         }
+        return .success
     }
     
-    public func storeAsElement(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+    @discardableResult
+    func storeAsElement(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Result {
         storeValue(atPtr: atPtr, endianness)
+        return .success
     }
+}
+
+extension Int64: Initialize {
     
-    
-    public static func readValue(atPtr: UnsafeMutableRawPointer, count: Int? = nil, _ endianness: Endianness) -> T {
+    init(valuePtr: UnsafeMutableRawPointer, count: Int = 0, _ endianness: Endianness) {
         if endianness == machineEndianness {
-            return atPtr.assumingMemoryBound(to: UInt64.self).pointee
+            self.init(valuePtr.assumingMemoryBound(to: Int64.self).pointee)
         } else {
-            return atPtr.assumingMemoryBound(to: UInt64.self).pointee.byteSwapped
+            self.init(valuePtr.assumingMemoryBound(to: Int64.self).pointee.byteSwapped)
         }
     }
     
-    public static func readFromItem(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) -> T {
-        let nameFieldByteCount = Int(UInt8.readValue(atPtr: atPtr.advanced(by: itemNameFieldByteCountOffset), endianness))
-        let ptr = atPtr.advanced(by: itemNvrFieldOffset + nameFieldByteCount)
-        return readValue(atPtr: ptr, endianness)
+    init(itemPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+        let nameFieldByteCount = Int(UInt8(valuePtr: itemPtr.advanced(by: itemNameFieldByteCountOffset), endianness))
+        let ptr = itemPtr.advanced(by: itemNvrFieldOffset + nameFieldByteCount)
+        self.init(valuePtr: ptr, endianness)
     }
     
-    public static func readFromElement(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) -> T {
-        return readValue(atPtr: atPtr, endianness)
+    init(elementPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+        self.init(valuePtr: elementPtr, endianness)
     }
 }

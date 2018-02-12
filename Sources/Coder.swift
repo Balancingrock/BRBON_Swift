@@ -52,11 +52,9 @@ import Foundation
 import BRUtils
 
 
-/// This protocol is used to encode/decode types from a byte stream.
+/// This protocol is used to encode/decode types to/from a byte stream.
 
-public protocol BrbonCoder {
-    
-    associatedtype T
+internal protocol Coder {
     
     
     /// The BRBON Item type of the item this value will be stored into.
@@ -79,17 +77,50 @@ public protocol BrbonCoder {
     ///   - atPtr: The pointer at which the first byte will be stored. On return the pointer will be incremented for the number of bytes stored.
     ///   - endianness: Specifies the endianness of the bytes.
     
-    func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness)
+    @discardableResult
+    func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Result
 
-    func storeAsItem(atPtr: UnsafeMutableRawPointer, nameField nfd: NameFieldDescriptor?, parentOffset: Int, valueByteCount: Int?, _ endianness: Endianness)
+    /// Stores the value as an item.
+    ///
+    /// - Parameters:
+    ///   - atPtr: The address of the first byte to be stored.
+    ///   - bufferPtr: The startaddress of the buffer of in which the item will be stored.
+    ///   - parentPtr: The address of the first byte of the parent item of the to be stored item. Must be equal to bufferPtr for the first item in a buffer.
+    ///   - nameField: A name field descriptor if the item has a name.
+    ///   - valueByteCount: If present, then the item will have a value field of at least this many bytes.
+    ///   - endianness: The endianness for the value and its item structure.
+    ///
+    /// - Returns: Either .success or an error code.
     
-    func storeAsElement(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness)
+    @discardableResult
+    func storeAsItem(
+        atPtr: UnsafeMutableRawPointer,
+        bufferPtr: UnsafeMutableRawPointer,
+        parentPtr: UnsafeMutableRawPointer,
+        nameField nfd: NameFieldDescriptor?,
+        valueByteCount: Int?,
+        _ endianness: Endianness) -> Result
     
     
-    static func readValue(atPtr: UnsafeMutableRawPointer, count: Int?, _ endianness: Endianness) -> T
-    
-    static func readFromItem(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) -> T
-    
-    static func readFromElement(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) -> T
+    /// Stores the value in an array.
+    ///
+    /// This operation is only usable for non-containers. Containers are always stored as items, even in an array. The container types are: .array, .dictionary, .sequence and .table. All other types are value types.
+    ///
+    /// - Parameters:
+    ///   - atPtr: The address of the first byte where the value will be stored.
+    ///   - endianness: The endianness for the value and its item structure.
+    ///
+    /// - Returns: Either .success or an error code.
+
+    @discardableResult
+    func storeAsElement(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Result
 }
 
+internal protocol Initialize {
+    
+    init(valuePtr: UnsafeMutableRawPointer, count: Int, _ endianness: Endianness)
+    
+    init(itemPtr: UnsafeMutableRawPointer, _ endianness: Endianness)
+    
+    init(elementPtr: UnsafeMutableRawPointer, _ endianness: Endianness)
+}

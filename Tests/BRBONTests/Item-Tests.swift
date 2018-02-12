@@ -31,7 +31,7 @@ class Item_Tests: XCTestCase {
         
         let item = Item(basePtr: ptr, parentPtr: nil)
         
-        true.storeAsItem(atPtr: ptr, parentOffset: 0, machineEndianness)
+        true.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!, machineEndianness)
         
         if let b = item.bool { XCTAssertTrue(b) } else { XCTFail() }
         
@@ -134,7 +134,7 @@ class Item_Tests: XCTestCase {
         
         let nfd = NameFieldDescriptor("one", fixedLength: 10)
         
-        true.storeAsItem(atPtr: ptr, nameField: nfd, parentOffset: 0, machineEndianness)
+        true.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!, nameField: nfd, machineEndianness)
         
         if let b = item.bool { XCTAssertTrue(b) } else { XCTFail() }
         
@@ -223,7 +223,7 @@ class Item_Tests: XCTestCase {
         
         let item = Item(basePtr: ptr, parentPtr: nil)
         
-        UInt8(44).storeAsItem(atPtr: ptr, parentOffset: 0, machineEndianness)
+        UInt8(44).storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!, machineEndianness)
         
         if let b = item.uint8 { XCTAssertEqual(b, 44) } else { XCTFail() }
         
@@ -279,7 +279,7 @@ class Item_Tests: XCTestCase {
         
         let item = Item(basePtr: ptr, parentPtr: nil)
         
-        UInt16(44).storeAsItem(atPtr: ptr, parentOffset: 0, machineEndianness)
+        UInt16(44).storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!, machineEndianness)
         
         if let b = item.uint16 { XCTAssertEqual(b, 44) } else { XCTFail() }
         
@@ -335,7 +335,7 @@ class Item_Tests: XCTestCase {
         
         let item = Item(basePtr: ptr, parentPtr: nil)
         
-        UInt32(44).storeAsItem(atPtr: ptr, parentOffset: 0, machineEndianness)
+        UInt32(44).storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!, machineEndianness)
         
         if let b = item.uint32 { XCTAssertEqual(b, 44) } else { XCTFail() }
         
@@ -391,7 +391,7 @@ class Item_Tests: XCTestCase {
         
         let item = Item(basePtr: ptr, parentPtr: nil)
         
-        UInt64(44).storeAsItem(atPtr: ptr, parentOffset: 0, machineEndianness)
+        UInt64(44).storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!, machineEndianness)
         
         if let b = item.uint64 { XCTAssertEqual(b, 44) } else { XCTFail() }
         
@@ -447,7 +447,7 @@ class Item_Tests: XCTestCase {
         
         let item = Item(basePtr: ptr, parentPtr: nil)
         
-        Int8(44).storeAsItem(atPtr: ptr, parentOffset: 0, machineEndianness)
+        Int8(44).storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!, machineEndianness)
         
         if let b = item.int8 { XCTAssertEqual(b, 44) } else { XCTFail() }
         
@@ -503,7 +503,7 @@ class Item_Tests: XCTestCase {
         
         let item = Item(basePtr: ptr, parentPtr: nil)
         
-        Int16(44).storeAsItem(atPtr: ptr, parentOffset: 0, machineEndianness)
+        Int16(44).storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!, machineEndianness)
         
         if let b = item.int16 { XCTAssertEqual(b, 44) } else { XCTFail() }
         
@@ -559,7 +559,7 @@ class Item_Tests: XCTestCase {
         
         let item = Item(basePtr: ptr, parentPtr: nil)
         
-        Int32(44).storeAsItem(atPtr: ptr, parentOffset: 0, machineEndianness)
+        Int32(44).storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!, machineEndianness)
         
         if let b = item.int32 { XCTAssertEqual(b, 44) } else { XCTFail() }
         
@@ -615,7 +615,7 @@ class Item_Tests: XCTestCase {
         
         let item = Item(basePtr: ptr, parentPtr: nil)
         
-        Int64(44).storeAsItem(atPtr: ptr, parentOffset: 0, machineEndianness)
+        Int64(44).storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!, machineEndianness)
         
         if let b = item.int64 { XCTAssertEqual(b, 44) } else { XCTFail() }
         
@@ -671,7 +671,7 @@ class Item_Tests: XCTestCase {
         
         let item = Item(basePtr: ptr, parentPtr: nil)
         
-        Data(bytes: [0x01, 0x20, 0x33]).storeAsItem(atPtr: ptr, parentOffset: 0, machineEndianness)
+        Data(bytes: [0x01, 0x20, 0x33]).storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!, machineEndianness)
         
         if let b = item.binary { XCTAssertEqual(b, Data(bytes: [0x01, 0x20, 0x33])) } else { XCTFail() }
         
@@ -727,7 +727,7 @@ class Item_Tests: XCTestCase {
         
         let item = Item(basePtr: ptr, parentPtr: nil)
         
-        "Hello".storeAsItem(atPtr: ptr, parentOffset: 0, machineEndianness)
+        "Hello".storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!, machineEndianness)
         
         if let b = item.string { XCTAssertEqual(b, "Hello") } else { XCTFail() }
         

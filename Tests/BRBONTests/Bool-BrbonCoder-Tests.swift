@@ -47,7 +47,7 @@ class Bool_BrbonCoder_Tests: XCTestCase {
         
         XCTAssertEqual(buffer.baseAddress!.assumingMemoryBound(to: UInt8.self).pointee, 1)
         
-        b.storeAsItem(atPtr: buffer.baseAddress!, parentOffset: 0x12345678, machineEndianness)
+        b.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!.advanced(by: 0x12345678), machineEndianness)
         
         var data = Data(bytesNoCopy: buffer.baseAddress!, count: 16, deallocator: Data.Deallocator.none)
         
@@ -60,7 +60,7 @@ class Bool_BrbonCoder_Tests: XCTestCase {
         
         XCTAssertEqual(data, exp)
         
-        b.storeAsItem(atPtr: buffer.baseAddress!, parentOffset: 0x12345678, valueByteCount: 5, machineEndianness)
+        b.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!.advanced(by: 0x12345678), valueByteCount: 5, machineEndianness)
         
         data = Data(bytesNoCopy: buffer.baseAddress!, count: 24, deallocator: Data.Deallocator.none)
         
@@ -84,23 +84,23 @@ class Bool_BrbonCoder_Tests: XCTestCase {
         
         buffer.copyBytes(from: [0x00])
         
-        XCTAssertEqual(Bool.readValue(atPtr: buffer.baseAddress!, machineEndianness), false)
+        XCTAssertEqual(Bool(valuePtr: buffer.baseAddress!, machineEndianness), false)
 
         buffer.copyBytes(from: [0x01])
         
-        XCTAssertEqual(Bool.readValue(atPtr: buffer.baseAddress!, machineEndianness), true)
+        XCTAssertEqual(Bool(valuePtr: buffer.baseAddress!, machineEndianness), true)
 
         buffer.copyBytes(from: [0x56])
         
-        XCTAssertEqual(Bool.readValue(atPtr: buffer.baseAddress!, machineEndianness), false)
+        XCTAssertEqual(Bool(valuePtr: buffer.baseAddress!, machineEndianness), false)
         
         buffer.copyBytes(from: exp)
         
-        XCTAssertEqual(Bool.readFromItem(atPtr: buffer.baseAddress!, machineEndianness), true)
+        XCTAssertEqual(Bool(itemPtr: buffer.baseAddress!, machineEndianness), true)
         
         buffer.copyBytes(from: [0])
         
-        XCTAssertEqual(Bool.readFromElement(atPtr: buffer.baseAddress!, machineEndianness), false)
+        XCTAssertEqual(Bool(elementPtr: buffer.baseAddress!, machineEndianness), false)
     }
     
     func test_WithNameField() {
@@ -133,7 +133,7 @@ class Bool_BrbonCoder_Tests: XCTestCase {
         
         XCTAssertEqual(buffer.baseAddress!.assumingMemoryBound(to: UInt8.self).pointee, 1)
         
-        b.storeAsItem(atPtr: buffer.baseAddress!, nameField: nfd, parentOffset: 0x12345678, machineEndianness)
+        b.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!.advanced(by: 0x12345678), nameField: nfd, machineEndianness)
         
         var data = Data(bytesNoCopy: buffer.baseAddress!, count: 24, deallocator: Data.Deallocator.none)
 
@@ -148,7 +148,7 @@ class Bool_BrbonCoder_Tests: XCTestCase {
         
         XCTAssertEqual(data, exp)
         
-        b.storeAsItem(atPtr: buffer.baseAddress!, nameField: nfd, parentOffset: 0x12345678, valueByteCount: 5, machineEndianness)
+        b.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!.advanced(by: 0x12345678), nameField: nfd, valueByteCount: 5, machineEndianness)
         
         data = Data(bytesNoCopy: buffer.baseAddress!, count: 32, deallocator: Data.Deallocator.none)
 
@@ -174,23 +174,23 @@ class Bool_BrbonCoder_Tests: XCTestCase {
         
         buffer.copyBytes(from: [0x00])
         
-        XCTAssertEqual(Bool.readValue(atPtr: buffer.baseAddress!, machineEndianness), false)
+        XCTAssertEqual(Bool(valuePtr: buffer.baseAddress!, machineEndianness), false)
         
         buffer.copyBytes(from: [0x01])
         
-        XCTAssertEqual(Bool.readValue(atPtr: buffer.baseAddress!, machineEndianness), true)
+        XCTAssertEqual(Bool(valuePtr: buffer.baseAddress!, machineEndianness), true)
         
         buffer.copyBytes(from: [0x56])
         
-        XCTAssertEqual(Bool.readValue(atPtr: buffer.baseAddress!, machineEndianness), false)
+        XCTAssertEqual(Bool(valuePtr: buffer.baseAddress!, machineEndianness), false)
         
         buffer.copyBytes(from: exp)
         
-        XCTAssertEqual(Bool.readFromItem(atPtr: buffer.baseAddress!, machineEndianness), true)
+        XCTAssertEqual(Bool(itemPtr: buffer.baseAddress!, machineEndianness), true)
         
         buffer.copyBytes(from: [0])
         
-        XCTAssertEqual(Bool.readFromElement(atPtr: buffer.baseAddress!, machineEndianness), false)
+        XCTAssertEqual(Bool(elementPtr: buffer.baseAddress!, machineEndianness), false)
     }
 
 

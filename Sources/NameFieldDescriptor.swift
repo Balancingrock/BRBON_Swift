@@ -73,10 +73,10 @@ public struct NameFieldDescriptor {
     }
 
     internal static func readValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) -> NameFieldDescriptor {
-        let crc = UInt16.readValue(atPtr: atPtr, endianness)
-        let count = Int(UInt8.readValue(atPtr: atPtr.advanced(by: 2), endianness))
+        let crc = UInt16(valuePtr: atPtr, endianness)
+        let count = Int(UInt8(valuePtr: atPtr.advanced(by: 2), endianness))
         let byteCount = 3 + count
-        let data = Data(bytes: atPtr.advanced(by: 3), count: Int(count))
+        let data = Data(valuePtr: atPtr.advanced(by: 3), count: count, endianness)
         return NameFieldDescriptor(data: data, crc: crc, byteCount: byteCount)
     }
 }

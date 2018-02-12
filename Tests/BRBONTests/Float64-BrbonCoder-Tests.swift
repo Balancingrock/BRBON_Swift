@@ -47,7 +47,7 @@ class Float64_BrbonCoder_Tests: XCTestCase {
         
         XCTAssertEqual(buffer.baseAddress!.assumingMemoryBound(to: Float64.self).pointee, 1.23)
         
-        i.storeAsItem(atPtr: buffer.baseAddress!, parentOffset: 0x12345678, machineEndianness)
+        i.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!.advanced(by: 0x12345678), machineEndianness)
         
         var data = Data(bytesNoCopy: buffer.baseAddress!, count: 24, deallocator: Data.Deallocator.none)
 
@@ -62,7 +62,7 @@ class Float64_BrbonCoder_Tests: XCTestCase {
         
         XCTAssertEqual(data, exp)
         
-        i.storeAsItem(atPtr: buffer.baseAddress!, parentOffset: 0x12345678, valueByteCount: 10, machineEndianness)
+        i.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!.advanced(by: 0x12345678), valueByteCount: 10, machineEndianness)
         
         data = Data(bytesNoCopy: buffer.baseAddress!, count: 32, deallocator: Data.Deallocator.none)
 
@@ -88,15 +88,15 @@ class Float64_BrbonCoder_Tests: XCTestCase {
         
         buffer.copyBytes(from: [0xae, 0x47, 0xe1, 0x7a, 0x14, 0xae, 0xf3, 0x3f])
         
-        XCTAssertEqual(Float64.readValue(atPtr: buffer.baseAddress!, machineEndianness), 1.23)
+        XCTAssertEqual(Float64(valuePtr: buffer.baseAddress!, machineEndianness), 1.23)
         
         buffer.copyBytes(from: exp)
         
-        XCTAssertEqual(Float64.readFromItem(atPtr: buffer.baseAddress!, machineEndianness), 1.23)
+        XCTAssertEqual(Float64(itemPtr: buffer.baseAddress!, machineEndianness), 1.23)
         
         buffer.copyBytes(from: [0xae, 0x47, 0xe1, 0x7a, 0x14, 0xae, 0xf3, 0x3f])
         
-        XCTAssertEqual(Float64.readFromElement(atPtr: buffer.baseAddress!, machineEndianness), 1.23)
+        XCTAssertEqual(Float64(elementPtr: buffer.baseAddress!, machineEndianness), 1.23)
     }
     
     func test_WithNameField() {
@@ -129,7 +129,7 @@ class Float64_BrbonCoder_Tests: XCTestCase {
         
         XCTAssertEqual(buffer.baseAddress!.assumingMemoryBound(to: Float64.self).pointee, 1.23)
         
-        i.storeAsItem(atPtr: buffer.baseAddress!, nameField: nfd, parentOffset: 0x12345678, machineEndianness)
+        i.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!.advanced(by: 0x12345678), nameField: nfd, machineEndianness)
         
         var data = Data(bytesNoCopy: buffer.baseAddress!, count: 32, deallocator: Data.Deallocator.none)
         data.printBytes()
@@ -146,7 +146,7 @@ class Float64_BrbonCoder_Tests: XCTestCase {
         
         XCTAssertEqual(data, exp)
         
-        i.storeAsItem(atPtr: buffer.baseAddress!, nameField: nfd, parentOffset: 0x12345678, valueByteCount: 10, machineEndianness)
+        i.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!.advanced(by: 0x12345678), nameField: nfd, valueByteCount: 10, machineEndianness)
         
         data = Data(bytesNoCopy: buffer.baseAddress!, count: 40, deallocator: Data.Deallocator.none)
         
@@ -174,14 +174,14 @@ class Float64_BrbonCoder_Tests: XCTestCase {
         
         buffer.copyBytes(from: [0xae, 0x47, 0xe1, 0x7a, 0x14, 0xae, 0xf3, 0x3f])
         
-        XCTAssertEqual(Float64.readValue(atPtr: buffer.baseAddress!, machineEndianness), 1.23)
+        XCTAssertEqual(Float64(valuePtr: buffer.baseAddress!, machineEndianness), 1.23)
         
         buffer.copyBytes(from: exp)
         
-        XCTAssertEqual(Float64.readFromItem(atPtr: buffer.baseAddress!, machineEndianness), 1.23)
+        XCTAssertEqual(Float64(itemPtr: buffer.baseAddress!, machineEndianness), 1.23)
         
         buffer.copyBytes(from: [0xae, 0x47, 0xe1, 0x7a, 0x14, 0xae, 0xf3, 0x3f])
         
-        XCTAssertEqual(Float64.readFromElement(atPtr: buffer.baseAddress!, machineEndianness), 1.23)
+        XCTAssertEqual(Float64(elementPtr: buffer.baseAddress!, machineEndianness), 1.23)
     }
 }

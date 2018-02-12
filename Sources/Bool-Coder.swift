@@ -12,28 +12,34 @@ import BRUtils
 
 /// Adds the BrbonCoder protocol
 
-extension Bool: BrbonCoder {
+extension Bool: Coder {
     
-    public typealias T = Bool
+    var brbonType: ItemType { return ItemType.bool }
     
+    var valueByteCount: Int { return 1 }
     
-    public var brbonType: ItemType { return ItemType.bool }
+    func itemByteCount(_ nfd: NameFieldDescriptor? = nil) -> Int { return minimumItemByteCount + (nfd?.byteCount ?? 0) }
     
-    public var valueByteCount: Int { return 1 }
+    var elementByteCount: Int { return valueByteCount }
     
-    public func itemByteCount(_ nfd: NameFieldDescriptor? = nil) -> Int { return minimumItemByteCount + (nfd?.byteCount ?? 0) }
-    
-    public var elementByteCount: Int { return valueByteCount }
-    
-    public func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+    @discardableResult
+    func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Result {
         if self {
             atPtr.storeBytes(of: 1, as: UInt8.self)
         } else {
             atPtr.storeBytes(of: 0, as: UInt8.self)
         }
+        return .success
     }
     
-    public func storeAsItem(atPtr: UnsafeMutableRawPointer, nameField nfd: NameFieldDescriptor? = nil, parentOffset: Int, valueByteCount: Int? = nil, _ endianness: Endianness) {
+    @discardableResult
+    func storeAsItem(
+        atPtr: UnsafeMutableRawPointer,
+        bufferPtr: UnsafeMutableRawPointer,
+        parentPtr: UnsafeMutableRawPointer,
+        nameField nfd: NameFieldDescriptor? = nil,
+        valueByteCount: Int? = nil,
+        _ endianness: Endianness) -> Result {
         
         var byteCount: Int = itemByteCount(nfd)
         
@@ -59,7 +65,7 @@ extension Bool: BrbonCoder {
         UInt32(byteCount).storeValue(atPtr: ptr, endianness)
         ptr = ptr.advanced(by: 4)
         
-        UInt32(parentOffset).storeValue(atPtr: ptr, endianness)
+        UInt32(bufferPtr.distance(to: parentPtr)).storeValue(atPtr: ptr, endianness)
         ptr = ptr.advanced(by: 4)
         
         self.storeValue(atPtr: ptr, endianness)
@@ -78,22 +84,29 @@ extension Bool: BrbonCoder {
         if remainderByteCount > 0 {
             Data(count: remainderByteCount).storeValue(atPtr: ptr, endianness)
         }
-    }
-    
-    public func storeAsElement(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        storeValue(atPtr: atPtr, endianness)
-    }
         
-    public static func readValue(atPtr: UnsafeMutableRawPointer, count: Int? = nil, _ endianness: Endianness) -> T {
-        return 1 == atPtr.assumingMemoryBound(to: UInt8.self).pointee
+        return .success
     }
     
-    public static func readFromItem(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) -> T {
-        let ptr = atPtr.advanced(by: itemValueCountOffset)
-        return readValue(atPtr: ptr, endianness)
+    @discardableResult
+    func storeAsElement(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Result {
+        storeValue(atPtr: atPtr, endianness)
+        return .success
+    }
+}
+
+extension Bool: Initialize {
+    
+    init(valuePtr: UnsafeMutableRawPointer, count: Int = 0, _ endianness: Endianness) {
+        self.init(1 == valuePtr.assumingMemoryBound(to: UInt8.self).pointee)
     }
     
-    public static func readFromElement(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) -> T {
-        return readValue(atPtr: atPtr, endianness)
+    init(itemPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+        let ptr = itemPtr.advanced(by: itemValueCountOffset)
+        self.init(valuePtr: ptr, endianness)
+    }
+    
+    init(elementPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+        self.init(valuePtr: elementPtr, endianness)
     }
 }

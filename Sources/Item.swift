@@ -106,7 +106,11 @@ public class Item {
     
     internal static let nullItem: NullItem = {
         let nullItemBuffer = UnsafeMutableRawBufferPointer.allocate(count: Int(minimumItemByteCount))
-        Null().storeAsItem(atPtr: nullItemBuffer.baseAddress!, parentOffset: 0, machineEndianness)
+        Null().storeAsItem(
+            atPtr: nullItemBuffer.baseAddress!,
+            bufferPtr: nullItemBuffer.baseAddress!,
+            parentPtr: nullItemBuffer.baseAddress!,
+            machineEndianness)
         return NullItem(basePtr: nullItemBuffer.baseAddress!, parentPtr: nil)
     }()
 
@@ -117,9 +121,9 @@ public class Item {
         get {
             guard isBool else { return nil }
             if isElement {
-                return Bool.readFromElement(atPtr: basePtr, endianness)
+                return Bool(elementPtr: basePtr, endianness)
             } else {
-                return Bool.readFromItem(atPtr: basePtr, endianness)
+                return Bool(itemPtr: basePtr, endianness)
             }
         }
         set {
@@ -142,9 +146,9 @@ public class Item {
         get {
             guard isUInt8 else { return nil }
             if isElement {
-                return UInt8.readFromElement(atPtr: basePtr, endianness)
+                return UInt8(elementPtr: basePtr, endianness)
             } else {
-                return UInt8.readFromItem(atPtr: basePtr, endianness)
+                return UInt8(itemPtr: basePtr, endianness)
             }
         }
         set {
@@ -167,9 +171,9 @@ public class Item {
         get {
             guard isUInt16 else { return nil }
             if isElement {
-                return UInt16.readFromElement(atPtr: basePtr, endianness)
+                return UInt16(elementPtr: basePtr, endianness)
             } else {
-                return UInt16.readFromItem(atPtr: basePtr, endianness)
+                return UInt16(itemPtr: basePtr, endianness)
             }
         }
         set {
@@ -192,9 +196,9 @@ public class Item {
         get {
             guard isUInt32 else { return nil }
             if isElement {
-                return UInt32.readFromElement(atPtr: basePtr, endianness)
+                return UInt32(elementPtr: basePtr, endianness)
             } else {
-                return UInt32.readFromItem(atPtr: basePtr, endianness)
+                return UInt32(itemPtr: basePtr, endianness)
             }
         }
         set {
@@ -217,9 +221,9 @@ public class Item {
         get {
             guard isUInt64 else { return nil }
             if isElement {
-                return UInt64.readFromElement(atPtr: basePtr, endianness)
+                return UInt64(elementPtr: basePtr, endianness)
             } else {
-                return UInt64.readFromItem(atPtr: basePtr, endianness)
+                return UInt64(itemPtr: basePtr, endianness)
             }
         }
         set {
@@ -245,9 +249,9 @@ public class Item {
         get {
             guard isInt8 else { return nil }
             if isElement {
-                return Int8.readFromElement(atPtr: basePtr, endianness)
+                return Int8(elementPtr: basePtr, endianness)
             } else {
-                return Int8.readFromItem(atPtr: basePtr, endianness)
+                return Int8(itemPtr: basePtr, endianness)
             }
         }
         set {
@@ -270,9 +274,9 @@ public class Item {
         get {
             guard isInt16 else { return nil }
             if isElement {
-                return Int16.readFromElement(atPtr: basePtr, endianness)
+                return Int16(elementPtr: basePtr, endianness)
             } else {
-                return Int16.readFromItem(atPtr: basePtr, endianness)
+                return Int16(itemPtr: basePtr, endianness)
             }
         }
         set {
@@ -295,9 +299,9 @@ public class Item {
         get {
             guard isInt32 else { return nil }
             if isElement {
-                return Int32.readFromElement(atPtr: basePtr, endianness)
+                return Int32(elementPtr: basePtr, endianness)
             } else {
-                return Int32.readFromItem(atPtr: basePtr, endianness)
+                return Int32(itemPtr: basePtr, endianness)
             }
         }
         set {
@@ -320,9 +324,9 @@ public class Item {
         get {
             guard isInt64 else { return nil }
             if isElement {
-                return Int64.readFromElement(atPtr: basePtr, endianness)
+                return Int64(elementPtr: basePtr, endianness)
             } else {
-                return Int64.readFromItem(atPtr: basePtr, endianness)
+                return Int64(itemPtr: basePtr, endianness)
             }
         }
         set {
@@ -348,9 +352,9 @@ public class Item {
         get {
             guard isFloat32 else { return nil }
             if isElement {
-                return Float32.readFromElement(atPtr: basePtr, endianness)
+                return Float32(elementPtr: basePtr, endianness)
             } else {
-                return Float32.readFromItem(atPtr: basePtr, endianness)
+                return Float32(itemPtr: basePtr, endianness)
             }
         }
         set {
@@ -373,9 +377,9 @@ public class Item {
         get {
             guard isFloat64 else { return nil }
             if isElement {
-                return Float64.readFromElement(atPtr: basePtr, endianness)
+                return Float64(elementPtr: basePtr, endianness)
             } else {
-                return Float64.readFromItem(atPtr: basePtr, endianness)
+                return Float64(itemPtr: basePtr, endianness)
             }
         }
         set {
@@ -401,9 +405,9 @@ public class Item {
         get {
             guard isString else { return nil }
             if isElement {
-                return String.readFromElement(atPtr: basePtr, endianness)
+                return String(elementPtr: basePtr, endianness)
             } else {
-                return String.readFromItem(atPtr: basePtr, endianness)
+                return String(itemPtr: basePtr, endianness)
             }
         }
         set {
@@ -429,9 +433,9 @@ public class Item {
         get {
             guard isBinary else { return nil }
             if isElement {
-                return Data.readFromElement(atPtr: basePtr, endianness)
+                return Data(elementPtr: basePtr, endianness)
             } else {
-                return Data.readFromItem(atPtr: basePtr, endianness)
+                return Data(itemPtr: basePtr, endianness)
             }
         }
         set {
@@ -459,8 +463,8 @@ internal extension Item {
     
     internal var typePtr: UnsafeMutableRawPointer {
         guard let parentPtr = parentPtr else { return basePtr }
-        if UInt8.readValue(atPtr: parentPtr, endianness) == ItemType.array.rawValue {
-            let nameFieldByteCount = UInt8.readValue(atPtr: parentPtr.advanced(by: itemNameFieldByteCountOffset), endianness)
+        if UInt8(valuePtr: parentPtr, endianness) == ItemType.array.rawValue {
+            let nameFieldByteCount = UInt8(valuePtr: parentPtr.advanced(by: itemNameFieldByteCountOffset), endianness)
             return parentPtr.advanced(by: itemNvrFieldOffset + Int(nameFieldByteCount))
         } else {
             return basePtr
@@ -469,8 +473,8 @@ internal extension Item {
 
     internal var optionsPtr: UnsafeMutableRawPointer {
         guard let parentPtr = parentPtr else { return basePtr.advanced(by: itemOptionsOffset) }
-        if UInt8.readValue(atPtr: parentPtr, endianness) == ItemType.array.rawValue {
-            let nameFieldByteCount = UInt8.readValue(atPtr: parentPtr.advanced(by: nameFieldOffset), endianness)
+        if UInt8(valuePtr: parentPtr, endianness) == ItemType.array.rawValue {
+            let nameFieldByteCount = UInt8(valuePtr: parentPtr.advanced(by: nameFieldOffset), endianness)
             return parentPtr.advanced(by: itemNvrFieldOffset + Int(nameFieldByteCount) + itemOptionsOffset)
         } else {
             return basePtr.advanced(by: itemOptionsOffset)
@@ -479,8 +483,8 @@ internal extension Item {
     
     internal var flagsPtr: UnsafeMutableRawPointer {
         guard let parentPtr = parentPtr else { return basePtr.advanced(by: itemFlagsOffset) }
-        if UInt8.readValue(atPtr: parentPtr, endianness) == ItemType.array.rawValue {
-            let nameFieldByteCount = UInt8.readValue(atPtr: parentPtr.advanced(by: nameFieldOffset), endianness)
+        if UInt8(valuePtr: parentPtr, endianness) == ItemType.array.rawValue {
+            let nameFieldByteCount = UInt8(valuePtr: parentPtr.advanced(by: nameFieldOffset), endianness)
             return parentPtr.advanced(by: itemNvrFieldOffset + Int(nameFieldByteCount) + itemFlagsOffset)
         } else {
             return basePtr.advanced(by: itemFlagsOffset)
@@ -489,8 +493,8 @@ internal extension Item {
     
     internal var nameFieldByteCountPtr: UnsafeMutableRawPointer {
         guard let parentPtr = parentPtr else { return basePtr.advanced(by: itemNameFieldByteCountOffset) }
-        if UInt8.readValue(atPtr: parentPtr, endianness) == ItemType.array.rawValue {
-            let nameFieldByteCount = UInt8.readValue(atPtr: parentPtr.advanced(by: nameFieldOffset), endianness)
+        if UInt8(valuePtr: parentPtr, endianness) == ItemType.array.rawValue {
+            let nameFieldByteCount = UInt8(valuePtr: parentPtr.advanced(by: nameFieldOffset), endianness)
             return parentPtr.advanced(by: itemNvrFieldOffset + Int(nameFieldByteCount) + itemNameFieldByteCountOffset)
         } else {
             return basePtr.advanced(by: itemNameFieldByteCountOffset)
@@ -499,8 +503,8 @@ internal extension Item {
 
     internal var itemByteCountPtr: UnsafeMutableRawPointer {
         guard let parentPtr = parentPtr else { return basePtr.advanced(by: itemByteCountOffset) }
-        if UInt8.readValue(atPtr: parentPtr, endianness) == ItemType.array.rawValue {
-            let nameFieldByteCount = UInt8.readValue(atPtr: parentPtr.advanced(by: nameFieldOffset), endianness)
+        if UInt8(valuePtr: parentPtr, endianness) == ItemType.array.rawValue {
+            let nameFieldByteCount = UInt8(valuePtr: parentPtr.advanced(by: nameFieldOffset), endianness)
             return parentPtr.advanced(by: itemNvrFieldOffset + Int(nameFieldByteCount) + itemByteCountOffset)
         } else {
             return basePtr.advanced(by: itemByteCountOffset)
@@ -509,8 +513,8 @@ internal extension Item {
     
     internal var parentOffsetPtr: UnsafeMutableRawPointer {
         guard let parentPtr = parentPtr else { return basePtr.advanced(by: itemParentOffsetOffset) }
-        if UInt8.readValue(atPtr: parentPtr, endianness) == ItemType.array.rawValue {
-            let nameFieldByteCount = UInt8.readValue(atPtr: parentPtr.advanced(by: nameFieldOffset), endianness)
+        if UInt8(valuePtr: parentPtr, endianness) == ItemType.array.rawValue {
+            let nameFieldByteCount = UInt8(valuePtr: parentPtr.advanced(by: nameFieldOffset), endianness)
             return parentPtr.advanced(by: itemNvrFieldOffset + Int(nameFieldByteCount) + itemParentOffsetOffset)
         } else {
             return basePtr.advanced(by: itemParentOffsetOffset)
@@ -519,7 +523,7 @@ internal extension Item {
 
     internal var childCountPtr: UnsafeMutableRawPointer {
         guard let parentPtr = parentPtr else { return basePtr.advanced(by: itemValueCountOffset) }
-        if UInt8.readValue(atPtr: parentPtr, endianness) == ItemType.array.rawValue {
+        if UInt8(valuePtr: parentPtr, endianness) == ItemType.array.rawValue {
             return basePtr
         } else {
             return basePtr.advanced(by: itemValueCountOffset)
@@ -611,7 +615,7 @@ public extension Item {
     internal(set) var nameFieldByteCount: Int {
         get {
             if isElement { return 0 }
-            return Int(UInt8.readValue(atPtr: nameFieldByteCountPtr, endianness))
+            return Int(UInt8(valuePtr: nameFieldByteCountPtr, endianness))
         }
         set {
             if isElement { return } // Not for array's
@@ -622,9 +626,9 @@ public extension Item {
     internal var byteCount: Int {
         get {
             if isElement {
-                return Int(UInt32.readValue(atPtr: parentItem!.valuePtr.advanced(by: 4), endianness))
+                return Int(UInt32(valuePtr: parentItem!.valuePtr.advanced(by: 4), endianness))
             } else {
-                return Int(UInt32.readValue(atPtr: itemByteCountPtr, endianness))
+                return Int(UInt32(valuePtr: itemByteCountPtr, endianness))
             }
         }
         set {
@@ -639,7 +643,7 @@ public extension Item {
     internal var parentOffset: Int {
         get {
             if isElement { return 0 }
-            return Int(UInt32.readValue(atPtr: parentOffsetPtr, endianness))
+            return Int(UInt32(valuePtr: parentOffsetPtr, endianness))
         }
         set {
             if isElement { return }
@@ -650,7 +654,7 @@ public extension Item {
     public var count: Int {
         get {
             if isElement { return 0 }
-            return Int(UInt32.readValue(atPtr: childCountPtr, endianness))
+            return Int(UInt32(valuePtr: childCountPtr, endianness))
         }
         set {
             if isElement { return }
@@ -661,7 +665,7 @@ public extension Item {
     internal(set) var nameHash: UInt16 {
         get {
             if nameFieldByteCount == 0 { return 0 }
-            return UInt16.readValue(atPtr: nameHashPtr, endianness)
+            return UInt16(valuePtr: nameHashPtr, endianness)
         }
         set {
             if isElement { return }
@@ -672,7 +676,7 @@ public extension Item {
     internal(set) var nameCount: Int {
         get {
             if nameFieldByteCount == 0 { return 0 }
-            return Int(UInt8.readValue(atPtr: nameCountPtr, endianness))
+            return Int(UInt8(valuePtr: nameCountPtr, endianness))
         }
         set {
             if isElement { return }
@@ -756,7 +760,7 @@ internal extension Item {
     internal var parentItem: Item? {
         guard let parentPtr = parentPtr else { return nil }
         let parentParentOffsetPtr = parentPtr.advanced(by: itemParentOffsetOffset)
-        let parentParentOffset = Int(UInt32.readValue(atPtr: parentParentOffsetPtr, endianness))
+        let parentParentOffset = Int(UInt32(valuePtr: parentParentOffsetPtr, endianness))
         if parentParentOffset == 0 {
             return Item.init(basePtr: parentPtr, parentPtr: nil, endianness: endianness)
         } else {
@@ -769,7 +773,7 @@ internal extension Item {
     
     internal var elementByteCount: Int {
         get {
-            return Int(UInt32.readValue(atPtr: parentItem!.valuePtr.advanced(by: 4), endianness))
+            return Int(UInt32(valuePtr: parentItem!.valuePtr.advanced(by: 4), endianness))
         }
         set {
             UInt32(newValue).storeValue(atPtr: parentItem!.valuePtr.advanced(by: 4), endianness)
@@ -777,7 +781,7 @@ internal extension Item {
     }
     
     
-    /// Returns the type of a child in an array
+    /// Returns the type of this item if the item is an element
     
     internal var elementType: ItemType? {
         get {
@@ -794,7 +798,7 @@ internal extension Item {
 
     internal var availableValueByteCount: Int {
         if isElement {
-            return Int(UInt32.readValue(atPtr: parentItem!.valuePtr.advanced(by: 4), endianness))
+            return Int(UInt32(valuePtr: parentItem!.valuePtr.advanced(by: 4), endianness))
         } else {
             return byteCount - minimumItemByteCount - nameFieldByteCount
         }
@@ -808,7 +812,7 @@ internal extension Item {
         case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32: return 0
         case .int64, .uint64, .float64: return 8
         case .string, .binary: return count
-        case .array: return 8 + count * Int(UInt32.readValue(atPtr: valuePtr.advanced(by: 4), endianness))
+        case .array: return 8 + count * Int(UInt32(valuePtr: valuePtr.advanced(by: 4), endianness))
         case .dictionary, .sequence:
             var usedByteCount: Int = 0
             forEachAbortOnTrue({ usedByteCount += Int($0.byteCount) ; return false })
@@ -1018,9 +1022,9 @@ public extension Item {
                         srcPtr = itemPtr
                     }
                     if srcPtr != nil {
-                        length += Int(UInt32.readValue(atPtr: itemPtr.advanced(by: itemByteCountOffset), endianness))
+                        length += Int(UInt32(valuePtr: itemPtr.advanced(by: itemByteCountOffset), endianness))
                     }
-                    itemPtr = itemPtr.advanced(by: Int(UInt32.readValue(atPtr: itemPtr.advanced(by: itemByteCountOffset), endianness)))
+                    itemPtr = itemPtr.advanced(by: Int(UInt32(valuePtr: itemPtr.advanced(by: itemByteCountOffset), endianness)))
                     childCount -= 1
                 }
                 if srcPtr == nil { srcPtr = itemPtr }
@@ -1082,6 +1086,17 @@ public extension Item {
             pit = pit!.parentItem   // Go up the parent/child chain
         }
         return ptr.distance(to: aptr)
+    }
+    
+    
+    internal var bufferPtr: UnsafeMutableRawPointer {
+        var pit = parentItem
+        var ptr = basePtr
+        while pit != nil {
+            ptr = pit!.basePtr      // The base pointer of the first item is the buffer base address
+            pit = pit!.parentItem   // Go up the parent/child chain
+        }
+        return ptr
     }
     
     

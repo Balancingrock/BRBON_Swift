@@ -145,7 +145,7 @@ public extension Item {
     /// - Returns: success or an error indicator.
     
     @discardableResult
-    public func append<T>(_ value: T) -> Result where T:BrbonCoder {
+    private func _append<T>(_ value: T) -> Result where T:Coder {
         
         
         // Prevent errors
@@ -167,6 +167,33 @@ public extension Item {
         
         return .success
     }
+    
+    @discardableResult
+    public func append(_ value: Bool) -> Result { return _append(value) }
+    @discardableResult
+    public func append(_ value: UInt8) -> Result { return _append(value) }
+    @discardableResult
+    public func append(_ value: UInt16) -> Result { return _append(value) }
+    @discardableResult
+    public func append(_ value: UInt32) -> Result { return _append(value) }
+    @discardableResult
+    public func append(_ value: UInt64) -> Result { return _append(value) }
+    @discardableResult
+    public func append(_ value: Int8) -> Result { return _append(value) }
+    @discardableResult
+    public func append(_ value: Int16) -> Result { return _append(value) }
+    @discardableResult
+    public func append(_ value: Int32) -> Result { return _append(value) }
+    @discardableResult
+    public func append(_ value: Int64) -> Result { return _append(value) }
+    @discardableResult
+    public func append(_ value: Float32) -> Result { return _append(value) }
+    @discardableResult
+    public func append(_ value: Float64) -> Result { return _append(value) }
+    @discardableResult
+    public func append(_ value: String) -> Result { return _append(value) }
+    @discardableResult
+    public func append(_ value: Data) -> Result { return _append(value) }
 
     
     /// Removes an item from the array.
@@ -200,16 +227,12 @@ public extension Item {
     /// - Returns: .success or an error indicator.
     
     @discardableResult
-    public func createNewElements<T>(amount: Int = 1, value: T? = nil) -> Result where T:BrbonCoder {
+    private func _createNewElements<T>(_ value: T, _ amount: Int) -> Result where T:Coder {
         
         guard isArray else { return .onlySupportedOnArray }
         
         guard amount > 0 else { return .success }
         
-        if let value = value {
-            guard value.brbonType == elementType! else { return .typeConflict }
-        }
-
         
         // Not implemented yet
         
@@ -218,31 +241,17 @@ public extension Item {
 
         // Ensure storage area
         
-        let bytesNeeded = amount * (value?.elementByteCount ?? elementType!.assumedValueByteCount)
+        let bytesNeeded = amount * value.elementByteCount
         guard ensureValueStorage(for: bytesNeeded) == .success else { return .outOfStorage }
         
         
-        // Fill it with initial values or zero
-        
-        if let value = value {
+        // Use default value
             
-            
-            // Use default value
-            
-            var loopCount = amount
-            repeat {
-                value.storeValue(atPtr: elementPtr(for: count + loopCount - 1), endianness)
-                loopCount -= 1
-            } while loopCount > 0
-            
-        } else {
-            
-            
-            // No default value, set the whole area to zero
-            
-            let ptr = elementPtr(for: count).assumingMemoryBound(to: UInt8.self)
-            Data(count: Int(bytesNeeded)).copyBytes(to: ptr, count: self.count)
-        }
+        var loopCount = amount
+        repeat {
+            value.storeValue(atPtr: elementPtr(for: count + loopCount - 1), endianness)
+            loopCount -= 1
+        } while loopCount > 0
         
         
         // Increment the number of elements
@@ -253,11 +262,38 @@ public extension Item {
         return .success
     }
     
+    @discardableResult
+    public func createNewElements(_ value: Bool, amount: Int = 1) -> Result { return _createNewElements(value, amount) }
+    @discardableResult
+    public func createNewElements(_ value: UInt8, amount: Int = 1) -> Result { return _createNewElements(value, amount) }
+    @discardableResult
+    public func createNewElements(_ value: UInt16, amount: Int = 1) -> Result { return _createNewElements(value, amount) }
+    @discardableResult
+    public func createNewElements(_ value: UInt32, amount: Int = 1) -> Result { return _createNewElements(value, amount) }
+    @discardableResult
+    public func createNewElements(_ value: UInt64, amount: Int = 1) -> Result { return _createNewElements(value, amount) }
+    @discardableResult
+    public func createNewElements(_ value: Int8, amount: Int = 1) -> Result { return _createNewElements(value, amount) }
+    @discardableResult
+    public func createNewElements(_ value: Int16, amount: Int = 1) -> Result { return _createNewElements(value, amount) }
+    @discardableResult
+    public func createNewElements(_ value: Int32, amount: Int = 1) -> Result { return _createNewElements(value, amount) }
+    @discardableResult
+    public func createNewElements(_ value: Int64, amount: Int = 1) -> Result { return _createNewElements(value, amount) }
+    @discardableResult
+    public func createNewElements(_ value: Float32, amount: Int = 1) -> Result { return _createNewElements(value, amount) }
+    @discardableResult
+    public func createNewElements(_ value: Float64, amount: Int = 1) -> Result { return _createNewElements(value, amount) }
+    @discardableResult
+    public func createNewElements(_ value: String, amount: Int = 1) -> Result { return _createNewElements(value, amount) }
+    @discardableResult
+    public func createNewElements(_ value: Data, amount: Int = 1) -> Result { return _createNewElements(value, amount) }
+
     
     /// Inserts a new element at the given position.
     
     @discardableResult
-    public func insert<T>(_ value: T, at index: Int) -> Result where T:BrbonCoder {
+    private func _insert<T>(_ value: T, _ index: Int) -> Result where T:Coder {
 
         
         // Prevent errors
@@ -299,6 +335,33 @@ public extension Item {
         return .success
     }
 
+    @discardableResult
+    public func insert(_ value: Bool, at index: Int) -> Result { return _insert(value, index) }
+    @discardableResult
+    public func insert(_ value: UInt8, at index: Int) -> Result { return _insert(value, index) }
+    @discardableResult
+    public func insert(_ value: UInt16, at index: Int) -> Result { return _insert(value, index) }
+    @discardableResult
+    public func insert(_ value: UInt32, at index: Int) -> Result { return _insert(value, index) }
+    @discardableResult
+    public func insert(_ value: UInt64, at index: Int) -> Result { return _insert(value, index) }
+    @discardableResult
+    public func insert(_ value: Int8, at index: Int) -> Result { return _insert(value, index) }
+    @discardableResult
+    public func insert(_ value: Int16, at index: Int) -> Result { return _insert(value, index) }
+    @discardableResult
+    public func insert(_ value: Int32, at index: Int) -> Result { return _insert(value, index) }
+    @discardableResult
+    public func insert(_ value: Int64, at index: Int) -> Result { return _insert(value, index) }
+    @discardableResult
+    public func insert(_ value: Float32, at index: Int) -> Result { return _insert(value, index) }
+    @discardableResult
+    public func insert(_ value: Float64, at index: Int) -> Result { return _insert(value, index) }
+    @discardableResult
+    public func insert(_ value: String, at index: Int) -> Result { return _insert(value, index) }
+    @discardableResult
+    public func insert(_ value: Data, at index: Int) -> Result { return _insert(value, index) }
+
     
     // *********************************
     // MARK: - Internal
@@ -327,7 +390,7 @@ public extension Item {
         parentOffset: Int,
         elementValueLength: Int? = nil,
         fixedItemLength: Int? = nil,
-        endianness: Endianness = machineEndianness) -> Bool where T:BrbonCoder {
+        endianness: Endianness = machineEndianness) -> Bool where T:Coder {
     
         
         guard elementType != .null else { return false }

@@ -48,7 +48,7 @@ extension Item {
         
         // Add the null at the end
         
-        Null().storeAsItem(atPtr: newItemPtr, nameField: nfd, parentOffset: offsetInBuffer(for: basePtr), valueByteCount: valueByteCount, endianness)
+        Null().storeAsItem(atPtr: newItemPtr, bufferPtr: bufferPtr, parentPtr: basePtr, nameField: nfd, valueByteCount: valueByteCount, endianness)
         
         
         // Increment the number of children
@@ -200,7 +200,7 @@ extension Item {
     /// Updates the value or adds a new value for the given name
     
     @discardableResult
-    public func updateValue<T>(_ value: T, forName name: String) -> Result where T:BrbonCoder {
+    internal func updateValue<T>(_ value: T, forName name: String) -> Result where T:Coder {
         
         guard isDictionary else { return .onlySupportedOnDictionary }
         
@@ -225,6 +225,33 @@ extension Item {
         return .success
     }
     
+    @discardableResult
+    public func updateValue(_ value: Bool, forName name: String) -> Result { return updateValue(value, forName: name) }
+    @discardableResult
+    public func updateValue(_ value: UInt8, forName name: String) -> Result { return updateValue(value, forName: name) }
+    @discardableResult
+    public func updateValue(_ value: UInt16, forName name: String) -> Result { return updateValue(value, forName: name) }
+    @discardableResult
+    public func updateValue(_ value: UInt32, forName name: String) -> Result { return updateValue(value, forName: name) }
+    @discardableResult
+    public func updateValue(_ value: UInt64, forName name: String) -> Result { return updateValue(value, forName: name) }
+    @discardableResult
+    public func updateValue(_ value: Int8, forName name: String) -> Result { return updateValue(value, forName: name) }
+    @discardableResult
+    public func updateValue(_ value: Int16, forName name: String) -> Result { return updateValue(value, forName: name) }
+    @discardableResult
+    public func updateValue(_ value: Int32, forName name: String) -> Result { return updateValue(value, forName: name) }
+    @discardableResult
+    public func updateValue(_ value: Int64, forName name: String) -> Result { return updateValue(value, forName: name) }
+    @discardableResult
+    public func updateValue(_ value: Float32, forName name: String) -> Result { return updateValue(value, forName: name) }
+    @discardableResult
+    public func updateValue(_ value: Float64, forName name: String) -> Result { return updateValue(value, forName: name) }
+    @discardableResult
+    public func updateValue(_ value: String, forName name: String) -> Result { return updateValue(value, forName: name) }
+    @discardableResult
+    public func updateValue(_ value: Data, forName name: String) -> Result { return updateValue(value, forName: name) }
+
     
     // *****************
     // MARK: - Internals
@@ -251,7 +278,7 @@ extension Item {
         var p = valuePtr
         var remainder = count
         while remainder > 0 {
-            let byteCount = Int(UInt32.readValue(atPtr: p.advanced(by: itemByteCountOffset), endianness))
+            let byteCount = Int(UInt32(valuePtr: p.advanced(by: itemByteCountOffset), endianness))
             p = p.advanced(by: byteCount)
             remainder -= 1
         }

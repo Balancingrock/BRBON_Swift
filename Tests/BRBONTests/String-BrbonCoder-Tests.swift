@@ -50,7 +50,7 @@ class String_BrbonCoder_Tests: XCTestCase {
         XCTAssertEqual(buffer.baseAddress!.advanced(by: 2).assumingMemoryBound(to: UInt8.self).pointee, 0x73)
         XCTAssertEqual(buffer.baseAddress!.advanced(by: 3).assumingMemoryBound(to: UInt8.self).pointee, 0x74)
         
-        s.storeAsItem(atPtr: buffer.baseAddress!, parentOffset: 0x12345678, machineEndianness)
+        s.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!.advanced(by: 0x12345678), machineEndianness)
         
         var data = Data(bytesNoCopy: buffer.baseAddress!, count: 24, deallocator: Data.Deallocator.none)
 
@@ -65,7 +65,7 @@ class String_BrbonCoder_Tests: XCTestCase {
         
         XCTAssertEqual(data, exp)
         
-        s.storeAsItem(atPtr: buffer.baseAddress!, parentOffset: 0x12345678, valueByteCount: 10, machineEndianness)
+        s.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!.advanced(by: 0x12345678), valueByteCount: 10, machineEndianness)
         
         data = Data(bytesNoCopy: buffer.baseAddress!, count: 32, deallocator: Data.Deallocator.none)
         
@@ -95,17 +95,17 @@ class String_BrbonCoder_Tests: XCTestCase {
         
         buffer.copyBytes(from: [0x74, 0x65, 0x73, 0x74])
         
-        var str = String.readValue(atPtr: buffer.baseAddress!, count: 4, machineEndianness)
+        var str = String(valuePtr: buffer.baseAddress!, count: 4, machineEndianness)
         XCTAssertEqual(str, "test")
         
         buffer.copyBytes(from: exp)
         
-        str = String.readFromItem(atPtr: buffer.baseAddress!, machineEndianness)
+        str = String(itemPtr: buffer.baseAddress!, machineEndianness)
         XCTAssertEqual(str, "test")
         
         buffer.copyBytes(from: [0x04, 0, 0, 0, 0x74, 0x65, 0x73, 0x74])
         
-        str = String.readFromElement(atPtr: buffer.baseAddress!, machineEndianness)
+        str = String(elementPtr: buffer.baseAddress!, machineEndianness)
         XCTAssertEqual(str, "test")
     }
     
@@ -142,7 +142,7 @@ class String_BrbonCoder_Tests: XCTestCase {
         XCTAssertEqual(buffer.baseAddress!.advanced(by: 2).assumingMemoryBound(to: UInt8.self).pointee, 0x73)
         XCTAssertEqual(buffer.baseAddress!.advanced(by: 3).assumingMemoryBound(to: UInt8.self).pointee, 0x74)
         
-        s.storeAsItem(atPtr: buffer.baseAddress!, nameField: nfd, parentOffset: 0x12345678, machineEndianness)
+        s.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!.advanced(by: 0x12345678), nameField: nfd, machineEndianness)
         
         var data = Data(bytesNoCopy: buffer.baseAddress!, count: 32, deallocator: Data.Deallocator.none)
         
@@ -159,7 +159,7 @@ class String_BrbonCoder_Tests: XCTestCase {
         
         XCTAssertEqual(data, exp)
         
-        s.storeAsItem(atPtr: buffer.baseAddress!, nameField: nfd, parentOffset: 0x12345678, valueByteCount: 10, machineEndianness)
+        s.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!.advanced(by: 0x12345678), nameField: nfd, valueByteCount: 10, machineEndianness)
         
         data = Data(bytesNoCopy: buffer.baseAddress!, count: 40, deallocator: Data.Deallocator.none)
         
@@ -191,17 +191,17 @@ class String_BrbonCoder_Tests: XCTestCase {
         
         buffer.copyBytes(from: [0x74, 0x65, 0x73, 0x74, 0x74, 0x65, 0x73, 0x74])
         
-        var str = String.readValue(atPtr: buffer.baseAddress!, count: 8, machineEndianness)
+        var str = String(valuePtr: buffer.baseAddress!, count: 8, machineEndianness)
         XCTAssertEqual(str, "testtest")
         
         buffer.copyBytes(from: exp)
         
-        str = String.readFromItem(atPtr: buffer.baseAddress!, machineEndianness)
+        str = String(itemPtr: buffer.baseAddress!, machineEndianness)
         XCTAssertEqual(str, "testtest")
         
         buffer.copyBytes(from: [0x08, 0, 0, 0, 0x74, 0x65, 0x73, 0x74, 0x74, 0x65, 0x73, 0x74])
         
-        str = String.readFromElement(atPtr: buffer.baseAddress!, machineEndianness)
+        str = String(elementPtr: buffer.baseAddress!, machineEndianness)
         XCTAssertEqual(str, "testtest")
     }
 }

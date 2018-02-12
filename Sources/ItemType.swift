@@ -186,6 +186,10 @@ public enum ItemType: UInt8 {
         case .array, .dictionary, .sequence: return true
         }
     }
+    
+    public init?(atPtr: UnsafeMutableRawPointer) {
+        self.init(rawValue: UInt8(valuePtr: atPtr, machineEndianness))
+    }
 }
 
 
@@ -198,7 +202,7 @@ extension ItemType {
     }
     
     internal static func readValue(atPtr: UnsafeMutableRawPointer) -> ItemType? {
-        let v = UInt8.readValue(atPtr: atPtr, machineEndianness)
+        let v = UInt8(valuePtr: atPtr, machineEndianness)
         return ItemType(rawValue: v)
     }
 }
