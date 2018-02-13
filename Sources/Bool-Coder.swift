@@ -13,9 +13,7 @@ import BRUtils
 /// Adds the BrbonCoder protocol
 
 extension Bool: Coder {
-    
-    var brbonType: ItemType { return ItemType.bool }
-    
+        
     var valueByteCount: Int { return 1 }
     
     func itemByteCount(_ nfd: NameFieldDescriptor? = nil) -> Int { return minimumItemByteCount + (nfd?.byteCount ?? 0) }

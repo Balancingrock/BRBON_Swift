@@ -10,7 +10,7 @@ import Foundation
 import BRUtils
 
 
-public class Null: Coder {
+internal class Null: Coder, IsBrbon {
     
     
     var brbonType: ItemType { return ItemType.null }

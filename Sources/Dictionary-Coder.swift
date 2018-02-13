@@ -10,7 +10,17 @@ import Foundation
 import BRUtils
 
 
-extension Dictionary where Value: Coder {
+internal class BrbonDictionary: Coder, IsBrbon {
+
+    
+    init(content: Dictionary<String, IsBrbon>) {
+        self.content = content as! Dictionary<String, Coder>
+    }
+
+    
+    // The content of this dictionary
+    
+    let content: Dictionary<String, Coder>
     
     
     /// The BRBON Item type of the item this value will be stored into.
@@ -21,17 +31,16 @@ extension Dictionary where Value: Coder {
     /// The number of bytes needed to encode self into an BrbonBytes stream
     
     var valueByteCount: Int {
-        if self.count == 0 { return 0 }
+        if content.count == 0 { return 0 }
         var bc = 0
-        for (key, value) in self {
-            guard key is String else { return 0 }
-            guard let nfd = NameFieldDescriptor((key as! String)) else { return 0 }
+        for (key, value) in content {
+            guard let nfd = NameFieldDescriptor(key) else { return 0 }
             bc += value.itemByteCount(nfd)
         }
         return bc
     }
     
-    func itemByteCount(_ nfd: NameFieldDescriptor?) -> Int {
+    func itemByteCount(_ nfd: NameFieldDescriptor? = nil) -> Int {
         return minimumItemByteCount + (nfd?.byteCount ?? 0) + valueByteCount
     }
     
@@ -112,7 +121,7 @@ extension Dictionary where Value: Coder {
         UInt32(bufferPtr.distance(to: parentPtr)).storeValue(atPtr: p, endianness)
         p = p.advanced(by: 4)
         
-        UInt32(self.count).storeValue(atPtr: p, endianness)
+        UInt32(content.count).storeValue(atPtr: p, endianness)
         p = p.advanced(by: 4)
         
         nfd?.storeValue(atPtr: p, endianness)
@@ -121,13 +130,9 @@ extension Dictionary where Value: Coder {
         
         // Items
         
-        for (key, value) in self {
-            guard key is String else { return .allDictionaryKeysMustBeString }
-            guard !(key as! String).isEmpty else { return .emptyKey }
-            guard let knfd = NameFieldDescriptor((key as! String)) else { return .nameFieldError }
-            
+        for (key, value) in content {
+            guard let knfd = NameFieldDescriptor(key) else { return .nameFieldError }
             value.storeAsItem(atPtr: p, bufferPtr: bufferPtr, parentPtr: atPtr, nameField: knfd, valueByteCount: nil, endianness)
-            
             p = p.advanced(by: Int(UInt32(valuePtr: p.advanced(by: itemByteCountOffset), endianness)))
         }
         

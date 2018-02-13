@@ -151,7 +151,7 @@ public extension Item {
         // Prevent errors
         
         guard isArray else { return .onlySupportedOnArray }
-        guard elementType == ItemType.bool else { return .typeConflict }
+        guard elementType == value.brbonType else { return .typeConflict }
         
         
         // Store element
@@ -168,6 +168,54 @@ public extension Item {
         return .success
     }
     
+    @discardableResult
+    private func _appendArray(_ arr: BrbonArray) -> Result {
+        
+        
+        // Prevent errors
+        
+        guard isArray else { return .onlySupportedOnArray }
+        guard elementType == ItemType.array else { return .typeConflict }
+
+        
+        // Size guarantee
+        
+        guard ensureValueStorage(for: arr.itemByteCount()) == .success else { return .outOfStorage }
+        arr.storeAsItem(atPtr: elementPtr(for: count), bufferPtr: bufferPtr, parentPtr: basePtr, endianness)
+        
+        
+        // Increase child counter
+        
+        count += 1
+
+        
+        return .success
+    }
+    
+    @discardableResult
+    private func _appendDictionary(_ dict: BrbonDictionary) -> Result {
+        
+        
+        // Prevent errors
+        
+        guard isArray else { return .onlySupportedOnArray }
+        guard elementType == ItemType.dictionary else { return .typeConflict }
+        
+        
+        // Size guarantee
+        
+        guard ensureValueStorage(for: dict.itemByteCount()) == .success else { return .outOfStorage }
+        dict.storeAsItem(atPtr: elementPtr(for: count), bufferPtr: bufferPtr, parentPtr: basePtr, endianness)
+        
+        
+        // Increase child counter
+        
+        count += 1
+        
+        
+        return .success
+    }
+
     @discardableResult
     public func append(_ value: Bool) -> Result { return _append(value) }
     @discardableResult
@@ -194,6 +242,34 @@ public extension Item {
     public func append(_ value: String) -> Result { return _append(value) }
     @discardableResult
     public func append(_ value: Data) -> Result { return _append(value) }
+    @discardableResult
+    public func append(_ value: Array<Bool>) -> Result { return _appendArray(BrbonArray(content: value, type: .bool)) }
+    @discardableResult
+    public func append(_ value: Array<UInt8>) -> Result { return _appendArray(BrbonArray(content: value, type: .uint8)) }
+    @discardableResult
+    public func append(_ value: Array<UInt16>) -> Result { return _appendArray(BrbonArray(content: value, type: .uint16)) }
+    @discardableResult
+    public func append(_ value: Array<UInt32>) -> Result { return _appendArray(BrbonArray(content: value, type: .uint32)) }
+    @discardableResult
+    public func append(_ value: Array<UInt64>) -> Result { return _appendArray(BrbonArray(content: value, type: .uint64)) }
+    @discardableResult
+    public func append(_ value: Array<Int8>) -> Result { return _appendArray(BrbonArray(content: value, type: .int8)) }
+    @discardableResult
+    public func append(_ value: Array<Int16>) -> Result { return _appendArray(BrbonArray(content: value, type: .int16)) }
+    @discardableResult
+    public func append(_ value: Array<Int32>) -> Result { return _appendArray(BrbonArray(content: value, type: .int32)) }
+    @discardableResult
+    public func append(_ value: Array<Int64>) -> Result { return _appendArray(BrbonArray(content: value, type: .int64)) }
+    @discardableResult
+    public func append(_ value: Array<Float32>) -> Result { return _appendArray(BrbonArray(content: value, type: .float32)) }
+    @discardableResult
+    public func append(_ value: Array<Float64>) -> Result { return _appendArray(BrbonArray(content: value, type: .float64)) }
+    @discardableResult
+    public func append(_ value: Array<String>) -> Result { return _appendArray(BrbonArray(content: value, type: .string)) }
+    @discardableResult
+    public func append(_ value: Array<Data>) -> Result { return _appendArray(BrbonArray(content: value, type: .binary)) }
+    @discardableResult
+    public func append(_ value: Dictionary<String, IsBrbon>) -> Result { return _appendDictionary(BrbonDictionary(content: value)) }
 
     
     /// Removes an item from the array.

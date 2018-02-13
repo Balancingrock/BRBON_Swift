@@ -54,13 +54,8 @@ import BRUtils
 
 /// This protocol is used to encode/decode types to/from a byte stream.
 
-internal protocol Coder {
-    
-    
-    /// The BRBON Item type of the item this value will be stored into.
-    
-    var brbonType: ItemType { get }
-    
+internal protocol Coder: IsBrbon {
+
     
     /// The number of bytes needed to encode self into an BrbonBytes stream
     

@@ -107,6 +107,11 @@ public enum ItemType: UInt8 {
     
     case binary         = 0x44
     
+    
+    /// A table is an array with identical dictionaries as elements, allowing pointered access to items within them.
+    
+    //case table          = 0x45
+    
 
     /// ===================================================
     /// These types do use the count/value field as a value

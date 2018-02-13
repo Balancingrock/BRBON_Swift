@@ -15,11 +15,6 @@ import BRUtils
 extension UInt64: Coder {
     
     
-    /// The BRBON Item type of the item this value will be stored into.
-    
-    var brbonType: ItemType { return ItemType.uint64 }
-    
-    
     var valueByteCount: Int { return 8 }
     
     func itemByteCount(_ nfd: NameFieldDescriptor? = nil) -> Int { return minimumItemByteCount + (nfd?.byteCount ?? 0) + valueByteCount }

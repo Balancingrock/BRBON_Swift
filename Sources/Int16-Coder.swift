@@ -13,12 +13,7 @@ import BRUtils
 /// Adds the BrbonCoder protocol
 
 extension Int16: Coder {
-    
-    
-    /// The BRBON Item type of the item this value will be stored into.
-    
-    var brbonType: ItemType { return ItemType.int16 }
-    
+        
     
     var valueByteCount: Int { return 2 }
     

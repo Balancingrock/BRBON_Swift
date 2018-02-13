@@ -1,46 +1,32 @@
 //
-//  Array-BrbonCoder.swift
+//  Sequence-Coder.swift
 //  BRBON
 //
-//  Created by Marinus van der Lugt on 09/02/18.
+//  Created by Marinus van der Lugt on 12/02/18.
 //
 //
 
 import Foundation
 import BRUtils
 
-
-internal class BrbonArray: Coder, IsBrbon {
-
-    init(content: Array<Coder>, type: ItemType) {
-        self.content = content
-        self.elementType = type
-    }
-    
-    let content: Array<Coder>
+internal class Sequence: Coder {
     
     
     /// The BRBON Item type of the item this value will be stored into.
     
-    var brbonType: ItemType { return ItemType.array }
-    
-    let elementType: ItemType
+    var brbonType: ItemType { return ItemType.sequence }
     
     
-    /// The number of bytes needed to encode self into an BrbonBytes stream.
+    /// The number of bytes needed to encode self into an BrbonBytes stream
     
-    var valueByteCount: Int {
-        var ebc = 0
-        content.forEach(){ if $0.elementByteCount > ebc { ebc = $0.elementByteCount } }
-        return content.count * ebc
-    }
+    var valueByteCount: Int { return 0 }
     
-    func itemByteCount(_ nfd: NameFieldDescriptor? = nil) -> Int {
-        return minimumItemByteCount + (nfd?.byteCount ?? 0) + 8 + valueByteCount
+    func itemByteCount(_ nfd: NameFieldDescriptor?) -> Int {
+        return minimumItemByteCount + (nfd?.byteCount ?? 0) + valueByteCount
     }
     
     var elementByteCount: Int {
-        return minimumItemByteCount + 8 + valueByteCount
+        return minimumItemByteCount + valueByteCount
     }
     
     
@@ -68,17 +54,12 @@ internal class BrbonArray: Coder, IsBrbon {
         nameField nfd: NameFieldDescriptor? = nil,
         valueByteCount: Int? = nil,
         _ endianness: Endianness) -> Result {
-        
-        if content.count == 0 { return .arrayMustContainAnElement }
-        
+
         
         // Determine size of the value field
         // =================================
         
-        var itemBC = self.itemByteCount(nfd)
-        let elemBC = (content.count > 0) ? content[0].elementByteCount : elementType.assumedValueByteCount
-        
-        itemBC += (elemBC * content.count).roundUpToNearestMultipleOf8()
+        var itemBC = itemByteCount(nfd)
         
         
         if let valueByteCount = valueByteCount {
@@ -104,7 +85,7 @@ internal class BrbonArray: Coder, IsBrbon {
         
         var p = atPtr
         
-        ItemType.array.storeValue(atPtr: p)
+        ItemType.sequence.storeValue(atPtr: p)
         p = p.advanced(by: 1)
         
         ItemOptions.none.storeValue(atPtr: p)
@@ -122,41 +103,11 @@ internal class BrbonArray: Coder, IsBrbon {
         UInt32(bufferPtr.distance(to: parentPtr)).storeValue(atPtr: p, endianness)
         p = p.advanced(by: 4)
         
-        UInt32(content.count).storeValue(atPtr: p, endianness)
+        UInt32(0).storeValue(atPtr: p, endianness)
         p = p.advanced(by: 4)
         
         nfd?.storeValue(atPtr: p, endianness)
         p = p.advanced(by: (nfd?.byteCount ?? 0))
-        
-        
-        // Element spec
-        
-        elementType.storeValue(atPtr: p)
-        p = p.advanced(by: 1)
-        
-        UInt8(0).storeValue(atPtr: p, endianness)
-        p = p.advanced(by: 1)
-        
-        UInt16(0).storeValue(atPtr: p, endianness)
-        p = p.advanced(by: 2)
-        
-        
-        // Element bytecount
-        
-        UInt32(elemBC).storeValue(atPtr: p, endianness)
-        p = p.advanced(by: 4)
-        
-        
-        // Elements
-        
-        content.forEach({
-            switch $0.brbonType {
-            case .null: break
-            case .bool, .int8, .int16, .int32, .int64, .uint8, .uint16, .uint32, .uint64, .float32, .float64, .string, .binary: $0.storeAsElement(atPtr: p, endianness)
-            case .array, .dictionary, .sequence: $0.storeAsItem(atPtr: p, bufferPtr: bufferPtr, parentPtr: atPtr, nameField: nil, valueByteCount: nil, endianness)
-            }
-            p = p.advanced(by: elemBC)
-        })
         
         
         // Filler
