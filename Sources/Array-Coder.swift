@@ -30,17 +30,28 @@ internal class BrbonArray: Coder, IsBrbon {
     /// The number of bytes needed to encode self into an BrbonBytes stream.
     
     var valueByteCount: Int {
-        var ebc = 0
-        content.forEach(){ if $0.elementByteCount > ebc { ebc = $0.elementByteCount } }
-        return content.count * ebc
+        switch elementType {
+        case .null: return 0
+        case .bool, .int8, .uint8: return content.count + 8
+        case .int16, .uint16: return content.count * 2 + 8
+        case .int32, .uint32, .float32: return content.count * 4 + 8
+        case .int64, .uint64, .float64: return content.count * 8 + 8
+        case .string, .binary, .array, .dictionary, .sequence:
+            var ebc = 0
+            content.forEach(){
+                let bc = $0.elementByteCount
+                if bc > ebc { ebc = bc }
+            }
+            return (content.count * ebc + 8)
+        }
     }
     
     func itemByteCount(_ nfd: NameFieldDescriptor? = nil) -> Int {
-        return minimumItemByteCount + (nfd?.byteCount ?? 0) + 8 + valueByteCount
+        return minimumItemByteCount + (nfd?.byteCount ?? 0) + valueByteCount.roundUpToNearestMultipleOf8()
     }
     
     var elementByteCount: Int {
-        return minimumItemByteCount + 8 + valueByteCount
+        return minimumItemByteCount + valueByteCount.roundUpToNearestMultipleOf8()
     }
     
     
@@ -69,16 +80,29 @@ internal class BrbonArray: Coder, IsBrbon {
         valueByteCount: Int? = nil,
         _ endianness: Endianness) -> Result {
         
-        if content.count == 0 { return .arrayMustContainAnElement }
-        
         
         // Determine size of the value field
         // =================================
         
         var itemBC = self.itemByteCount(nfd)
-        let elemBC = (content.count > 0) ? content[0].elementByteCount : elementType.assumedValueByteCount
-        
-        itemBC += (elemBC * content.count).roundUpToNearestMultipleOf8()
+        var elemBC: Int
+
+        switch elementType {
+        case .null: elemBC = 0
+        case .bool, .int8, .uint8: elemBC = 1
+        case .int16, .uint16: elemBC = 2
+        case .int32, .uint32, .float32: elemBC = 4
+        case .int64, .uint64, .float64: elemBC = 8
+        case .string, .binary, .array, .dictionary, .sequence:
+            var ebc = 0
+            content.forEach(){
+                let bc = $0.elementByteCount
+                if bc > ebc { ebc = bc }
+            }
+            elemBC = ebc
+        }
+
+        if elemBC == 0 { elemBC = elementType.assumedValueByteCount }
         
         
         if let valueByteCount = valueByteCount {
@@ -91,12 +115,12 @@ internal class BrbonArray: Coder, IsBrbon {
             
             // If specified, the fixed item length must at least be large enough for the name field
             
-            guard valueByteCount < itemBC else { return .valueByteCountTooSmall }
+            guard valueByteCount < self.valueByteCount else { return .valueByteCountTooSmall }
             
             
             // Make the itemLength the fixed item length, but ensure that it is a multiple of 8 bytes.
             
-            itemBC = valueByteCount.roundUpToNearestMultipleOf8()
+            itemBC = (itemBC - self.valueByteCount + valueByteCount + 8).roundUpToNearestMultipleOf8()
         }
         
         
@@ -154,6 +178,10 @@ internal class BrbonArray: Coder, IsBrbon {
             case .null: break
             case .bool, .int8, .int16, .int32, .int64, .uint8, .uint16, .uint32, .uint64, .float32, .float64, .string, .binary: $0.storeAsElement(atPtr: p, endianness)
             case .array, .dictionary, .sequence: $0.storeAsItem(atPtr: p, bufferPtr: bufferPtr, parentPtr: atPtr, nameField: nil, valueByteCount: nil, endianness)
+            }
+            let remainder = elemBC - $0.elementByteCount
+            if remainder > 0 {
+                Data(count: remainder).storeValue(atPtr: p.advanced(by: $0.elementByteCount), endianness)
             }
             p = p.advanced(by: elemBC)
         })

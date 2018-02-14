@@ -19,7 +19,7 @@ extension String: Coder {
     
     func itemByteCount(_ nfd: NameFieldDescriptor? = nil) -> Int { return minimumItemByteCount + (nfd?.byteCount ?? 0) + valueByteCount.roundUpToNearestMultipleOf8() }
     
-    var elementByteCount: Int { return valueByteCount + 4 }
+    var elementByteCount: Int { return (valueByteCount + 4).roundUpToNearestMultipleOf8() }
     
     @discardableResult
     func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Result {
@@ -99,13 +99,13 @@ extension String: Initialize {
     
     init(itemPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         let nameFieldByteCount = Int(UInt8(valuePtr: itemPtr.advanced(by: itemNameFieldByteCountOffset), endianness))
-        let bytes = Int(UInt32(valuePtr: itemPtr.advanced(by: itemValueCountOffset), endianness))
+        let bytes = Int(UInt32(valuePtr: itemPtr.advanced(by: itemCountValueOffset), endianness))
         let ptr = itemPtr.advanced(by: itemNvrFieldOffset + nameFieldByteCount)
         self.init(valuePtr: ptr, count: bytes, endianness)
     }
     
     init(elementPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        let bytes = Int(UInt32(valuePtr: elementPtr.advanced(by: itemValueCountOffset), endianness))
+        let bytes = Int(UInt32(valuePtr: elementPtr.advanced(by: itemCountValueOffset), endianness))
         self.init(valuePtr: elementPtr.advanced(by: 4), count: bytes, endianness)
     }
 }

@@ -127,7 +127,7 @@ class String_Coder_Tests: XCTestCase {
         XCTAssertEqual(s.brbonType, ItemType.string)
         XCTAssertEqual(s.valueByteCount, 8)
         XCTAssertEqual(s.itemByteCount(), 24)
-        XCTAssertEqual(s.elementByteCount, 12)
+        XCTAssertEqual(s.elementByteCount, 16)
         
         
         // Storing

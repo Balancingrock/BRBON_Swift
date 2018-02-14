@@ -18,7 +18,7 @@ internal let itemFlagsOffset = 2
 internal let itemNameFieldByteCountOffset = 3
 internal let itemByteCountOffset = 4
 internal let itemParentOffsetOffset = 8
-internal let itemValueCountOffset = 12
+internal let itemCountValueOffset = 12
 internal let itemNvrFieldOffset = 16
 
 
@@ -136,7 +136,9 @@ public class Item {
                     guard isBool else { return }
                     newValue.storeValue(atPtr: valuePtr, endianness)
                 } else {
-                    type = .null
+                    if isBool {
+                        type = .null
+                    }
                 }
             }
         }
@@ -161,7 +163,9 @@ public class Item {
                     guard isUInt8 else { return }
                     newValue.storeValue(atPtr: valuePtr, endianness)
                 } else {
-                    type = .null
+                    if isUInt8 {
+                        type = .null
+                    }
                 }
             }
         }
@@ -186,7 +190,9 @@ public class Item {
                     guard isUInt16 else { return }
                     newValue.storeValue(atPtr: valuePtr, endianness)
                 } else {
-                    type = .null
+                    if isUInt16 {
+                        type = .null
+                    }
                 }
             }
         }
@@ -211,7 +217,9 @@ public class Item {
                     guard isUInt32 else { return }
                     newValue.storeValue(atPtr: valuePtr, endianness)
                 } else {
-                    type = .null
+                    if isUInt32 {
+                        type = .null
+                    }
                 }
             }
         }
@@ -239,7 +247,9 @@ public class Item {
                     guard isUInt64 else { return }
                     newValue.storeValue(atPtr: valuePtr, endianness)
                 } else {
-                    type = .null
+                    if isUInt64 {
+                        type = .null
+                    }
                 }
             }
         }
@@ -264,7 +274,9 @@ public class Item {
                     guard isInt8 else { return }
                     newValue.storeValue(atPtr: valuePtr, endianness)
                 } else {
-                    type = .null
+                    if isInt8 {
+                        type = .null
+                    }
                 }
             }
         }
@@ -289,7 +301,9 @@ public class Item {
                     guard isInt16 else { return }
                     newValue.storeValue(atPtr: valuePtr, endianness)
                 } else {
-                    type = .null
+                    if isInt16 {
+                        type = .null
+                    }
                 }
             }
         }
@@ -314,7 +328,9 @@ public class Item {
                     guard isInt32 else { return }
                     newValue.storeValue(atPtr: valuePtr, endianness)
                 } else {
-                    type = .null
+                    if isInt32 {
+                        type = .null
+                    }
                 }
             }
         }
@@ -342,7 +358,9 @@ public class Item {
                     guard isInt64 else { return }
                     newValue.storeValue(atPtr: valuePtr, endianness)
                 } else {
-                    type = .null
+                    if isInt64 {
+                        type = .null
+                    }
                 }
             }
         }
@@ -367,7 +385,9 @@ public class Item {
                     guard isFloat32 else { return }
                     newValue.storeValue(atPtr: valuePtr, endianness)
                 } else {
-                    type = .null
+                    if isFloat32 {
+                        type = .null
+                    }
                 }
             }
         }
@@ -395,7 +415,9 @@ public class Item {
                     guard isFloat64 else { return }
                     newValue.storeValue(atPtr: valuePtr, endianness)
                 } else {
-                    type = .null
+                    if isFloat64 {
+                        type = .null
+                    }
                 }
             }
         }
@@ -420,10 +442,12 @@ public class Item {
                         guard ensureValueStorage(for: newValue.valueByteCount) == .success else { return }
                         type = .string
                     }
-                    UInt32(newValue.valueByteCount).storeValue(atPtr: childCountPtr, endianness)
+                    UInt32(newValue.valueByteCount).storeValue(atPtr: countValuePtr, endianness)
                     newValue.storeValue(atPtr: valuePtr, endianness)
                 } else {
-                    type = .null
+                    if isString {
+                        type = .null
+                    }
                 }
             }
         }
@@ -448,10 +472,12 @@ public class Item {
                         guard ensureValueStorage(for: newValue.valueByteCount) == .success else { return }
                         type = .binary
                     }
-                    UInt32(newValue.count).storeValue(atPtr: childCountPtr, endianness)
+                    UInt32(newValue.count).storeValue(atPtr: countValuePtr, endianness)
                     newValue.storeValue(atPtr: valuePtr, endianness)
                 } else {
-                    type = .null
+                    if isBinary {
+                        type = .null
+                    }
                 }
             }
         }
@@ -521,12 +547,12 @@ internal extension Item {
         }
     }
 
-    internal var childCountPtr: UnsafeMutableRawPointer {
-        guard let parentPtr = parentPtr else { return basePtr.advanced(by: itemValueCountOffset) }
+    internal var countValuePtr: UnsafeMutableRawPointer {
+        guard let parentPtr = parentPtr else { return basePtr.advanced(by: itemCountValueOffset) }
         if UInt8(valuePtr: parentPtr, endianness) == ItemType.array.rawValue {
             return basePtr
         } else {
-            return basePtr.advanced(by: itemValueCountOffset)
+            return basePtr.advanced(by: itemCountValueOffset)
         }
     }
     
@@ -556,7 +582,7 @@ internal extension Item {
             switch type! {
                 
             case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32:
-                return basePtr.advanced(by: itemValueCountOffset)
+                return basePtr.advanced(by: itemCountValueOffset)
                 
             case .int64, .uint64, .float64, .string, .binary, .array, .dictionary, .sequence:
                 return basePtr.advanced(by: itemNvrFieldOffset + nameFieldByteCount)
@@ -654,11 +680,11 @@ public extension Item {
     public var count: Int {
         get {
             if isElement { return 0 }
-            return Int(UInt32(valuePtr: childCountPtr, endianness))
+            return Int(UInt32(valuePtr: countValuePtr, endianness))
         }
         set {
             if isElement { return }
-            UInt32(newValue).storeValue(atPtr: childCountPtr, endianness)
+            UInt32(newValue).storeValue(atPtr: countValuePtr, endianness)
         }
     }
     

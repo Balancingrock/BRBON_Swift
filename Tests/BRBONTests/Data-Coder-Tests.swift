@@ -35,7 +35,7 @@ class Data_BrbonCoder_Tests: XCTestCase {
         XCTAssertEqual(d.brbonType, ItemType.binary)
         XCTAssertEqual(d.valueByteCount, 3)
         XCTAssertEqual(d.itemByteCount(), 24)
-        XCTAssertEqual(d.elementByteCount, 7)
+        XCTAssertEqual(d.elementByteCount, 8)
         
         
         // Storing
@@ -125,7 +125,7 @@ class Data_BrbonCoder_Tests: XCTestCase {
         XCTAssertEqual(d.brbonType, ItemType.binary)
         XCTAssertEqual(d.valueByteCount, 3)
         XCTAssertEqual(d.itemByteCount(nfd), 32)
-        XCTAssertEqual(d.elementByteCount, 7)
+        XCTAssertEqual(d.elementByteCount, 8)
         
         
         // Storing

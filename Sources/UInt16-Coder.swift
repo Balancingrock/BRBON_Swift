@@ -102,7 +102,7 @@ extension UInt16: Initialize {
     }
     
     init(itemPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        let ptr = itemPtr.advanced(by: itemValueCountOffset)
+        let ptr = itemPtr.advanced(by: itemCountValueOffset)
         self.init(valuePtr: ptr, endianness)
     }
     

@@ -1,0 +1,1408 @@
+//
+//  ItemManager-Tests.swift
+//  BRBON
+//
+//  Created by Marinus van der Lugt on 13/02/18.
+//
+//
+
+import XCTest
+import BRUtils
+@testable import BRBON
+
+
+class ItemManager_Tests: XCTestCase {
+
+    override func setUp() {
+        super.setUp()
+        // Put setup code here. This method is called before the invocation of each test method in the class.
+    }
+    
+    override func tearDown() {
+        // Put teardown code here. This method is called after the invocation of each test method in the class.
+        super.tearDown()
+    }
+
+    func testInit_Null() {
+        
+        
+        // No name, no value length
+        
+        guard let mgr = ItemManager(rootItemType: .null) else { XCTFail() ; return }
+        
+        var exp = Data(bytes: [
+            0x80, 0x00, 0x00, 0x00,
+            0x10, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        var data = mgr.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, value length given
+        
+        guard let mgr2 = ItemManager(rootItemType: .null, itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x80, 0x00, 0x00, 0x00,
+            0x20, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr2.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // With name and value length
+        
+        guard let mgr3 = ItemManager(rootItemType: .null, name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x80, 0x00, 0x00, 0x08,
+            0x28, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0xb9, 0xa6, 0x03, 0x61,
+            0x61, 0x61, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr3.data
+
+        XCTAssertEqual(data, exp)
+    }
+    
+    func testInit_Bool() {
+        
+        
+        // No name, no value length
+        
+        guard let mgr = ItemManager(rootItemType: .bool) else { XCTFail() ; return }
+        
+        var exp = Data(bytes: [
+            0x81, 0x00, 0x00, 0x00,
+            0x10, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        var data = mgr.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, value length given
+        
+        guard let mgr2 = ItemManager(rootItemType: .bool, itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x81, 0x00, 0x00, 0x00,
+            0x20, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr2.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // With name and value length
+        
+        guard let mgr3 = ItemManager(rootItemType: .bool, name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x81, 0x00, 0x00, 0x08,
+            0x28, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0xb9, 0xa6, 0x03, 0x61,
+            0x61, 0x61, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr3.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, no value length
+        
+        let b = true
+        guard let mgr4 = ItemManager(value: b) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x81, 0x00, 0x00, 0x00,
+            0x10, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x01, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr4.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, value length given
+        
+        guard let mgr5 = ItemManager(value: b, itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x81, 0x00, 0x00, 0x00,
+            0x20, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x01, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr5.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // With name and value length
+        
+        guard let mgr6 = ItemManager(value: b, name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x81, 0x00, 0x00, 0x08,
+            0x28, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x01, 0x00, 0x00, 0x00,
+            0xb9, 0xa6, 0x03, 0x61,
+            0x61, 0x61, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr6.data
+        
+        XCTAssertEqual(data, exp)
+    }
+
+    func testInit_Int8() {
+        
+        
+        // No name, no value length
+        
+        guard let mgr = ItemManager(rootItemType: .int8) else { XCTFail() ; return }
+        
+        var exp = Data(bytes: [
+            0x82, 0x00, 0x00, 0x00,
+            0x10, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        var data = mgr.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, value length given
+        
+        guard let mgr2 = ItemManager(rootItemType: .int8, itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x82, 0x00, 0x00, 0x00,
+            0x20, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr2.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // With name and value length
+        
+        guard let mgr3 = ItemManager(rootItemType: .int8, name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x82, 0x00, 0x00, 0x08,
+            0x28, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0xb9, 0xa6, 0x03, 0x61,
+            0x61, 0x61, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr3.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, no value length
+        
+        guard let mgr4 = ItemManager(value: Int8(0x66)) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x82, 0x00, 0x00, 0x00,
+            0x10, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x66, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr4.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, value length given
+        
+        guard let mgr5 = ItemManager(value: Int8(0x05), itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x82, 0x00, 0x00, 0x00,
+            0x20, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x05, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr5.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // With name and value length
+        
+        guard let mgr6 = ItemManager(value: Int8(0x33), name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x82, 0x00, 0x00, 0x08,
+            0x28, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x33, 0x00, 0x00, 0x00,
+            0xb9, 0xa6, 0x03, 0x61,
+            0x61, 0x61, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr6.data
+        
+        XCTAssertEqual(data, exp)
+    }
+
+    func testInit_Int16() {
+        
+        
+        // No name, no value length
+        
+        guard let mgr = ItemManager(rootItemType: .int16) else { XCTFail() ; return }
+        
+        var exp = Data(bytes: [
+            0x83, 0x00, 0x00, 0x00,
+            0x10, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        var data = mgr.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, value length given
+        
+        guard let mgr2 = ItemManager(rootItemType: .int16, itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x83, 0x00, 0x00, 0x00,
+            0x20, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr2.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // With name and value length
+        
+        guard let mgr3 = ItemManager(rootItemType: .int16, name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x83, 0x00, 0x00, 0x08,
+            0x28, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0xb9, 0xa6, 0x03, 0x61,
+            0x61, 0x61, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr3.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, no value length
+        
+        guard let mgr4 = ItemManager(value: Int16(0x6666)) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x83, 0x00, 0x00, 0x00,
+            0x10, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x66, 0x66, 0x00, 0x00
+            ])
+        
+        data = mgr4.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, value length given
+        
+        guard let mgr5 = ItemManager(value: Int16(0x0550), itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x83, 0x00, 0x00, 0x00,
+            0x20, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x50, 0x05, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr5.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // With name and value length
+        
+        guard let mgr6 = ItemManager(value: Int16(0x3344), name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x83, 0x00, 0x00, 0x08,
+            0x28, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x44, 0x33, 0x00, 0x00,
+            0xb9, 0xa6, 0x03, 0x61,
+            0x61, 0x61, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr6.data
+        
+        XCTAssertEqual(data, exp)
+    }
+
+    func testInit_Int32() {
+        
+        
+        // No name, no value length
+        
+        guard let mgr = ItemManager(rootItemType: .int32) else { XCTFail() ; return }
+        
+        var exp = Data(bytes: [
+            0x84, 0x00, 0x00, 0x00,
+            0x10, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        var data = mgr.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, value length given
+        
+        guard let mgr2 = ItemManager(rootItemType: .int32, itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x84, 0x00, 0x00, 0x00,
+            0x20, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr2.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // With name and value length
+        
+        guard let mgr3 = ItemManager(rootItemType: .int32, name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x84, 0x00, 0x00, 0x08,
+            0x28, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0xb9, 0xa6, 0x03, 0x61,
+            0x61, 0x61, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr3.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, no value length
+        
+        guard let mgr4 = ItemManager(value: Int32(0x66666666)) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x84, 0x00, 0x00, 0x00,
+            0x10, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x66, 0x66, 0x66, 0x66
+            ])
+        
+        data = mgr4.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, value length given
+        
+        guard let mgr5 = ItemManager(value: Int32(0x05501122), itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x84, 0x00, 0x00, 0x00,
+            0x20, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x22, 0x11, 0x50, 0x05,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr5.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // With name and value length
+        
+        guard let mgr6 = ItemManager(value: Int32(0x55663344), name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x84, 0x00, 0x00, 0x08,
+            0x28, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x44, 0x33, 0x66, 0x55,
+            0xb9, 0xa6, 0x03, 0x61,
+            0x61, 0x61, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr6.data
+        
+        XCTAssertEqual(data, exp)
+    }
+
+    func testInit_Int64() {
+        
+        
+        // No name, no value length
+        
+        guard let mgr = ItemManager(rootItemType: .int64) else { XCTFail() ; return }
+        
+        var exp = Data(bytes: [
+            0x01, 0x00, 0x00, 0x00,
+            0x18, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        var data = mgr.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, value length given
+        
+        guard let mgr2 = ItemManager(rootItemType: .int64, itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x01, 0x00, 0x00, 0x00,
+            0x20, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr2.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // With name and value length
+        
+        guard let mgr3 = ItemManager(rootItemType: .int64, name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x01, 0x00, 0x00, 0x08,
+            0x28, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0xb9, 0xa6, 0x03, 0x61,
+            0x61, 0x61, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr3.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, no value length
+        
+        guard let mgr4 = ItemManager(value: Int64(0x6666666699999999)) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x01, 0x00, 0x00, 0x00,
+            0x18, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x99, 0x99, 0x99, 0x99,
+            0x66, 0x66, 0x66, 0x66
+            ])
+        
+        data = mgr4.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, value length given
+        
+        guard let mgr5 = ItemManager(value: Int64(0x0550112277777777), itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x01, 0x00, 0x00, 0x00,
+            0x20, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x77, 0x77, 0x77, 0x77,
+            0x22, 0x11, 0x50, 0x05,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr5.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // With name and value length
+        
+        guard let mgr6 = ItemManager(value: Int64(0x5566334411111111), name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x01, 0x00, 0x00, 0x08,
+            0x28, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0xb9, 0xa6, 0x03, 0x61,
+            0x61, 0x61, 0x00, 0x00,
+            0x11, 0x11, 0x11, 0x11,
+            0x44, 0x33, 0x66, 0x55,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr6.data
+        
+        XCTAssertEqual(data, exp)
+    }
+
+    func testInit_UInt8() {
+        
+        
+        // No name, no value length
+        
+        guard let mgr = ItemManager(rootItemType: .uint8) else { XCTFail() ; return }
+        
+        var exp = Data(bytes: [
+            0x85, 0x00, 0x00, 0x00,
+            0x10, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        var data = mgr.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, value length given
+        
+        guard let mgr2 = ItemManager(rootItemType: .uint8, itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x85, 0x00, 0x00, 0x00,
+            0x20, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr2.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // With name and value length
+        
+        guard let mgr3 = ItemManager(rootItemType: .uint8, name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x85, 0x00, 0x00, 0x08,
+            0x28, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0xb9, 0xa6, 0x03, 0x61,
+            0x61, 0x61, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr3.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, no value length
+        
+        guard let mgr4 = ItemManager(value: UInt8(0x66)) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x85, 0x00, 0x00, 0x00,
+            0x10, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x66, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr4.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, value length given
+        
+        guard let mgr5 = ItemManager(value: UInt8(0x05), itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x85, 0x00, 0x00, 0x00,
+            0x20, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x05, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr5.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // With name and value length
+        
+        guard let mgr6 = ItemManager(value: UInt8(0x33), name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x85, 0x00, 0x00, 0x08,
+            0x28, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x33, 0x00, 0x00, 0x00,
+            0xb9, 0xa6, 0x03, 0x61,
+            0x61, 0x61, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr6.data
+        
+        XCTAssertEqual(data, exp)
+    }
+    
+    func testInit_UInt16() {
+        
+        
+        // No name, no value length
+        
+        guard let mgr = ItemManager(rootItemType: .uint16) else { XCTFail() ; return }
+        
+        var exp = Data(bytes: [
+            0x86, 0x00, 0x00, 0x00,
+            0x10, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        var data = mgr.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, value length given
+        
+        guard let mgr2 = ItemManager(rootItemType: .uint16, itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x86, 0x00, 0x00, 0x00,
+            0x20, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr2.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // With name and value length
+        
+        guard let mgr3 = ItemManager(rootItemType: .uint16, name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x86, 0x00, 0x00, 0x08,
+            0x28, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0xb9, 0xa6, 0x03, 0x61,
+            0x61, 0x61, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr3.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, no value length
+        
+        guard let mgr4 = ItemManager(value: UInt16(0x6666)) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x86, 0x00, 0x00, 0x00,
+            0x10, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x66, 0x66, 0x00, 0x00
+            ])
+        
+        data = mgr4.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, value length given
+        
+        guard let mgr5 = ItemManager(value: UInt16(0x0550), itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x86, 0x00, 0x00, 0x00,
+            0x20, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x50, 0x05, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr5.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // With name and value length
+        
+        guard let mgr6 = ItemManager(value: UInt16(0x3344), name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x86, 0x00, 0x00, 0x08,
+            0x28, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x44, 0x33, 0x00, 0x00,
+            0xb9, 0xa6, 0x03, 0x61,
+            0x61, 0x61, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr6.data
+        
+        XCTAssertEqual(data, exp)
+    }
+    
+    func testInit_UInt32() {
+        
+        
+        // No name, no value length
+        
+        guard let mgr = ItemManager(rootItemType: .uint32) else { XCTFail() ; return }
+        
+        var exp = Data(bytes: [
+            0x87, 0x00, 0x00, 0x00,
+            0x10, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        var data = mgr.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, value length given
+        
+        guard let mgr2 = ItemManager(rootItemType: .uint32, itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x87, 0x00, 0x00, 0x00,
+            0x20, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr2.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // With name and value length
+        
+        guard let mgr3 = ItemManager(rootItemType: .uint32, name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x87, 0x00, 0x00, 0x08,
+            0x28, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0xb9, 0xa6, 0x03, 0x61,
+            0x61, 0x61, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr3.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, no value length
+        
+        guard let mgr4 = ItemManager(value: UInt32(0x66666666)) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x87, 0x00, 0x00, 0x00,
+            0x10, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x66, 0x66, 0x66, 0x66
+            ])
+        
+        data = mgr4.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, value length given
+        
+        guard let mgr5 = ItemManager(value: UInt32(0x05501122), itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x87, 0x00, 0x00, 0x00,
+            0x20, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x22, 0x11, 0x50, 0x05,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr5.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // With name and value length
+        
+        guard let mgr6 = ItemManager(value: UInt32(0x55663344), name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x87, 0x00, 0x00, 0x08,
+            0x28, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x44, 0x33, 0x66, 0x55,
+            0xb9, 0xa6, 0x03, 0x61,
+            0x61, 0x61, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr6.data
+        
+        XCTAssertEqual(data, exp)
+    }
+    
+    func testInit_UInt64() {
+        
+        
+        // No name, no value length
+        
+        guard let mgr = ItemManager(rootItemType: .uint64) else { XCTFail() ; return }
+        
+        var exp = Data(bytes: [
+            0x02, 0x00, 0x00, 0x00,
+            0x18, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        var data = mgr.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, value length given
+        
+        guard let mgr2 = ItemManager(rootItemType: .uint64, itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x02, 0x00, 0x00, 0x00,
+            0x20, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr2.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // With name and value length
+        
+        guard let mgr3 = ItemManager(rootItemType: .uint64, name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x02, 0x00, 0x00, 0x08,
+            0x28, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0xb9, 0xa6, 0x03, 0x61,
+            0x61, 0x61, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr3.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, no value length
+        
+        guard let mgr4 = ItemManager(value: UInt64(0x6666666699999999)) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x02, 0x00, 0x00, 0x00,
+            0x18, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x99, 0x99, 0x99, 0x99,
+            0x66, 0x66, 0x66, 0x66
+            ])
+        
+        data = mgr4.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, value length given
+        
+        guard let mgr5 = ItemManager(value: UInt64(0x0550112277777777), itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x02, 0x00, 0x00, 0x00,
+            0x20, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x77, 0x77, 0x77, 0x77,
+            0x22, 0x11, 0x50, 0x05,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr5.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // With name and value length
+        
+        guard let mgr6 = ItemManager(value: UInt64(0x5566334411111111), name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x02, 0x00, 0x00, 0x08,
+            0x28, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0xb9, 0xa6, 0x03, 0x61,
+            0x61, 0x61, 0x00, 0x00,
+            0x11, 0x11, 0x11, 0x11,
+            0x44, 0x33, 0x66, 0x55,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr6.data
+        
+        XCTAssertEqual(data, exp)
+    }
+    
+    func testInit_Float32() {
+        
+        
+        // No name, no value length
+        
+        guard let mgr = ItemManager(rootItemType: .float32) else { XCTFail() ; return }
+        
+        var exp = Data(bytes: [
+            0x88, 0x00, 0x00, 0x00,
+            0x10, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        var data = mgr.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, value length given
+        
+        guard let mgr2 = ItemManager(rootItemType: .float32, itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x88, 0x00, 0x00, 0x00,
+            0x20, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr2.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // With name and value length
+        
+        guard let mgr3 = ItemManager(rootItemType: .float32, name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x88, 0x00, 0x00, 0x08,
+            0x28, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0xb9, 0xa6, 0x03, 0x61,
+            0x61, 0x61, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr3.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, no value length
+        
+        guard let mgr4 = ItemManager(value: Float32(1.23e4)) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x88, 0x00, 0x00, 0x00,
+            0x10, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x0, 0x30, 0x40, 0x46
+            ])
+        
+        data = mgr4.data
+        data.printBytes()
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, value length given
+        
+        guard let mgr5 = ItemManager(value: Float32(1.23e4), itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x88, 0x00, 0x00, 0x00,
+            0x20, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x0, 0x30, 0x40, 0x46,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr5.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // With name and value length
+        
+        guard let mgr6 = ItemManager(value: Float32(1.23e4), name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x88, 0x00, 0x00, 0x08,
+            0x28, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x0, 0x30, 0x40, 0x46,
+            0xb9, 0xa6, 0x03, 0x61,
+            0x61, 0x61, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr6.data
+        
+        XCTAssertEqual(data, exp)
+    }
+    
+    func testInit_Float64() {
+        
+        
+        // No name, no value length
+        
+        guard let mgr = ItemManager(rootItemType: .float64) else { XCTFail() ; return }
+        
+        var exp = Data(bytes: [
+            0x03, 0x00, 0x00, 0x00,
+            0x18, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        var data = mgr.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, value length given
+        
+        guard let mgr2 = ItemManager(rootItemType: .float64, itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x03, 0x00, 0x00, 0x00,
+            0x20, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr2.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // With name and value length
+        
+        guard let mgr3 = ItemManager(rootItemType: .float64, name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x03, 0x00, 0x00, 0x08,
+            0x28, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0xb9, 0xa6, 0x03, 0x61,
+            0x61, 0x61, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr3.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, no value length
+        
+        guard let mgr4 = ItemManager(value: Float64(1.234e56)) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x03, 0x00, 0x00, 0x00,
+            0x18, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x5a, 0xd7, 0x30, 0xa9,
+            0x6c, 0x21, 0x94, 0x4b
+            ])
+        
+        data = mgr4.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // No name, value length given
+        
+        guard let mgr5 = ItemManager(value: Float64(1.234e56), itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x03, 0x00, 0x00, 0x00,
+            0x20, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x5a, 0xd7, 0x30, 0xa9,
+            0x6c, 0x21, 0x94, 0x4b,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr5.data
+        
+        XCTAssertEqual(data, exp)
+        
+        
+        // With name and value length
+        
+        guard let mgr6 = ItemManager(value: Float64(1.234e56), name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        
+        exp = Data(bytes: [
+            0x03, 0x00, 0x00, 0x08,
+            0x28, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0xb9, 0xa6, 0x03, 0x61,
+            0x61, 0x61, 0x00, 0x00,
+            0x5a, 0xd7, 0x30, 0xa9,
+            0x6c, 0x21, 0x94, 0x4b,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        data = mgr6.data
+        
+        XCTAssertEqual(data, exp)
+    }    
+}
