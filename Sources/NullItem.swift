@@ -19,67 +19,67 @@ internal class NullItem: Item {
         set { return }
     }
     
-    override var bool: Bool? {
+    var bool: Bool? {
         get { return nil }
         set { return }
     }
     
-    override var uint8: UInt8? {
+    var uint8: UInt8? {
         get { return nil }
         set { return }
     }
     
-    override var uint16: UInt16? {
+    var uint16: UInt16? {
         get { return nil }
         set { return }
     }
     
-    override var uint32: UInt32? {
+    var uint32: UInt32? {
         get { return nil }
         set { return }
     }
     
-    override var uint64: UInt64? {
+    var uint64: UInt64? {
         get { return nil }
         set { return }
     }
     
-    override var int8: Int8? {
+    var int8: Int8? {
         get { return nil }
         set { return }
     }
     
-    override var int16: Int16? {
+    var int16: Int16? {
         get { return nil }
         set { return }
     }
     
-    override var int32: Int32? {
+    var int32: Int32? {
         get { return nil }
         set { return }
     }
     
-    override var int64: Int64? {
+    var int64: Int64? {
         get { return nil }
         set { return }
     }
     
-    override var float32: Float32? {
+    var float32: Float32? {
         get { return nil }
         set { return }
     }
     
-    override var float64: Float64? {
+    var float64: Float64? {
         get { return nil }
         set { return }
     }
     
-    override var string: String? {
+    var string: String? {
         get { return nil }
         set { return }
     }
     
-    override var binary: Data? {
+    var binary: Data? {
         get { return nil }
         set { return }
     }

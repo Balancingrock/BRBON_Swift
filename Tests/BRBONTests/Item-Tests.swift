@@ -29,7 +29,7 @@ class Item_Tests: XCTestCase {
         
         let ptr = buffer.baseAddress!
         
-        let item = Item(basePtr: ptr, parentPtr: nil)
+        let item = Item(basePtr: ptr, parentPtr: nil, endianness: machineEndianness)
         
         true.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!, machineEndianness)
         
@@ -56,7 +56,7 @@ class Item_Tests: XCTestCase {
         XCTAssertEqual(ptr.advanced(by: 1), item.optionsPtr)
         XCTAssertEqual(ptr.advanced(by: 2), item.flagsPtr)
         XCTAssertEqual(ptr.advanced(by: 3), item.nameFieldByteCountPtr)
-        XCTAssertEqual(ptr.advanced(by: 4), item.itemByteCountPtr)
+        XCTAssertEqual(ptr.advanced(by: 4), item.byteCountPtr)
         XCTAssertEqual(ptr.advanced(by: 8), item.parentOffsetPtr)
         XCTAssertEqual(ptr.advanced(by: 12), item.countValuePtr)
         XCTAssertEqual(ptr.advanced(by: 16), item.nameHashPtr)
@@ -89,10 +89,10 @@ class Item_Tests: XCTestCase {
         XCTAssertEqual(item.parentOffset, 0x12345678)
         item.parentOffset = 0
 
-        XCTAssertEqual(item.count, 0)
-        item.count = 0x12345678
-        XCTAssertEqual(item.count, 0x12345678)
-        item.count = 0
+        XCTAssertEqual(item.countValue, 0)
+        item.countValue = 0x12345678
+        XCTAssertEqual(item.countValue, 0x12345678)
+        item.countValue = 0
         
         XCTAssertEqual(item.nameHash, 0)
         XCTAssertEqual(item.nameCount, 0)
@@ -130,7 +130,7 @@ class Item_Tests: XCTestCase {
         
         let ptr = buffer.baseAddress!
         
-        let item = Item(basePtr: ptr, parentPtr: nil)
+        let item = Item(basePtr: ptr, parentPtr: nil, endianness: machineEndianness)
         
         let nfd = NameFieldDescriptor("one", fixedLength: 10)
         
@@ -159,7 +159,7 @@ class Item_Tests: XCTestCase {
         XCTAssertEqual(ptr.advanced(by: 1), item.optionsPtr)
         XCTAssertEqual(ptr.advanced(by: 2), item.flagsPtr)
         XCTAssertEqual(ptr.advanced(by: 3), item.nameFieldByteCountPtr)
-        XCTAssertEqual(ptr.advanced(by: 4), item.itemByteCountPtr)
+        XCTAssertEqual(ptr.advanced(by: 4), item.byteCountPtr)
         XCTAssertEqual(ptr.advanced(by: 8), item.parentOffsetPtr)
         XCTAssertEqual(ptr.advanced(by: 12), item.countValuePtr)
         XCTAssertEqual(ptr.advanced(by: 16), item.nameHashPtr)
@@ -183,7 +183,7 @@ class Item_Tests: XCTestCase {
         
         XCTAssertEqual(item.parentOffset, 0)
         
-        XCTAssertEqual(item.count, 0) // Bool false = 0
+        XCTAssertEqual(item.countValue, 0) // Bool false = 0
         
         XCTAssertEqual(item.nameHash, 0x56dc)
         XCTAssertEqual(item.nameCount, 3)
@@ -221,7 +221,7 @@ class Item_Tests: XCTestCase {
         
         let ptr = buffer.baseAddress!
         
-        let item = Item(basePtr: ptr, parentPtr: nil)
+        let item = Item(basePtr: ptr, parentPtr: nil, endianness: machineEndianness)
         
         UInt8(44).storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!, machineEndianness)
         
@@ -246,7 +246,7 @@ class Item_Tests: XCTestCase {
         
         XCTAssertEqual(item.type, ItemType.uint8)
         
-        XCTAssertEqual(item.count, 55)
+        XCTAssertEqual(item.countValue, 55)
         
         XCTAssertFalse(item.isNull)
         XCTAssertFalse(item.isBool)
@@ -277,7 +277,7 @@ class Item_Tests: XCTestCase {
         
         let ptr = buffer.baseAddress!
         
-        let item = Item(basePtr: ptr, parentPtr: nil)
+        let item = Item(basePtr: ptr, parentPtr: nil, endianness: machineEndianness)
         
         UInt16(44).storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!, machineEndianness)
         
@@ -302,7 +302,7 @@ class Item_Tests: XCTestCase {
         
         XCTAssertEqual(item.type, ItemType.uint16)
         
-        XCTAssertEqual(item.count, 0x5533)
+        XCTAssertEqual(item.countValue, 0x5533)
         
         XCTAssertFalse(item.isNull)
         XCTAssertFalse(item.isBool)
@@ -333,7 +333,7 @@ class Item_Tests: XCTestCase {
         
         let ptr = buffer.baseAddress!
         
-        let item = Item(basePtr: ptr, parentPtr: nil)
+        let item = Item(basePtr: ptr, parentPtr: nil, endianness: machineEndianness)
         
         UInt32(44).storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!, machineEndianness)
         
@@ -358,7 +358,7 @@ class Item_Tests: XCTestCase {
         
         XCTAssertEqual(item.type, ItemType.uint32)
         
-        XCTAssertEqual(item.count, 0x55332211)
+        XCTAssertEqual(item.countValue, 0x55332211)
         
         XCTAssertFalse(item.isNull)
         XCTAssertFalse(item.isBool)
@@ -389,7 +389,7 @@ class Item_Tests: XCTestCase {
         
         let ptr = buffer.baseAddress!
         
-        let item = Item(basePtr: ptr, parentPtr: nil)
+        let item = Item(basePtr: ptr, parentPtr: nil, endianness: machineEndianness)
         
         UInt64(44).storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!, machineEndianness)
         
@@ -414,7 +414,7 @@ class Item_Tests: XCTestCase {
         
         XCTAssertEqual(item.type, ItemType.uint64)
         
-        XCTAssertEqual(item.count, 0)
+        XCTAssertEqual(item.countValue, 0)
         
         XCTAssertFalse(item.isNull)
         XCTAssertFalse(item.isBool)
@@ -445,7 +445,7 @@ class Item_Tests: XCTestCase {
         
         let ptr = buffer.baseAddress!
         
-        let item = Item(basePtr: ptr, parentPtr: nil)
+        let item = Item(basePtr: ptr, parentPtr: nil, endianness: machineEndianness)
         
         Int8(44).storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!, machineEndianness)
         
@@ -470,7 +470,7 @@ class Item_Tests: XCTestCase {
         
         XCTAssertEqual(item.type, ItemType.int8)
         
-        XCTAssertEqual(item.count, 55)
+        XCTAssertEqual(item.countValue, 55)
         
         XCTAssertFalse(item.isNull)
         XCTAssertFalse(item.isBool)
@@ -501,7 +501,7 @@ class Item_Tests: XCTestCase {
         
         let ptr = buffer.baseAddress!
         
-        let item = Item(basePtr: ptr, parentPtr: nil)
+        let item = Item(basePtr: ptr, parentPtr: nil, endianness: machineEndianness)
         
         Int16(44).storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!, machineEndianness)
         
@@ -526,7 +526,7 @@ class Item_Tests: XCTestCase {
         
         XCTAssertEqual(item.type, ItemType.int16)
         
-        XCTAssertEqual(item.count, 0x5533)
+        XCTAssertEqual(item.countValue, 0x5533)
         
         XCTAssertFalse(item.isNull)
         XCTAssertFalse(item.isBool)
@@ -557,7 +557,7 @@ class Item_Tests: XCTestCase {
         
         let ptr = buffer.baseAddress!
         
-        let item = Item(basePtr: ptr, parentPtr: nil)
+        let item = Item(basePtr: ptr, parentPtr: nil, endianness: machineEndianness)
         
         Int32(44).storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!, machineEndianness)
         
@@ -582,7 +582,7 @@ class Item_Tests: XCTestCase {
         
         XCTAssertEqual(item.type, ItemType.int32)
         
-        XCTAssertEqual(item.count, 0x55332211)
+        XCTAssertEqual(item.countValue, 0x55332211)
         
         XCTAssertFalse(item.isNull)
         XCTAssertFalse(item.isBool)
@@ -613,7 +613,7 @@ class Item_Tests: XCTestCase {
         
         let ptr = buffer.baseAddress!
         
-        let item = Item(basePtr: ptr, parentPtr: nil)
+        let item = Item(basePtr: ptr, parentPtr: nil, endianness: machineEndianness)
         
         Int64(44).storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!, machineEndianness)
         
@@ -638,7 +638,7 @@ class Item_Tests: XCTestCase {
         
         XCTAssertEqual(item.type, ItemType.int64)
         
-        XCTAssertEqual(item.count, 0)
+        XCTAssertEqual(item.countValue, 0)
         
         XCTAssertFalse(item.isNull)
         XCTAssertFalse(item.isBool)
@@ -669,7 +669,7 @@ class Item_Tests: XCTestCase {
         
         let ptr = buffer.baseAddress!
         
-        let item = Item(basePtr: ptr, parentPtr: nil)
+        let item = Item(basePtr: ptr, parentPtr: nil, endianness: machineEndianness)
         
         Data(bytes: [0x01, 0x20, 0x33]).storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!, machineEndianness)
         
@@ -694,7 +694,7 @@ class Item_Tests: XCTestCase {
         
         XCTAssertEqual(item.type, ItemType.binary)
         
-        XCTAssertEqual(item.count, 4)
+        XCTAssertEqual(item.countValue, 4)
         
         XCTAssertFalse(item.isNull)
         XCTAssertFalse(item.isBool)
@@ -725,7 +725,7 @@ class Item_Tests: XCTestCase {
         
         let ptr = buffer.baseAddress!
         
-        let item = Item(basePtr: ptr, parentPtr: nil)
+        let item = Item(basePtr: ptr, parentPtr: nil, endianness: machineEndianness)
         
         "Hello".storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!, machineEndianness)
         
@@ -750,7 +750,7 @@ class Item_Tests: XCTestCase {
         
         XCTAssertEqual(item.type, ItemType.string)
         
-        XCTAssertEqual(item.count, 3)
+        XCTAssertEqual(item.countValue, 3)
         
         XCTAssertFalse(item.isNull)
         XCTAssertFalse(item.isBool)

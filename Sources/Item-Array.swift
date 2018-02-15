@@ -23,7 +23,7 @@ public extension Item {
     public subscript(index: Int) -> Bool? {
         get { return self[index].bool }
         set {
-            guard index >= 0, index < count else { return }
+            guard index >= 0, index < countValue else { return }
             let ptr = elementPtr(for: index)
             newValue?.storeAsElement(atPtr: ptr, endianness)
         }
@@ -32,7 +32,7 @@ public extension Item {
     public subscript(index: Int) -> UInt8? {
         get { return self[index].uint8 }
         set {
-            guard index >= 0, index < count else { return }
+            guard index >= 0, index < countValue else { return }
             let ptr = elementPtr(for: index)
             newValue?.storeAsElement(atPtr: ptr, endianness)
         }
@@ -41,7 +41,7 @@ public extension Item {
     public subscript(index: Int) -> UInt16? {
         get { return self[index].uint16 }
         set {
-            guard index >= 0, index < count else { return }
+            guard index >= 0, index < countValue else { return }
             let ptr = elementPtr(for: index)
             newValue?.storeAsElement(atPtr: ptr, endianness)
         }
@@ -50,7 +50,7 @@ public extension Item {
     public subscript(index: Int) -> UInt32? {
         get { return self[index].uint32 }
         set {
-            guard index >= 0, index < count else { return }
+            guard index >= 0, index < countValue else { return }
             let ptr = elementPtr(for: index)
             newValue?.storeAsElement(atPtr: ptr, endianness)
         }
@@ -59,7 +59,7 @@ public extension Item {
     public subscript(index: Int) -> UInt64? {
         get { return self[index].uint64 }
         set {
-            guard index >= 0, index < count else { return }
+            guard index >= 0, index < countValue else { return }
             let ptr = elementPtr(for: index)
             newValue?.storeAsElement(atPtr: ptr, endianness)
         }
@@ -68,7 +68,7 @@ public extension Item {
     public subscript(index: Int) -> Int8? {
         get { return self[index].int8 }
         set {
-            guard index >= 0, index < count else { return }
+            guard index >= 0, index < countValue else { return }
             let ptr = elementPtr(for: index)
             newValue?.storeAsElement(atPtr: ptr, endianness)
         }
@@ -77,7 +77,7 @@ public extension Item {
     public subscript(index: Int) -> Int16? {
         get { return self[index].int16 }
         set {
-            guard index >= 0, index < count else { return }
+            guard index >= 0, index < countValue else { return }
             let ptr = elementPtr(for: index)
             newValue?.storeAsElement(atPtr: ptr, endianness)
         }
@@ -86,7 +86,7 @@ public extension Item {
     public subscript(index: Int) -> Int32? {
         get { return self[index].int32 }
         set {
-            guard index >= 0, index < count else { return }
+            guard index >= 0, index < countValue else { return }
             let ptr = elementPtr(for: index)
             newValue?.storeAsElement(atPtr: ptr, endianness)
         }
@@ -95,7 +95,7 @@ public extension Item {
     public subscript(index: Int) -> Int64? {
         get { return self[index].int64 }
         set {
-            guard index >= 0, index < count else { return }
+            guard index >= 0, index < countValue else { return }
             let ptr = elementPtr(for: index)
             newValue?.storeAsElement(atPtr: ptr, endianness)
         }
@@ -104,7 +104,7 @@ public extension Item {
     public subscript(index: Int) -> Float32? {
         get { return self[index].float32 }
         set {
-            guard index >= 0, index < count else { return }
+            guard index >= 0, index < countValue else { return }
             let ptr = elementPtr(for: index)
             newValue?.storeAsElement(atPtr: ptr, endianness)
         }
@@ -113,7 +113,7 @@ public extension Item {
     public subscript(index: Int) -> Float64? {
         get { return self[index].float64 }
         set {
-            guard index >= 0, index < count else { return }
+            guard index >= 0, index < countValue else { return }
             let ptr = elementPtr(for: index)
             newValue?.storeAsElement(atPtr: ptr, endianness)
         }
@@ -122,7 +122,7 @@ public extension Item {
     public subscript(index: Int) -> String? {
         get { return self[index].string }
         set {
-            guard index >= 0, index < count else { return }
+            guard index >= 0, index < countValue else { return }
             let ptr = elementPtr(for: index)
             newValue?.storeAsElement(atPtr: ptr, endianness)
         }
@@ -131,7 +131,7 @@ public extension Item {
     public subscript(index: Int) -> Data? {
         get { return self[index].binary }
         set {
-            guard index >= 0, index < count else { return }
+            guard index >= 0, index < countValue else { return }
             let ptr = elementPtr(for: index)
             newValue?.storeAsElement(atPtr: ptr, endianness)
         }
@@ -157,12 +157,12 @@ public extension Item {
         // Store element
         
         guard ensureValueStorage(for: value.elementByteCount) == .success else { return .outOfStorage }
-        value.storeAsElement(atPtr: elementPtr(for: count), endianness)
+        value.storeAsElement(atPtr: elementPtr(for: countValue), endianness)
         
         
         // Increase child counter
         
-        count += 1
+        countValue += 1
         
         
         return .success
@@ -181,12 +181,12 @@ public extension Item {
         // Size guarantee
         
         guard ensureValueStorage(for: arr.itemByteCount()) == .success else { return .outOfStorage }
-        arr.storeAsItem(atPtr: elementPtr(for: count), bufferPtr: bufferPtr, parentPtr: basePtr, endianness)
+        arr.storeAsItem(atPtr: elementPtr(for: countValue), bufferPtr: bufferPtr, parentPtr: basePtr, endianness)
         
         
         // Increase child counter
         
-        count += 1
+        countValue += 1
 
         
         return .success
@@ -205,12 +205,12 @@ public extension Item {
         // Size guarantee
         
         guard ensureValueStorage(for: dict.itemByteCount()) == .success else { return .outOfStorage }
-        dict.storeAsItem(atPtr: elementPtr(for: count), bufferPtr: bufferPtr, parentPtr: basePtr, endianness)
+        dict.storeAsItem(atPtr: elementPtr(for: countValue), bufferPtr: bufferPtr, parentPtr: basePtr, endianness)
         
         
         // Increase child counter
         
-        count += 1
+        countValue += 1
         
         
         return .success
@@ -284,12 +284,12 @@ public extension Item {
     public func remove(at index: Int) -> Result {
         guard isArray else { return .onlySupportedOnArray }
         guard index >= 0 else { return .indexBelowLowerBound }
-        guard index < count else { return .indexAboveHigherBound }
+        guard index < countValue else { return .indexAboveHigherBound }
         let srcPtr = elementPtr(for: index + 1)
         let dstPtr = elementPtr(for: index)
-        let len = (count - 1 - index) * elementByteCount
+        let len = (countValue - 1 - index) * elementByteCount
         moveBlock(dstPtr, srcPtr, len)
-        count -= 1
+        countValue -= 1
         return .success
     }
 
@@ -325,14 +325,14 @@ public extension Item {
             
         var loopCount = amount
         repeat {
-            value.storeValue(atPtr: elementPtr(for: count + loopCount - 1), endianness)
+            value.storeValue(atPtr: elementPtr(for: countValue + loopCount - 1), endianness)
             loopCount -= 1
         } while loopCount > 0
         
         
         // Increment the number of elements
 
-        count += amount
+        countValue += amount
         
         
         return .success
@@ -377,7 +377,7 @@ public extension Item {
         guard isArray else { return .onlySupportedOnArray }
         guard value.brbonType == elementType else { return .typeConflict }
         guard index >= 0 else { return .indexBelowLowerBound }
-        guard index < count else { return .indexAboveHigherBound }
+        guard index < countValue else { return .indexAboveHigherBound }
         
         
         // Not implemented yet
@@ -394,7 +394,7 @@ public extension Item {
         
         let dstPtr = elementPtr(for: index + 1)
         let srcPtr = elementPtr(for: index)
-        let length = (count - index) * elementByteCount
+        let length = (countValue - index) * elementByteCount
         moveBlock(dstPtr, srcPtr, length)
         
         
@@ -405,7 +405,7 @@ public extension Item {
         
         // Increase the number of elements
         
-        count += 1
+        countValue += 1
         
         
         return .success
@@ -471,8 +471,8 @@ public extension Item {
     
     private func element(at index: Int) -> Item? {
         guard isArray else { return fatalOrNil("Subscript with Int on non-array") }
-        guard index >= 0 && index < count else {
-            let range = Range(uncheckedBounds: (lower: 0, upper: count))
+        guard index >= 0 && index < countValue else {
+            let range = Range(uncheckedBounds: (lower: 0, upper: countValue))
             return fatalOrNil("Index (\(index)) out of range \(range)")
         }
         return Item.init(basePtr: elementPtr(for: index), parentPtr: basePtr, endianness: endianness)

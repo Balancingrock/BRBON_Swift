@@ -9,6 +9,61 @@
 import Foundation
 import BRUtils
 
+
+/// This struct is used to keep track of the number of portals that have been returned to the API user.
+
+fileprivate struct ActivePortals {
+    
+    
+    /// Associate a portal with a reference counter
+    
+    class Entry {
+        let portal: Portal
+        var refcount: Int = 0
+        init(_ portal: Portal) { self.portal = portal }
+    }
+    
+    
+    /// The dictionary that associates an item pointer with a valueItem entry
+    
+    var dict: Dictionary<UnsafeMutableRawPointer, Entry> = [:]
+    
+    
+    /// Return the portal for the given parameters. A new one is created if it was not found in the dictionary.
+    
+    mutating func getPortal(for ptr: UnsafeMutableRawPointer, mgr: ItemManager) -> Portal {
+        if let entry = dict[ptr] {
+            entry.refcount += 1
+            return entry.portal
+        } else {
+            let vi = Portal(basePtr: ptr, parentPtr: nil, manager: mgr, endianness: mgr.endianness)
+            let entry = Entry(vi)
+            dict[ptr] = entry
+            return vi
+        }
+    }
+    
+    
+    /// Decrement the reference counter of a portal and remove the entry of the refcount reaches zero.
+    
+    mutating func decrementRefcountAndRemoveOnZero(for portal: Portal) {
+        if let vi = dict[portal.basePtr] {
+            vi.refcount -= 1
+            if vi.refcount == 0 {
+                dict.removeValue(forKey: portal.basePtr)
+            }
+        }
+    }
+    
+    
+    /// Execute the given closure on each portal
+    
+    func forEachPortal(_ closure: (Portal) -> ()) {
+        dict.forEach() { closure($0.value.portal) }
+    }
+}
+
+
 public final class ItemManager {
 
     
@@ -48,6 +103,11 @@ public final class ItemManager {
     public var data: Data {
         return Data(bytesNoCopy: basePtr, count: rootItem.byteCount, deallocator: Data.Deallocator.none)
     }
+    
+    
+    /// The array with all active portals.
+    
+    fileprivate var activePortals = ActivePortals()
     
 
     /// Create a new manager.
@@ -217,7 +277,37 @@ public final class ItemManager {
     
     
     deinit {
+        
+        
+        // The active portals are no longer valid
+        
+        activePortals.forEachPortal() { _ = $0.invalidate() }
+
+        
+        // Release the buffer area
+        
         buffer.deallocate()
+    }
+    
+    internal func getPortal(for ptr: UnsafeMutableRawPointer) -> Portal {
+        return activePortals.getPortal(for: ptr, mgr: self)
+    }
+    
+    internal func unsubscribe(portal: Portal) {
+        activePortals.decrementRefcountAndRemoveOnZero(for: portal)
+    }
+    
+    internal func portalChange(oldBaseAddres: UnsafeMutableRawPointer, newBaseAddress: UnsafeMutableRawPointer) {
+        let offset = oldBaseAddres.distance(to: newBaseAddress)
+        activePortals.forEachPortal() { $0.updatePointers(by: offset) }
+    }
+    
+    internal func portalUpdate(atOrAboveThisPtr refPtr: UnsafeMutableRawPointer, offset: Int) {
+        activePortals.forEachPortal() { $0.update(atOrAboveThisPtr: refPtr, by: offset) }
+    }
+    
+    internal func portalInvalidate(atOrAboveThisPtr startPtr: UnsafeMutableRawPointer, belowThisPtr endPtr: UnsafeMutableRawPointer) {
+        activePortals.forEachPortal() { $0.invalidate(atOrAboveThisPtr: startPtr, belowThisPtr: endPtr) }
     }
 }
 

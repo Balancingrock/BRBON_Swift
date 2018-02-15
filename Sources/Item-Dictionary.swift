@@ -53,7 +53,7 @@ extension Item {
         
         // Increment the number of children
         
-        count += 1
+        countValue += 1
         
         return .success
     }
@@ -191,7 +191,7 @@ extension Item {
         
         moveBlock(dstPtr, srcPtr, len)
         
-        count -= 1
+        countValue -= 1
         
         return .success
     }
@@ -276,7 +276,7 @@ extension Item {
 
     fileprivate var newItemPtr: UnsafeMutableRawPointer {
         var p = valuePtr
-        var remainder = count
+        var remainder = countValue
         while remainder > 0 {
             let byteCount = Int(UInt32(valuePtr: p.advanced(by: itemByteCountOffset), endianness))
             p = p.advanced(by: byteCount)

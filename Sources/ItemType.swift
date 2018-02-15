@@ -53,6 +53,10 @@ import Foundation
 import BRUtils
 
 
+internal let useCountValueAsValueMask: UInt8 = 0x80
+internal let useCountValueAsCountMask: UInt8 = 0x40
+
+
 /// The identifier that describes the actual value.
 
 public enum ItemType: UInt8 {
@@ -162,9 +166,9 @@ public enum ItemType: UInt8 {
     case float32        = 0x88
 
     
-    public var useValueCountFieldAsCount: Bool { return (self.rawValue & 0x40) != 0 }
+    public var useCountValueAsCount: Bool { return (self.rawValue & useCountValueAsCountMask) != 0 }
     
-    public var useValueCountFieldAsValue: Bool { return (self.rawValue & 0x80) != 0 }
+    public var useCountValueAsValue: Bool { return (self.rawValue & useCountValueAsValueMask) != 0 }
     
     public var assumedValueByteCount: Int {
         switch self {
