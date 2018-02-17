@@ -1,4 +1,5 @@
 import XCTest
+import BRUtils
 @testable import BRBON
 
 class BRBONTests: XCTestCase {

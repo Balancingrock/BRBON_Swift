@@ -1,5 +1,5 @@
 //
-//  Item-Subscript.swift
+//  Portal-Subscript.swift
 //  BRBON
 //
 //  Created by Marinus van der Lugt on 21/01/18.
@@ -10,133 +10,70 @@ import Foundation
 import BRUtils
 
 
-/// Array subscript operator.
-/// Note that array elements cannot change their type to/from null (unlike sequence or dictionary).
+///
 
-public extension Item {
+public extension Portal {
+
     
-    
-    public subscript(index: Int) -> Item {
-        get { return element(at: index) ?? Item.nullItem }
-    }
-    
-    public subscript(index: Int) -> Bool? {
-        get { return self[index].bool }
-        set {
-            guard index >= 0, index < countValue else { return }
-            let ptr = elementPtr(for: index)
-            newValue?.storeAsElement(atPtr: ptr, endianness)
-        }
-    }
-    
-    public subscript(index: Int) -> UInt8? {
-        get { return self[index].uint8 }
-        set {
-            guard index >= 0, index < countValue else { return }
-            let ptr = elementPtr(for: index)
-            newValue?.storeAsElement(atPtr: ptr, endianness)
-        }
-    }
-    
-    public subscript(index: Int) -> UInt16? {
-        get { return self[index].uint16 }
-        set {
-            guard index >= 0, index < countValue else { return }
-            let ptr = elementPtr(for: index)
-            newValue?.storeAsElement(atPtr: ptr, endianness)
-        }
+    public subscript(index: Int) -> Portal {
+        get { return element(at: index) }
     }
 
-    public subscript(index: Int) -> UInt32? {
-        get { return self[index].uint32 }
+    public subscript(index: Int) -> Bool? { get { return getHelper(index).bool } set { setHelper(index, newValue) } }
+    public subscript(index: Int) -> Int8? { get { return getHelper(index).int8 } set { setHelper(index, newValue) } }
+    public subscript(index: Int) -> Int16? { get { return getHelper(index).int16 } set { setHelper(index, newValue) } }
+    public subscript(index: Int) -> Int32? { get { return getHelper(index).int32 } set { setHelper(index, newValue) } }
+    public subscript(index: Int) -> Int64? { get { return getHelper(index).int64 } set { setHelper(index, newValue) } }
+    public subscript(index: Int) -> UInt8? { get { return getHelper(index).uint8 } set { setHelper(index, newValue) } }
+    public subscript(index: Int) -> UInt16? { get { return getHelper(index).uint16 } set { setHelper(index, newValue) } }
+    public subscript(index: Int) -> UInt32? { get { return getHelper(index).uint32 } set { setHelper(index, newValue) } }
+    public subscript(index: Int) -> UInt64? { get { return getHelper(index).uint64 } set { setHelper(index, newValue) } }
+    public subscript(index: Int) -> Float32? { get { return getHelper(index).float32 } set { setHelper(index, newValue) } }
+    public subscript(index: Int) -> Float64? { get { return getHelper(index).float64 } set { setHelper(index, newValue) } }
+    
+    public subscript(index: Int) -> String? { get { return getHelper(index).string }
         set {
-            guard index >= 0, index < countValue else { return }
-            let ptr = elementPtr(for: index)
-            newValue?.storeAsElement(atPtr: ptr, endianness)
+            if isArray {
+                guard (newValue?.elementByteCount ?? 0) <= elementByteCount else { fatalOrNull("Not sufficient storage for new value"); return }
+            } else if isSequence {
+                fatalError("Sequence not implemented yet")
+            }
+            setHelper(index, newValue)
+        }
+    }
+    public subscript(index: Int) -> Data? { get { return getHelper(index).binary }
+        set {
+            if isArray {
+                guard (newValue?.elementByteCount ?? 0) <= elementByteCount else { fatalOrNull("Not sufficient storage for new value"); return }
+            } else if isSequence {
+                fatalError("Sequence not implemented yet")
+            }
+            setHelper(index, newValue)
         }
     }
     
-    public subscript(index: Int) -> UInt64? {
-        get { return self[index].uint64 }
-        set {
-            guard index >= 0, index < countValue else { return }
-            let ptr = elementPtr(for: index)
-            newValue?.storeAsElement(atPtr: ptr, endianness)
+    
+    private func getHelper(_ index: Int) -> Portal {
+        if isArray {
+            return element(at: index)
+        } else if isSequence {
+            return fatalOrNull("Sequence not implemented yet")
+        } else {
+            return fatalOrNull("Portal type does not support Int subscript access")
         }
     }
     
-    public subscript(index: Int) -> Int8? {
-        get { return self[index].int8 }
-        set {
-            guard index >= 0, index < countValue else { return }
-            let ptr = elementPtr(for: index)
-            newValue?.storeAsElement(atPtr: ptr, endianness)
+    private func setHelper(_ index: Int, _ newValue: Coder?) {
+        guard index >= 0 else { fatalOrNull("Index below zero"); return }
+        guard index < countValue else { fatalOrNull("Index too high"); return }
+        if isArray {
+            guard elementType == (newValue?.brbonType ?? .null) else { fatalOrNull("Type mismatch, try to store \((newValue?.brbonType ?? .null)) in an array of \(elementType)"); return }
+            newValue?.storeAsElement(atPtr: elementPtr(for: index), endianness)
+        } else if isSequence {
+            fatalError("Sequence not implemented yet")
         }
     }
-    
-    public subscript(index: Int) -> Int16? {
-        get { return self[index].int16 }
-        set {
-            guard index >= 0, index < countValue else { return }
-            let ptr = elementPtr(for: index)
-            newValue?.storeAsElement(atPtr: ptr, endianness)
-        }
-    }
-    
-    public subscript(index: Int) -> Int32? {
-        get { return self[index].int32 }
-        set {
-            guard index >= 0, index < countValue else { return }
-            let ptr = elementPtr(for: index)
-            newValue?.storeAsElement(atPtr: ptr, endianness)
-        }
-    }
-    
-    public subscript(index: Int) -> Int64? {
-        get { return self[index].int64 }
-        set {
-            guard index >= 0, index < countValue else { return }
-            let ptr = elementPtr(for: index)
-            newValue?.storeAsElement(atPtr: ptr, endianness)
-        }
-    }
-    
-    public subscript(index: Int) -> Float32? {
-        get { return self[index].float32 }
-        set {
-            guard index >= 0, index < countValue else { return }
-            let ptr = elementPtr(for: index)
-            newValue?.storeAsElement(atPtr: ptr, endianness)
-        }
-    }
-    
-    public subscript(index: Int) -> Float64? {
-        get { return self[index].float64 }
-        set {
-            guard index >= 0, index < countValue else { return }
-            let ptr = elementPtr(for: index)
-            newValue?.storeAsElement(atPtr: ptr, endianness)
-        }
-    }
-    
-    public subscript(index: Int) -> String? {
-        get { return self[index].string }
-        set {
-            guard index >= 0, index < countValue else { return }
-            let ptr = elementPtr(for: index)
-            newValue?.storeAsElement(atPtr: ptr, endianness)
-        }
-    }
-    
-    public subscript(index: Int) -> Data? {
-        get { return self[index].binary }
-        set {
-            guard index >= 0, index < countValue else { return }
-            let ptr = elementPtr(for: index)
-            newValue?.storeAsElement(atPtr: ptr, endianness)
-        }
-    }
-    
+
     
     /// Adds a new bool value to the end of the array.
     ///
@@ -145,7 +82,7 @@ public extension Item {
     /// - Returns: success or an error indicator.
     
     @discardableResult
-    private func _append<T>(_ value: T) -> Result where T:Coder {
+    private func _append(_ value: Coder) -> Result {
         
         
         // Prevent errors
@@ -156,7 +93,7 @@ public extension Item {
         
         // Store element
         
-        guard ensureValueStorage(for: value.elementByteCount) == .success else { return .outOfStorage }
+        guard ensureValueStorage(for: (countValue  + 1) * value.elementByteCount) == .success else { return .outOfStorage }
         value.storeAsElement(atPtr: elementPtr(for: countValue), endianness)
         
         
@@ -290,6 +227,7 @@ public extension Item {
         let len = (countValue - 1 - index) * elementByteCount
         moveBlock(dstPtr, srcPtr, len)
         countValue -= 1
+        
         return .success
     }
 
@@ -303,7 +241,7 @@ public extension Item {
     /// - Returns: .success or an error indicator.
     
     @discardableResult
-    private func _createNewElements<T>(_ value: T, _ amount: Int) -> Result where T:Coder {
+    private func _createNewElements(_ value: Coder, _ amount: Int) -> Result {
         
         guard isArray else { return .onlySupportedOnArray }
         
@@ -312,7 +250,7 @@ public extension Item {
         
         // Not implemented yet
         
-        guard !elementType!.isContainer else { fatalOrNil("Not implemented"); return .typeConflict }
+        guard !elementType!.isContainer else { fatalOrNull("Not implemented"); return .typeConflict }
 
 
         // Ensure storage area
@@ -369,7 +307,7 @@ public extension Item {
     /// Inserts a new element at the given position.
     
     @discardableResult
-    private func _insert<T>(_ value: T, _ index: Int) -> Result where T:Coder {
+    private func _insert(_ value: Coder, _ index: Int) -> Result {
 
         
         // Prevent errors
@@ -382,7 +320,7 @@ public extension Item {
         
         // Not implemented yet
         
-        guard !value.brbonType.isContainer else { fatalOrNil("Not implemented"); return .typeConflict }
+        guard !value.brbonType.isContainer else { fatalOrNull("Not implemented"); return .typeConflict }
         
         
         // Store element
@@ -438,43 +376,4 @@ public extension Item {
     @discardableResult
     public func insert(_ value: Data, at index: Int) -> Result { return _insert(value, index) }
 
-    
-    // *********************************
-    // MARK: - Internal
-    // *********************************
-
-
-    /// The offset from the first byte of the first element to the indexed element.
-    ///
-    /// - Note: This operation does not check for validity of the index.
-    ///
-    /// - Parameter for: the index of the element for which to determine the offset.
-    ///
-    /// - Returns: The offset.
-    
-    internal func elementOffset(for index: Int) -> Int {
-        return index * elementByteCount
-    }
-    
-    
-    /// A pointer to the first byte of the indexed element.
-    ///
-    /// - Note: This operation does not check for validity of the index.
-    ///
-    /// - Parameter for: the index of the element for which to return the pointer.
-    ///
-    /// - Returns: The pointer.
-
-    internal func elementPtr(for index: Int) -> UnsafeMutableRawPointer {
-        return valuePtr.advanced(by: 8 + elementOffset(for: index))
-    }
-    
-    private func element(at index: Int) -> Item? {
-        guard isArray else { return fatalOrNil("Subscript with Int on non-array") }
-        guard index >= 0 && index < countValue else {
-            let range = Range(uncheckedBounds: (lower: 0, upper: countValue))
-            return fatalOrNil("Index (\(index)) out of range \(range)")
-        }
-        return Item.init(basePtr: elementPtr(for: index), parentPtr: basePtr, endianness: endianness)
-    }
 }

@@ -13,6 +13,22 @@ import Foundation
 import BRUtils
 
 
+/// This variable controls the raising of fatal errors on problems in the BRBON API.
+///
+/// Some usage errors can create a recoverable error condition as far as the BRBON API is considered. This variable controls if the usage error should result in a fatal error, or if it should be ignored. If a return value is expected, then ignoring will return a nil or the nullPortal.
+///
+/// It is recommened to set this to 'true' during develeopment and testing. Depending on the application, you may consider setting this to 'false' on the shipping application.
+
+public var allowFatalError = true
+
+
+@discardableResult
+internal func fatalOrNull(_ message: String = "") -> Portal {
+    if allowFatalError { fatalError(message) }
+    return Portal.nullPortal
+}
+
+
 public class Portal {
     
     var basePtr: UnsafeMutableRawPointer!
@@ -29,7 +45,7 @@ public class Portal {
     
     init(basePtr: UnsafeMutableRawPointer, parentPtr: UnsafeMutableRawPointer?, manager: ItemManager?, endianness: Endianness) {
         self.basePtr = basePtr
-        self.parentPtr = parentPtr
+        self.parentPtr = parentPtr 
         self.endianness = endianness
         self.manager = manager
         self.isValid = true
@@ -64,10 +80,10 @@ public class Portal {
     
     /// If an internal pointer is higher than the reference pointer, it will be advanced by the given offset.
     
-    internal func update(atOrAboveThisPtr refPtr: UnsafeMutableRawPointer, by offset: Int) {
-        if basePtr >= refPtr { basePtr = basePtr.advanced(by: offset) }
+    internal func update(atOrAboveThisPtr refPtr: UnsafeMutableRawPointer, belowThisPtr endPtr: UnsafeMutableRawPointer, by offset: Int) {
+        if basePtr >= refPtr && basePtr < endPtr { basePtr = basePtr.advanced(by: offset) }
         guard let pptr = parentPtr else { return }
-        if pptr >= refPtr { parentPtr = pptr.advanced(by: offset) }
+        if pptr >= refPtr && pptr < endPtr { parentPtr = pptr.advanced(by: offset) }
     }
     
     
@@ -87,6 +103,13 @@ public class Portal {
 }
 
 
+// MARK: - Conveniance
+
+extension Portal {
+    
+    var count: Int { return countValue }
+}
+
 // MARK: - Memory management
 
 extension Portal {
@@ -98,7 +121,11 @@ extension Portal {
         if isElement {
             return elementByteCount
         } else {
-            return itemByteCount - minimumItemByteCount - nameFieldByteCount
+            if isArray {
+                return itemByteCount - minimumItemByteCount - nameFieldByteCount - 8
+            } else {
+                return itemByteCount - minimumItemByteCount - nameFieldByteCount
+            }
         }
     }
     
@@ -381,7 +408,35 @@ extension Portal {
     internal var parentPortal: Portal? {
         guard let parentPtr = parentPtr else { return nil }
         guard let manager = manager else { return nil }
-        return manager.getPortal(for: parentPtr)
+        let greatParentOffset = Int(parentPtr.brbonItemParentOffsetPtr.assumingMemoryBound(to: UInt32.self).pointee)
+        var greatParentPtr: UnsafeMutableRawPointer?
+        if greatParentOffset != 0 { greatParentPtr = bufferPtr.advanced(by: greatParentOffset) }
+        return manager.getPortal(for: parentPtr, parentPtr: greatParentPtr)
+    }
+
+    
+    /// Returns the element pointer for a given index.
+    ///
+    /// - Note: This operation is purly mathematical, no checking performed.
+    
+    internal func elementPtr(for index: Int) -> UnsafeMutableRawPointer {
+        let elementBasePtr = basePtr.brbonItemValuePtr.advanced(by: 8)
+        let elementOffset = index * elementByteCount
+        return elementBasePtr.advanced(by: elementOffset)
+    }
+    
+    
+    /// Get an element from an array as a portal.
+    ///
+    /// - Parameter index: The index of the element to retrieve.
+    /// - Returns: A portal for the requested element, or the null-portal if the element does not exist
+    
+    internal func element(at index: Int) -> Portal {
+        guard isArray else { return fatalOrNull("Int subscript access on non-array") }
+        guard index >= 0 else { return fatalOrNull("Index below zero") }
+        guard index < countValue else { return fatalOrNull("Index out of upper limit") }
+        guard let manager = manager else { return fatalOrNull("No manager available") }
+        return manager.getPortal(for: elementPtr(for: index), parentPtr: basePtr)
     }
 
 }
@@ -493,12 +548,10 @@ extension Portal {
     }
 }
 
+
+// MARK: - Subscript accessors
+
 extension Portal {
-    
-    public subscript(index: Int) -> Portal {
-        get { return Portal.nullPortal }
-        set { return }
-    }
     
     public subscript(key: String) -> Portal {
         get { return Portal.nullPortal }
@@ -506,7 +559,14 @@ extension Portal {
     }
 }
 
+
+// MARK: - Value accessors
+
 extension Portal {
+    
+    public var portal: Portal {
+        return manager?.getPortal(for: basePtr, parentPtr: parentPtr) ?? Portal.nullPortal
+    }
     
     public var isNull: Bool {
         guard isValid else { return false }
@@ -999,7 +1059,7 @@ extension Portal {
     
     /// The closure is called for each child item or until the closure returns true.
     ///
-    /// - Parameter closure: The closure that is called for each item in the dictionary. If the closure returns true then the processing of further items is aborted. Note that the portals passed to the closure are not registered with the
+    /// - Parameter closure: The closure that is called for each item in the dictionary. If the closure returns true then the processing of further items is aborted. Note that the portals passed to the closure are not registered with the active portals in the ItemManager
     
     internal func forEachAbortOnTrue(_ closure: (Portal) -> Bool) {
         if isArray {
@@ -1024,5 +1084,80 @@ extension Portal {
                 remainder -= 1
             }
         }
+    }
+    
+    
+    /// Compares the content pointed at by two portals and returns true if they are the same.
+    ///
+    /// Note that this opration only compares used bytes and excluding the flag bits and parent-offsets. A data based compare would probably find differences even when this operation returns equality. Invalid item types will always be unequal.
+    
+    public static func ==(left: Portal, right: Portal) -> Bool {
+        
+        guard left.isValid, right.isValid else { return false }
+        if left.isElement != right.isElement { return false }
+        
+        if left.isElement {
+            
+            switch left.elementType! {
+            case .null: return true
+            case .bool: return left.bool! == right.bool!
+            case .int8: return left.int8! == right.int8!
+            case .int16: return left.int16! == right.int16!
+            case .int32: return left.int32! == right.int32!
+            case .int64: return left.int64! == right.int64!
+            case .uint8: return left.uint8! == right.uint8!
+            case .uint16: return left.uint16! == right.uint16!
+            case .uint32: return left.uint32! == right.uint32!
+            case .uint64: return left.uint64! == right.uint64!
+            case .float32: return left.float32! == right.float32!
+            case .float64: return left.float64! == right.float64!
+            case .string: return left.string! == right.string!
+            case .binary: return left.binary! == right.binary!
+            case .array: fatalError("Comparing array elements not yet implemented")
+            case .dictionary: fatalError("Comparing dictionary elements not yet implemented")
+            case .sequence: fatalError("Comparing sequence elements not yet implemented")
+            }
+        } else {
+            guard left.itemType != nil else { return false }
+            guard right.itemType != nil else { return false }
+            
+            if left.basePtr.assumingMemoryBound(to: UInt16.self).pointee != right.basePtr.assumingMemoryBound(to: UInt16.self).pointee { return false }
+            if left.nameFieldByteCount != right.nameFieldByteCount { return false }
+            if left.itemByteCount != right.itemByteCount { return false }
+            if left.countValue != right.countValue { return false }
+            if left.nameFieldByteCount != 0 {
+                if left.basePtr.brbonItemNameFieldPtr.assumingMemoryBound(to: UInt32.self).pointee != right.basePtr.brbonItemNameFieldPtr.assumingMemoryBound(to: UInt32.self).pointee { return false }
+                if left.nameData != right.nameData { return false }
+            }
+            switch left.itemType! {
+            case .null, .bool, .int8, .int16, .int32, .uint8, .uint16, .uint32, .float32: return true
+            case .int64, .uint64, .float64: return left.basePtr.brbonItemValuePtr.assumingMemoryBound(to: UInt64.self).pointee == right.basePtr.brbonItemValuePtr.assumingMemoryBound(to: UInt64.self).pointee
+            case .string: return left.string == right.string
+            case .binary: return left.binary == right.binary
+            case .array:
+                
+                guard left.elementType != nil else { return false }
+                guard right.elementType != nil else { return false }
+                
+                if left.elementType != right.elementType { return false }
+                if left.elementByteCount != right.elementByteCount { return false }
+                
+                for index in 0 ..< left.countValue {
+                    let leftPortal: Portal = left[index]
+                    let rightPortal: Portal = right[index]
+                    if leftPortal != rightPortal { return false }
+                }
+                return true
+                
+            case .dictionary:
+                fatalError("dictionary compare not yet implemented")
+            case .sequence:
+                fatalError("sequence compare not yet implemented")
+            }
+        }
+    }
+    
+    public static func !=(left: Portal, right: Portal) -> Bool {
+        return !(left == right)
     }
 }

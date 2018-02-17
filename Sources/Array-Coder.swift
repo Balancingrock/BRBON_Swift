@@ -31,7 +31,7 @@ internal class BrbonArray: Coder, IsBrbon {
     
     var valueByteCount: Int {
         switch elementType {
-        case .null: return 0
+        case .null: return 8
         case .bool, .int8, .uint8: return content.count + 8
         case .int16, .uint16: return content.count * 2 + 8
         case .int32, .uint32, .float32: return content.count * 4 + 8
@@ -81,10 +81,13 @@ internal class BrbonArray: Coder, IsBrbon {
         _ endianness: Endianness) -> Result {
         
         
-        // Determine size of the value field
-        // =================================
+        // Number of bytes of the complete item
         
         var itemBC = self.itemByteCount(nfd)
+        
+        
+        // Number of bytes in the element
+        
         var elemBC: Int
 
         switch elementType {
@@ -115,12 +118,12 @@ internal class BrbonArray: Coder, IsBrbon {
             
             // If specified, the fixed item length must at least be large enough for the name field
             
-            guard valueByteCount < self.valueByteCount else { return .valueByteCountTooSmall }
+            guard valueByteCount >= (itemBC - minimumItemByteCount - (nfd?.byteCount ?? 0)) else { return .valueByteCountTooSmall }
             
             
             // Make the itemLength the fixed item length, but ensure that it is a multiple of 8 bytes.
             
-            itemBC = (itemBC - self.valueByteCount + valueByteCount + 8).roundUpToNearestMultipleOf8()
+            itemBC = (minimumItemByteCount - (nfd?.byteCount ?? 0) + valueByteCount).roundUpToNearestMultipleOf8()
         }
         
         

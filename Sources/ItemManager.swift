@@ -31,12 +31,12 @@ fileprivate struct ActivePortals {
     
     /// Return the portal for the given parameters. A new one is created if it was not found in the dictionary.
     
-    mutating func getPortal(for ptr: UnsafeMutableRawPointer, mgr: ItemManager) -> Portal {
-        if let entry = dict[ptr] {
+    mutating func getPortal(for ptr: UnsafeMutableRawPointer, parentPtr: UnsafeMutableRawPointer?, mgr: ItemManager) -> Portal {
+        if let entry = dict[ptr], entry.portal.isValid {
             entry.refcount += 1
             return entry.portal
         } else {
-            let vi = Portal(basePtr: ptr, parentPtr: nil, manager: mgr, endianness: mgr.endianness)
+            let vi = Portal(basePtr: ptr, parentPtr: parentPtr, manager: mgr, endianness: mgr.endianness)
             let entry = Entry(vi)
             dict[ptr] = entry
             return vi
@@ -79,12 +79,12 @@ public final class ItemManager {
     
     /// The root item (top most item in the buffer)
     
-    public let rootItem: Item
+    public let root: Portal
     
     
     /// The number of bytes used by the root item (equal to all bytes that are used in the buffer)
     
-    public var count: Int { return rootItem.byteCount }
+    public var count: Int { return root.itemByteCount }
     
     
     /// The number of unused bytes in the buffer
@@ -101,7 +101,7 @@ public final class ItemManager {
     /// A data object with the entire rootItem in it as a sequence of bytes.
     
     public var data: Data {
-        return Data(bytesNoCopy: basePtr, count: rootItem.byteCount, deallocator: Data.Deallocator.none)
+        return Data(bytesNoCopy: basePtr, count: root.itemByteCount, deallocator: Data.Deallocator.none)
     }
     
     
@@ -138,16 +138,15 @@ public final class ItemManager {
         self.bufferIncrements = minimalBufferIncrements
         self.endianness = endianness
         
-        self.buffer = UnsafeMutableRawBufferPointer.allocate(count: initialBufferByteCount)
+        self.buffer = UnsafeMutableRawBufferPointer.allocate(count: initialBufferByteCount.roundUpToNearestMultipleOf8())
         self.basePtr = buffer.baseAddress!
 
         let value: Coder = value as! Coder
 
         value.storeAsItem(atPtr: basePtr, bufferPtr: basePtr, parentPtr: basePtr, nameField: nfd, valueByteCount: itemValueByteCount, endianness)
         
-        self.rootItem = Item(basePtr: basePtr, parentPtr: nil, endianness: endianness)
-        
-        rootItem.manager = self
+        self.root = Portal(basePtr: basePtr, parentPtr: nil, manager: nil, endianness: endianness)
+        self.root.manager = self
     }
 
     
@@ -182,7 +181,7 @@ public final class ItemManager {
         self.bufferIncrements = minimalBufferIncrements
         self.endianness = endianness
         
-        self.buffer = UnsafeMutableRawBufferPointer.allocate(count: initialBufferByteCount)
+        self.buffer = UnsafeMutableRawBufferPointer.allocate(count: initialBufferByteCount.roundUpToNearestMultipleOf8())
         self.basePtr = buffer.baseAddress!
 
         
@@ -271,8 +270,8 @@ public final class ItemManager {
         case .sequence: break
         }
         
-        self.rootItem = Item(basePtr: basePtr, parentPtr: nil, endianness: endianness)
-        self.rootItem.manager = self
+        self.root = Portal(basePtr: basePtr, parentPtr: nil, manager: nil, endianness: endianness)
+        self.root.manager = self
     }
     
     
@@ -289,14 +288,14 @@ public final class ItemManager {
         buffer.deallocate()
     }
     
-    internal func getPortal(for ptr: UnsafeMutableRawPointer) -> Portal {
-        return activePortals.getPortal(for: ptr, mgr: self)
+    internal func getPortal(for ptr: UnsafeMutableRawPointer, parentPtr: UnsafeMutableRawPointer?) -> Portal {
+        return activePortals.getPortal(for: ptr, parentPtr: parentPtr, mgr: self)
     }
     
     internal func unsubscribe(portal: Portal) {
         activePortals.decrementRefcountAndRemoveOnZero(for: portal)
     }
-    
+    /*
     internal func portalChange(oldBaseAddres: UnsafeMutableRawPointer, newBaseAddress: UnsafeMutableRawPointer) {
         let offset = oldBaseAddres.distance(to: newBaseAddress)
         activePortals.forEachPortal() { $0.updatePointers(by: offset) }
@@ -308,21 +307,22 @@ public final class ItemManager {
     
     internal func portalInvalidate(atOrAboveThisPtr startPtr: UnsafeMutableRawPointer, belowThisPtr endPtr: UnsafeMutableRawPointer) {
         activePortals.forEachPortal() { $0.invalidate(atOrAboveThisPtr: startPtr, belowThisPtr: endPtr) }
-    }
+    }*/
 }
 
 extension ItemManager: BufferManagerProtocol {
     
-    internal var unusedByteCount: Int { return buffer.count - rootItem.byteCount }
+    internal var unusedByteCount: Int { return buffer.count - root.itemByteCount }
     
     internal func increaseBufferSize(by bytes: Int) -> Bool {
         
         guard bufferIncrements > 0 else { return false }
         
-        let increase = Int(max(bytes, bufferIncrements))
+        let increase = Int(max(bytes, bufferIncrements)).roundUpToNearestMultipleOf8()
         let newBuffer = UnsafeMutableRawBufferPointer.allocate(count: buffer.count + increase)
         
         _ = Darwin.memmove(newBuffer.baseAddress!, buffer.baseAddress!, buffer.count)
+        _ = Darwin.memset(newBuffer.baseAddress!.advanced(by: buffer.count), 0, increase/4)
         
         buffer = newBuffer
         basePtr = newBuffer.baseAddress!
@@ -331,6 +331,11 @@ extension ItemManager: BufferManagerProtocol {
     }
     
     internal func moveBlock(_ dstPtr: UnsafeMutableRawPointer, _ srcPtr: UnsafeMutableRawPointer, _ length: Int) {
+        let distance = srcPtr.distance(to: dstPtr) // distance will be negative because blocks are always moved down
+        activePortals.forEachPortal() {
+            $0.invalidate(atOrAboveThisPtr: dstPtr, belowThisPtr: srcPtr)
+            $0.update(atOrAboveThisPtr: srcPtr, belowThisPtr: srcPtr.advanced(by: length), by: distance)
+        }
         _ = Darwin.memmove(dstPtr, srcPtr, length)
     }
     

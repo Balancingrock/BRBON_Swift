@@ -593,9 +593,10 @@ public extension Item {
     
     internal func increaseItemByteCount(by bytes: Int, recursiveItems: inout Array<Item>) -> Result {
         
-        
         if parentPtr == nil {
-            
+        
+            let bytes = bytes.roundUpToNearestMultipleOf8()
+
             
             // If there is no buffer manager, the size cannot be changed.
             
@@ -610,7 +611,7 @@ public extension Item {
                 // Continue only when the buffer manager has increased its size.
                 
                 let oldPtr = basePtr
-                guard manager.increaseBufferSize(by: bytes.roundUpToNearestMultipleOf8()) else { return .increaseFailed }
+                guard manager.increaseBufferSize(by: bytes) else { return .increaseFailed }
                 
                 
                 // All pointers must be updated
@@ -627,7 +628,7 @@ public extension Item {
             
             // No matter what this item is, its value area can be increased. Update the byte count
             
-            byteCount += bytes.roundUpToNearestMultipleOf8()
+            byteCount += bytes
             
             
             return .success
