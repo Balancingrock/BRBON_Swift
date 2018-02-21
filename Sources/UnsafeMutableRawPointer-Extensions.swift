@@ -20,6 +20,11 @@ internal let itemParentOffsetOffset = 8
 internal let itemCountValueOffset = 12
 internal let itemNvrFieldOffset = 16
 
+// The smallest possible item size
+
+internal let minimumItemByteCount: Int = 16
+
+
 // Offsets in the NVR field data structure
 
 internal let nameFieldOffset = itemNvrFieldOffset
@@ -144,6 +149,24 @@ extension UnsafeMutableRawPointer {
         }
     }
 
+    
+    /// Returns a pointer to the start of elements of an array
+    ///
+    /// - Note: Self must point to the first byte of an array item.
+
+    var brbonArrayElementsBasePtr: UnsafeMutableRawPointer {
+        return self.brbonItemValuePtr.advanced(by: 8)
+    }
+    
+    
+    /// Return the offset to an element for the given element size
+    ///
+    /// - Note: Self must point to the first byte of an array item.
+
+    func brbonArrayElementPtr(for index: Int, elementByteCount: Int) -> UnsafeMutableRawPointer {
+        return brbonArrayElementsBasePtr.advanced(by: index * elementByteCount)
+    }
+    
     
     /// Returns a pointer to the byte count of the elements in an array.
     ///

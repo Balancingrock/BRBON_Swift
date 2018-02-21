@@ -44,7 +44,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr2 = ItemManager(rootItemType: .null, itemValueByteCount: 10) else { XCTFail() ; return }
+        guard let mgr2 = ItemManager(rootItemType: .null, rootValueByteCount: 10) else { XCTFail() ; return }
         
         exp = Data(bytes: [
             0x80, 0x00, 0x00, 0x00,
@@ -64,7 +64,7 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr3 = ItemManager(rootItemType: .null, name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        guard let mgr3 = ItemManager(rootItemType: .null, name: "aaa", rootValueByteCount: 10) else { XCTFail() ; return }
         
         exp = Data(bytes: [
             0x80, 0x00, 0x00, 0x08,
@@ -105,7 +105,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr2 = ItemManager(rootItemType: .bool, itemValueByteCount: 10) else { XCTFail() ; return }
+        guard let mgr2 = ItemManager(rootItemType: .bool, rootValueByteCount: 10) else { XCTFail() ; return }
         
         exp = Data(bytes: [
             0x81, 0x00, 0x00, 0x00,
@@ -125,7 +125,7 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr3 = ItemManager(rootItemType: .bool, name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        guard let mgr3 = ItemManager(rootItemType: .bool, name: "aaa", rootValueByteCount: 10) else { XCTFail() ; return }
         
         exp = Data(bytes: [
             0x81, 0x00, 0x00, 0x08,
@@ -225,7 +225,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr2 = ItemManager(rootItemType: .int8, itemValueByteCount: 10) else { XCTFail() ; return }
+        guard let mgr2 = ItemManager(rootItemType: .int8, rootValueByteCount: 10) else { XCTFail() ; return }
         
         exp = Data(bytes: [
             0x82, 0x00, 0x00, 0x00,
@@ -245,7 +245,7 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr3 = ItemManager(rootItemType: .int8, name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        guard let mgr3 = ItemManager(rootItemType: .int8, name: "aaa", rootValueByteCount: 10) else { XCTFail() ; return }
         
         exp = Data(bytes: [
             0x82, 0x00, 0x00, 0x08,
@@ -344,7 +344,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr2 = ItemManager(rootItemType: .int16, itemValueByteCount: 10) else { XCTFail() ; return }
+        guard let mgr2 = ItemManager(rootItemType: .int16, rootValueByteCount: 10) else { XCTFail() ; return }
         
         exp = Data(bytes: [
             0x83, 0x00, 0x00, 0x00,
@@ -364,7 +364,7 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr3 = ItemManager(rootItemType: .int16, name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        guard let mgr3 = ItemManager(rootItemType: .int16, name: "aaa", rootValueByteCount: 10) else { XCTFail() ; return }
         
         exp = Data(bytes: [
             0x83, 0x00, 0x00, 0x08,
@@ -463,7 +463,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr2 = ItemManager(rootItemType: .int32, itemValueByteCount: 10) else { XCTFail() ; return }
+        guard let mgr2 = ItemManager(rootItemType: .int32, rootValueByteCount: 10) else { XCTFail() ; return }
         
         exp = Data(bytes: [
             0x84, 0x00, 0x00, 0x00,
@@ -483,7 +483,7 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr3 = ItemManager(rootItemType: .int32, name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        guard let mgr3 = ItemManager(rootItemType: .int32, name: "aaa", rootValueByteCount: 10) else { XCTFail() ; return }
         
         exp = Data(bytes: [
             0x84, 0x00, 0x00, 0x08,
@@ -584,7 +584,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr2 = ItemManager(rootItemType: .int64, itemValueByteCount: 10) else { XCTFail() ; return }
+        guard let mgr2 = ItemManager(rootItemType: .int64, rootValueByteCount: 10) else { XCTFail() ; return }
         
         exp = Data(bytes: [
             0x01, 0x00, 0x00, 0x00,
@@ -604,7 +604,7 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr3 = ItemManager(rootItemType: .int64, name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        guard let mgr3 = ItemManager(rootItemType: .int64, name: "aaa", rootValueByteCount: 10) else { XCTFail() ; return }
         
         exp = Data(bytes: [
             0x01, 0x00, 0x00, 0x08,
@@ -705,7 +705,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr2 = ItemManager(rootItemType: .uint8, itemValueByteCount: 10) else { XCTFail() ; return }
+        guard let mgr2 = ItemManager(rootItemType: .uint8, rootValueByteCount: 10) else { XCTFail() ; return }
         
         exp = Data(bytes: [
             0x85, 0x00, 0x00, 0x00,
@@ -725,7 +725,7 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr3 = ItemManager(rootItemType: .uint8, name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        guard let mgr3 = ItemManager(rootItemType: .uint8, name: "aaa", rootValueByteCount: 10) else { XCTFail() ; return }
         
         exp = Data(bytes: [
             0x85, 0x00, 0x00, 0x08,
@@ -824,7 +824,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr2 = ItemManager(rootItemType: .uint16, itemValueByteCount: 10) else { XCTFail() ; return }
+        guard let mgr2 = ItemManager(rootItemType: .uint16, rootValueByteCount: 10) else { XCTFail() ; return }
         
         exp = Data(bytes: [
             0x86, 0x00, 0x00, 0x00,
@@ -844,7 +844,7 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr3 = ItemManager(rootItemType: .uint16, name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        guard let mgr3 = ItemManager(rootItemType: .uint16, name: "aaa", rootValueByteCount: 10) else { XCTFail() ; return }
         
         exp = Data(bytes: [
             0x86, 0x00, 0x00, 0x08,
@@ -943,7 +943,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr2 = ItemManager(rootItemType: .uint32, itemValueByteCount: 10) else { XCTFail() ; return }
+        guard let mgr2 = ItemManager(rootItemType: .uint32, rootValueByteCount: 10) else { XCTFail() ; return }
         
         exp = Data(bytes: [
             0x87, 0x00, 0x00, 0x00,
@@ -963,7 +963,7 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr3 = ItemManager(rootItemType: .uint32, name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        guard let mgr3 = ItemManager(rootItemType: .uint32, name: "aaa", rootValueByteCount: 10) else { XCTFail() ; return }
         
         exp = Data(bytes: [
             0x87, 0x00, 0x00, 0x08,
@@ -1064,7 +1064,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr2 = ItemManager(rootItemType: .uint64, itemValueByteCount: 10) else { XCTFail() ; return }
+        guard let mgr2 = ItemManager(rootItemType: .uint64, rootValueByteCount: 10) else { XCTFail() ; return }
         
         exp = Data(bytes: [
             0x02, 0x00, 0x00, 0x00,
@@ -1084,7 +1084,7 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr3 = ItemManager(rootItemType: .uint64, name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        guard let mgr3 = ItemManager(rootItemType: .uint64, name: "aaa", rootValueByteCount: 10) else { XCTFail() ; return }
         
         exp = Data(bytes: [
             0x02, 0x00, 0x00, 0x08,
@@ -1185,7 +1185,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr2 = ItemManager(rootItemType: .float32, itemValueByteCount: 10) else { XCTFail() ; return }
+        guard let mgr2 = ItemManager(rootItemType: .float32, rootValueByteCount: 10) else { XCTFail() ; return }
         
         exp = Data(bytes: [
             0x88, 0x00, 0x00, 0x00,
@@ -1205,7 +1205,7 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr3 = ItemManager(rootItemType: .float32, name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        guard let mgr3 = ItemManager(rootItemType: .float32, name: "aaa", rootValueByteCount: 10) else { XCTFail() ; return }
         
         exp = Data(bytes: [
             0x88, 0x00, 0x00, 0x08,
@@ -1306,7 +1306,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr2 = ItemManager(rootItemType: .float64, itemValueByteCount: 10) else { XCTFail() ; return }
+        guard let mgr2 = ItemManager(rootItemType: .float64, rootValueByteCount: 10) else { XCTFail() ; return }
         
         exp = Data(bytes: [
             0x03, 0x00, 0x00, 0x00,
@@ -1326,7 +1326,7 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr3 = ItemManager(rootItemType: .float64, name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        guard let mgr3 = ItemManager(rootItemType: .float64, name: "aaa", rootValueByteCount: 10) else { XCTFail() ; return }
         
         exp = Data(bytes: [
             0x03, 0x00, 0x00, 0x08,

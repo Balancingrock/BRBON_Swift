@@ -134,7 +134,7 @@ class Array_Coder_Tests: XCTestCase {
         a.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!.advanced(by: 0x12345678), nameField: nfd, valueByteCount: 10, machineEndianness)
         
         data = Data(bytesNoCopy: buffer.baseAddress!, count: 48, deallocator: Data.Deallocator.none)
-        
+
         let exp2 = Data(bytes: [
             0x41, 0x00, 0x00, 0x08,
             0x30, 0x00, 0x00, 0x00,

@@ -12,9 +12,10 @@ import BRUtils
 
 internal class BrbonArray: Coder, IsBrbon {
 
-    init(content: Array<Coder>, type: ItemType) {
+    init(content: Array<Coder>, type: ItemType, elementByteCount: Int? = nil) {
         self.content = content
         self.elementType = type
+        self.elementValueByteCount = elementByteCount
     }
     
     let content: Array<Coder>
@@ -25,6 +26,8 @@ internal class BrbonArray: Coder, IsBrbon {
     var brbonType: ItemType { return ItemType.array }
     
     let elementType: ItemType
+    
+    let elementValueByteCount: Int?
     
     
     /// The number of bytes needed to encode self into an BrbonBytes stream.
@@ -37,7 +40,7 @@ internal class BrbonArray: Coder, IsBrbon {
         case .int32, .uint32, .float32: return content.count * 4 + 8
         case .int64, .uint64, .float64: return content.count * 8 + 8
         case .string, .binary, .array, .dictionary, .sequence:
-            var ebc = 0
+            var ebc = elementValueByteCount ?? 0
             content.forEach(){
                 let bc = $0.elementByteCount
                 if bc > ebc { ebc = bc }
@@ -85,7 +88,12 @@ internal class BrbonArray: Coder, IsBrbon {
         
         var itemBC = self.itemByteCount(nfd)
         
+
+        // Number of bytes in the name field
         
+        let nameFieldByteCount = nfd?.byteCount ?? 0
+        
+
         // Number of bytes in the element
         
         var elemBC: Int
@@ -97,7 +105,7 @@ internal class BrbonArray: Coder, IsBrbon {
         case .int32, .uint32, .float32: elemBC = 4
         case .int64, .uint64, .float64: elemBC = 8
         case .string, .binary, .array, .dictionary, .sequence:
-            var ebc = 0
+            var ebc = elementValueByteCount ?? 0
             content.forEach(){
                 let bc = $0.elementByteCount
                 if bc > ebc { ebc = bc }
@@ -107,7 +115,6 @@ internal class BrbonArray: Coder, IsBrbon {
 
         if elemBC == 0 { elemBC = elementType.assumedValueByteCount }
         
-        
         if let valueByteCount = valueByteCount {
             
             
@@ -116,76 +123,67 @@ internal class BrbonArray: Coder, IsBrbon {
             guard valueByteCount <= Int(Int32.max) else { return .valueByteCountTooLarge }
             
             
-            // If specified, the fixed item length must at least be large enough for the name field
+            // If specified, the fixed item length must be large enough (add the 8 overhead bytes as that is unknown to the API user)
             
-            guard valueByteCount >= (itemBC - minimumItemByteCount - (nfd?.byteCount ?? 0)) else { return .valueByteCountTooSmall }
+            guard (valueByteCount + 8) >= (itemBC - minimumItemByteCount - nameFieldByteCount) else { return .valueByteCountTooSmall }
             
             
-            // Make the itemLength the fixed item length, but ensure that it is a multiple of 8 bytes.
+            // Use the fixed value byte count, but ensure that it is a multiple of 8 bytes.
             
-            itemBC = (minimumItemByteCount - (nfd?.byteCount ?? 0) + valueByteCount).roundUpToNearestMultipleOf8()
+            itemBC = (minimumItemByteCount + (nfd?.byteCount ?? 0) + 8 + valueByteCount).roundUpToNearestMultipleOf8()
         }
         
         
         // Create the array structure
         
-        var p = atPtr
+        ItemType.array.storeValue(atPtr: atPtr.brbonItemTypePtr)
         
-        ItemType.array.storeValue(atPtr: p)
-        p = p.advanced(by: 1)
+        ItemOptions.none.storeValue(atPtr: atPtr.brbonItemOptionsPtr)
         
-        ItemOptions.none.storeValue(atPtr: p)
-        p = p.advanced(by: 1)
+        ItemFlags.none.storeValue(atPtr: atPtr.brbonItemFlagsPtr)
         
-        ItemFlags.none.storeValue(atPtr: p)
-        p = p.advanced(by: 1)
+        UInt8(nameFieldByteCount).storeValue(atPtr: atPtr.brbonItemNameFieldByteCountPtr, endianness)
         
-        UInt8(nfd?.byteCount ?? 0).storeValue(atPtr: p, endianness)
-        p = p.advanced(by: 1)
+        UInt32(itemBC).storeValue(atPtr: atPtr.brbonItemByteCountPtr, endianness)
         
-        UInt32(itemBC).storeValue(atPtr: p, endianness)
-        p = p.advanced(by: 4)
+        UInt32(bufferPtr.distance(to: parentPtr)).storeValue(atPtr: atPtr.brbonItemParentOffsetPtr, endianness)
         
-        UInt32(bufferPtr.distance(to: parentPtr)).storeValue(atPtr: p, endianness)
-        p = p.advanced(by: 4)
+        UInt32(content.count).storeValue(atPtr: atPtr.brbonItemCountValuePtr, endianness)
         
-        UInt32(content.count).storeValue(atPtr: p, endianness)
-        p = p.advanced(by: 4)
-        
-        nfd?.storeValue(atPtr: p, endianness)
-        p = p.advanced(by: (nfd?.byteCount ?? 0))
+        nfd?.storeValue(atPtr: atPtr.brbonItemNameFieldPtr, endianness)
         
         
         // Element spec
         
-        elementType.storeValue(atPtr: p)
-        p = p.advanced(by: 1)
-        
-        UInt8(0).storeValue(atPtr: p, endianness)
-        p = p.advanced(by: 1)
-        
-        UInt16(0).storeValue(atPtr: p, endianness)
-        p = p.advanced(by: 2)
+        UInt32(0).storeValue(atPtr: atPtr.brbonArrayElementTypePtr, endianness)
+
+        elementType.storeValue(atPtr: atPtr.brbonArrayElementTypePtr)
         
         
         // Element bytecount
         
-        UInt32(elemBC).storeValue(atPtr: p, endianness)
-        p = p.advanced(by: 4)
+        UInt32(elemBC).storeValue(atPtr: atPtr.brbonArrayElementByteCountPtr, endianness)
         
         
         // Elements
         
+        var p = atPtr.brbonArrayElementsBasePtr
+        
         content.forEach({
+            
             switch $0.brbonType {
             case .null: break
-            case .bool, .int8, .int16, .int32, .int64, .uint8, .uint16, .uint32, .uint64, .float32, .float64, .string, .binary: $0.storeAsElement(atPtr: p, endianness)
-            case .array, .dictionary, .sequence: $0.storeAsItem(atPtr: p, bufferPtr: bufferPtr, parentPtr: atPtr, nameField: nil, valueByteCount: nil, endianness)
+            case .bool, .int8, .int16, .int32, .int64, .uint8, .uint16, .uint32, .uint64, .float32, .float64, .string, .binary:
+                $0.storeAsElement(atPtr: p, endianness)
+            case .array, .dictionary, .sequence:
+                $0.storeAsItem(atPtr: p, bufferPtr: bufferPtr, parentPtr: atPtr, nameField: nil, valueByteCount: nil, endianness)
             }
+            
             let remainder = elemBC - $0.elementByteCount
             if remainder > 0 {
                 Data(count: remainder).storeValue(atPtr: p.advanced(by: $0.elementByteCount), endianness)
             }
+            
             p = p.advanced(by: elemBC)
         })
         

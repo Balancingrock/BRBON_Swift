@@ -91,9 +91,13 @@ public extension Portal {
         guard elementType == value.brbonType else { return .typeConflict }
         
         
-        // Store element
+        // Make sure the total value storage area is big enough to accept the new value plus possible expansion of the existing elements.
         
-        guard ensureValueStorage(for: (countValue  + 1) * value.elementByteCount) == .success else { return .outOfStorage }
+        let newElementByteCount = max(elementByteCount, value.elementByteCount)
+        guard ensureValueByteCount(for: ((countValue  + 1) * newElementByteCount) + 8) == .success else { return .outOfStorage }
+        if newElementByteCount > elementByteCount {
+            increaseElementByteCount(to: newElementByteCount)
+        }
         value.storeAsElement(atPtr: elementPtr(for: countValue), endianness)
         
         
@@ -117,8 +121,12 @@ public extension Portal {
         
         // Size guarantee
         
-        guard ensureValueStorage(for: arr.itemByteCount()) == .success else { return .outOfStorage }
-        arr.storeAsItem(atPtr: elementPtr(for: countValue), bufferPtr: bufferPtr, parentPtr: basePtr, endianness)
+        let newElementByteCount = max(elementByteCount, arr.itemByteCount())
+        guard ensureValueByteCount(for: ((countValue  + 1) * newElementByteCount) + 8) == .success else { return .outOfStorage }
+        if newElementByteCount > elementByteCount {
+            increaseElementByteCount(to: newElementByteCount)
+        }
+        arr.storeAsItem(atPtr: elementPtr(for: countValue), bufferPtr: bufferPtr, parentPtr: itemPtr, endianness)
         
         
         // Increase child counter
@@ -141,8 +149,8 @@ public extension Portal {
         
         // Size guarantee
         
-        guard ensureValueStorage(for: dict.itemByteCount()) == .success else { return .outOfStorage }
-        dict.storeAsItem(atPtr: elementPtr(for: countValue), bufferPtr: bufferPtr, parentPtr: basePtr, endianness)
+        guard ensureValueByteCount(for: dict.itemByteCount()) == .success else { return .outOfStorage }
+        dict.storeAsItem(atPtr: elementPtr(for: countValue), bufferPtr: bufferPtr, parentPtr: itemPtr, endianness)
         
         
         // Increase child counter
@@ -227,7 +235,8 @@ public extension Portal {
         let len = (countValue - 1 - index) * elementByteCount
         moveBlock(dstPtr, srcPtr, len)
         countValue -= 1
-        
+        let key = PortalKey(itemPtr: itemPtr, valuePtr: elementPtr(for: countValue))
+        manager?.activePortals.removePortal(for: key)
         return .success
     }
 
@@ -255,8 +264,8 @@ public extension Portal {
 
         // Ensure storage area
         
-        let bytesNeeded = amount * value.elementByteCount
-        guard ensureValueStorage(for: bytesNeeded) == .success else { return .outOfStorage }
+        let bytesNeeded = amount * value.elementByteCount + 8
+        guard ensureValueByteCount(for: bytesNeeded) == .success else { return .outOfStorage }
         
         
         // Use default value
@@ -323,9 +332,14 @@ public extension Portal {
         guard !value.brbonType.isContainer else { fatalOrNull("Not implemented"); return .typeConflict }
         
         
-        // Store element
+        // Ensure enough storage area is available
         
-        guard ensureValueStorage(for: value.elementByteCount) == .success else { return .outOfStorage }
+        let newElementByteCount = max(elementByteCount, value.elementByteCount)
+        guard ensureValueByteCount(for: ((countValue  + 1) * newElementByteCount) + 8) == .success else { return .outOfStorage }
+        if newElementByteCount > elementByteCount {
+            increaseElementByteCount(to: newElementByteCount)
+        }
+        value.storeAsElement(atPtr: elementPtr(for: countValue), endianness)
         
         
         // Copy the existing elements upward

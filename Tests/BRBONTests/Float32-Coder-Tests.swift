@@ -50,7 +50,7 @@ class Float32_BrbonCoder_Tests: XCTestCase {
         i.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!.advanced(by: 0x12345678), machineEndianness)
         
         var data = Data(bytesNoCopy: buffer.baseAddress!, count: 16, deallocator: Data.Deallocator.none)
-        data.printBytes()
+
         let exp = Data(bytes: [
             0x88, 0x00, 0x00, 0x00,
             0x10, 0x00, 0x00, 0x00,

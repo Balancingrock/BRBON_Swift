@@ -61,7 +61,8 @@ internal class Sequence: Coder {
         
         var itemBC = itemByteCount(nfd)
         
-        
+        let nameFieldByteCount = nfd?.byteCount ?? 0
+
         if let valueByteCount = valueByteCount {
             
             

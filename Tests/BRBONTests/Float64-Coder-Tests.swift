@@ -132,7 +132,7 @@ class Float64_BrbonCoder_Tests: XCTestCase {
         i.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!.advanced(by: 0x12345678), nameField: nfd, machineEndianness)
         
         var data = Data(bytesNoCopy: buffer.baseAddress!, count: 32, deallocator: Data.Deallocator.none)
-        data.printBytes()
+
         let exp = Data(bytes: [
             0x03, 0x00, 0x00, 0x08,
             0x20, 0x00, 0x00, 0x00,

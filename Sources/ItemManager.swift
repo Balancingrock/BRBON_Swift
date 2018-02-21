@@ -12,7 +12,7 @@ import BRUtils
 
 /// This struct is used to keep track of the number of portals that have been returned to the API user.
 
-fileprivate struct ActivePortals {
+internal struct ActivePortals {
     
     
     /// Associate a portal with a reference counter
@@ -26,31 +26,65 @@ fileprivate struct ActivePortals {
     
     /// The dictionary that associates an item pointer with a valueItem entry
     
-    var dict: Dictionary<UnsafeMutableRawPointer, Entry> = [:]
+    var dict: Dictionary<PortalKey, Entry> = [:]
     
     
     /// Return the portal for the given parameters. A new one is created if it was not found in the dictionary.
     
-    mutating func getPortal(for ptr: UnsafeMutableRawPointer, parentPtr: UnsafeMutableRawPointer?, mgr: ItemManager) -> Portal {
-        if let entry = dict[ptr], entry.portal.isValid {
+    mutating func getPortal(for ptr: UnsafeMutableRawPointer, elementPtr: UnsafeMutableRawPointer?, mgr: ItemManager) -> Portal {
+        let newPortal = Portal(itemPtr: ptr, elementPtr: elementPtr, manager: mgr, endianness: mgr.endianness)
+        if let entry = dict[newPortal.key], entry.portal.isValid {
             entry.refcount += 1
             return entry.portal
         } else {
-            let vi = Portal(basePtr: ptr, parentPtr: parentPtr, manager: mgr, endianness: mgr.endianness)
-            let entry = Entry(vi)
-            dict[ptr] = entry
-            return vi
+            let entry = Entry(newPortal)
+            entry.refcount += 1
+            dict[newPortal.key] = entry
+            return newPortal
         }
     }
     
     
+    /// Remove a portal from the list.
+    
+    mutating func removePortal(for key: PortalKey) {
+        if let entry = dict[key] {
+            entry.portal.isValid = false
+            dict.removeValue(forKey: entry.portal.key)
+        }
+    }
+    
+    
+    /// Update the active portals
+    
+    mutating func updatePointers(atAndAbove: UnsafeMutableRawPointer, below: UnsafeMutableRawPointer, toNewBase: UnsafeMutableRawPointer) {
+        let delta = atAndAbove.distance(to: toNewBase)
+        for (_, entry) in dict {
+            var change = false
+            let oldKey = entry.portal.key
+            if entry.portal.itemPtr >= atAndAbove && entry.portal.itemPtr < below {
+                entry.portal.itemPtr = entry.portal.itemPtr.advanced(by: delta)
+                change = true
+            }
+            if (entry.portal.valuePtr >= atAndAbove && entry.portal.valuePtr < below) {
+                entry.portal.valuePtr = entry.portal.valuePtr.advanced(by: delta)
+                change = true
+            }
+            if change {
+                dict.removeValue(forKey: oldKey)
+                dict[entry.portal.key] = entry
+            }
+        }
+    }
+
+    
     /// Decrement the reference counter of a portal and remove the entry of the refcount reaches zero.
     
     mutating func decrementRefcountAndRemoveOnZero(for portal: Portal) {
-        if let vi = dict[portal.basePtr] {
+        if let vi = dict[portal.key] {
             vi.refcount -= 1
             if vi.refcount == 0 {
-                dict.removeValue(forKey: portal.basePtr)
+                dict.removeValue(forKey: portal.key)
             }
         }
     }
@@ -58,7 +92,7 @@ fileprivate struct ActivePortals {
     
     /// Execute the given closure on each portal
     
-    func forEachPortal(_ closure: (Portal) -> ()) {
+    func forEachPortal(_ closure: @escaping (Portal) -> ()) {
         dict.forEach() { closure($0.value.portal) }
     }
 }
@@ -95,19 +129,19 @@ public final class ItemManager {
     /// The buffer containing the items, the root item as the top level item.
     
     internal var buffer: UnsafeMutableRawBufferPointer
-    internal var basePtr: UnsafeMutableRawPointer
+    internal var bufferPtr: UnsafeMutableRawPointer
     
     
     /// A data object with the entire rootItem in it as a sequence of bytes.
     
     public var data: Data {
-        return Data(bytesNoCopy: basePtr, count: root.itemByteCount, deallocator: Data.Deallocator.none)
+        return Data(bytesNoCopy: bufferPtr, count: root.itemByteCount, deallocator: Data.Deallocator.none)
     }
     
     
     /// The array with all active portals.
     
-    fileprivate var activePortals = ActivePortals()
+    internal var activePortals = ActivePortals()
     
 
     /// Create a new manager.
@@ -139,13 +173,13 @@ public final class ItemManager {
         self.endianness = endianness
         
         self.buffer = UnsafeMutableRawBufferPointer.allocate(count: initialBufferByteCount.roundUpToNearestMultipleOf8())
-        self.basePtr = buffer.baseAddress!
+        self.bufferPtr = buffer.baseAddress!
 
         let value: Coder = value as! Coder
 
-        value.storeAsItem(atPtr: basePtr, bufferPtr: basePtr, parentPtr: basePtr, nameField: nfd, valueByteCount: itemValueByteCount, endianness)
+        value.storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: itemValueByteCount, endianness)
         
-        self.root = Portal(basePtr: basePtr, parentPtr: nil, manager: nil, endianness: endianness)
+        self.root = Portal(itemPtr: bufferPtr, elementPtr: nil, manager: nil, endianness: endianness)
         self.root.manager = self
     }
 
@@ -154,16 +188,19 @@ public final class ItemManager {
     ///
     /// - Parameters:
     ///   - rootItemType: The ItemType of the root item. All subsequent access will go through the root item and are limited to the operations supported by this root item.
-    ///   - elementType: If the root item is an array, the associated type is the type of the element in the array.
-    ///   - initialBufferByteCount: The initial size for the buffer. In bytes.
+    ///   - elementType: If the root item is an array, this associated type is the type of the element in the array.
+    ///   - rootValueByteCount: The byte count reserved for the root.
+    ///   - elementValueByteCount: The byte count for each value, only used if the root is an array and is then mandatory. Minimum value is 32.
+    ///   - initialBufferByteCount: The initial size for the buffer. In bytes. Note that items and elements need more space than just their value byte count. The minimum item size -for example- is 16 bytes.
     ///   - minimalBufferIncrements: The minimum number of bytes with which to increase the buffersize when needed. In bytes.
-    ///   -
+    ///   - endianness: The endianness of the data structure to be generated.
     
     public init?(
         rootItemType: ItemType,
         name: String? = nil,
         elementType: ItemType? = nil,
-        itemValueByteCount: Int? = nil,
+        rootValueByteCount: Int? = nil,
+        elementValueByteCount: Int? = nil,
         initialBufferByteCount: Int = 1024,
         minimalBufferIncrements: Int = 1024,
         endianness: Endianness = machineEndianness) {
@@ -182,95 +219,98 @@ public final class ItemManager {
         self.endianness = endianness
         
         self.buffer = UnsafeMutableRawBufferPointer.allocate(count: initialBufferByteCount.roundUpToNearestMultipleOf8())
-        self.basePtr = buffer.baseAddress!
+        self.bufferPtr = buffer.baseAddress!
 
         
         switch rootItemType {
         case .null:
             
-            Null().storeAsItem(atPtr: basePtr, bufferPtr: basePtr, parentPtr: basePtr, nameField: nfd, valueByteCount: itemValueByteCount, endianness)
+            Null().storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
             
             
         case .bool:
             
-            false.storeAsItem(atPtr: basePtr, bufferPtr: basePtr, parentPtr: basePtr, nameField: nfd, valueByteCount: itemValueByteCount, endianness)
+            false.storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
 
             
         case .int8:
             
-            Int8(0).storeAsItem(atPtr: basePtr, bufferPtr: basePtr, parentPtr: basePtr, nameField: nfd, valueByteCount: itemValueByteCount, endianness)
+            Int8(0).storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
             
             
         case .int16:
             
-            Int16(0).storeAsItem(atPtr: basePtr, bufferPtr: basePtr, parentPtr: basePtr, nameField: nfd, valueByteCount: itemValueByteCount, endianness)
+            Int16(0).storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
             
             
         case .int32:
             
-            Int32(0).storeAsItem(atPtr: basePtr, bufferPtr: basePtr, parentPtr: basePtr, nameField: nfd, valueByteCount: itemValueByteCount, endianness)
+            Int32(0).storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
             
             
         case .int64:
             
-            Int64(0).storeAsItem(atPtr: basePtr, bufferPtr: basePtr, parentPtr: basePtr, nameField: nfd, valueByteCount: itemValueByteCount, endianness)
+            Int64(0).storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
             
             
         case .uint8:
             
-            UInt8(0).storeAsItem(atPtr: basePtr, bufferPtr: basePtr, parentPtr: basePtr, nameField: nfd, valueByteCount: itemValueByteCount, endianness)
+            UInt8(0).storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
             
             
         case .uint16:
             
-            UInt16(0).storeAsItem(atPtr: basePtr, bufferPtr: basePtr, parentPtr: basePtr, nameField: nfd, valueByteCount: itemValueByteCount, endianness)
+            UInt16(0).storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
             
             
         case .uint32:
             
-            UInt32(0).storeAsItem(atPtr: basePtr, bufferPtr: basePtr, parentPtr: basePtr, nameField: nfd, valueByteCount: itemValueByteCount, endianness)
+            UInt32(0).storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
             
             
         case .uint64:
             
-            UInt64(0).storeAsItem(atPtr: basePtr, bufferPtr: basePtr, parentPtr: basePtr, nameField: nfd, valueByteCount: itemValueByteCount, endianness)
+            UInt64(0).storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
             
             
         case .float32:
             
-            Float32(0).storeAsItem(atPtr: basePtr, bufferPtr: basePtr, parentPtr: basePtr, nameField: nfd, valueByteCount: itemValueByteCount, endianness)
+            Float32(0).storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
             
             
         case .float64:
             
-            Float64(0).storeAsItem(atPtr: basePtr, bufferPtr: basePtr, parentPtr: basePtr, nameField: nfd, valueByteCount: itemValueByteCount, endianness)
+            Float64(0).storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
             
             
         case .binary:
             
-            Data().storeAsItem(atPtr: basePtr, bufferPtr: basePtr, parentPtr: basePtr, nameField: nfd, valueByteCount: itemValueByteCount, endianness)
+            Data().storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
 
             
         case .string:
             
-            "".storeAsItem(atPtr: basePtr, bufferPtr: basePtr, parentPtr: basePtr, nameField: nfd, valueByteCount: itemValueByteCount, endianness)
+            "".storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
 
             
         case .array:
             
             guard let elementType = elementType else { buffer.deallocate() ; return nil }
-            let arr = BrbonArray(content: [], type: elementType)
-            arr.storeAsItem(atPtr: basePtr, bufferPtr: basePtr, parentPtr: basePtr, nameField: nfd, valueByteCount: itemValueByteCount, endianness)
+            if elementType == .array {
+                guard let elementValueByteCount = elementValueByteCount, elementValueByteCount >= (minimumItemByteCount + 16) else { buffer.deallocate() ;return nil }
+            }
+            let arr = BrbonArray(content: [], type: elementType, elementByteCount: elementValueByteCount)
+            arr.storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
             
         case .dictionary:
             
             let dict = BrbonDictionary(content: [:])
-            dict.storeAsItem(atPtr: basePtr, bufferPtr: basePtr, parentPtr: basePtr, nameField: nfd, valueByteCount: itemValueByteCount, endianness)
+            dict.storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
             
         case .sequence: break
         }
         
-        self.root = Portal(basePtr: basePtr, parentPtr: nil, manager: nil, endianness: endianness)
+        self.root = Portal(itemPtr: bufferPtr, elementPtr: nil, manager: nil, endianness: endianness)
         self.root.manager = self
     }
     
@@ -280,7 +320,7 @@ public final class ItemManager {
         
         // The active portals are no longer valid
         
-        activePortals.forEachPortal() { _ = $0.invalidate() }
+        activePortals.forEachPortal() { _ = $0.isValid = false }
 
         
         // Release the buffer area
@@ -288,29 +328,16 @@ public final class ItemManager {
         buffer.deallocate()
     }
     
-    internal func getPortal(for ptr: UnsafeMutableRawPointer, parentPtr: UnsafeMutableRawPointer?) -> Portal {
-        return activePortals.getPortal(for: ptr, parentPtr: parentPtr, mgr: self)
+    internal func getPortal(for ptr: UnsafeMutableRawPointer, elementPtr: UnsafeMutableRawPointer?) -> Portal {
+        return activePortals.getPortal(for: ptr, elementPtr: elementPtr, mgr: self)
     }
     
     internal func unsubscribe(portal: Portal) {
         activePortals.decrementRefcountAndRemoveOnZero(for: portal)
     }
-    /*
-    internal func portalChange(oldBaseAddres: UnsafeMutableRawPointer, newBaseAddress: UnsafeMutableRawPointer) {
-        let offset = oldBaseAddres.distance(to: newBaseAddress)
-        activePortals.forEachPortal() { $0.updatePointers(by: offset) }
-    }
-    
-    internal func portalUpdate(atOrAboveThisPtr refPtr: UnsafeMutableRawPointer, offset: Int) {
-        activePortals.forEachPortal() { $0.update(atOrAboveThisPtr: refPtr, by: offset) }
-    }
-    
-    internal func portalInvalidate(atOrAboveThisPtr startPtr: UnsafeMutableRawPointer, belowThisPtr endPtr: UnsafeMutableRawPointer) {
-        activePortals.forEachPortal() { $0.invalidate(atOrAboveThisPtr: startPtr, belowThisPtr: endPtr) }
-    }*/
 }
 
-extension ItemManager: BufferManagerProtocol {
+extension ItemManager {
     
     internal var unusedByteCount: Int { return buffer.count - root.itemByteCount }
     
@@ -324,23 +351,16 @@ extension ItemManager: BufferManagerProtocol {
         _ = Darwin.memmove(newBuffer.baseAddress!, buffer.baseAddress!, buffer.count)
         _ = Darwin.memset(newBuffer.baseAddress!.advanced(by: buffer.count), 0, increase/4)
         
+        activePortals.updatePointers(atAndAbove: bufferPtr, below: bufferPtr.advanced(by: buffer.count), toNewBase: newBuffer.baseAddress!)
+
+        
         buffer = newBuffer
-        basePtr = newBuffer.baseAddress!
+        bufferPtr = newBuffer.baseAddress!
         
         return true
     }
     
     internal func moveBlock(_ dstPtr: UnsafeMutableRawPointer, _ srcPtr: UnsafeMutableRawPointer, _ length: Int) {
-        let distance = srcPtr.distance(to: dstPtr) // distance will be negative because blocks are always moved down
-        activePortals.forEachPortal() {
-            $0.invalidate(atOrAboveThisPtr: dstPtr, belowThisPtr: srcPtr)
-            $0.update(atOrAboveThisPtr: srcPtr, belowThisPtr: srcPtr.advanced(by: length), by: distance)
-        }
         _ = Darwin.memmove(dstPtr, srcPtr, length)
-    }
-    
-    internal func moveEndBlock(_ dstPtr: UnsafeMutableRawPointer, _ srcPtr: UnsafeMutableRawPointer) {
-        let length = srcPtr.distance(to: basePtr.advanced(by: count))
-        moveBlock(dstPtr, srcPtr, length)
     }
 }

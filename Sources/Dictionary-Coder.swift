@@ -80,6 +80,8 @@ internal class BrbonDictionary: Coder, IsBrbon {
         
         var itemBC = self.itemByteCount(nfd)
         
+        let nameFieldByteCount = nfd?.byteCount ?? 0
+
         if let valueByteCount = valueByteCount {
             
             

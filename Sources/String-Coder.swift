@@ -41,44 +41,36 @@ extension String: Coder {
 
         var byteCount = itemByteCount(nfd)
         
+        let nameFieldByteCount = nfd?.byteCount ?? 0
+
         if let valueByteCount = valueByteCount {
-            let alternateByteCount = (minimumItemByteCount + (nfd?.byteCount ?? 0) + valueByteCount).roundUpToNearestMultipleOf8()
+            let alternateByteCount = (minimumItemByteCount + nameFieldByteCount + 4 + valueByteCount).roundUpToNearestMultipleOf8()
             if alternateByteCount > byteCount { byteCount = alternateByteCount }
         }
         
-        var ptr = atPtr
+        brbonType.storeValue(atPtr: atPtr.brbonItemTypePtr)
         
-        brbonType.storeValue(atPtr: ptr)
-        ptr = ptr.advanced(by: 1)
+        ItemOptions.none.storeValue(atPtr: atPtr.brbonItemOptionsPtr)
         
-        ItemOptions.none.storeValue(atPtr: ptr)
-        ptr = ptr.advanced(by: 1)
+        ItemFlags.none.storeValue(atPtr: atPtr.brbonItemFlagsPtr)
         
-        ItemFlags.none.storeValue(atPtr: ptr)
-        ptr = ptr.advanced(by: 1)
+        UInt8(nameFieldByteCount).storeValue(atPtr: atPtr.brbonItemNameFieldByteCountPtr, endianness)
         
-        UInt8(nfd?.byteCount ?? 0).storeValue(atPtr: ptr, endianness)
-        ptr = ptr.advanced(by: 1)
+        UInt32(byteCount).storeValue(atPtr: atPtr.brbonItemByteCountPtr, endianness)
         
-        UInt32(byteCount).storeValue(atPtr: ptr, endianness)
-        ptr = ptr.advanced(by: 4)
+        UInt32(bufferPtr.distance(to: parentPtr)).storeValue(atPtr: atPtr.brbonItemParentOffsetPtr, endianness)
         
-        UInt32(bufferPtr.distance(to: parentPtr)).storeValue(atPtr: ptr, endianness)
-        ptr = ptr.advanced(by: 4)
+        UInt32(data.count).storeValue(atPtr: atPtr.brbonItemCountValuePtr, endianness)
         
-        UInt32(data.count).storeValue(atPtr: ptr, endianness)
-        ptr = ptr.advanced(by: 4)
+        nfd?.storeValue(atPtr: atPtr.brbonItemNameFieldPtr, endianness)
         
-        nfd?.storeValue(atPtr: ptr, endianness)
-        ptr = ptr.advanced(by: Int(nfd?.byteCount ?? 0))
+        data.storeValue(atPtr: atPtr.brbonItemValuePtr, endianness)
         
-        data.storeValue(atPtr: ptr, endianness)
-        ptr = ptr.advanced(by: data.count)
-        
-        let remainderByteCount = ptr.distance(to: atPtr.advanced(by: Int(byteCount)))
+        let remainderByteCount = byteCount - minimumItemByteCount - nameFieldByteCount - data.count
         if remainderByteCount > 0 {
-            Data(count: remainderByteCount).storeValue(atPtr: ptr, endianness)
+            Data(count: remainderByteCount).storeValue(atPtr: atPtr.brbonItemNameFieldPtr.advanced(by: nameFieldByteCount + data.count), endianness)
         }
+
         return .success
     }
     
@@ -98,14 +90,12 @@ extension String: Initialize {
     }
     
     init(itemPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        let nameFieldByteCount = Int(UInt8(valuePtr: itemPtr.advanced(by: itemNameFieldByteCountOffset), endianness))
-        let bytes = Int(UInt32(valuePtr: itemPtr.advanced(by: itemCountValueOffset), endianness))
-        let ptr = itemPtr.advanced(by: itemNvrFieldOffset + nameFieldByteCount)
-        self.init(valuePtr: ptr, count: bytes, endianness)
+        let bytes = Int(UInt32(valuePtr: itemPtr.brbonItemCountValuePtr, endianness))
+        self.init(valuePtr: itemPtr.brbonItemValuePtr, count: bytes, endianness)
     }
     
     init(elementPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        let bytes = Int(UInt32(valuePtr: elementPtr.advanced(by: itemCountValueOffset), endianness))
+        let bytes = Int(UInt32(valuePtr: elementPtr, endianness))
         self.init(valuePtr: elementPtr.advanced(by: 4), count: bytes, endianness)
     }
 }
