@@ -126,7 +126,7 @@ public extension Portal {
         if newElementByteCount > elementByteCount {
             increaseElementByteCount(to: newElementByteCount)
         }
-        arr.storeAsItem(atPtr: elementPtr(for: countValue), bufferPtr: bufferPtr, parentPtr: itemPtr, endianness)
+        arr.storeAsItem(atPtr: elementPtr(for: countValue), bufferPtr: (manager?.bufferPtr ?? itemPtr), parentPtr: itemPtr, endianness)
         
         
         // Increase child counter
@@ -150,7 +150,7 @@ public extension Portal {
         // Size guarantee
         
         guard ensureValueByteCount(for: dict.itemByteCount()) == .success else { return .outOfStorage }
-        dict.storeAsItem(atPtr: elementPtr(for: countValue), bufferPtr: bufferPtr, parentPtr: itemPtr, endianness)
+        dict.storeAsItem(atPtr: elementPtr(for: countValue), bufferPtr: (manager?.bufferPtr ?? itemPtr), parentPtr: itemPtr, endianness)
         
         
         // Increase child counter

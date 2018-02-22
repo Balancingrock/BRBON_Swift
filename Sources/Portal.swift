@@ -63,6 +63,7 @@ public final class Portal {
             self.valuePtr = itemPtr.brbonItemValuePtr
             self.isElement = false
         }
+        
     }
     
     deinit {
@@ -85,7 +86,15 @@ public final class Portal {
     }
     
     
+    // Derived values
+    
     var key: PortalKey { return PortalKey(itemPtr: itemPtr, valuePtr: valuePtr) }
+    
+    var parentIsArray: Bool {
+        guard let manager = manager else { return false }
+        let parentPtr = manager.bufferPtr.advanced(by: parentOffset)
+        return parentPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.array.rawValue
+    }
 }
 
 
@@ -297,10 +306,18 @@ extension Portal {
     
     internal func ensureValueByteCount(for bytes: Int) -> Result {
         if valueByteCount >= bytes { return .success }
-        if isElement { return .outOfStorage }
-        if !itemType!.hasVariableLength { return .outOfStorage }
-        var recursiveItems: Array<Portal> = [self]
-        return increaseItemByteCount(by: (bytes - valueByteCount), recursiveItems: &recursiveItems)
+        if let parentPortal = parentPortal, parentPortal.isArray {
+            // This is being called from the update of an element, thus the entire needed area must be calculated
+            let arrayBytes = parentPortal.elementByteCount * parentPortal.countValue
+            let result = parentPortal.ensureValueByteCount(for: arrayBytes)
+            guard result == .success else { return result }
+            parentPortal.increaseElementByteCount(to: arrayBytes)
+            return .success
+        } else {
+            if !itemType!.hasVariableLength { return .outOfStorage }
+            var recursiveItems: Array<Portal> = [self]
+            return increaseItemByteCount(by: (bytes - valueByteCount), recursiveItems: &recursiveItems)
+        }
     }
     
     
@@ -487,55 +504,17 @@ extension Portal {
     
     /// Moves a block of memory from the source pointer to the destination pointer.
     ///
-    /// This operation is passed on to the buffer manager to allow updating of pointer values in items that the API has made visible.
+    /// This operation is passed on to the buffer manager to allow updating of pointer values in items that the API has made visible. If no manager is available it is done directly.
     
     internal func moveBlock(_ dstPtr: UnsafeMutableRawPointer, _ srcPtr: UnsafeMutableRawPointer, _ length: Int) {
-        if let parent = parentPortal {
-            return parent.moveBlock(dstPtr, srcPtr, length)
-        } else {
-            guard let manager = manager else { return }
+        if let manager = manager {
             manager.moveBlock(dstPtr, srcPtr, length)
-        }
-    }
-    
-    
-    /// Moves a block of memory from the source pointer to the destination pointer. The size of the block is given by the distance from the source pointer to the last byte used in the buffer area.
-    ///
-    /// This operation is passed on to the buffer manager to allow updating of pointer values in items that the API has made visible.
-    /*
-    internal func moveEndBlock(_ dstPtr: UnsafeMutableRawPointer, _ srcPtr: UnsafeMutableRawPointer) {
-        if let parent = parentPortal {
-            return parent.moveEndBlock(dstPtr, srcPtr)
         } else {
-            guard let manager = manager else { return }
-            manager.moveEndBlock(dstPtr, srcPtr)
+            _ = Darwin.memmove(dstPtr, srcPtr, length)
         }
-    }*/
-    
-    
-    /// The offset for the given pointer from the start of the buffer.
-    
-    internal func offsetInBuffer(for aptr: UnsafeMutableRawPointer) -> Int {
-        var pit = parentPortal
-        var ptr = itemPtr
-        while pit != nil {
-            ptr = pit!.itemPtr      // The base pointer of the first item is the buffer base address
-            pit = pit!.parentPortal   // Go up the parent/child chain
-        }
-        return ptr.distance(to: aptr)
     }
     
-    
-    internal var bufferPtr: UnsafeMutableRawPointer {
-        var pit = parentPortal
-        var ptr = itemPtr
-        while pit != nil {
-            ptr = pit!.itemPtr      // The base pointer of the first item is the buffer base address
-            pit = pit!.parentPortal   // Go up the parent/child chain
-        }
-        return ptr
-    }
-    
+
     internal func increaseElementByteCount(to newByteCount: Int) {
 
         let elementBasePtr = itemPtr.brbonArrayElementsBasePtr
@@ -559,24 +538,21 @@ extension Portal {
     
     
     /// Returns a pointer to the parent if there is one.
-    
+    /*
     internal var parentPointer: UnsafeMutableRawPointer? {
         guard let manager = manager else { return nil }
         guard parentOffset != 0 else { return nil }
         return manager.bufferPtr.advanced(by: parentOffset)
-    }
+    }*/
     
     
     /// Returns the parent as a new portal
     
     internal var parentPortal: Portal? {
+        guard parentOffset != 0 else { return nil }
         guard let manager = manager else { return nil }
-        if isElement {
-            return manager.getPortal(for: itemPtr, elementPtr: nil)
-        } else {
-            guard let parentPointer = parentPointer else { return nil }
-            return manager.getPortal(for: parentPointer, elementPtr: nil)
-        }
+        let parentPtr = manager.bufferPtr.advanced(by: parentOffset)
+        return manager.getPortal(for: parentPtr, elementPtr: nil)
     }
 
     
@@ -1060,11 +1036,11 @@ extension Portal {
             } else {
                 if let newValue = newValue {
                     if isNull {
-                        guard ensureValueByteCount(for: newValue.valueByteCount) == .success else { return }
                         itemType = .string
                         valuePtr = itemPtr.brbonItemValuePtr
                     }
                     guard isString else { return }
+                    guard ensureValueByteCount(for: newValue.valueByteCount) == .success else { return }
                     newValue.storeValue(atPtr: valuePtr, endianness)
                 } else {
                     if isString {
@@ -1092,11 +1068,11 @@ extension Portal {
             } else {
                 if let newValue = newValue {
                     if isNull {
-                        guard ensureValueByteCount(for: newValue.valueByteCount) == .success else { return }
                         itemType = .binary
                         valuePtr = itemPtr.brbonItemValuePtr
                     }
                     guard isBinary else { return }
+                    guard ensureValueByteCount(for: newValue.valueByteCount) == .success else { return }
                     newValue.storeValue(atPtr: valuePtr, endianness)
                 } else {
                     if isBinary {
