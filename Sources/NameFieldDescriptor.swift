@@ -10,7 +10,7 @@ import Foundation
 import BRUtils
 
 
-public struct NameFieldDescriptor {
+public struct NameFieldDescriptor: Equatable {
     
     internal let data: Data?
     internal let crc: UInt16
@@ -57,6 +57,13 @@ public struct NameFieldDescriptor {
         self.data = data
         self.crc = crc
         self.byteCount = byteCount
+    }
+    
+    public static func ==(lhs: NameFieldDescriptor, rhs: NameFieldDescriptor) -> Bool {
+        guard lhs.crc == rhs.crc else { return false }
+        guard lhs.byteCount == rhs.byteCount else { return false }
+        guard lhs.data == rhs.data else { return false }
+        return true
     }
     
     internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {

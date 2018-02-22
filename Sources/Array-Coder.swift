@@ -71,8 +71,6 @@ internal class BrbonArray: Coder, IsBrbon {
     
     
     /// Create an array item of the contents of this array.
-    ///
-    /// - Note: The array may not be empty!
     
     @discardableResult
     func storeAsItem(

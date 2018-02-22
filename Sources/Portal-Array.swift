@@ -91,14 +91,68 @@ public extension Portal {
         guard elementType == value.brbonType else { return .typeConflict }
         
         
-        // Make sure the total value storage area is big enough to accept the new value plus possible expansion of the existing elements.
+        // Check to see if the element byte count of the array must be increased.
         
-        let newElementByteCount = max(elementByteCount, value.elementByteCount)
-        guard ensureValueByteCount(for: ((countValue  + 1) * newElementByteCount) + 8) == .success else { return .outOfStorage }
-        if newElementByteCount > elementByteCount {
-            increaseElementByteCount(to: newElementByteCount)
+        if value.elementByteCount > elementByteCount {
+            
+            
+            // The value byte count is bigger than the existing element byte count.
+            // Enlarge the item to accomodate extra bytes.
+            
+            let necessaryElementByteCount: Int
+            if value.brbonType.isContainer {
+                necessaryElementByteCount = value.elementByteCount.roundUpToNearestMultipleOf8()
+            } else {
+                necessaryElementByteCount = value.elementByteCount
+            }
+            
+            
+            // This is the byte count that self has to become in order to accomodate the new value
+            
+            let necessaryItemByteCount = itemByteCount - valueByteCount + 8 + ((countValue + 1) * necessaryElementByteCount)
+        
+            
+            if necessaryItemByteCount > itemByteCount {
+                // It is necessary to increase the bytecount for the array item itself
+                let result = increaseItemByteCount(to: necessaryItemByteCount.roundUpToNearestMultipleOf8())
+                guard result == .success else { return result }
+            }
+            
+            
+            // Increase the byte count of the elements by shifting them up inside the enlarged array.
+            
+            increaseElementByteCount(to: necessaryElementByteCount)
+
+            
+        } else {
+            
+            
+            // The element byte count of the array is big enough to hold the new value.
+            
+            // Make sure a new value can be added to the array
+            
+            let necessaryElementByteCount: Int
+            if value.brbonType.isContainer {
+                necessaryElementByteCount = value.elementByteCount.roundUpToNearestMultipleOf8()
+            } else {
+                necessaryElementByteCount = value.elementByteCount
+            }
+
+            let necessaryItemByteCount = itemByteCount - valueByteCount + 8 + ((countValue + 1) * necessaryElementByteCount)
+            
+            if necessaryItemByteCount > itemByteCount {
+                let result = increaseItemByteCount(to: necessaryItemByteCount.roundUpToNearestMultipleOf8())
+                guard result == .success else { return result }
+            }
         }
-        value.storeAsElement(atPtr: elementPtr(for: countValue), endianness)
+        
+
+        // The new value can be added
+        if value.brbonType.isContainer {
+            value.storeAsItem(atPtr: elementPtr(for: countValue), bufferPtr: (manager?.bufferPtr ?? elementPtr(for: countValue)), parentPtr: itemPtr, nameField: nil, valueByteCount: nil, endianness)
+        } else {
+            value.storeAsElement(atPtr: elementPtr(for: countValue), endianness)
+        }
         
         
         // Increase child counter
@@ -109,57 +163,153 @@ public extension Portal {
         return .success
     }
     
-    @discardableResult
+    internal func increaseItemByteCount(to newByteCount: Int) -> Result {
+        
+        if let parent = parentPortal {
+            
+            
+            // Check if the parent is an array
+            
+            if parent.isArray {
+                
+                
+                // Check if the element byte count of the array must be grown
+                
+                if parent.elementByteCount < newByteCount {
+                    
+                    
+                    // Calculate the necessary byte count for the parent array
+                    
+                    let necessaryParentItemByteCount = parent.itemByteCount - parent.valueByteCount + 8 + parent.countValue * newByteCount
+                    
+                    
+                    // Check if the parent item byte count must be increased
+                    
+                    if parent.itemByteCount < necessaryParentItemByteCount {
+                        
+                        let result = parent.increaseItemByteCount(to: necessaryParentItemByteCount)
+                        guard result == .success else { return result }
+                    }
+                    
+                    
+                    // Increase the byte count of the elements of the parent
+                    
+                    parent.increaseElementByteCount(to: newByteCount)
+                }
+                
+                
+                // Only update the new byte count for self, other elements will be updated when necessary.
+                
+                itemByteCount = newByteCount
+
+                return .success
+                
+            } else {
+                
+                fatalError("item value byte count expansion for dictionaries and sequences not yet implemented")
+
+            }
+            
+        } else {
+            
+            // There is no parent, this must be the root item.
+            
+            guard let manager = manager else { return .noManager }
+            
+            
+            // If the buffer manager cannot accomodate the increase of the item, then increase the buffer size.
+            
+            if manager.unusedByteCount < newByteCount {
+                
+                // Note: The following operation also updates all active portals
+                
+                guard manager.increaseBufferSize(to: newByteCount) else { return .increaseFailed }
+            }
+            
+            
+            // Update the byte count
+            
+            itemByteCount = newByteCount
+            
+            
+            return .success
+        }
+    }
+    
+    
+/*    @discardableResult
     private func _appendArray(_ arr: BrbonArray) -> Result {
-        
-        
-        // Prevent errors
-        
+
         guard isArray else { return .onlySupportedOnArray }
         guard elementType == ItemType.array else { return .typeConflict }
 
-        
-        // Size guarantee
-        
-        let newElementByteCount = max(elementByteCount, arr.itemByteCount())
-        guard ensureValueByteCount(for: ((countValue  + 1) * newElementByteCount) + 8) == .success else { return .outOfStorage }
-        if newElementByteCount > elementByteCount {
-            increaseElementByteCount(to: newElementByteCount)
+        if arr.elementByteCount > elementByteCount {
+            
+            let necessaryElementByteCount = arr.elementByteCount.roundUpToNearestMultipleOf8()
+            
+            let necessaryItemValueByteCount = 8 + ((countValue + 1) * necessaryElementByteCount)
+            
+            if necessaryItemValueByteCount > valueByteCount {
+                // It is necessary to increase the bytecount for the array item itself
+                let result = increaseItemValueByteCount(to: necessaryItemValueByteCount)
+                guard result == .success else { return result }
+            }
+            
+            increaseElementByteCount(to: necessaryElementByteCount)
+            
+        } else {
+            
+            let necessaryItemValueByteCount = 8 + ((countValue + 1) * elementByteCount)
+            
+            if necessaryItemValueByteCount > valueByteCount {
+                let result = increaseItemValueByteCount(to: necessaryItemValueByteCount)
+                guard result == .success else { return result }
+            }
         }
+
         arr.storeAsItem(atPtr: elementPtr(for: countValue), bufferPtr: (manager?.bufferPtr ?? itemPtr), parentPtr: itemPtr, endianness)
-        
-        
-        // Increase child counter
         
         countValue += 1
 
-        
         return .success
-    }
+    }*/
     
-    @discardableResult
+/*    @discardableResult
     private func _appendDictionary(_ dict: BrbonDictionary) -> Result {
-        
-        
-        // Prevent errors
         
         guard isArray else { return .onlySupportedOnArray }
         guard elementType == ItemType.dictionary else { return .typeConflict }
         
+        if dict.elementByteCount > elementByteCount {
+            
+            let necessaryElementByteCount = dict.elementByteCount.roundUpToNearestMultipleOf8()
+            
+            let necessaryItemValueByteCount = 8 + ((countValue + 1) * necessaryElementByteCount)
+            
+            if necessaryItemValueByteCount > valueByteCount {
+                // It is necessary to increase the bytecount for the array item itself
+                let result = increaseItemValueByteCount(to: necessaryItemValueByteCount)
+                guard result == .success else { return result }
+            }
+            
+            increaseElementByteCount(to: necessaryElementByteCount)
+            
+        } else {
+            
+            let necessaryItemValueByteCount = 8 + ((countValue + 1) * elementByteCount)
+            
+            if necessaryItemValueByteCount > valueByteCount {
+                let result = increaseItemValueByteCount(to: necessaryItemValueByteCount)
+                guard result == .success else { return result }
+            }
+        }
         
-        // Size guarantee
-        
-        guard ensureValueByteCount(for: dict.itemByteCount()) == .success else { return .outOfStorage }
         dict.storeAsItem(atPtr: elementPtr(for: countValue), bufferPtr: (manager?.bufferPtr ?? itemPtr), parentPtr: itemPtr, endianness)
-        
-        
-        // Increase child counter
         
         countValue += 1
         
-        
         return .success
-    }
+    }*/
 
     @discardableResult
     public func append(_ value: Bool) -> Result { return _append(value) }
@@ -188,33 +338,33 @@ public extension Portal {
     @discardableResult
     public func append(_ value: Data) -> Result { return _append(value) }
     @discardableResult
-    public func append(_ value: Array<Bool>) -> Result { return _appendArray(BrbonArray(content: value, type: .bool)) }
+    public func append(_ value: Array<Bool>) -> Result { return _append(BrbonArray(content: value, type: .bool)) }
     @discardableResult
-    public func append(_ value: Array<UInt8>) -> Result { return _appendArray(BrbonArray(content: value, type: .uint8)) }
+    public func append(_ value: Array<UInt8>) -> Result { return _append(BrbonArray(content: value, type: .uint8)) }
     @discardableResult
-    public func append(_ value: Array<UInt16>) -> Result { return _appendArray(BrbonArray(content: value, type: .uint16)) }
+    public func append(_ value: Array<UInt16>) -> Result { return _append(BrbonArray(content: value, type: .uint16)) }
     @discardableResult
-    public func append(_ value: Array<UInt32>) -> Result { return _appendArray(BrbonArray(content: value, type: .uint32)) }
+    public func append(_ value: Array<UInt32>) -> Result { return _append(BrbonArray(content: value, type: .uint32)) }
     @discardableResult
-    public func append(_ value: Array<UInt64>) -> Result { return _appendArray(BrbonArray(content: value, type: .uint64)) }
+    public func append(_ value: Array<UInt64>) -> Result { return _append(BrbonArray(content: value, type: .uint64)) }
     @discardableResult
-    public func append(_ value: Array<Int8>) -> Result { return _appendArray(BrbonArray(content: value, type: .int8)) }
+    public func append(_ value: Array<Int8>) -> Result { return _append(BrbonArray(content: value, type: .int8)) }
     @discardableResult
-    public func append(_ value: Array<Int16>) -> Result { return _appendArray(BrbonArray(content: value, type: .int16)) }
+    public func append(_ value: Array<Int16>) -> Result { return _append(BrbonArray(content: value, type: .int16)) }
     @discardableResult
-    public func append(_ value: Array<Int32>) -> Result { return _appendArray(BrbonArray(content: value, type: .int32)) }
+    public func append(_ value: Array<Int32>) -> Result { return _append(BrbonArray(content: value, type: .int32)) }
     @discardableResult
-    public func append(_ value: Array<Int64>) -> Result { return _appendArray(BrbonArray(content: value, type: .int64)) }
+    public func append(_ value: Array<Int64>) -> Result { return _append(BrbonArray(content: value, type: .int64)) }
     @discardableResult
-    public func append(_ value: Array<Float32>) -> Result { return _appendArray(BrbonArray(content: value, type: .float32)) }
+    public func append(_ value: Array<Float32>) -> Result { return _append(BrbonArray(content: value, type: .float32)) }
     @discardableResult
-    public func append(_ value: Array<Float64>) -> Result { return _appendArray(BrbonArray(content: value, type: .float64)) }
+    public func append(_ value: Array<Float64>) -> Result { return _append(BrbonArray(content: value, type: .float64)) }
     @discardableResult
-    public func append(_ value: Array<String>) -> Result { return _appendArray(BrbonArray(content: value, type: .string)) }
+    public func append(_ value: Array<String>) -> Result { return _append(BrbonArray(content: value, type: .string)) }
     @discardableResult
-    public func append(_ value: Array<Data>) -> Result { return _appendArray(BrbonArray(content: value, type: .binary)) }
+    public func append(_ value: Array<Data>) -> Result { return _append(BrbonArray(content: value, type: .binary)) }
     @discardableResult
-    public func append(_ value: Dictionary<String, IsBrbon>) -> Result { return _appendDictionary(BrbonDictionary(content: value)) }
+    public func append(_ value: Dictionary<String, IsBrbon>) -> Result { return _append(BrbonDictionary(content: value)) }
 
     
     /// Removes an item from the array.
@@ -235,7 +385,7 @@ public extension Portal {
         let len = (countValue - 1 - index) * elementByteCount
         moveBlock(dstPtr, srcPtr, len)
         countValue -= 1
-        let key = PortalKey(itemPtr: itemPtr, valuePtr: elementPtr(for: countValue))
+        let key = PortalKey(itemPtr: itemPtr, index: countValue)
         manager?.activePortals.removePortal(for: key)
         return .success
     }

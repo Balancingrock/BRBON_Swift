@@ -30,10 +30,10 @@ internal func fatalOrNull(_ message: String = "") -> Portal {
 
 internal struct PortalKey: Equatable, Hashable {
     let itemPtr: UnsafeMutableRawPointer
-    let valuePtr: UnsafeMutableRawPointer
-    var hashValue: Int { return itemPtr.hashValue ^ valuePtr.hashValue }
+    let index: Int?
+    var hashValue: Int { return itemPtr.hashValue ^ (index ?? 0).hashValue }
     static func == (lhs: PortalKey, rhs: PortalKey) -> Bool {
-        return (lhs.itemPtr == rhs.itemPtr) && (lhs.valuePtr == rhs.valuePtr)
+        return (lhs.itemPtr == rhs.itemPtr) && (lhs.index == rhs.index)
     }
 }
 
@@ -41,29 +41,21 @@ public final class Portal {
     
     var itemPtr: UnsafeMutableRawPointer
     
-    var valuePtr: UnsafeMutableRawPointer
-    
+    var index: Int? // Only set for element portals
+
     var endianness: Endianness
     
     var manager: ItemManager?
     
     var isValid: Bool
     
-    var isElement: Bool
-        
-    init(itemPtr: UnsafeMutableRawPointer, elementPtr: UnsafeMutableRawPointer?, manager: ItemManager?, endianness: Endianness) {
+    
+    init(itemPtr: UnsafeMutableRawPointer, index: Int? = nil, manager: ItemManager?, endianness: Endianness) {
         self.itemPtr = itemPtr
         self.endianness = endianness
         self.manager = manager
         self.isValid = true
-        if let elementPtr = elementPtr {
-            self.valuePtr = elementPtr
-            self.isElement = true
-        } else {
-            self.valuePtr = itemPtr.brbonItemValuePtr
-            self.isElement = false
-        }
-        
+        self.index = index
     }
     
     deinit {
@@ -79,21 +71,25 @@ public final class Portal {
     
     private init() {
         isValid = false
-        isElement = false
+        index = nil
         endianness = machineEndianness
         itemPtr = UnsafeMutableRawPointer(bitPattern: 1)!
-        valuePtr = UnsafeMutableRawPointer(bitPattern: 1)!
     }
     
     
     // Derived values
     
-    var key: PortalKey { return PortalKey(itemPtr: itemPtr, valuePtr: valuePtr) }
+    var key: PortalKey { return PortalKey(itemPtr: itemPtr, index: index) }
     
     var parentIsArray: Bool {
         guard let manager = manager else { return false }
         let parentPtr = manager.bufferPtr.advanced(by: parentOffset)
         return parentPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.array.rawValue
+    }
+    
+    var nameFieldDescriptor: NameFieldDescriptor? {
+        if nameFieldByteCount == 0 { return nil }
+        return NameFieldDescriptor.readValue(atPtr: itemPtr.brbonItemNameFieldPtr, endianness)
     }
 }
 
@@ -106,79 +102,116 @@ extension Portal: Equatable {
     ///
     /// Note that this opration only compares used bytes and excluding the flag bits and parent-offsets. A bit by bit compare would probably find differences even when this operation returns equality. Invalid item types will always be considered unequal.
     
-    public static func ==(left: Portal, right: Portal) -> Bool {
+    public static func ==(lhs: Portal, rhs: Portal) -> Bool {
         
-        if (left.itemPtr == right.itemPtr) && (left.valuePtr == right.valuePtr) { return true }
+        // Test if the portals are still valid
+        guard lhs.isValid, rhs.isValid else { return false }
         
-        guard left.isValid, right.isValid else { return false }
-        if left.isElement != right.isElement { return false }
+        // Check indicies
+        if lhs.index != rhs.index { return false }
         
-        if left.isElement {
+        // Test a single element or the entire array, depending on the index validity
+        if lhs.index == nil {
+
+            // Test entire array
+            // Test type
+            guard let lType = lhs.itemType else { return false }
+            guard let rType = rhs.itemType else { return false }
+            guard lType == rType else { return false }
             
-            switch left.elementType! {
-            case .null: return true
-            case .bool: return left.bool! == right.bool!
-            case .int8: return left.int8! == right.int8!
-            case .int16: return left.int16! == right.int16!
-            case .int32: return left.int32! == right.int32!
-            case .int64: return left.int64! == right.int64!
-            case .uint8: return left.uint8! == right.uint8!
-            case .uint16: return left.uint16! == right.uint16!
-            case .uint32: return left.uint32! == right.uint32!
-            case .uint64: return left.uint64! == right.uint64!
-            case .float32: return left.float32! == right.float32!
-            case .float64: return left.float64! == right.float64!
-            case .string: return left.string! == right.string!
-            case .binary: return left.binary! == right.binary!
-            case .array:
-                let leftItem = Portal(itemPtr: left.valuePtr, elementPtr: nil, manager: nil, endianness: left.endianness)
-                let rightItem = Portal(itemPtr: right.valuePtr, elementPtr: nil, manager: nil, endianness: right.endianness)
-                return leftItem == rightItem
-            case .dictionary: fatalError("Comparing dictionary elements not yet implemented")
-            case .sequence: fatalError("Comparing sequence elements not yet implemented")
-            }
-        } else {
-            guard left.itemType != nil else { return false }
-            guard right.itemType != nil else { return false }
+            // Test options
+            guard let lOptions = lhs.options else { return false }
+            guard let rOptions = rhs.options else { return false }
+            guard lOptions == rOptions else { return false }
             
-            if left.itemPtr.assumingMemoryBound(to: UInt16.self).pointee != right.itemPtr.assumingMemoryBound(to: UInt16.self).pointee { return false }
-            if left.nameFieldByteCount != right.nameFieldByteCount { return false }
-            if left.itemByteCount != right.itemByteCount { return false }
-            if left.countValue != right.countValue { return false }
-            if left.nameFieldByteCount != 0 {
-                if left.itemPtr.brbonItemNameFieldPtr.assumingMemoryBound(to: UInt32.self).pointee != right.itemPtr.brbonItemNameFieldPtr.assumingMemoryBound(to: UInt32.self).pointee { return false }
-                if left.nameData != right.nameData { return false }
+            // Do not test flags
+            
+            // Test length of name field
+            guard lhs.nameFieldByteCount == rhs.nameFieldByteCount else { return false }
+            
+            // Do not test the byte count
+            
+            // Do not test parent offset
+            
+            // Test count/value field (note that unused bytes must be zero!
+            guard lhs.countValue == rhs.countValue else { return false }
+            
+            // Test name field (if present)
+            if lhs.nameFieldByteCount != 0 {
+                guard let lnfd = lhs.nameFieldDescriptor else { return false }
+                guard let rnfd = rhs.nameFieldDescriptor else { return false }
+                guard lnfd == rnfd else { return false }
             }
-            switch left.itemType! {
-            case .null, .bool, .int8, .int16, .int32, .uint8, .uint16, .uint32, .float32: return true
-            case .int64, .uint64, .float64: return left.itemPtr.brbonItemValuePtr.assumingMemoryBound(to: UInt64.self).pointee == right.itemPtr.brbonItemValuePtr.assumingMemoryBound(to: UInt64.self).pointee
-            case .string: return left.string == right.string
-            case .binary: return left.binary == right.binary
+            
+            // Test value field
+            switch lhs.itemType! {
+                
+            case .null, .bool, .int8, .int16, .int32, .uint8, .uint16, .uint32, .float32:
+                return true // Was already tested in the count/value field
+                
+            case .int64, .uint64, .float64:
+                return
+                    lhs.itemPtr.brbonItemValuePtr.assumingMemoryBound(to: UInt64.self).pointee
+                    ==
+                    rhs.itemPtr.brbonItemValuePtr.assumingMemoryBound(to: UInt64.self).pointee
+                
+            case .string:
+                return lhs.string == rhs.string
+                
+            case .binary:
+                return lhs.binary == rhs.binary
+                
             case .array:
                 
-                guard left.elementType != nil else { return false }
-                guard right.elementType != nil else { return false }
+                // Test element type
+                guard lhs.elementType != nil else { return false }
+                guard rhs.elementType != nil else { return false }
+                guard lhs.elementType == rhs.elementType else { return false }
                 
-                if left.elementType != right.elementType { return false }
-                if left.elementByteCount != right.elementByteCount { return false }
+                // Do not test the element byte count
                 
-                for index in 0 ..< left.countValue {
-                    let leftPortal: Portal = left[index]
-                    let rightPortal: Portal = right[index]
-                    if leftPortal != rightPortal { return false }
+                // Test the elements
+                for index in 0 ..< lhs.countValue {
+                    let lPortal = Portal(itemPtr: lhs.itemPtr, index: index, manager: nil, endianness: lhs.endianness)
+                    let rPortal = Portal(itemPtr: rhs.itemPtr, index: index, manager: nil, endianness: rhs.endianness)
+                    if lPortal != rPortal { return false }
                 }
                 return true
                 
             case .dictionary:
                 fatalError("dictionary compare not yet implemented")
+                
             case .sequence:
                 fatalError("sequence compare not yet implemented")
             }
+            
+        } else {
+            
+            // Test a single value
+            switch lhs.elementType! {
+                
+            case .null: return true
+            case .bool: return lhs.bool == rhs.bool
+            case .int8: return lhs.int8 == rhs.int8
+            case .int16: return lhs.int16 == rhs.int16
+            case .int32: return lhs.int32 == rhs.int32
+            case .int64: return lhs.int64 == rhs.int64
+            case .uint8: return lhs.uint8 == rhs.uint8
+            case .uint16: return lhs.uint16 == rhs.uint16
+            case .uint32: return lhs.uint32 == rhs.uint32
+            case .uint64: return lhs.uint64 == rhs.uint64
+            case .float32: return lhs.float32 == rhs.float32
+            case .float64: return lhs.float64 == rhs.float64
+            case .string: return lhs.string == rhs.string
+            case .binary: return lhs.binary == rhs.binary
+            case .array, .dictionary, .sequence:
+                let lPortal = Portal(itemPtr: lhs.elementPtr(for: lhs.index!), index: nil, manager: nil, endianness: lhs.endianness)
+                let rPortal = Portal(itemPtr: rhs.elementPtr(for: rhs.index!), index: nil, manager: nil, endianness: rhs.endianness)
+                return lPortal == rPortal
+            }
         }
-    }
-    
-    public static func !=(left: Portal, right: Portal) -> Bool {
-        return !(left == right)
+        
+        return true
     }
 }
 
@@ -274,7 +307,7 @@ extension Portal {
     /// Returns the number of bytes that are currently available for the value this portal offers access to.
     
     internal var valueByteCount: Int {
-        if isElement {
+        if index != nil {
             return elementByteCount
         } else {
             return itemByteCount - minimumItemByteCount - nameFieldByteCount
@@ -307,17 +340,18 @@ extension Portal {
     internal func ensureValueByteCount(for bytes: Int) -> Result {
         if valueByteCount >= bytes { return .success }
         if let parentPortal = parentPortal, parentPortal.isArray {
-            // This is being called from the update of an element, thus the entire needed area must be calculated
-            let arrayBytes = parentPortal.elementByteCount * parentPortal.countValue
-            let result = parentPortal.ensureValueByteCount(for: arrayBytes)
-            guard result == .success else { return result }
-            parentPortal.increaseElementByteCount(to: arrayBytes)
-            return .success
-        } else {
-            if !itemType!.hasVariableLength { return .outOfStorage }
-            var recursiveItems: Array<Portal> = [self]
-            return increaseItemByteCount(by: (bytes - valueByteCount), recursiveItems: &recursiveItems)
+            // Self is contained in an array, check if the array's element byte count is sufficient
+            if parentPortal.elementByteCount < bytes {
+                // The array's elementByteCount is too small, increase it
+                let arrayBytes = bytes * parentPortal.countValue
+                let result = parentPortal.ensureValueByteCount(for: arrayBytes)
+                guard result == .success else { return result }
+                // Reallocate the elements in accordance with the new element size
+                parentPortal.increaseElementByteCount(to: bytes)
+            }
         }
+        var recursiveItems: Array<Portal> = [self]
+        return increaseItemByteCount(by: (bytes - valueByteCount), recursiveItems: &recursiveItems)
     }
     
     
@@ -358,7 +392,6 @@ extension Portal {
                 let offset = itemPtr.distance(to: oldPtr)
                 for item in recursiveItems {
                     item.itemPtr = item.itemPtr.advanced(by: offset)
-                    item.valuePtr = item.valuePtr.advanced(by: offset)
                 }
             }
             
@@ -446,7 +479,6 @@ extension Portal {
                         let offset = srcPtr.distance(to: dstPtr)
                         for item in recursiveItems {
                             if item.itemPtr > srcPtr { item.itemPtr = item.itemPtr.advanced(by: offset) }
-                            if item.valuePtr > srcPtr { item.valuePtr = item.valuePtr.advanced(by: offset) }
                         }
                     }
                     
@@ -535,24 +567,16 @@ extension Portal {
 // MARK: - Hierarchy traversing
 
 extension Portal {
-    
-    
-    /// Returns a pointer to the parent if there is one.
-    /*
-    internal var parentPointer: UnsafeMutableRawPointer? {
-        guard let manager = manager else { return nil }
-        guard parentOffset != 0 else { return nil }
-        return manager.bufferPtr.advanced(by: parentOffset)
-    }*/
+
     
     
     /// Returns the parent as a new portal
     
     internal var parentPortal: Portal? {
-        guard parentOffset != 0 else { return nil }
         guard let manager = manager else { return nil }
         let parentPtr = manager.bufferPtr.advanced(by: parentOffset)
-        return manager.getPortal(for: parentPtr, elementPtr: nil)
+        if parentPtr == itemPtr { return nil }
+        return manager.getPortal(for: parentPtr)
     }
 
     
@@ -578,15 +602,15 @@ extension Portal {
         guard index < countValue else { return fatalOrNull("Index out of upper limit") }
         if let manager = manager {
             if elementType!.isContainer {
-                return manager.getPortal(for: elementPtr(for: index), elementPtr: nil)
+                return manager.getPortal(for: elementPtr(for: index))
             } else {
-                return manager.getPortal(for: itemPtr, elementPtr: elementPtr(for: index))
+                return manager.getPortal(for: itemPtr, index: index)
             }
         } else {
             if elementType!.isContainer {
-                return Portal(itemPtr: elementPtr(for: index), elementPtr: nil, manager: nil, endianness: endianness)
+                return Portal(itemPtr: itemPtr, index: index, manager: nil, endianness: endianness)
             } else {
-                return Portal(itemPtr: itemPtr, elementPtr: elementPtr(for: index), manager: nil, endianness: endianness)
+                return Portal(itemPtr: elementPtr(for: index), index: nil, manager: nil, endianness: endianness)
             }
         }
     }
@@ -611,144 +635,144 @@ extension Portal {
 extension Portal {
     
     public var portal: Portal {
-        let eptr: UnsafeMutableRawPointer? = isElement ? valuePtr : nil
-        return manager?.getPortal(for: itemPtr, elementPtr: eptr) ?? Portal.nullPortal
+        return manager?.getPortal(for: itemPtr, index: index) ?? Portal.nullPortal
     }
     
     public var isNull: Bool {
         guard isValid else { return false }
-        return isElement ?
-            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.null.rawValue
-            :
+        return (index == nil) ?
             itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.null.rawValue
+            :
+            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.null.rawValue
     }
     
     public var isBool: Bool {
         guard isValid else { return false }
-        return isElement ?
-            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.bool.rawValue
-            :
+        return (index == nil) ?
             itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.bool.rawValue
+            :
+            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.bool.rawValue
+
     }
     
     public var isUInt8: Bool {
         guard isValid else { return false }
-        return isElement ?
-            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint8.rawValue
-            :
+        return (index == nil) ?
             itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint8.rawValue
+            :
+            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint8.rawValue
     }
     
     public var isUInt16: Bool {
         guard isValid else { return false }
-        return isElement ?
-            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint16.rawValue
-            :
+        return (index == nil) ?
             itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint16.rawValue
+            :
+            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint16.rawValue
     }
     
     public var isUInt32: Bool {
         guard isValid else { return false }
-        return isElement ?
-            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint32.rawValue
-            :
+        return (index == nil) ?
             itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint32.rawValue
+            :
+            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint32.rawValue
     }
     
     public var isUInt64: Bool {
         guard isValid else { return false }
-        return isElement ?
-            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint64.rawValue
-            :
+        return (index == nil) ?
             itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint64.rawValue
+            :
+            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint64.rawValue
     }
     
     public var isInt8: Bool {
         guard isValid else { return false }
-        return isElement ?
-            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int8.rawValue
-            :
+        return (index == nil) ?
             itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int8.rawValue
+            :
+            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int8.rawValue
     }
     
     public var isInt16: Bool {
         guard isValid else { return false }
-        return isElement ?
-            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int16.rawValue
-            :
+        return (index == nil) ?
             itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int16.rawValue
+            :
+            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int16.rawValue
     }
     
     public var isInt32: Bool {
         guard isValid else { return false }
-        return isElement ?
-            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int32.rawValue
-            :
+        return (index == nil) ?
             itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int32.rawValue
+            :
+            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int32.rawValue
     }
     
     public var isInt64: Bool {
         guard isValid else { return false }
-        return isElement ?
-            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int64.rawValue
-            :
+        return (index == nil) ?
             itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int64.rawValue
+            :
+            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int64.rawValue
     }
     
     public var isFloat32: Bool {
         guard isValid else { return false }
-        return isElement ?
-            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.float32.rawValue
-            :
+        return (index == nil) ?
             itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.float32.rawValue
+            :
+            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.float32.rawValue
     }
     
     public var isFloat64: Bool {
         guard isValid else { return false }
-        return isElement ?
-            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.float64.rawValue
-            :
+        return (index == nil) ?
             itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.float64.rawValue
+            :
+            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.float64.rawValue
     }
     
     public var isString: Bool {
         guard isValid else { return false }
-        return isElement ?
-            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.string.rawValue
-            :
+        return (index == nil) ?
             itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.string.rawValue
+            :
+            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.string.rawValue
     }
     
     public var isBinary: Bool {
         guard isValid else { return false }
-        return isElement ?
-            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.binary.rawValue
-            :
+        return (index == nil) ?
             itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.binary.rawValue
+            :
+            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.binary.rawValue
     }
     
     public var isArray: Bool {
         guard isValid else { return false }
-        return isElement ?
-            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.array.rawValue
-            :
+        return (index == nil) ?
             itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.array.rawValue
+            :
+            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.array.rawValue
     }
     
     public var isDictionary: Bool {
         guard isValid else { return false }
-        return isElement ?
-            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.dictionary.rawValue
-            :
+        return (index == nil) ?
             itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.dictionary.rawValue
+            :
+            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.dictionary.rawValue
     }
     
     public var isSequence: Bool {
         guard isValid else { return false }
-        return isElement ?
-            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.sequence.rawValue
-            :
+        return (index == nil) ?
             itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.sequence.rawValue
+            :
+            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.sequence.rawValue
     }
     
     
@@ -760,18 +784,22 @@ extension Portal {
     public var bool: Bool? {
         get {
             guard isValid, isBool else { return nil }
-            return Bool(valuePtr: valuePtr, endianness)
+            if let index = index {
+                return Bool(elementPtr: elementPtr(for: index), endianness)
+            } else {
+                return Bool(itemPtr: itemPtr, endianness)
+            }
         }
         set {
             guard isValid else { return }
-            if isElement {
+            if let index = index {
                 guard isBool else { return }
-                newValue?.storeValue(atPtr: valuePtr, endianness)
+                newValue?.storeValue(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
                     if isNull { itemType = .bool }
                     guard isBool else { return }
-                    newValue.storeValue(atPtr: valuePtr, endianness)
+                    newValue.storeValue(atPtr: itemPtr.brbonItemCountValuePtr, endianness)
                 } else {
                     if isBool { itemType = .null }
                 }
@@ -782,18 +810,22 @@ extension Portal {
     public var uint8: UInt8? {
         get {
             guard isValid, isUInt8 else { return nil }
-            return UInt8(valuePtr: valuePtr, endianness)
+            if let index = index {
+                return UInt8(elementPtr: elementPtr(for: index), endianness)
+            } else {
+                return UInt8(itemPtr: itemPtr, endianness)
+            }
         }
         set {
             guard isValid else { return }
-            if isElement {
+            if let index = index {
                 guard isUInt8 else { return }
-                newValue?.storeValue(atPtr: valuePtr, endianness)
+                newValue?.storeValue(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
                     if isNull { itemType = .uint8 }
                     guard isUInt8 else { return }
-                    newValue.storeValue(atPtr: valuePtr, endianness)
+                    newValue.storeValue(atPtr: itemPtr.brbonItemCountValuePtr, endianness)
                 } else {
                     if isUInt8 { itemType = .null }
                 }
@@ -804,18 +836,22 @@ extension Portal {
     public var uint16: UInt16? {
         get {
             guard isValid, isUInt16 else { return nil }
-            return UInt16(valuePtr: valuePtr, endianness)
+            if let index = index {
+                return UInt16(elementPtr: elementPtr(for: index), endianness)
+            } else {
+                return UInt16(itemPtr: itemPtr, endianness)
+            }
         }
         set {
             guard isValid else { return }
-            if isElement {
+            if let index = index {
                 guard isUInt16 else { return }
-                newValue?.storeValue(atPtr: valuePtr, endianness)
+                newValue?.storeValue(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
                     if isNull { itemType = .uint16 }
                     guard isUInt16 else { return }
-                    newValue.storeValue(atPtr: valuePtr, endianness)
+                    newValue.storeValue(atPtr: itemPtr.brbonItemCountValuePtr, endianness)
                 } else {
                     if isUInt16 { itemType = .null }
                 }
@@ -826,18 +862,22 @@ extension Portal {
     public var uint32: UInt32? {
         get {
             guard isValid, isUInt32 else { return nil }
-            return UInt32(valuePtr: valuePtr, endianness)
+            if let index = index {
+                return UInt32(elementPtr: elementPtr(for: index), endianness)
+            } else {
+                return UInt32(itemPtr: itemPtr, endianness)
+            }
         }
         set {
             guard isValid else { return }
-            if isElement {
+            if let index = index {
                 guard isUInt32 else { return }
-                newValue?.storeValue(atPtr: valuePtr, endianness)
+                newValue?.storeValue(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
                     if isNull { itemType = .uint32 }
                     guard isUInt32 else { return }
-                    newValue.storeValue(atPtr: valuePtr, endianness)
+                    newValue.storeValue(atPtr: itemPtr.brbonItemCountValuePtr, endianness)
                 } else {
                     if isUInt32 { itemType = .null }
                 }
@@ -848,26 +888,28 @@ extension Portal {
     public var uint64: UInt64? {
         get {
             guard isValid, isUInt64 else { return nil }
-            return UInt64(valuePtr: valuePtr, endianness)
+            if let index = index {
+                return UInt64(elementPtr: elementPtr(for: index), endianness)
+            } else {
+                return UInt64(itemPtr: itemPtr, endianness)
+            }
         }
         set {
             guard isValid else { return }
-            if isElement {
+            if let index = index {
                 guard isUInt64 else { return }
-                newValue?.storeValue(atPtr: valuePtr, endianness)
+                newValue?.storeValue(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
                     if isNull {
                         guard ensureValueByteCount(for: newValue.valueByteCount) == .success else { return }
                         itemType = .uint64
-                        valuePtr = itemPtr.brbonItemValuePtr
                     }
                     guard isUInt64 else { return }
-                    newValue.storeValue(atPtr: valuePtr, endianness)
+                    newValue.storeValue(atPtr: itemPtr.brbonItemValuePtr, endianness)
                 } else {
                     if isUInt64 {
                         itemType = .null
-                        valuePtr = itemPtr.brbonItemValuePtr
                     }
                 }
             }
@@ -877,18 +919,22 @@ extension Portal {
     public var int8: Int8? {
         get {
             guard isValid, isInt8 else { return nil }
-            return Int8(valuePtr: valuePtr, endianness)
+            if let index = index {
+                return Int8(elementPtr: elementPtr(for: index), endianness)
+            } else {
+                return Int8(itemPtr: itemPtr, endianness)
+            }
         }
         set {
             guard isValid else { return }
-            if isElement {
+            if let index = index {
                 guard isInt8 else { return }
-                newValue?.storeValue(atPtr: valuePtr, endianness)
+                newValue?.storeValue(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
                     if isNull { itemType = .int8 }
                     guard isInt8 else { return }
-                    newValue.storeValue(atPtr: valuePtr, endianness)
+                    newValue.storeValue(atPtr: itemPtr.brbonItemCountValuePtr, endianness)
                 } else {
                     if isInt8 { itemType = .null }
                 }
@@ -899,18 +945,22 @@ extension Portal {
     public var int16: Int16? {
         get {
             guard isValid, isInt16 else { return nil }
-            return Int16(valuePtr: valuePtr, endianness)
+            if let index = index {
+                return Int16(elementPtr: elementPtr(for: index), endianness)
+            } else {
+                return Int16(itemPtr: itemPtr, endianness)
+            }
         }
         set {
             guard isValid else { return }
-            if isElement {
+            if let index = index {
                 guard isInt16 else { return }
-                newValue?.storeValue(atPtr: valuePtr, endianness)
+                newValue?.storeValue(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
                     if isNull { itemType = .int16 }
                     guard isInt16 else { return }
-                    newValue.storeValue(atPtr: valuePtr, endianness)
+                    newValue.storeValue(atPtr: itemPtr.brbonItemCountValuePtr, endianness)
                 } else {
                     if isInt16 { itemType = .null }
                 }
@@ -921,18 +971,22 @@ extension Portal {
     public var int32: Int32? {
         get {
             guard isValid, isInt32 else { return nil }
-            return Int32(valuePtr: valuePtr, endianness)
+            if let index = index {
+                return Int32(elementPtr: elementPtr(for: index), endianness)
+            } else {
+                return Int32(itemPtr: itemPtr, endianness)
+            }
         }
         set {
             guard isValid else { return }
-            if isElement {
+            if let index = index {
                 guard isInt32 else { return }
-                newValue?.storeValue(atPtr: valuePtr, endianness)
+                newValue?.storeValue(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
                     if isNull { itemType = .int32 }
                     guard isInt32 else { return }
-                    newValue.storeValue(atPtr: valuePtr, endianness)
+                    newValue.storeValue(atPtr: itemPtr.brbonItemCountValuePtr, endianness)
                 } else {
                     if isInt32 { itemType = .null }
                 }
@@ -943,26 +997,28 @@ extension Portal {
     public var int64: Int64? {
         get {
             guard isValid, isInt64 else { return nil }
-            return Int64(valuePtr: valuePtr, endianness)
+            if let index = index {
+                return Int64(elementPtr: elementPtr(for: index), endianness)
+            } else {
+                return Int64(itemPtr: itemPtr, endianness)
+            }
         }
         set {
             guard isValid else { return }
-            if isElement {
+            if let index = index {
                 guard isInt64 else { return }
-                newValue?.storeValue(atPtr: valuePtr, endianness)
+                newValue?.storeValue(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
                     if isNull {
                         guard ensureValueByteCount(for: newValue.valueByteCount) == .success else { return }
                         itemType = .int64
-                        valuePtr = itemPtr.brbonItemValuePtr
                     }
                     guard isInt64 else { return }
-                    newValue.storeValue(atPtr: valuePtr, endianness)
+                    newValue.storeValue(atPtr: itemPtr.brbonItemValuePtr, endianness)
                 } else {
                     if isInt64 {
                         itemType = .null
-                        valuePtr = itemPtr.brbonItemValuePtr
                     }
                 }
             }
@@ -972,18 +1028,22 @@ extension Portal {
     public var float32: Float32? {
         get {
             guard isValid, isFloat32 else { return nil }
-            return Float32(valuePtr: valuePtr, endianness)
+            if let index = index {
+                return Float32(elementPtr: elementPtr(for: index), endianness)
+            } else {
+                return Float32(itemPtr: itemPtr, endianness)
+            }
         }
         set {
             guard isValid else { return }
-            if isElement {
+            if let index = index {
                 guard isFloat32 else { return }
-                newValue?.storeValue(atPtr: valuePtr, endianness)
+                newValue?.storeValue(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
                     if isNull { itemType = .float32 }
                     guard isFloat32 else { return }
-                    newValue.storeValue(atPtr: valuePtr, endianness)
+                    newValue.storeValue(atPtr: itemPtr.brbonItemCountValuePtr, endianness)
                 } else {
                     if isFloat32 { itemType = .null }
                 }
@@ -994,26 +1054,28 @@ extension Portal {
     public var float64: Float64? {
         get {
             guard isValid, isFloat64 else { return nil }
-            return Float64(valuePtr: valuePtr, endianness)
+            if let index = index {
+                return Float64(elementPtr: elementPtr(for: index), endianness)
+            } else {
+                return Float64(itemPtr: itemPtr, endianness)
+            }
         }
         set {
             guard isValid else { return }
-            if isElement {
+            if let index = index {
                 guard isFloat64 else { return }
-                newValue?.storeValue(atPtr: valuePtr, endianness)
+                newValue?.storeValue(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
                     if isNull {
                         guard ensureValueByteCount(for: newValue.valueByteCount) == .success else { return }
                         itemType = .float64
-                        valuePtr = itemPtr.brbonItemValuePtr
                     }
                     guard isFloat64 else { return }
-                    newValue.storeValue(atPtr: valuePtr, endianness)
+                    newValue.storeValue(atPtr: itemPtr.brbonItemValuePtr, endianness)
                 } else {
                     if isFloat64 {
                         itemType = .null
-                        valuePtr = itemPtr.brbonItemValuePtr
                     }
                 }
             }
@@ -1023,30 +1085,26 @@ extension Portal {
     public var string: String? {
         get {
             guard isValid, isString else { return nil }
-            return isElement ?
-                String(elementPtr: valuePtr, endianness)
-                :
-                String(itemPtr: valuePtr, endianness)
+            if let index = index {
+                return String(elementPtr: elementPtr(for: index), endianness)
+            } else {
+                return String(itemPtr: itemPtr, endianness)
+            }
         }
         set {
             guard isValid else { return }
-            if isElement {
-                guard isString else { return }
-                newValue?.storeValue(atPtr: valuePtr, endianness)
+            if let index = index {
+                guard let newValue = newValue, isString else { return }
+                guard ensureValueByteCount(for: newValue.valueByteCount) == .success else { return }
+                newValue.storeValue(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
-                    if isNull {
-                        itemType = .string
-                        valuePtr = itemPtr.brbonItemValuePtr
-                    }
+                    if isNull { itemType = .string }
                     guard isString else { return }
                     guard ensureValueByteCount(for: newValue.valueByteCount) == .success else { return }
-                    newValue.storeValue(atPtr: valuePtr, endianness)
+                    newValue.storeValue(atPtr: itemPtr.brbonItemValuePtr, endianness)
                 } else {
-                    if isString {
-                        itemType = .null
-                        valuePtr = itemPtr.brbonItemValuePtr
-                    }
+                    if isString { itemType = .null }
                 }
             }
         }
@@ -1055,30 +1113,26 @@ extension Portal {
     public var binary: Data? {
         get {
             guard isValid, isBinary else { return nil }
-            return isElement ?
-                Data(elementPtr: valuePtr, endianness)
-                :
-                Data(itemPtr: valuePtr, endianness)
+            if let index = index {
+                return Data(elementPtr: elementPtr(for: index), endianness)
+            } else {
+                return Data(itemPtr: itemPtr, endianness)
+            }
         }
         set {
             guard isValid else { return }
-            if isElement {
-                guard isBinary else { return }
-                newValue?.storeValue(atPtr: valuePtr, endianness)
+            if let index = index {
+                guard let newValue = newValue, isString else { return }
+                guard ensureValueByteCount(for: newValue.valueByteCount) == .success else { return }
+                newValue.storeValue(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
-                    if isNull {
-                        itemType = .binary
-                        valuePtr = itemPtr.brbonItemValuePtr
-                    }
+                    if isNull { itemType = .binary }
                     guard isBinary else { return }
                     guard ensureValueByteCount(for: newValue.valueByteCount) == .success else { return }
-                    newValue.storeValue(atPtr: valuePtr, endianness)
+                    newValue.storeValue(atPtr: itemPtr.brbonItemValuePtr, endianness)
                 } else {
-                    if isBinary {
-                        itemType = .null
-                        valuePtr = itemPtr.brbonItemValuePtr
-                    }
+                    if isBinary { itemType = .null }
                 }
             }
         }
@@ -1097,12 +1151,10 @@ extension Portal {
     
     internal func forEachAbortOnTrue(_ closure: (Portal) -> Bool) {
         if isArray {
-            let elementPtr = itemPtr.brbonItemValuePtr.advanced(by: 8)
             let nofChildren = countValue
             var index = 0
-            let ebc = elementByteCount
             while index < nofChildren {
-                let portal = Portal(itemPtr: itemPtr, elementPtr: elementPtr.advanced(by: index * ebc), manager: nil, endianness: endianness)
+                let portal = Portal(itemPtr: itemPtr, index: index, manager: nil, endianness: endianness)
                 if closure(portal) { return }
                 index += 1
             }
@@ -1112,7 +1164,7 @@ extension Portal {
             var aPtr = itemPtr.brbonItemValuePtr
             var remainder = countValue
             while remainder > 0 {
-                let portal = Portal(itemPtr: aPtr, elementPtr: nil, manager: nil, endianness: endianness)
+                let portal = Portal(itemPtr: aPtr, manager: nil, endianness: endianness)
                 if closure(portal) { return }
                 aPtr = aPtr.advanced(by: portal.itemByteCount)
                 remainder -= 1

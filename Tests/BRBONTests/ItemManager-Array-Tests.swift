@@ -123,7 +123,7 @@ class ItemManager_Array_Tests: XCTestCase {
         data = am.data
 
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr), elementPtr: nil)
+            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == am.root)
         }
 
@@ -146,7 +146,7 @@ class ItemManager_Array_Tests: XCTestCase {
         data = am.data
         
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr), elementPtr: nil)
+            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == am.root)
         }
 
@@ -156,7 +156,7 @@ class ItemManager_Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.append(Int64(0x44553366)), .typeConflict)
 
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr), elementPtr: nil)
+            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == am.root)
         }
     }
@@ -191,7 +191,7 @@ class ItemManager_Array_Tests: XCTestCase {
             ])
         
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr), elementPtr: nil)
+            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == am.root)
         }
 
@@ -228,7 +228,7 @@ class ItemManager_Array_Tests: XCTestCase {
             ])
         
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr), elementPtr: nil)
+            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == am.root)
         }
 
@@ -344,7 +344,7 @@ class ItemManager_Array_Tests: XCTestCase {
             ])
         
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr), elementPtr: nil)
+            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == am.root)
         }
         
@@ -380,7 +380,7 @@ class ItemManager_Array_Tests: XCTestCase {
             ])
         
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr), elementPtr: nil)
+            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == am.root)
         }
 
@@ -433,7 +433,7 @@ class ItemManager_Array_Tests: XCTestCase {
             ])
         
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr), elementPtr: nil)
+            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == am.root)
         }
 
@@ -524,7 +524,7 @@ class ItemManager_Array_Tests: XCTestCase {
             ])
                 
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr), elementPtr: nil)
+            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == am.root)
         }
 
@@ -551,7 +551,7 @@ class ItemManager_Array_Tests: XCTestCase {
             ])
                 
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr), elementPtr: nil)
+            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == am.root)
         }
         
@@ -600,7 +600,7 @@ class ItemManager_Array_Tests: XCTestCase {
             ])
         
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr), elementPtr: nil)
+            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == am.root)
         }
 
@@ -628,7 +628,7 @@ class ItemManager_Array_Tests: XCTestCase {
             ])
         
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr), elementPtr: nil)
+            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == am.root)
         }
 
@@ -673,7 +673,7 @@ class ItemManager_Array_Tests: XCTestCase {
             ])
         
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr), elementPtr: nil)
+            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == am.root)
         }
 
@@ -719,8 +719,9 @@ class ItemManager_Array_Tests: XCTestCase {
             0x00, 0x00, 0x00, 0x00
             ])
         
+
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr), elementPtr: nil)
+            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == am.root)
         }
 
@@ -764,20 +765,21 @@ class ItemManager_Array_Tests: XCTestCase {
             0x00, 0x00, 0x00, 0x00
             ])
         
-        exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr), elementPtr: nil)
+         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
+            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == am.root)
         }
         
         XCTAssertEqual(portal.uint16, 0xAABB)
         XCTAssertEqual(portal1.int32, 0x4888CCCC)
 
-        
+
         // Keep adding to the first array until it grows beyond the current maximum size
         
         XCTAssertEqual(am.root[0].append(UInt16(0x1111)), .success)
         XCTAssertEqual(am.root[0].append(UInt16(0x2222)), .success)
         XCTAssertEqual(am.root[0].append(UInt16(0x3333)), .success)
+        
         XCTAssertEqual(am.root[0].append(UInt16(0x4444)), .success)
         
         exp = Data(bytes: [
@@ -818,7 +820,7 @@ class ItemManager_Array_Tests: XCTestCase {
         am.data.printBytes()
         
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr), elementPtr: nil)
+            let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == am.root)
         }
         

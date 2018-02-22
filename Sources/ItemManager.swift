@@ -31,8 +31,8 @@ internal struct ActivePortals {
     
     /// Return the portal for the given parameters. A new one is created if it was not found in the dictionary.
     
-    mutating func getPortal(for ptr: UnsafeMutableRawPointer, elementPtr: UnsafeMutableRawPointer?, mgr: ItemManager) -> Portal {
-        let newPortal = Portal(itemPtr: ptr, elementPtr: elementPtr, manager: mgr, endianness: mgr.endianness)
+    mutating func getPortal(for ptr: UnsafeMutableRawPointer, index: Int? = nil, mgr: ItemManager) -> Portal {
+        let newPortal = Portal(itemPtr: ptr, index: index, manager: mgr, endianness: mgr.endianness)
         if let entry = dict[newPortal.key], entry.portal.isValid {
             entry.refcount += 1
             return entry.portal
@@ -64,10 +64,6 @@ internal struct ActivePortals {
             let oldKey = entry.portal.key
             if entry.portal.itemPtr >= atAndAbove && entry.portal.itemPtr < below {
                 entry.portal.itemPtr = entry.portal.itemPtr.advanced(by: delta)
-                change = true
-            }
-            if (entry.portal.valuePtr >= atAndAbove && entry.portal.valuePtr < below) {
-                entry.portal.valuePtr = entry.portal.valuePtr.advanced(by: delta)
                 change = true
             }
             if change {
@@ -179,7 +175,7 @@ public final class ItemManager {
 
         value.storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: itemValueByteCount, endianness)
         
-        self.root = Portal(itemPtr: bufferPtr, elementPtr: nil, manager: nil, endianness: endianness)
+        self.root = Portal(itemPtr: bufferPtr, manager: nil, endianness: endianness)
         self.root.manager = self
     }
 
@@ -310,7 +306,7 @@ public final class ItemManager {
         case .sequence: break
         }
         
-        self.root = Portal(itemPtr: bufferPtr, elementPtr: nil, manager: nil, endianness: endianness)
+        self.root = Portal(itemPtr: bufferPtr, manager: nil, endianness: endianness)
         self.root.manager = self
     }
     
@@ -328,8 +324,8 @@ public final class ItemManager {
         buffer.deallocate()
     }
     
-    internal func getPortal(for ptr: UnsafeMutableRawPointer, elementPtr: UnsafeMutableRawPointer?) -> Portal {
-        return activePortals.getPortal(for: ptr, elementPtr: elementPtr, mgr: self)
+    internal func getPortal(for ptr: UnsafeMutableRawPointer, index: Int? = nil) -> Portal {
+        return activePortals.getPortal(for: ptr, index: index, mgr: self)
     }
     
     internal func unsubscribe(portal: Portal) {
@@ -349,7 +345,6 @@ extension ItemManager {
         let newBuffer = UnsafeMutableRawBufferPointer.allocate(count: buffer.count + increase)
         
         _ = Darwin.memmove(newBuffer.baseAddress!, buffer.baseAddress!, buffer.count)
-        _ = Darwin.memset(newBuffer.baseAddress!.advanced(by: buffer.count), 0, increase/4)
         
         activePortals.updatePointers(atAndAbove: bufferPtr, below: bufferPtr.advanced(by: buffer.count), toNewBase: newBuffer.baseAddress!)
 
@@ -359,6 +354,25 @@ extension ItemManager {
         
         return true
     }
+
+    internal func increaseBufferSize(to bytes: Int) -> Bool {
+        
+        guard bufferIncrements > 0 else { return false }
+        
+        let increase = max(bytes, bufferIncrements).roundUpToNearestMultipleOf8()
+        let newBuffer = UnsafeMutableRawBufferPointer.allocate(count: increase)
+        
+        _ = Darwin.memmove(newBuffer.baseAddress!, buffer.baseAddress!, buffer.count)
+        
+        activePortals.updatePointers(atAndAbove: bufferPtr, below: bufferPtr.advanced(by: buffer.count), toNewBase: newBuffer.baseAddress!)
+        
+        
+        buffer = newBuffer
+        bufferPtr = newBuffer.baseAddress!
+        
+        return true
+    }
+
     
     internal func moveBlock(_ dstPtr: UnsafeMutableRawPointer, _ srcPtr: UnsafeMutableRawPointer, _ length: Int) {
         _ = Darwin.memmove(dstPtr, srcPtr, length)
