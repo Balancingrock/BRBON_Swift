@@ -131,14 +131,7 @@ public extension Portal {
             
             // Make sure a new value can be added to the array
             
-            let necessaryElementByteCount: Int
-            if value.brbonType.isContainer {
-                necessaryElementByteCount = value.elementByteCount.roundUpToNearestMultipleOf8()
-            } else {
-                necessaryElementByteCount = value.elementByteCount
-            }
-
-            let necessaryItemByteCount = itemByteCount - valueByteCount + 8 + ((countValue + 1) * necessaryElementByteCount)
+            let necessaryItemByteCount = itemByteCount - valueByteCount + 8 + ((countValue + 1) * elementByteCount)
             
             if necessaryItemByteCount > itemByteCount {
                 let result = increaseItemByteCount(to: necessaryItemByteCount.roundUpToNearestMultipleOf8())
@@ -148,6 +141,7 @@ public extension Portal {
         
 
         // The new value can be added
+        
         if value.brbonType.isContainer {
             value.storeAsItem(atPtr: elementPtr(for: countValue), bufferPtr: (manager?.bufferPtr ?? elementPtr(for: countValue)), parentPtr: itemPtr, nameField: nil, valueByteCount: nil, endianness)
         } else {
@@ -163,154 +157,7 @@ public extension Portal {
         return .success
     }
     
-    internal func increaseItemByteCount(to newByteCount: Int) -> Result {
-        
-        if let parent = parentPortal {
-            
-            
-            // Check if the parent is an array
-            
-            if parent.isArray {
-                
-                
-                // Check if the element byte count of the array must be grown
-                
-                if parent.elementByteCount < newByteCount {
-                    
-                    
-                    // Calculate the necessary byte count for the parent array
-                    
-                    let necessaryParentItemByteCount = parent.itemByteCount - parent.valueByteCount + 8 + parent.countValue * newByteCount
-                    
-                    
-                    // Check if the parent item byte count must be increased
-                    
-                    if parent.itemByteCount < necessaryParentItemByteCount {
-                        
-                        let result = parent.increaseItemByteCount(to: necessaryParentItemByteCount)
-                        guard result == .success else { return result }
-                    }
-                    
-                    
-                    // Increase the byte count of the elements of the parent
-                    
-                    parent.increaseElementByteCount(to: newByteCount)
-                }
-                
-                
-                // Only update the new byte count for self, other elements will be updated when necessary.
-                
-                itemByteCount = newByteCount
-
-                return .success
-                
-            } else {
-                
-                fatalError("item value byte count expansion for dictionaries and sequences not yet implemented")
-
-            }
-            
-        } else {
-            
-            // There is no parent, this must be the root item.
-            
-            guard let manager = manager else { return .noManager }
-            
-            
-            // If the buffer manager cannot accomodate the increase of the item, then increase the buffer size.
-            
-            if manager.unusedByteCount < newByteCount {
-                
-                // Note: The following operation also updates all active portals
-                
-                guard manager.increaseBufferSize(to: newByteCount) else { return .increaseFailed }
-            }
-            
-            
-            // Update the byte count
-            
-            itemByteCount = newByteCount
-            
-            
-            return .success
-        }
-    }
     
-    
-/*    @discardableResult
-    private func _appendArray(_ arr: BrbonArray) -> Result {
-
-        guard isArray else { return .onlySupportedOnArray }
-        guard elementType == ItemType.array else { return .typeConflict }
-
-        if arr.elementByteCount > elementByteCount {
-            
-            let necessaryElementByteCount = arr.elementByteCount.roundUpToNearestMultipleOf8()
-            
-            let necessaryItemValueByteCount = 8 + ((countValue + 1) * necessaryElementByteCount)
-            
-            if necessaryItemValueByteCount > valueByteCount {
-                // It is necessary to increase the bytecount for the array item itself
-                let result = increaseItemValueByteCount(to: necessaryItemValueByteCount)
-                guard result == .success else { return result }
-            }
-            
-            increaseElementByteCount(to: necessaryElementByteCount)
-            
-        } else {
-            
-            let necessaryItemValueByteCount = 8 + ((countValue + 1) * elementByteCount)
-            
-            if necessaryItemValueByteCount > valueByteCount {
-                let result = increaseItemValueByteCount(to: necessaryItemValueByteCount)
-                guard result == .success else { return result }
-            }
-        }
-
-        arr.storeAsItem(atPtr: elementPtr(for: countValue), bufferPtr: (manager?.bufferPtr ?? itemPtr), parentPtr: itemPtr, endianness)
-        
-        countValue += 1
-
-        return .success
-    }*/
-    
-/*    @discardableResult
-    private func _appendDictionary(_ dict: BrbonDictionary) -> Result {
-        
-        guard isArray else { return .onlySupportedOnArray }
-        guard elementType == ItemType.dictionary else { return .typeConflict }
-        
-        if dict.elementByteCount > elementByteCount {
-            
-            let necessaryElementByteCount = dict.elementByteCount.roundUpToNearestMultipleOf8()
-            
-            let necessaryItemValueByteCount = 8 + ((countValue + 1) * necessaryElementByteCount)
-            
-            if necessaryItemValueByteCount > valueByteCount {
-                // It is necessary to increase the bytecount for the array item itself
-                let result = increaseItemValueByteCount(to: necessaryItemValueByteCount)
-                guard result == .success else { return result }
-            }
-            
-            increaseElementByteCount(to: necessaryElementByteCount)
-            
-        } else {
-            
-            let necessaryItemValueByteCount = 8 + ((countValue + 1) * elementByteCount)
-            
-            if necessaryItemValueByteCount > valueByteCount {
-                let result = increaseItemValueByteCount(to: necessaryItemValueByteCount)
-                guard result == .success else { return result }
-            }
-        }
-        
-        dict.storeAsItem(atPtr: elementPtr(for: countValue), bufferPtr: (manager?.bufferPtr ?? itemPtr), parentPtr: itemPtr, endianness)
-        
-        countValue += 1
-        
-        return .success
-    }*/
-
     @discardableResult
     public func append(_ value: Bool) -> Result { return _append(value) }
     @discardableResult

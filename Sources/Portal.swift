@@ -338,201 +338,141 @@ extension Portal {
     /// - Returns: True if the item or element has sufficient bytes available.
     
     internal func ensureValueByteCount(for bytes: Int) -> Result {
-        if valueByteCount >= bytes { return .success }
-        if let parentPortal = parentPortal, parentPortal.isArray {
-            // Self is contained in an array, check if the array's element byte count is sufficient
-            if parentPortal.elementByteCount < bytes {
-                // The array's elementByteCount is too small, increase it
-                let arrayBytes = bytes * parentPortal.countValue
-                let result = parentPortal.ensureValueByteCount(for: arrayBytes)
+        
+        
+        // Different treatment for elements and items
+        
+        if index == nil {
+            
+            // This is an item
+            
+            
+            // If the current value byte count is sufficient, return immediately
+            
+            if valueByteCount >= bytes { return .success }
+
+            
+            // The byte count should be increased
+            
+            let necessaryItemByteCount = itemType!.minimumItemByteCount + bytes
+            
+            return increaseItemByteCount(to: necessaryItemByteCount)
+
+            
+        } else {
+            
+            // This is an array element
+            
+            
+            // If the element byte count is sufficient, return immediately
+            
+            if elementByteCount >= bytes { return .success }
+            
+            
+            // The element byte count must be increased, calculate the necessary item byte count
+            
+            let necessaryItemByteCount = ItemType.array.minimumElementByteCount + countValue * bytes
+            
+            if itemByteCount < necessaryItemByteCount {
+                let result = increaseItemByteCount(to: necessaryItemByteCount)
                 guard result == .success else { return result }
-                // Reallocate the elements in accordance with the new element size
-                parentPortal.increaseElementByteCount(to: bytes)
             }
+            
+            
+            // Now increase the element byte count
+            
+            increaseElementByteCount(to: bytes)
+            
+            
+            return .success
         }
-        var recursiveItems: Array<Portal> = [self]
-        return increaseItemByteCount(by: (bytes - valueByteCount), recursiveItems: &recursiveItems)
     }
     
     
-    /// Increases the byte count of the item if possible.
+    /// Increases the byte count of self.
     ///
-    /// This operation is recursive back to the top level and the buffer manager. Also, if the operation affects an item that is contained in an array or sequence the change will be applied to all elements of that array. Hence a minimum increase of 8 bytes can (worst case) result in a multi megabyte increase in total.
+    /// This operation might affect the itemByteCount and elementByteCount of multiple items if self is contained in other items. This can result in a total size increase many times the value in this call.
     ///
-    /// - Parameters:
-    ///   - by: The number by which to increase the size of an item. Note that the actual size increase will happen in multiples of 8 bytes.
-    ///   - recursiveItems: A list of items that may need their pointers to be updated. This list is in the order of the recursivity of calls. I.e. initially this list is empty and then a new item is added at the end for each recursive call.
+    /// This operation might fail if an upstream item cannot be increased in byte count.
     ///
-    /// - Returns: .noManager or .increaseFailed if the increase failed, .success if it was successful.
+    /// - Parameter newByteCount: The number of bytes this item should encompass.
+    ///
+    /// - Returns: Success if the operation succeeded. An error id if not.
     
-    internal func increaseItemByteCount(by bytes: Int, recursiveItems: inout Array<Portal>) -> Result {
+    internal func increaseItemByteCount(to newByteCount: Int) -> Result {
         
-        
-        if parentOffset == 0 {
+        if let parent = parentPortal {
             
             
-            // If there is no buffer manager, the size cannot be changed.
+            // Check if the parent is an array
+            
+            if parent.isArray {
+                
+                
+                // Check if the element byte count of the array must be grown
+                
+                if parent.elementByteCount < newByteCount {
+                    
+                    
+                    // Calculate the necessary byte count for the parent array
+                    
+                    //let necessaryParentItemByteCount = parent.itemByteCount - parent.valueByteCount + 8 + parent.countValue * newByteCount
+                    let necessaryParentItemByteCount = ItemType.array.minimumItemByteCount + parent.countValue * newByteCount
+                    
+                    
+                    // Check if the parent item byte count must be increased
+                    
+                    if parent.itemByteCount < necessaryParentItemByteCount {
+                        
+                        let result = parent.increaseItemByteCount(to: necessaryParentItemByteCount)
+                        guard result == .success else { return result }
+                    }
+                    
+                    
+                    // Increase the byte count of the elements of the parent
+                    
+                    parent.increaseElementByteCount(to: newByteCount)
+                }
+                
+                
+                // Only update the new byte count for self, other elements will be updated when necessary.
+                
+                itemByteCount = newByteCount
+                
+                return .success
+                
+            } else {
+                
+                fatalError("item value byte count expansion for dictionaries and sequences not yet implemented")
+                
+            }
+            
+        } else {
+            
+            // There is no parent, this must be the root item.
             
             guard let manager = manager else { return .noManager }
             
             
             // If the buffer manager cannot accomodate the increase of the item, then increase the buffer size.
             
-            if manager.unusedByteCount < bytes {
+            if manager.unusedByteCount < newByteCount {
                 
+                // Note: The following operation also updates all active portals
                 
-                // Continue only when the buffer manager has increased its size.
-                
-                let oldPtr = itemPtr
-                guard manager.increaseBufferSize(by: bytes.roundUpToNearestMultipleOf8()) else { return .increaseFailed }
-                
-                
-                // All pointers must be updated
-                
-                let offset = itemPtr.distance(to: oldPtr)
-                for item in recursiveItems {
-                    item.itemPtr = item.itemPtr.advanced(by: offset)
-                }
+                guard manager.increaseBufferSize(to: newByteCount) else { return .increaseFailed }
             }
             
             
-            // No matter what this item is, its value area can be increased. Update the byte count
+            // Update the byte count
             
-            itemByteCount += bytes.roundUpToNearestMultipleOf8()
+            itemByteCount = newByteCount
             
             
             return .success
-            
-            
-        } else {
-            
-            
-            // There is a parent item, get it.
-            
-            let parent = parentPortal!
-            
-            
-            // Ensure the multiple-of-8 boundaries for non-elements
-            
-            let increase: Int
-            if parent.isArray {
-                increase = bytes
-            } else {
-                increase = bytes.roundUpToNearestMultipleOf8()
-            }
-            
-            
-            // The number of bytes the parent item has available for child byte count increases
-            
-            let freeByteCount = parent.valueByteCount - parent.usedValueByteCount
-            
-            
-            // The number of bytes needed for the increase in the parent item
-            
-            let needed: Int
-            
-            if isArray {
-                needed = (countValue * increase).roundUpToNearestMultipleOf8()
-            } else {
-                needed = increase
-            }
-            
-            
-            // If more is needed than available, then ask the parent to increase the available byte count
-            
-            if needed > freeByteCount {
-                recursiveItems.append(self)
-                let result = parent.increaseItemByteCount(by: needed, recursiveItems: &recursiveItems)
-                guard result == .success else { return .increaseFailed }
-                _ = recursiveItems.popLast()
-            }
-            
-            
-            // The parent is big enough.
-            
-            if parent.isArray {
-                
-                // Increase the size of all elements by the same amount
-                
-                var index = parent.countValue
-                while index > 0 {
-                    
-                    let srcPtr = parent.itemPtr.brbonItemValuePtr.advanced(by: 8 + (index - 1) * parent.elementByteCount)
-                    let dstPtr = parent.itemPtr.brbonItemValuePtr.advanced(by: 8 + (index - 1) * parent.elementByteCount + increase)
-                    let length = parent.elementByteCount
-                    
-                    moveBlock(dstPtr, srcPtr, length)
-                    
-                    
-                    // Check if the point to self has to be updated
-                    
-                    if itemPtr == srcPtr {
-                        
-                        
-                        // Yes, self must be updated.
-                        
-                        itemPtr = dstPtr
-                        
-                        
-                        // Also update the pointer values in the recursiveItems by the same offset
-                        
-                        let offset = srcPtr.distance(to: dstPtr)
-                        for item in recursiveItems {
-                            if item.itemPtr > srcPtr { item.itemPtr = item.itemPtr.advanced(by: offset) }
-                        }
-                    }
-                    
-                    index -= 1
-                }
-                
-                // Update the size of the elements in the parent
-                
-                parent.elementByteCount += increase
-                
-                return .success
-            }
-            
-            
-            if parent.isDictionary || parent.isSequence {
-                
-                // Shift all the items after self by the amount of increase of self.
-                
-                var srcPtr: UnsafeMutableRawPointer?
-                var length: Int = 0
-                
-                var itemPtr = parent.itemPtr.brbonItemValuePtr
-                var childCount = parent.countValue
-                while childCount > 0 {
-                    
-                    if (srcPtr == nil) && (itemPtr > itemPtr) {
-                        srcPtr = itemPtr
-                    }
-                    if srcPtr != nil {
-                        length += Int(UInt32(valuePtr: itemPtr.advanced(by: itemByteCountOffset), endianness))
-                    }
-                    itemPtr = itemPtr.advanced(by: Int(UInt32(valuePtr: itemPtr.advanced(by: itemByteCountOffset), endianness)))
-                    childCount -= 1
-                }
-                if srcPtr == nil { srcPtr = itemPtr }
-                
-                if itemByteCount > 0 {
-                    let dstPtr = srcPtr!.advanced(by: Int(increase))
-                    moveBlock(dstPtr, srcPtr!, length)
-                }
-                
-                
-                // Update the item size of self
-                
-                itemByteCount += increase
-                
-                
-                return .success
-            }
-            
-            fatalError("No other parent possible")
         }
     }
-    
+
     
     /// Moves a block of memory from the source pointer to the destination pointer.
     ///
@@ -794,7 +734,7 @@ extension Portal {
             guard isValid else { return }
             if let index = index {
                 guard isBool else { return }
-                newValue?.storeValue(atPtr: elementPtr(for: index), endianness)
+                newValue?.storeAsElement(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
                     if isNull { itemType = .bool }
@@ -820,7 +760,7 @@ extension Portal {
             guard isValid else { return }
             if let index = index {
                 guard isUInt8 else { return }
-                newValue?.storeValue(atPtr: elementPtr(for: index), endianness)
+                newValue?.storeAsElement(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
                     if isNull { itemType = .uint8 }
@@ -846,7 +786,7 @@ extension Portal {
             guard isValid else { return }
             if let index = index {
                 guard isUInt16 else { return }
-                newValue?.storeValue(atPtr: elementPtr(for: index), endianness)
+                newValue?.storeAsElement(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
                     if isNull { itemType = .uint16 }
@@ -872,7 +812,7 @@ extension Portal {
             guard isValid else { return }
             if let index = index {
                 guard isUInt32 else { return }
-                newValue?.storeValue(atPtr: elementPtr(for: index), endianness)
+                newValue?.storeAsElement(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
                     if isNull { itemType = .uint32 }
@@ -898,7 +838,7 @@ extension Portal {
             guard isValid else { return }
             if let index = index {
                 guard isUInt64 else { return }
-                newValue?.storeValue(atPtr: elementPtr(for: index), endianness)
+                newValue?.storeAsElement(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
                     if isNull {
@@ -929,7 +869,7 @@ extension Portal {
             guard isValid else { return }
             if let index = index {
                 guard isInt8 else { return }
-                newValue?.storeValue(atPtr: elementPtr(for: index), endianness)
+                newValue?.storeAsElement(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
                     if isNull { itemType = .int8 }
@@ -955,7 +895,7 @@ extension Portal {
             guard isValid else { return }
             if let index = index {
                 guard isInt16 else { return }
-                newValue?.storeValue(atPtr: elementPtr(for: index), endianness)
+                newValue?.storeAsElement(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
                     if isNull { itemType = .int16 }
@@ -981,7 +921,7 @@ extension Portal {
             guard isValid else { return }
             if let index = index {
                 guard isInt32 else { return }
-                newValue?.storeValue(atPtr: elementPtr(for: index), endianness)
+                newValue?.storeAsElement(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
                     if isNull { itemType = .int32 }
@@ -1007,7 +947,7 @@ extension Portal {
             guard isValid else { return }
             if let index = index {
                 guard isInt64 else { return }
-                newValue?.storeValue(atPtr: elementPtr(for: index), endianness)
+                newValue?.storeAsElement(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
                     if isNull {
@@ -1038,7 +978,7 @@ extension Portal {
             guard isValid else { return }
             if let index = index {
                 guard isFloat32 else { return }
-                newValue?.storeValue(atPtr: elementPtr(for: index), endianness)
+                newValue?.storeAsElement(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
                     if isNull { itemType = .float32 }
@@ -1064,7 +1004,7 @@ extension Portal {
             guard isValid else { return }
             if let index = index {
                 guard isFloat64 else { return }
-                newValue?.storeValue(atPtr: elementPtr(for: index), endianness)
+                newValue?.storeAsElement(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
                     if isNull {
@@ -1095,8 +1035,8 @@ extension Portal {
             guard isValid else { return }
             if let index = index {
                 guard let newValue = newValue, isString else { return }
-                guard ensureValueByteCount(for: newValue.valueByteCount) == .success else { return }
-                newValue.storeValue(atPtr: elementPtr(for: index), endianness)
+                guard ensureValueByteCount(for: newValue.elementByteCount) == .success else { return }
+                newValue.storeAsElement(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
                     if isNull { itemType = .string }
@@ -1123,8 +1063,8 @@ extension Portal {
             guard isValid else { return }
             if let index = index {
                 guard let newValue = newValue, isString else { return }
-                guard ensureValueByteCount(for: newValue.valueByteCount) == .success else { return }
-                newValue.storeValue(atPtr: elementPtr(for: index), endianness)
+                guard ensureValueByteCount(for: newValue.elementByteCount) == .success else { return }
+                newValue.storeAsElement(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
                     if isNull { itemType = .binary }
