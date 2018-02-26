@@ -1,21 +1,28 @@
 # BRBON
 An Binary Object Notation by Balancing Rock.
 ## Description
-JSON is a convenient and very maintainable format for data storage and transfer. However the price paid for this convenience is speed. This is not always a problem, but JSON also invites developers to use it as a database replacement system. This works fine for small amounts of data and low intensity access. But as the database grows and is used more intensely a speedier approach will often become necessary.
+BRBON is a binary storage format specification. It started out as a binary version for JSON but the requirement for speed has rendered some JSON aspects obsolete. Still, the JSON origins can be recognised in the object oriented approach.
 
-BRBON was designed for speed, but tries to keep as much from the simplicity of JSON as possible.
+The major design driver for BRBON is speed. Speed in access and speed in loading & storage.
 
-For this reason a binary based JSON model was followed but enhanced with vectors, space reservation and 8-byte alignement to allow for maximum speed. There is no optimisation for space for two reasons: memory and storage space is cheap nowadays, and when transferring data there will usually be a compression mechanism available, possibly in hardware.
+Strictly speaking BRBON only refers to the format specification, not an implementation. However a reference API is offered for free under the same name.
 
-Strictly speaking BRBON refers to the format specification in this project, not to the implementation. Though an implementation with the same is provided. It should be noted that the current implementation with this name does not implement a (fast) memory map based access mechanism but a simpler memory structure (parsing) based approach.
+Talking points:
 
-The current specification is version 0.1 and is intended for storage and access only. It thus concerns itself only with the Item specification. In the future a block wrapper is envisioned that will contain the Items as defined in this document and that may be used to exchange data between applications.
+- Vectored access: The format includes vectors that can be used to quickly traverse the entire structure (in both directions).
+- Named objects: Objects may be named for identification, a hash value is included for faster name recognition.
+- Aligned to 8 byte boundaries: Most of the elements in the structure are aligned to 8 byte boundaries. This ensures alignment for al types.
+- All standard types are supported: Bool, Int8, Int16, Int32, Int64, UInt8, UInt16, UInt32, UInt64, Float32, Float64, String, Binary.
+- Collection types: Array, Dictionary, Sequence, Table.
+- Special type: Null.
+- Array’s are packed for optimal storage density.
+- The maximum Item capacity is 2GB (Int32.max). (The unfinished Block specification will include the capability for larger structures)
 
-The most glaring omission from this specification is a way to specify the endianness of the Items. This will in the future be included in the block wrapper. For now it is assumed that data is only stored on a single machine or transferred between machines with the same endianness.
+At this point in time BRBON is considered incomplete. The ‘Item’ specification has been completed but the ‘Block’ specification is still open.
 
-The most glaring omission from the current implementation is multithreading support. The API should be accessed from within a single thread.
+The Item specification can be used for local storage needs and is useful on its own. The reference API has been prepared for the Block extension by taking the endianness of the data into account. Endianness will be part of the block specification. 
 
-Two alternatives for BRBON have been considered: BSON and BinSON. However both were found lacking with respect to the capabilities for (vectored) high speed memory mapped access. Though BSON does come close
+Two alternatives for BRBON have been considered: BSON and BinSON. However both were found lacking with respect to the capabilities for high speed (memory mapped) access.
 
 # Version history
 
