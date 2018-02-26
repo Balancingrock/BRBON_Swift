@@ -91,53 +91,10 @@ public extension Portal {
         guard elementType == value.brbonType else { return .typeConflict }
         
         
-        // Check to see if the element byte count of the array must be increased.
+        // Ensure that the element byte count is sufficient
         
-        if value.elementByteCount > elementByteCount {
-            
-            
-            // The value byte count is bigger than the existing element byte count.
-            // Enlarge the item to accomodate extra bytes.
-            
-            let necessaryElementByteCount: Int
-            if value.brbonType.isContainer {
-                necessaryElementByteCount = value.elementByteCount.roundUpToNearestMultipleOf8()
-            } else {
-                necessaryElementByteCount = value.elementByteCount
-            }
-            
-            
-            // This is the byte count that self has to become in order to accomodate the new value
-            
-            let necessaryItemByteCount = itemByteCount - valueByteCount + 8 + ((countValue + 1) * necessaryElementByteCount)
-        
-            
-            if necessaryItemByteCount > itemByteCount {
-                // It is necessary to increase the bytecount for the array item itself
-                let result = increaseItemByteCount(to: necessaryItemByteCount.roundUpToNearestMultipleOf8())
-                guard result == .success else { return result }
-            }
-            
-            
-            // Increase the byte count of the elements by shifting them up inside the enlarged array.
-            
-            increaseElementByteCount(to: necessaryElementByteCount)
-
-            
-        } else {
-            
-            
-            // The element byte count of the array is big enough to hold the new value.
-            
-            // Make sure a new value can be added to the array
-            
-            let necessaryItemByteCount = itemByteCount - valueByteCount + 8 + ((countValue + 1) * elementByteCount)
-            
-            if necessaryItemByteCount > itemByteCount {
-                let result = increaseItemByteCount(to: necessaryItemByteCount.roundUpToNearestMultipleOf8())
-                guard result == .success else { return result }
-            }
-        }
+        let result = ensureElementByteCount(for: value)
+        guard result == .success else { return result }
         
 
         // The new value can be added
@@ -250,22 +207,24 @@ public extension Portal {
     private func _createNewElements(_ value: Coder, _ amount: Int) -> Result {
         
         guard isArray else { return .onlySupportedOnArray }
-        
         guard amount > 0 else { return .success }
         
         
-        // Not implemented yet
+        // Ensure that the element byte count is sufficient
         
-        guard !elementType!.isContainer else { fatalOrNull("Not implemented"); return .typeConflict }
+        var result = ensureElementByteCount(for: value)
+        guard result == .success else { return result }
+        
+        
+        // Ensure that the item storage capacity is sufficient
 
-
-        // Ensure storage area
+        let newCount = countValue + amount
+        let neccesaryValueByteCount = 8 + elementByteCount * newCount
+        result = ensureValueByteCount(for: neccesaryValueByteCount)
+        guard result == .success else { return result }
         
-        let bytesNeeded = amount * value.elementByteCount + 8
-        guard ensureValueByteCount(for: bytesNeeded) == .success else { return .outOfStorage }
         
-        
-        // Use default value
+        // Use default value to populate the new items
             
         var loopCount = amount
         repeat {
@@ -308,6 +267,62 @@ public extension Portal {
     public func createNewElements(_ value: String, amount: Int = 1) -> Result { return _createNewElements(value, amount) }
     @discardableResult
     public func createNewElements(_ value: Data, amount: Int = 1) -> Result { return _createNewElements(value, amount) }
+    @discardableResult
+    public func createNewElements(_ value: Array<Bool>, amount: Int = 1) -> Result {
+        return _createNewElements(BrbonArray(content: value, type: .bool), amount)
+    }
+    @discardableResult
+    public func createNewElements(_ value: Array<UInt8>, amount: Int = 1) -> Result {
+        return _createNewElements(BrbonArray(content: value, type: .uint8), amount)
+    }
+    @discardableResult
+    public func createNewElements(_ value: Array<UInt16>, amount: Int = 1) -> Result {
+        return _createNewElements(BrbonArray(content: value, type: .uint16), amount)
+    }
+    @discardableResult
+    public func createNewElements(_ value: Array<UInt32>, amount: Int = 1) -> Result {
+        return _createNewElements(BrbonArray(content: value, type: .uint32), amount)
+    }
+    @discardableResult
+    public func createNewElements(_ value: Array<UInt64>, amount: Int = 1) -> Result {
+        return _createNewElements(BrbonArray(content: value, type: .uint64), amount)
+    }
+    @discardableResult
+    public func createNewElements(_ value: Array<Int8>, amount: Int = 1) -> Result {
+        return _createNewElements(BrbonArray(content: value, type: .int8), amount)
+    }
+    @discardableResult
+    public func createNewElements(_ value: Array<Int16>, amount: Int = 1) -> Result {
+        return _createNewElements(BrbonArray(content: value, type: .int16), amount)
+    }
+    @discardableResult
+    public func createNewElements(_ value: Array<Int32>, amount: Int = 1) -> Result {
+        return _createNewElements(BrbonArray(content: value, type: .int32), amount)
+    }
+    @discardableResult
+    public func createNewElements(_ value: Array<Int64>, amount: Int = 1) -> Result {
+        return _createNewElements(BrbonArray(content: value, type: .int64), amount)
+    }
+    @discardableResult
+    public func createNewElements(_ value: Array<Float32>, amount: Int = 1) -> Result {
+        return _createNewElements(BrbonArray(content: value, type: .float32), amount)
+    }
+    @discardableResult
+    public func createNewElements(_ value: Array<Float64>, amount: Int = 1) -> Result {
+        return _createNewElements(BrbonArray(content: value, type: .float64), amount)
+    }
+    @discardableResult
+    public func createNewElements(_ value: Array<String>, amount: Int = 1) -> Result {
+        return _createNewElements(BrbonArray(content: value, type: .string), amount)
+    }
+    @discardableResult
+    public func createNewElements(_ value: Array<Data>, amount: Int = 1) -> Result {
+        return _createNewElements(BrbonArray(content: value, type: .binary), amount)
+    }
+    @discardableResult
+    public func createNewElements(_ value: Dictionary<String, IsBrbon>, amount: Int = 1) -> Result {
+        return _createNewElements(BrbonDictionary(content: value), amount)
+    }
 
     
     /// Inserts a new element at the given position.
@@ -324,20 +339,19 @@ public extension Portal {
         guard index < countValue else { return .indexAboveHigherBound }
         
         
-        // Not implemented yet
+        // Ensure that the element byte count is sufficient
         
-        guard !value.brbonType.isContainer else { fatalOrNull("Not implemented"); return .typeConflict }
+        var result = ensureElementByteCount(for: value)
+        guard result == .success else { return result }
+
         
+        // Ensure that the item storage capacity is sufficient
         
-        // Ensure enough storage area is available
-        
-        let newElementByteCount = max(elementByteCount, value.elementByteCount)
-        guard ensureValueByteCount(for: ((countValue  + 1) * newElementByteCount) + 8) == .success else { return .outOfStorage }
-        if newElementByteCount > elementByteCount {
-            increaseElementByteCount(to: newElementByteCount)
-        }
-        value.storeAsElement(atPtr: elementPtr(for: countValue), endianness)
-        
+        let newCount = countValue + 1
+        let neccesaryValueByteCount = 8 + elementByteCount * newCount
+        result = ensureValueByteCount(for: neccesaryValueByteCount)
+        guard result == .success else { return result }
+
         
         // Copy the existing elements upward
         
@@ -386,5 +400,33 @@ public extension Portal {
     public func insert(_ value: String, at index: Int) -> Result { return _insert(value, index) }
     @discardableResult
     public func insert(_ value: Data, at index: Int) -> Result { return _insert(value, index) }
+    @discardableResult
+    public func insert(_ value: Array<Bool>, at index: Int) -> Result { return _insert(BrbonArray(content: value, type: .bool), index) }
+    @discardableResult
+    public func insert(_ value: Array<UInt8>, at index: Int) -> Result { return _insert(BrbonArray(content: value, type: .uint8), index) }
+    @discardableResult
+    public func insert(_ value: Array<UInt16>, at index: Int) -> Result { return _insert(BrbonArray(content: value, type: .uint16), index) }
+    @discardableResult
+    public func insert(_ value: Array<UInt32>, at index: Int) -> Result { return _insert(BrbonArray(content: value, type: .uint32), index) }
+    @discardableResult
+    public func insert(_ value: Array<UInt64>, at index: Int) -> Result { return _insert(BrbonArray(content: value, type: .uint64), index) }
+    @discardableResult
+    public func insert(_ value: Array<Int8>, at index: Int) -> Result { return _insert(BrbonArray(content: value, type: .int8), index) }
+    @discardableResult
+    public func insert(_ value: Array<Int16>, at index: Int) -> Result { return _insert(BrbonArray(content: value, type: .int16), index) }
+    @discardableResult
+    public func insert(_ value: Array<Int32>, at index: Int) -> Result { return _insert(BrbonArray(content: value, type: .int32), index) }
+    @discardableResult
+    public func insert(_ value: Array<Int64>, at index: Int) -> Result { return _insert(BrbonArray(content: value, type: .int64), index) }
+    @discardableResult
+    public func insert(_ value: Array<Float32>, at index: Int) -> Result { return _insert(BrbonArray(content: value, type: .float32), index) }
+    @discardableResult
+    public func insert(_ value: Array<Float64>, at index: Int) -> Result { return _insert(BrbonArray(content: value, type: .float64), index) }
+    @discardableResult
+    public func insert(_ value: Array<String>, at index: Int) -> Result { return _insert(BrbonArray(content: value, type: .string), index) }
+    @discardableResult
+    public func insert(_ value: Array<Data>, at index: Int) -> Result { return _insert(BrbonArray(content: value, type: .binary), index) }
+    @discardableResult
+    public func insert(_ value: Dictionary<String, IsBrbon>, at index: Int) -> Result { return _insert(BrbonDictionary(content: value), index) }
 
 }

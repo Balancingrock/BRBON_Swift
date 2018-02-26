@@ -15,31 +15,21 @@ import BRUtils
 internal struct ActivePortals {
     
     
-    /// Associate a portal with a reference counter
-    
-    class Entry {
-        let portal: Portal
-        var refcount: Int = 0
-        init(_ portal: Portal) { self.portal = portal }
-    }
-    
-    
     /// The dictionary that associates an item pointer with a valueItem entry
     
-    var dict: Dictionary<PortalKey, Entry> = [:]
+    var dict: Dictionary<PortalKey, Portal> = [:]
     
     
     /// Return the portal for the given parameters. A new one is created if it was not found in the dictionary.
     
     mutating func getPortal(for ptr: UnsafeMutableRawPointer, index: Int? = nil, mgr: ItemManager) -> Portal {
         let newPortal = Portal(itemPtr: ptr, index: index, manager: mgr, endianness: mgr.endianness)
-        if let entry = dict[newPortal.key], entry.portal.isValid {
-            entry.refcount += 1
-            return entry.portal
+        if let portal = dict[newPortal.key], portal.isValid {
+            portal.refCount += 1
+            return portal
         } else {
-            let entry = Entry(newPortal)
-            entry.refcount += 1
-            dict[newPortal.key] = entry
+            newPortal.refCount += 1
+            dict[newPortal.key] = newPortal
             return newPortal
         }
     }
@@ -48,9 +38,9 @@ internal struct ActivePortals {
     /// Remove a portal from the list.
     
     mutating func removePortal(for key: PortalKey) {
-        if let entry = dict[key] {
-            entry.portal.isValid = false
-            dict.removeValue(forKey: entry.portal.key)
+        if let portal = dict[key] {
+            portal.isValid = false
+            dict.removeValue(forKey: portal.key)
         }
     }
     
@@ -59,16 +49,12 @@ internal struct ActivePortals {
     
     mutating func updatePointers(atAndAbove: UnsafeMutableRawPointer, below: UnsafeMutableRawPointer, toNewBase: UnsafeMutableRawPointer) {
         let delta = atAndAbove.distance(to: toNewBase)
-        for (_, entry) in dict {
-            var change = false
-            let oldKey = entry.portal.key
-            if entry.portal.itemPtr >= atAndAbove && entry.portal.itemPtr < below {
-                entry.portal.itemPtr = entry.portal.itemPtr.advanced(by: delta)
-                change = true
-            }
-            if change {
+        for (_, portal) in dict {
+            if portal.itemPtr >= atAndAbove && portal.itemPtr < below {
+                let oldKey = portal.key
+                portal.itemPtr = portal.itemPtr.advanced(by: delta)
                 dict.removeValue(forKey: oldKey)
-                dict[entry.portal.key] = entry
+                dict[portal.key] = portal
             }
         }
     }
@@ -77,9 +63,9 @@ internal struct ActivePortals {
     /// Decrement the reference counter of a portal and remove the entry of the refcount reaches zero.
     
     mutating func decrementRefcountAndRemoveOnZero(for portal: Portal) {
-        if let vi = dict[portal.key] {
-            vi.refcount -= 1
-            if vi.refcount == 0 {
+        if let p = dict[portal.key] {
+            p.refCount -= 1
+            if p.refCount == 0 {
                 dict.removeValue(forKey: portal.key)
             }
         }

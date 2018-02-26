@@ -116,6 +116,10 @@ public enum ItemType: UInt8 {
     
     //case table          = 0x45
     
+    
+    /// A string preceded by a CRC-16 value for faster searching.
+    
+    //case idString       = 0x46
 
     /// ===================================================
     /// These types do use the count/value field as a value

@@ -45,10 +45,13 @@ public final class Portal {
 
     var endianness: Endianness
     
-    var manager: ItemManager?
+    weak var manager: ItemManager?
     
     var isValid: Bool
     
+    // This variable is for the active portals manager.
+    
+    var refCount = 0;
     
     init(itemPtr: UnsafeMutableRawPointer, index: Int? = nil, manager: ItemManager?, endianness: Endianness) {
         self.itemPtr = itemPtr
@@ -59,7 +62,9 @@ public final class Portal {
     }
     
     deinit {
-        manager?.unsubscribe(portal: self)
+        if refCount > 0 {
+            manager?.unsubscribe(portal: self)
+        }
     }
     
     
@@ -331,7 +336,9 @@ extension Portal {
     }
 
     
-    /// Ensures that an item can accomodate a value of the given length. If necessary it will try to increase the size of the item. Note that increasing the size is only possible for contiguous items and for variable length elements.
+    /// Ensures that the item can accomodate a value of the given length.
+    ///
+    /// If necessary it will try to increase the size of the item. Note that increasing the size is only possible for contiguous items and for variable length elements.
     ///
     /// - Parameter for: The number of bytes needed.
     ///
@@ -386,6 +393,67 @@ extension Portal {
             
             return .success
         }
+    }
+    
+    
+    /// Makes sure the element byte count is sufficient.
+    ///
+    /// - Parameter for: The Coder value that must be accomodated.
+    ///
+    /// - Returns: Success if the value can be allocated, an error identifier when not.
+    
+    internal func ensureElementByteCount(for value: Coder) -> Result {
+        
+        
+        // Check to see if the element byte count of the array must be increased.
+        
+        if value.elementByteCount > elementByteCount {
+            
+            
+            // The value byte count is bigger than the existing element byte count.
+            // Enlarge the item to accomodate extra bytes.
+            
+            let necessaryElementByteCount: Int
+            if value.brbonType.isContainer {
+                necessaryElementByteCount = value.elementByteCount.roundUpToNearestMultipleOf8()
+            } else {
+                necessaryElementByteCount = value.elementByteCount
+            }
+            
+            
+            // This is the byte count that self has to become in order to accomodate the new value
+            
+            let necessaryItemByteCount = itemByteCount - valueByteCount + 8 + ((countValue + 1) * necessaryElementByteCount)
+            
+            
+            if necessaryItemByteCount > itemByteCount {
+                // It is necessary to increase the bytecount for the array item itself
+                let result = increaseItemByteCount(to: necessaryItemByteCount.roundUpToNearestMultipleOf8())
+                guard result == .success else { return result }
+            }
+            
+            
+            // Increase the byte count of the elements by shifting them up inside the enlarged array.
+            
+            increaseElementByteCount(to: necessaryElementByteCount)
+            
+            
+        } else {
+            
+            
+            // The element byte count of the array is big enough to hold the new value.
+            
+            // Make sure a new value can be added to the array
+            
+            let necessaryItemByteCount = itemByteCount - valueByteCount + 8 + ((countValue + 1) * elementByteCount)
+            
+            if necessaryItemByteCount > itemByteCount {
+                let result = increaseItemByteCount(to: necessaryItemByteCount.roundUpToNearestMultipleOf8())
+                guard result == .success else { return result }
+            }
+        }
+        
+        return .success
     }
     
     
@@ -516,7 +584,7 @@ extension Portal {
         guard let manager = manager else { return nil }
         let parentPtr = manager.bufferPtr.advanced(by: parentOffset)
         if parentPtr == itemPtr { return nil }
-        return manager.getPortal(for: parentPtr)
+        return Portal(itemPtr: parentPtr, index: nil, manager: manager, endianness: endianness)
     }
 
     
@@ -540,18 +608,10 @@ extension Portal {
         guard isArray else { return fatalOrNull("Int subscript access on non-array") }
         guard index >= 0 else { return fatalOrNull("Index below zero") }
         guard index < countValue else { return fatalOrNull("Index out of upper limit") }
-        if let manager = manager {
-            if elementType!.isContainer {
-                return manager.getPortal(for: elementPtr(for: index))
-            } else {
-                return manager.getPortal(for: itemPtr, index: index)
-            }
+        if elementType!.isContainer {
+            return Portal(itemPtr: elementPtr(for: index), index: nil, manager: manager, endianness: endianness)
         } else {
-            if elementType!.isContainer {
-                return Portal(itemPtr: itemPtr, index: index, manager: nil, endianness: endianness)
-            } else {
-                return Portal(itemPtr: elementPtr(for: index), index: nil, manager: nil, endianness: endianness)
-            }
+            return Portal(itemPtr: itemPtr, index: index, manager: manager, endianness: endianness)
         }
     }
 }
@@ -1094,7 +1154,7 @@ extension Portal {
             let nofChildren = countValue
             var index = 0
             while index < nofChildren {
-                let portal = Portal(itemPtr: itemPtr, index: index, manager: nil, endianness: endianness)
+                let portal = Portal(itemPtr: itemPtr, index: index, manager: manager, endianness: endianness)
                 if closure(portal) { return }
                 index += 1
             }
@@ -1104,7 +1164,7 @@ extension Portal {
             var aPtr = itemPtr.brbonItemValuePtr
             var remainder = countValue
             while remainder > 0 {
-                let portal = Portal(itemPtr: aPtr, manager: nil, endianness: endianness)
+                let portal = Portal(itemPtr: aPtr, manager: manager, endianness: endianness)
                 if closure(portal) { return }
                 aPtr = aPtr.advanced(by: portal.itemByteCount)
                 remainder -= 1

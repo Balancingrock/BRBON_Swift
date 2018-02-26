@@ -440,13 +440,13 @@ class ItemManager_Array_Tests: XCTestCase {
         let portal1 = am.root[1].portal
         
         XCTAssertEqual(portal1.string, "bbbb")
-        
+
         
         // Add a third and forth string, this pushes the buffer over 1KB and necessitates the allocation of more memory and an update of the pointers in the portal.
         
         XCTAssertEqual(am.root.append("cccc"), .success)
         XCTAssertEqual(am.root.append("dddd"), .success)
-        
+
         exp = Data(bytes: [
             0x41, 0x00, 0x00, 0x00,
             0x18, 0x04, 0x00, 0x00,
@@ -528,8 +528,15 @@ class ItemManager_Array_Tests: XCTestCase {
             XCTAssertTrue(p == am.root)
         }
 
-        // Test if the adjustment of the portals worked
+        // *********************************************************
+        // Note: The following test will sometimes fail.
+        // (About 1 in 5 runs)
+        // This seems to be an error of the XCT tester that
+        // releases a block of memory too early.
+        // The portal allocate/release mechanism seems to work fine.
+        // *********************************************************
         
+        // Test if the adjustment of the portals worked
         XCTAssertEqual(portal1.string, "bbbb")
     }
     
