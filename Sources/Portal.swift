@@ -184,7 +184,17 @@ extension Portal: Equatable {
                 return true
                 
             case .dictionary:
-                fatalError("dictionary compare not yet implemented")
+
+                var result = true
+                
+                lhs.forEachAbortOnTrue(){
+                    (lportal: Portal) -> Bool in
+                    let rportal = rhs[lportal.name].portal
+                    result = (lportal == rportal)
+                    return !result
+                }
+                
+                return result
                 
             case .sequence:
                 fatalError("sequence compare not yet implemented")
@@ -509,10 +519,49 @@ extension Portal {
                 
                 return .success
                 
+            } else if parent.isDictionary {
+                
+                
+                // Check if the byte count of the parent must be grown
+                
+                let necessaryParentItemByteCount = minimumItemByteCount + parent.nameFieldByteCount + parent.valueByteCount - itemByteCount + newByteCount
+                
+                if parent.itemByteCount < necessaryParentItemByteCount {
+
+                    let result = parent.increaseItemByteCount(to: necessaryParentItemByteCount)
+                    guard result == .success else { return result }
+                }
+                
+                
+                // Increase the size of self, first copy all the items above this item out of reach
+                
+                let srcPtr = itemPtr.advanced(by: itemByteCount)
+                let pastLastItemPtr = parent.afterLastItemPtr
+                if srcPtr != pastLastItemPtr {
+                    
+                    // Items must be moved
+                    
+                    let len = pastLastItemPtr - srcPtr
+                    let dstPtr = srcPtr.advanced(by: newByteCount - itemByteCount)
+                    
+                    moveBlock(dstPtr, srcPtr, len)
+                    
+                    
+                    // Update active pointers
+                    
+                    manager?.activePortals.updatePointers(atAndAbove: srcPtr, below: dstPtr.advanced(by: len), toNewBase: dstPtr)
+                }
+                
+                
+                // Now the size of self can be increased
+
+                itemByteCount = newByteCount
+                
+                
+                return .success
+                
             } else {
-                
-                fatalError("item value byte count expansion for dictionaries and sequences not yet implemented")
-                
+                fatalError("item value byte count expansion for sequences not yet implemented")
             }
             
         } else {
@@ -614,19 +663,86 @@ extension Portal {
             return Portal(itemPtr: itemPtr, index: index, manager: manager, endianness: endianness)
         }
     }
-}
-
-
-
-
-// MARK: - Subscript accessors
-
-extension Portal {
     
-    public subscript(key: String) -> Portal {
-        get { return Portal.nullPortal }
-        set { return }
+    
+    /// Returns the item for a given name.
+    
+    internal func findItem(for name: String) -> Portal {
+        
+        guard let nameData = name.data(using: .utf8) else { return Portal.nullPortal }
+        
+        let crc = nameData.crc16()
+        
+        return findItem(with: crc, utf8ByteCode: nameData) ?? Portal.nullPortal
     }
+    
+    
+    /// Searches for an item with the same hash and string data as the search paremeters.
+    ///
+    /// - Parameters:
+    ///   - with: A CRC16 over the stringData.
+    ///   - utf8ByteCode: The bytes that make up a name string.
+    ///
+    /// - Returns: A pointer to the first byte
+    
+    internal func findItem(with hash: UInt16, utf8ByteCode: Data) -> Portal? {
+        
+        var ptrFound: UnsafeMutableRawPointer?
+        
+        forEachAbortOnTrue() {
+            if $0.nameHash != hash { return false }
+            if $0.nameCount != utf8ByteCode.count { return false }
+            if $0.nameData != utf8ByteCode { return false }
+            ptrFound = $0.itemPtr
+            return true
+        }
+        
+        if let aptr = ptrFound {
+            return Portal(itemPtr: aptr, manager: manager, endianness: endianness)
+        } else {
+            return nil
+        }
+    }
+    
+    
+    internal var afterLastItemPtr: UnsafeMutableRawPointer {
+        var ptr = itemPtr.brbonItemValuePtr
+        var remainder = countValue
+        while remainder > 0 {
+            ptr = ptr.advanced(by: Int(UInt32(valuePtr: ptr.brbonItemByteCountPtr, endianness)))
+            remainder -= 1
+        }
+        return ptr
+    }
+    
+    
+    /// The closure is called for each child item or until the closure returns true.
+    ///
+    /// - Parameter closure: The closure that is called for each item in the dictionary. If the closure returns true then the processing of further items is aborted. Note that the portals passed to the closure are not registered with the active portals in the ItemManager
+    
+    internal func forEachAbortOnTrue(_ closure: (Portal) -> Bool) {
+        if isArray {
+            let nofChildren = countValue
+            var index = 0
+            while index < nofChildren {
+                let portal = Portal(itemPtr: itemPtr, index: index, manager: manager, endianness: endianness)
+                if closure(portal) { return }
+                index += 1
+            }
+            return
+        }
+        if isDictionary {
+            var aPtr = itemPtr.brbonItemValuePtr
+            var remainder = countValue
+            while remainder > 0 {
+                let portal = Portal(itemPtr: aPtr, manager: manager, endianness: endianness)
+                if closure(portal) { return }
+                aPtr = aPtr.advanced(by: portal.itemByteCount)
+                remainder -= 1
+            }
+        }
+    }
+
 }
 
 
@@ -1137,40 +1253,4 @@ extension Portal {
             }
         }
     }
-}
-
-
-// MARK: - Support operations
-
-extension Portal {
-    
-    
-    /// The closure is called for each child item or until the closure returns true.
-    ///
-    /// - Parameter closure: The closure that is called for each item in the dictionary. If the closure returns true then the processing of further items is aborted. Note that the portals passed to the closure are not registered with the active portals in the ItemManager
-    
-    internal func forEachAbortOnTrue(_ closure: (Portal) -> Bool) {
-        if isArray {
-            let nofChildren = countValue
-            var index = 0
-            while index < nofChildren {
-                let portal = Portal(itemPtr: itemPtr, index: index, manager: manager, endianness: endianness)
-                if closure(portal) { return }
-                index += 1
-            }
-            return
-        }
-        if isDictionary {
-            var aPtr = itemPtr.brbonItemValuePtr
-            var remainder = countValue
-            while remainder > 0 {
-                let portal = Portal(itemPtr: aPtr, manager: manager, endianness: endianness)
-                if closure(portal) { return }
-                aPtr = aPtr.advanced(by: portal.itemByteCount)
-                remainder -= 1
-            }
-        }
-    }
-    
-    
 }

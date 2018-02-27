@@ -13,8 +13,12 @@ import BRUtils
 internal class BrbonDictionary: Coder, IsBrbon {
 
     
-    init(content: Dictionary<String, IsBrbon>) {
-        self.content = content as! Dictionary<String, Coder>
+    init(content: Dictionary<String, IsBrbon>? = nil) {
+        if let content = content {
+            self.content = content as! Dictionary<String, Coder>
+        } else {
+            self.content = [:]
+        }
     }
 
     
@@ -77,10 +81,10 @@ internal class BrbonDictionary: Coder, IsBrbon {
         
         // Determine size of the value field
         // =================================
-        
-        var itemBC = self.itemByteCount(nfd)
-        
+
         let nameFieldByteCount = nfd?.byteCount ?? 0
+
+        let usedValueByteCount: Int
 
         if let valueByteCount = valueByteCount {
             
@@ -90,16 +94,22 @@ internal class BrbonDictionary: Coder, IsBrbon {
             guard valueByteCount <= Int(Int32.max) else { return .valueByteCountTooLarge }
             
             
-            // If specified, the fixed item length must at least be large enough for the name field
+            // If specified, the fixed item length must be large enough (add the 8 overhead bytes as that is unknown to the API user)
             
-            guard valueByteCount < itemBC else { return .valueByteCountTooSmall }
+            guard valueByteCount >= self.valueByteCount else { return .valueByteCountTooSmall }
             
             
-            // Make the itemLength the fixed item length, but ensure that it is a multiple of 8 bytes.
+            // Use the fixed value byte count, but ensure that it is a multiple of 8 bytes.
             
-            itemBC = valueByteCount.roundUpToNearestMultipleOf8()
-        }
+            usedValueByteCount = valueByteCount.roundUpToNearestMultipleOf8()
         
+        } else {
+            
+            usedValueByteCount = self.valueByteCount
+        }
+
+        let itemBC = (minimumItemByteCount + nameFieldByteCount + usedValueByteCount).roundUpToNearestMultipleOf8()
+
         
         // Create the dictionary structure
         
@@ -114,7 +124,7 @@ internal class BrbonDictionary: Coder, IsBrbon {
         ItemFlags.none.storeValue(atPtr: p)
         p = p.advanced(by: 1)
         
-        UInt8(nfd?.byteCount ?? 0).storeValue(atPtr: p, endianness)
+        UInt8(nameFieldByteCount).storeValue(atPtr: p, endianness)
         p = p.advanced(by: 1)
         
         UInt32(itemBC).storeValue(atPtr: p, endianness)
@@ -127,7 +137,7 @@ internal class BrbonDictionary: Coder, IsBrbon {
         p = p.advanced(by: 4)
         
         nfd?.storeValue(atPtr: p, endianness)
-        p = p.advanced(by: (nfd?.byteCount ?? 0))
+        p = p.advanced(by: nameFieldByteCount)
         
         
         // Items

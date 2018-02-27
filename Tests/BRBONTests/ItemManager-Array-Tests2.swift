@@ -67,8 +67,6 @@ class ItemManager_Array_Tests2: XCTestCase {
             
             ])
         
-        am.data.printBytes()
-        
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
             let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == am.root)

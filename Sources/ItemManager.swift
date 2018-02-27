@@ -130,9 +130,11 @@ public final class ItemManager {
     ///
     /// - Parameters:
     ///   - value: A variable of the IsBrbon type that will be used as the root item.
-    ///   - initialBufferByteCount: The initial size for the buffer. In bytes.
-    ///   - minimalBufferIncrements: The minimum number of bytes with which to increase the buffersize when needed. In bytes.
-    ///   -
+    ///   - name: An optional name for the root item.
+    ///   - itemValueByteCount: The room allocated for the value field. This number must at least be big enough to accomodate the presented value.
+    ///   - initialBufferByteCount: The initial size for the buffer. In bytes. (default = 1024)
+    ///   - minimalBufferIncrements: The minimum number of bytes with which to increase the buffersize when needed. In bytes. (default = 1024)
+    ///   - endianness: The endianness to be used (default = machineEndianness).
     
     public init?(
         value: IsBrbon,
