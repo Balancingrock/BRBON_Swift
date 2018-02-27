@@ -208,8 +208,6 @@ class ItemManager_Dictionary_Tests: XCTestCase {
             0xfb, 0x64, 0x03, 0x65,  0x65, 0x65, 0x00, 0x00
             ])
         
-        dm.data.printBytes()
-        
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
             let p = dm.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == dm.root)
@@ -218,6 +216,53 @@ class ItemManager_Dictionary_Tests: XCTestCase {
         XCTAssertFalse(p1.isValid)
         XCTAssertEqual(p2.string, "twotwotwotwo")
         XCTAssertEqual(p3.int16, 0x5555)
-    }
+        
+        
+        // Remove last item
+        
+        XCTAssertEqual(dm.root.removeValue(forKey: "eee"), .success)
+        
+        exp = Data(bytes: [
+            0x42, 0x00, 0x00, 0x00,
+            0x68, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x01, 0x00, 0x00, 0x00,
+            
+            0x40, 0x00, 0x00, 0x08,  0x28, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,  0x0C, 0x00, 0x00, 0x00,
+            0xcc, 0x51, 0x03, 0x6e,  0x6e, 0x6e, 0x00, 0x00,
+            0x74, 0x77, 0x6f, 0x74,  0x77, 0x6f, 0x74, 0x77,
+            0x6f, 0x74, 0x77, 0x6f,  0x00, 0x00, 0x00, 0x00
+            ])
+        
+        exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
+            let p = dm.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
+            XCTAssertTrue(p == dm.root)
+        }
+        
+        XCTAssertFalse(p1.isValid)
+        XCTAssertEqual(p2.string, "twotwotwotwo")
+        XCTAssertFalse(p3.isValid)
 
+        
+        // Remove remaining item
+        
+        XCTAssertEqual(dm.root.removeValue(forKey: "nnn"), .success)
+        
+        exp = Data(bytes: [
+            0x42, 0x00, 0x00, 0x00,
+            0x68, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+        
+        exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
+            let p = dm.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
+            XCTAssertTrue(p == dm.root)
+        }
+        
+        XCTAssertFalse(p1.isValid)
+        XCTAssertFalse(p2.isValid)
+        XCTAssertFalse(p3.isValid)
+    }
 }
