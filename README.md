@@ -1,5 +1,8 @@
 # BRBON
 An Binary Object Notation by Balancing Rock.
+
+Note: HEAD is currently not stable, there are frequent updates.
+
 ## Description
 BRBON is a binary storage format specification. It started out as a binary version for JSON but the requirement for speed has rendered some JSON aspects obsolete. Still, the JSON origins can be recognised in the object oriented approach.
 
@@ -30,7 +33,7 @@ Note: Planned releases are for information only and subject to change without no
 
 #### 0.2.0 (Planned)
 
-- Add more conveniance operators.
+- Complete reworking of the API and some changes in the data structure.
 
 #### 0.1.0 (Current)
 
