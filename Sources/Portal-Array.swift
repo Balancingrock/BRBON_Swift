@@ -10,70 +10,338 @@ import Foundation
 import BRUtils
 
 
-///
+/// Extension that implement indexed lookup and other array related operations.
 
 public extension Portal {
 
     
     public subscript(index: Int) -> Portal {
-        get { return element(at: index) }
-    }
-
-    public subscript(index: Int) -> Bool? { get { return getHelper(index).bool } set { setHelper(index, newValue) } }
-    public subscript(index: Int) -> Int8? { get { return getHelper(index).int8 } set { setHelper(index, newValue) } }
-    public subscript(index: Int) -> Int16? { get { return getHelper(index).int16 } set { setHelper(index, newValue) } }
-    public subscript(index: Int) -> Int32? { get { return getHelper(index).int32 } set { setHelper(index, newValue) } }
-    public subscript(index: Int) -> Int64? { get { return getHelper(index).int64 } set { setHelper(index, newValue) } }
-    public subscript(index: Int) -> UInt8? { get { return getHelper(index).uint8 } set { setHelper(index, newValue) } }
-    public subscript(index: Int) -> UInt16? { get { return getHelper(index).uint16 } set { setHelper(index, newValue) } }
-    public subscript(index: Int) -> UInt32? { get { return getHelper(index).uint32 } set { setHelper(index, newValue) } }
-    public subscript(index: Int) -> UInt64? { get { return getHelper(index).uint64 } set { setHelper(index, newValue) } }
-    public subscript(index: Int) -> Float32? { get { return getHelper(index).float32 } set { setHelper(index, newValue) } }
-    public subscript(index: Int) -> Float64? { get { return getHelper(index).float64 } set { setHelper(index, newValue) } }
-    
-    public subscript(index: Int) -> String? { get { return getHelper(index).string }
-        set {
+        get {
+            guard isValid else { return fatalOrNull("Portal is no longer valid") }
+            guard index >= 0 else { return fatalOrNull("Index (\(index)) is negative") }
+            guard index < countValue else { return fatalOrNull("Index (\(index)) out of high bound (\(countValue))") }
             if isArray {
-                guard (newValue?.elementByteCount ?? 0) <= elementByteCount else { fatalOrNull("Not sufficient storage for new value"); return }
+                return element(at: index)
             } else if isSequence {
-                fatalError("Sequence not implemented yet")
+                return item(at: index)
+            } else {
+                return fatalOrNull("Integer index subscript not supported on \(itemType)")
             }
-            setHelper(index, newValue)
-        }
-    }
-    public subscript(index: Int) -> Data? { get { return getHelper(index).binary }
-        set {
-            if isArray {
-                guard (newValue?.elementByteCount ?? 0) <= elementByteCount else { fatalOrNull("Not sufficient storage for new value"); return }
-            } else if isSequence {
-                fatalError("Sequence not implemented yet")
-            }
-            setHelper(index, newValue)
-        }
-    }
-    
-    
-    private func getHelper(_ index: Int) -> Portal {
-        if isArray {
-            return element(at: index)
-        } else if isSequence {
-            return fatalOrNull("Sequence not implemented yet")
-        } else {
-            return fatalOrNull("Portal type does not support Int subscript access")
-        }
-    }
-    
-    private func setHelper(_ index: Int, _ newValue: Coder?) {
-        guard index >= 0 else { fatalOrNull("Index below zero"); return }
-        guard index < countValue else { fatalOrNull("Index too high"); return }
-        if isArray {
-            guard elementType == (newValue?.brbonType ?? .null) else { fatalOrNull("Type mismatch, try to store \((newValue?.brbonType ?? .null)) in an array of \(elementType)"); return }
-            newValue?.storeAsElement(atPtr: elementPtr(for: index), endianness)
-        } else if isSequence {
-            fatalError("Sequence not implemented yet")
         }
     }
 
+    public subscript(index: Int) -> Bool? {
+        get {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return nil }
+            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return nil }
+            if isArray {
+                return element(at: index).bool
+            } else if isSequence {
+                return item(at: index).bool
+            } else {
+                fatalOrNull("Integer index subscript not supported on \(itemType)")
+                return nil
+            }
+        }
+        set {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
+            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
+            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
+            if isArray { element(at: index).bool = newValue }
+            else if isSequence { _ = item(at: index).replaceWith(newValue) }
+            else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
+        }
+    }
+    
+    public subscript(index: Int) -> Int8? {
+        get {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return nil }
+            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return nil }
+            if isArray {
+                return element(at: index).int8
+            } else if isSequence {
+                return item(at: index).int8
+            } else {
+                fatalOrNull("Integer index subscript not supported on \(itemType)")
+                return nil
+            }
+        }
+        set {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
+            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
+            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
+            if isArray { element(at: index).int8 = newValue }
+            else if isSequence { _ = item(at: index).replaceWith(newValue) }
+            else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
+        }
+    }
+    
+    public subscript(index: Int) -> Int16? {
+        get {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return nil }
+            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return nil }
+            if isArray {
+                return element(at: index).int16
+            } else if isSequence {
+                return item(at: index).int16
+            } else {
+                fatalOrNull("Integer index subscript not supported on \(itemType)")
+                return nil
+            }
+        }
+        set {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
+            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
+            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
+            if isArray { element(at: index).int16 = newValue }
+            else if isSequence { _ = item(at: index).replaceWith(newValue) }
+            else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
+        }
+    }
+    
+    public subscript(index: Int) -> Int32? {
+        get {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return nil }
+            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return nil }
+            if isArray {
+                return element(at: index).int32
+            } else if isSequence {
+                return item(at: index).int32
+            } else {
+                fatalOrNull("Integer index subscript not supported on \(itemType)")
+                return nil
+            }
+        }
+        set {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
+            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
+            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
+            if isArray { element(at: index).int32 = newValue }
+            else if isSequence { _ = item(at: index).replaceWith(newValue) }
+            else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
+        }
+    }
+    
+    public subscript(index: Int) -> Int64? {
+        get {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return nil }
+            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return nil }
+            if isArray {
+                return element(at: index).int64
+            } else if isSequence {
+                return item(at: index).int64
+            } else {
+                fatalOrNull("Integer index subscript not supported on \(itemType)")
+                return nil
+            }
+        }
+        set {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
+            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
+            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
+            if isArray { element(at: index).int64 = newValue }
+            else if isSequence { _ = item(at: index).replaceWith(newValue) }
+            else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
+        }
+    }
+    
+    public subscript(index: Int) -> UInt8? {
+        get {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return nil }
+            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return nil }
+            if isArray {
+                return element(at: index).uint8
+            } else if isSequence {
+                return item(at: index).uint8
+            } else {
+                fatalOrNull("Integer index subscript not supported on \(itemType)")
+                return nil
+            }
+        }
+        set {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
+            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
+            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
+            if isArray { element(at: index).uint8 = newValue }
+            else if isSequence { _ = item(at: index).replaceWith(newValue) }
+            else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
+        }
+    }
+    
+    public subscript(index: Int) -> UInt16? {
+        get {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return nil }
+            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return nil }
+            if isArray {
+                return element(at: index).uint16
+            } else if isSequence {
+                return item(at: index).uint16
+            } else {
+                fatalOrNull("Integer index subscript not supported on \(itemType)")
+                return nil
+            }
+        }
+        set {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
+            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
+            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
+            if isArray { element(at: index).uint16 = newValue }
+            else if isSequence { _ = item(at: index).replaceWith(newValue) }
+            else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
+        }
+    }
+    
+    public subscript(index: Int) -> UInt32? {
+        get {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return nil }
+            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return nil }
+            if isArray {
+                return element(at: index).uint32
+            } else if isSequence {
+                return item(at: index).uint32
+            } else {
+                fatalOrNull("Integer index subscript not supported on \(itemType)")
+                return nil
+            }
+        }
+        set {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
+            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
+            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
+            if isArray { element(at: index).uint32 = newValue }
+            else if isSequence { _ = item(at: index).replaceWith(newValue) }
+            else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
+        }
+    }
+    
+    public subscript(index: Int) -> UInt64? {
+        get {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return nil }
+            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return nil }
+            if isArray {
+                return element(at: index).uint64
+            } else if isSequence {
+                return item(at: index).uint64
+            } else {
+                fatalOrNull("Integer index subscript not supported on \(itemType)")
+                return nil
+            }
+        }
+        set {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
+            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
+            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
+            if isArray { element(at: index).uint64 = newValue }
+            else if isSequence { _ = item(at: index).replaceWith(newValue) }
+            else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
+        }
+    }
+    
+    public subscript(index: Int) -> Float32? {
+        get {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return nil }
+            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return nil }
+            if isArray {
+                return element(at: index).float32
+            } else if isSequence {
+                return item(at: index).float32
+            } else {
+                fatalOrNull("Integer index subscript not supported on \(itemType)")
+                return nil
+            }
+        }
+        set {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
+            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
+            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
+            if isArray { element(at: index).float32 = newValue }
+            else if isSequence { _ = item(at: index).replaceWith(newValue) }
+            else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
+        }
+    }
+    
+    public subscript(index: Int) -> Float64? {
+        get {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return nil }
+            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return nil }
+            if isArray {
+                return element(at: index).float64
+            } else if isSequence {
+                return item(at: index).float64
+            } else {
+                fatalOrNull("Integer index subscript not supported on \(itemType)")
+                return nil
+            }
+        }
+        set {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
+            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
+            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
+            if isArray { element(at: index).float64 = newValue }
+            else if isSequence { _ = item(at: index).replaceWith(newValue) }
+            else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
+        }
+    }
+    
+    public subscript(index: Int) -> String? {
+        get {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return nil }
+            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return nil }
+            if isArray {
+                return element(at: index).string
+            } else if isSequence {
+                return item(at: index).string
+            } else {
+                fatalOrNull("Integer index subscript not supported on \(itemType)")
+                return nil
+            }
+        }
+        set {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
+            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
+            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
+            if isArray { element(at: index).string = newValue }
+            else if isSequence { _ = item(at: index).replaceWith(newValue) }
+            else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
+        }
+    }
+    
+    public subscript(index: Int) -> Data? {
+        get {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return nil }
+            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return nil }
+            if isArray {
+                return element(at: index).binary
+            } else if isSequence {
+                return item(at: index).binary
+            } else {
+                fatalOrNull("Integer index subscript not supported on \(itemType)")
+                return nil
+            }
+        }
+        set {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
+            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
+            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
+            if isArray { element(at: index).binary = newValue }
+            else if isSequence { _ = item(at: index).replaceWith(newValue) }
+            else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
+        }
+    }
+    
     
     /// Adds a new bool value to the end of the array.
     ///
@@ -82,65 +350,68 @@ public extension Portal {
     /// - Returns: success or an error indicator.
     
     @discardableResult
-    private func _append(_ value: Coder) -> Result {
+    private func _append(_ value: Coder, with name: String? = nil) -> Result {
         
+        guard isValid else { return .portalInvalid }
         
-        // Prevent errors
+        if isArray {
+            
+            guard elementType == value.brbonType else { return .typeConflict }
+            
+            
+            // Ensure that the element byte count is sufficient
+            
+            let result = ensureElementByteCount(for: value)
+            guard result == .success else { return result }
+            
+            
+            // The new value can be added
+            
+            if value.brbonType.isContainer {
+                value.storeAsItem(atPtr: elementPtr(for: countValue), bufferPtr: manager.bufferPtr, parentPtr: itemPtr, nameField: nil, valueByteCount: nil, endianness)
+            } else {
+                value.storeAsElement(atPtr: elementPtr(for: countValue), endianness)
+            }
+            
+            
+            // Increase child counter
+            
+            countValue += 1
+            
+            return .success
         
-        guard isArray else { return .onlySupportedOnArray }
-        guard elementType == value.brbonType else { return .typeConflict }
-        
-        
-        // Ensure that the element byte count is sufficient
-        
-        let result = ensureElementByteCount(for: value)
-        guard result == .success else { return result }
-        
-
-        // The new value can be added
-        
-        if value.brbonType.isContainer {
-            value.storeAsItem(atPtr: elementPtr(for: countValue), bufferPtr: (manager?.bufferPtr ?? elementPtr(for: countValue)), parentPtr: itemPtr, nameField: nil, valueByteCount: nil, endianness)
+        } else if isSequence {
+            
+            
+            // Ensure that there is enough space available
+            
+            let nfd: NameFieldDescriptor? = {
+                guard let name = name else { return nil }
+                return NameFieldDescriptor(name)
+            }()
+            
+            let newItemByteCount = value.itemByteCount(nfd)
+                        
+            if valueByteCount - usedValueByteCount < newItemByteCount {
+                let result = increaseItemByteCount(to: minimumItemByteCount + usedValueByteCount + newItemByteCount)
+                guard result == .success else { return result }
+            }
+            
+            value.storeAsItem(atPtr: afterLastItemPtr, bufferPtr: manager.bufferPtr, parentPtr: itemPtr, nameField: nfd, valueByteCount: nil, endianness)
+            
+            countValue += 1
+            
+            return .success
+            
         } else {
-            value.storeAsElement(atPtr: elementPtr(for: countValue), endianness)
+            fatalOrNull("Append operation not valid on \(itemType)")
+            return .operationNotSupported
         }
-        
-        
-        // Increase child counter
-        
-        countValue += 1
-        
-        
-        return .success
     }
     
     
     @discardableResult
-    public func append(_ value: Bool) -> Result { return _append(value) }
-    @discardableResult
-    public func append(_ value: UInt8) -> Result { return _append(value) }
-    @discardableResult
-    public func append(_ value: UInt16) -> Result { return _append(value) }
-    @discardableResult
-    public func append(_ value: UInt32) -> Result { return _append(value) }
-    @discardableResult
-    public func append(_ value: UInt64) -> Result { return _append(value) }
-    @discardableResult
-    public func append(_ value: Int8) -> Result { return _append(value) }
-    @discardableResult
-    public func append(_ value: Int16) -> Result { return _append(value) }
-    @discardableResult
-    public func append(_ value: Int32) -> Result { return _append(value) }
-    @discardableResult
-    public func append(_ value: Int64) -> Result { return _append(value) }
-    @discardableResult
-    public func append(_ value: Float32) -> Result { return _append(value) }
-    @discardableResult
-    public func append(_ value: Float64) -> Result { return _append(value) }
-    @discardableResult
-    public func append(_ value: String) -> Result { return _append(value) }
-    @discardableResult
-    public func append(_ value: Data) -> Result { return _append(value) }
+    public func append(_ value: IsBrbon) -> Result { return _append(value as! Coder) }
     @discardableResult
     public func append(_ value: Array<Bool>) -> Result { return _append(BrbonArray(content: value, type: .bool)) }
     @discardableResult
@@ -181,17 +452,52 @@ public extension Portal {
     
     @discardableResult
     public func remove(at index: Int) -> Result {
-        guard isArray else { return .onlySupportedOnArray }
-        guard index >= 0 else { return .indexBelowLowerBound }
-        guard index < countValue else { return .indexAboveHigherBound }
-        let srcPtr = elementPtr(for: index + 1)
-        let dstPtr = elementPtr(for: index)
-        let len = (countValue - 1 - index) * elementByteCount
-        moveBlock(dstPtr, srcPtr, len)
-        countValue -= 1
-        let key = PortalKey(itemPtr: itemPtr, index: countValue)
-        manager?.activePortals.removePortal(for: key)
-        return .success
+        
+        guard isValid else { fatalOrNull("Portal is invalid"); return .portalInvalid }
+        
+        guard index >= 0 else { fatalOrNull("Index (\(index)) below zero"); return .indexBelowLowerBound }
+        guard index < countValue else { fatalOrNull("Index (\(index)) above high bound (\(countValue))"); return .indexAboveHigherBound }
+
+        if isArray {
+            
+            let srcPtr = elementPtr(for: index + 1)
+            let dstPtr = elementPtr(for: index)
+            let len = (countValue - 1 - index) * elementByteCount
+            
+            moveBlock(dstPtr, srcPtr, len)
+            
+            countValue -= 1
+            
+            let key = PortalKey(itemPtr: itemPtr, index: countValue)
+            manager.activePortals.removePortal(for: key)
+            
+            return .success
+        
+        } else if isSequence {
+            
+            let itm = item(at: index)
+            let aliPtr = afterLastItemPtr
+                
+            let srcPtr = itm.itemPtr.advanced(by: itm.itemByteCount)
+            let dstPtr = itm.itemPtr
+            let len = srcPtr.distance(to: aliPtr)
+                
+            manager.activePortals.removePortal(for: itm.key)
+            
+            if len > 0 {
+                manager.activePortals.updatePointers(atAndAbove: dstPtr, below: aliPtr, toNewBase: srcPtr)
+                moveBlock(dstPtr, srcPtr, len)
+            }
+            
+            countValue -= 1
+
+            return .success
+            
+        } else {
+            
+            fatalOrNull("remove(int) not supported on \(itemPtr)")
+            return .operationNotSupported
+        }
     }
 
     
@@ -206,6 +512,8 @@ public extension Portal {
     @discardableResult
     private func _createNewElements(_ value: Coder, _ amount: Int) -> Result {
         
+        guard isValid else { fatalOrNull("Portal is invalid"); return .portalInvalid }
+
         guard isArray else { return .onlySupportedOnArray }
         guard amount > 0 else { return .success }
         

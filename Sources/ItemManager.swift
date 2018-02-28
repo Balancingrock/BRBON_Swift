@@ -75,7 +75,7 @@ internal struct ActivePortals {
     /// Execute the given closure on each portal
     
     func forEachPortal(_ closure: @escaping (Portal) -> ()) {
-        dict.forEach() { closure($0.value.portal) }
+        dict.forEach() { closure($0.value) }
     }
 }
 
@@ -95,7 +95,7 @@ public final class ItemManager {
     
     /// The root item (top most item in the buffer)
     
-    public let root: Portal
+    public private(set) var root: Portal!
     
     
     /// The number of bytes used by the root item (equal to all bytes that are used in the buffer)
@@ -163,8 +163,7 @@ public final class ItemManager {
 
         value.storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: itemValueByteCount, endianness)
         
-        self.root = Portal(itemPtr: bufferPtr, manager: nil, endianness: endianness)
-        self.root.manager = self
+        self.root = Portal(itemPtr: bufferPtr, manager: self, endianness: endianness)
     }
 
     
@@ -294,8 +293,7 @@ public final class ItemManager {
         case .sequence: break
         }
         
-        self.root = Portal(itemPtr: bufferPtr, manager: nil, endianness: endianness)
-        self.root.manager = self
+        self.root = Portal(itemPtr: bufferPtr, manager: self, endianness: endianness)
     }
     
     

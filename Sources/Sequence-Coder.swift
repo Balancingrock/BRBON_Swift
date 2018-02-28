@@ -9,7 +9,27 @@
 import Foundation
 import BRUtils
 
-internal class Sequence: Coder {
+internal class BrbonSequence: Coder {
+    
+    
+    init(array: Array<IsBrbon>? = nil, dict: Dictionary<String, IsBrbon>? = nil) {
+        if let content = array {
+            self.aContent = (content as! Array<Coder>)
+        } else {
+            self.aContent = nil
+        }
+        if let content = dict {
+            self.dContent = (content as! Dictionary<String, Coder>)
+        } else {
+            self.dContent = nil
+        }
+    }
+
+    
+    // The content of this dictionary
+    
+    let aContent: Array<Coder>?
+    let dContent: Dictionary<String, Coder>?
     
     
     /// The BRBON Item type of the item this value will be stored into.
@@ -19,9 +39,23 @@ internal class Sequence: Coder {
     
     /// The number of bytes needed to encode self into an BrbonBytes stream
     
-    var valueByteCount: Int { return 0 }
+    var valueByteCount: Int {
+        var count = 0
+        if let content = aContent {
+            for e in content {
+                count += e.itemByteCount(nil)
+            }
+        }
+        if let content = dContent {
+            for (key, value) in content {
+                guard let nfd = NameFieldDescriptor(key) else { return 0 }
+                count += value.itemByteCount(nfd)
+            }
+        }
+        return count
+    }
     
-    func itemByteCount(_ nfd: NameFieldDescriptor?) -> Int {
+    func itemByteCount(_ nfd: NameFieldDescriptor? = nil) -> Int {
         return minimumItemByteCount + (nfd?.byteCount ?? 0) + valueByteCount
     }
     
@@ -42,9 +76,9 @@ internal class Sequence: Coder {
     }
     
     
-    /// Create an array item of the contents of this array.
+    /// Create a dictionary item of the contents of this dictionary.
     ///
-    /// - Note: The array may not be empty!
+    /// - Note: All keys must be of the type String.
     
     @discardableResult
     func storeAsItem(
@@ -54,15 +88,15 @@ internal class Sequence: Coder {
         nameField nfd: NameFieldDescriptor? = nil,
         valueByteCount: Int? = nil,
         _ endianness: Endianness) -> Result {
-
+        
         
         // Determine size of the value field
         // =================================
         
-        var itemBC = itemByteCount(nfd)
-        
         let nameFieldByteCount = nfd?.byteCount ?? 0
-
+        
+        let usedValueByteCount: Int
+        
         if let valueByteCount = valueByteCount {
             
             
@@ -71,51 +105,73 @@ internal class Sequence: Coder {
             guard valueByteCount <= Int(Int32.max) else { return .valueByteCountTooLarge }
             
             
-            // If specified, the fixed item length must at least be large enough for the name field
+            // If specified, the fixed item length must be large enough (add the 8 overhead bytes as that is unknown to the API user)
             
-            guard valueByteCount < itemBC else { return .valueByteCountTooSmall }
+            guard valueByteCount >= self.valueByteCount else { return .valueByteCountTooSmall }
             
             
-            // Make the itemLength the fixed item length, but ensure that it is a multiple of 8 bytes.
+            // Use the fixed value byte count, but ensure that it is a multiple of 8 bytes.
             
-            itemBC = valueByteCount.roundUpToNearestMultipleOf8()
+            usedValueByteCount = valueByteCount.roundUpToNearestMultipleOf8()
+            
+        } else {
+            
+            usedValueByteCount = self.valueByteCount
         }
         
+        let itemBC = (minimumItemByteCount + nameFieldByteCount + usedValueByteCount).roundUpToNearestMultipleOf8()
         
-        // Create the array structure
         
-        var p = atPtr
+        // Create the sequence structure
         
-        ItemType.sequence.storeValue(atPtr: p)
-        p = p.advanced(by: 1)
+        ItemType.sequence.storeValue(atPtr: atPtr.brbonItemTypePtr)
         
-        ItemOptions.none.storeValue(atPtr: p)
-        p = p.advanced(by: 1)
+        ItemOptions.none.storeValue(atPtr: atPtr.brbonItemOptionsPtr)
         
-        ItemFlags.none.storeValue(atPtr: p)
-        p = p.advanced(by: 1)
+        ItemFlags.none.storeValue(atPtr: atPtr.brbonItemFlagsPtr)
         
-        UInt8(nfd?.byteCount ?? 0).storeValue(atPtr: p, endianness)
-        p = p.advanced(by: 1)
+        UInt8(nameFieldByteCount).storeValue(atPtr: atPtr.brbonItemNameFieldByteCountPtr, endianness)
         
-        UInt32(itemBC).storeValue(atPtr: p, endianness)
-        p = p.advanced(by: 4)
+        UInt32(itemBC).storeValue(atPtr: atPtr.brbonItemByteCountPtr, endianness)
         
-        UInt32(bufferPtr.distance(to: parentPtr)).storeValue(atPtr: p, endianness)
-        p = p.advanced(by: 4)
+        UInt32(bufferPtr.distance(to: parentPtr)).storeValue(atPtr: atPtr.brbonItemParentOffsetPtr, endianness)
         
-        UInt32(0).storeValue(atPtr: p, endianness)
-        p = p.advanced(by: 4)
+        UInt32((aContent?.count ?? 0) + (dContent?.count ?? 0)).storeValue(atPtr: atPtr.brbonItemCountValuePtr, endianness)
         
-        nfd?.storeValue(atPtr: p, endianness)
-        p = p.advanced(by: (nfd?.byteCount ?? 0))
+        nfd?.storeValue(atPtr: atPtr.brbonItemNameFieldPtr, endianness)
+        
+        
+        // Add the items
+        
+        var ptr = atPtr.brbonItemValuePtr
+        
+        
+        // Array items first
+        
+        if let content = aContent {
+            content.forEach({
+                $0.storeAsItem(atPtr: ptr, bufferPtr: bufferPtr, parentPtr: atPtr, nameField: nil, valueByteCount: nil, endianness)
+                ptr = ptr.advanced(by: $0.itemByteCount(nil))
+            })
+        }
+
+        
+        // Dictionary items second
+        
+        if let content = dContent {
+            for (key, value) in content {
+                guard let knfd = NameFieldDescriptor(key) else { return .nameFieldError }
+                value.storeAsItem(atPtr: ptr, bufferPtr: bufferPtr, parentPtr: atPtr, nameField: knfd, valueByteCount: nil, endianness)
+                ptr = ptr.advanced(by: value.itemByteCount(knfd))
+            }
+        }
         
         
         // Filler
         
-        let remainder = itemBC - atPtr.distance(to: p)
+        let remainder = itemBC - atPtr.distance(to: ptr)
         if remainder > 0 {
-            Data(count: remainder).storeValue(atPtr: p, endianness)
+            Data(count: remainder).storeValue(atPtr: ptr, endianness)
         }
         
         

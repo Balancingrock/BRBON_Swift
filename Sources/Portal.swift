@@ -45,7 +45,7 @@ public final class Portal {
 
     var endianness: Endianness
     
-    weak var manager: ItemManager?
+    weak var manager: ItemManager!
     
     var isValid: Bool
     
@@ -53,7 +53,7 @@ public final class Portal {
     
     var refCount = 0;
     
-    init(itemPtr: UnsafeMutableRawPointer, index: Int? = nil, manager: ItemManager?, endianness: Endianness) {
+    init(itemPtr: UnsafeMutableRawPointer, index: Int? = nil, manager: ItemManager, endianness: Endianness) {
         self.itemPtr = itemPtr
         self.endianness = endianness
         self.manager = manager
@@ -177,8 +177,8 @@ extension Portal: Equatable {
                 
                 // Test the elements
                 for index in 0 ..< lhs.countValue {
-                    let lPortal = Portal(itemPtr: lhs.itemPtr, index: index, manager: nil, endianness: lhs.endianness)
-                    let rPortal = Portal(itemPtr: rhs.itemPtr, index: index, manager: nil, endianness: rhs.endianness)
+                    let lPortal = Portal(itemPtr: lhs.itemPtr, index: index, manager: lhs.manager, endianness: lhs.endianness)
+                    let rPortal = Portal(itemPtr: rhs.itemPtr, index: index, manager: rhs.manager, endianness: rhs.endianness)
                     if lPortal != rPortal { return false }
                 }
                 return true
@@ -197,7 +197,13 @@ extension Portal: Equatable {
                 return result
                 
             case .sequence:
-                fatalError("sequence compare not yet implemented")
+
+                for index in 0 ..< lhs.countValue {
+                    let lPortal = Portal(itemPtr: lhs.itemPtr, index: index, manager: lhs.manager, endianness: lhs.endianness)
+                    let rPortal = Portal(itemPtr: rhs.itemPtr, index: index, manager: rhs.manager, endianness: rhs.endianness)
+                    if lPortal != rPortal { return false }
+                }
+                return true
             }
             
         } else {
@@ -220,13 +226,11 @@ extension Portal: Equatable {
             case .string: return lhs.string == rhs.string
             case .binary: return lhs.binary == rhs.binary
             case .array, .dictionary, .sequence:
-                let lPortal = Portal(itemPtr: lhs.elementPtr(for: lhs.index!), index: nil, manager: nil, endianness: lhs.endianness)
-                let rPortal = Portal(itemPtr: rhs.elementPtr(for: rhs.index!), index: nil, manager: nil, endianness: rhs.endianness)
+                let lPortal = Portal(itemPtr: lhs.elementPtr(for: lhs.index!), index: nil, manager: lhs.manager, endianness: lhs.endianness)
+                let rPortal = Portal(itemPtr: rhs.elementPtr(for: rhs.index!), index: nil, manager: rhs.manager, endianness: rhs.endianness)
                 return lPortal == rPortal
             }
         }
-        
-        return true
     }
 }
 
@@ -549,7 +553,7 @@ extension Portal {
                     
                     // Update active pointers
                     
-                    manager?.activePortals.updatePointers(atAndAbove: srcPtr, below: dstPtr.advanced(by: len), toNewBase: dstPtr)
+                    manager.activePortals.updatePointers(atAndAbove: srcPtr, below: dstPtr.advanced(by: len), toNewBase: dstPtr)
                 }
                 
                 
@@ -560,8 +564,29 @@ extension Portal {
                 
                 return .success
                 
+            } else if parent.isSequence {
+
+                // Check if the byte count of the parent must be grown
+                
+                let necessaryParentItemByteCount = minimumItemByteCount + parent.nameFieldByteCount + parent.valueByteCount + newByteCount
+                
+                if parent.itemByteCount < necessaryParentItemByteCount {
+                    
+                    let result = parent.increaseItemByteCount(to: necessaryParentItemByteCount)
+                    guard result == .success else { return result }
+                }
+                
+                
+                // Increase the byte count of self
+                
+                itemByteCount = newByteCount
+
+                
+                return .success
+            
             } else {
-                fatalError("item value byte count expansion for sequences not yet implemented")
+                
+                return .outOfStorage
             }
             
         } else {
@@ -613,7 +638,7 @@ extension Portal {
             let dstPtr = elementBasePtr.advanced(by: index * newByteCount)
             let srcPtr = elementBasePtr.advanced(by: index * oldByteCount)
             moveBlock(dstPtr, srcPtr, oldByteCount)
-            manager?.activePortals.updatePointers(atAndAbove: srcPtr, below: dstPtr, toNewBase: dstPtr)
+            manager.activePortals.updatePointers(atAndAbove: srcPtr, below: dstPtr, toNewBase: dstPtr)
         }
         
         elementByteCount = newByteCount
@@ -626,12 +651,17 @@ extension Portal {
 extension Portal {
 
     
+    /// Returns a pointer to the parent item. If there is no parent item, it returns a pointer to self (itemPtr)
+    
+    internal var parentPtr: UnsafeMutableRawPointer {
+        return manager.bufferPtr.advanced(by: parentOffset)
+    }
+    
     
     /// Returns the parent as a new portal
     
     internal var parentPortal: Portal? {
         guard let manager = manager else { return nil }
-        let parentPtr = manager.bufferPtr.advanced(by: parentOffset)
         if parentPtr == itemPtr { return nil }
         return Portal(itemPtr: parentPtr, index: nil, manager: manager, endianness: endianness)
     }
@@ -648,20 +678,36 @@ extension Portal {
     }
     
     
-    /// Get an element from an array as a portal.
+    /// Get an element from an array or an item from a sequence as a portal.
     ///
     /// - Parameter index: The index of the element to retrieve.
     /// - Returns: A portal for the requested element, or the null-portal if the element does not exist
     
     internal func element(at index: Int) -> Portal {
-        guard isArray else { return fatalOrNull("Int subscript access on non-array") }
-        guard index >= 0 else { return fatalOrNull("Index below zero") }
-        guard index < countValue else { return fatalOrNull("Index out of upper limit") }
+        
         if elementType!.isContainer {
             return Portal(itemPtr: elementPtr(for: index), index: nil, manager: manager, endianness: endianness)
         } else {
             return Portal(itemPtr: itemPtr, index: index, manager: manager, endianness: endianness)
         }
+    }
+    
+    internal func item(at index: Int) -> Portal {
+        
+        var ptr = itemPtr.brbonItemValuePtr
+        var c = 0
+        while c < countValue {
+            ptr = nextItemPtr(after: ptr)
+            c += 1
+        }
+        return Portal(itemPtr: ptr, manager: manager, endianness: endianness)
+    }
+    
+    
+    /// Returns a pointer to the item after the given pointer. The given pointer mst point to he first byte of an item.
+    
+    internal func nextItemPtr(after ptr: UnsafeMutableRawPointer) -> UnsafeMutableRawPointer {
+        return ptr.advanced(by: Int(UInt32(valuePtr: ptr.brbonItemByteCountPtr, endianness)))
     }
     
     
@@ -721,7 +767,9 @@ extension Portal {
     /// - Parameter closure: The closure that is called for each item in the dictionary. If the closure returns true then the processing of further items is aborted. Note that the portals passed to the closure are not registered with the active portals in the ItemManager
     
     internal func forEachAbortOnTrue(_ closure: (Portal) -> Bool) {
+        
         if isArray {
+            
             let nofChildren = countValue
             var index = 0
             while index < nofChildren {
@@ -730,8 +778,9 @@ extension Portal {
                 index += 1
             }
             return
-        }
-        if isDictionary {
+            
+        } else if isDictionary || isSequence {
+            
             var aPtr = itemPtr.brbonItemValuePtr
             var remainder = countValue
             while remainder > 0 {
@@ -751,7 +800,7 @@ extension Portal {
 extension Portal {
     
     public var portal: Portal {
-        return manager?.getPortal(for: itemPtr, index: index) ?? Portal.nullPortal
+        return manager.getPortal(for: itemPtr, index: index)
     }
     
     public var isNull: Bool {

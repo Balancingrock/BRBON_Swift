@@ -11,7 +11,10 @@ import Foundation
 public extension Portal {
     
     public subscript(key: String) -> Portal {
-        get { return findItem(for: key) }
+        get {
+            guard isValid, (isDictionary || isSequence) else { return Portal.nullPortal }
+            return findItem(for: key)
+        }
     }
     
     public subscript(key: String) -> Bool? { get { return getHelper(key).bool } set { setHelper(key, newValue) } }
@@ -186,7 +189,7 @@ public extension Portal {
         if aliPtr == item.itemPtr.advanced(by: item.itemByteCount) {
 
             // Update the active portals list (remove deleted item)
-            manager?.activePortals.removePortal(for: item.key)
+            manager.activePortals.removePortal(for: item.key)
 
         } else {
         
@@ -199,8 +202,8 @@ public extension Portal {
             moveBlock(dstPtr, srcPtr, len)
             
             // Update the active portals list
-            manager?.activePortals.removePortal(for: item.key)
-            manager?.activePortals.updatePointers(atAndAbove: srcPtr, below: aliPtr, toNewBase: dstPtr)
+            manager.activePortals.removePortal(for: item.key)
+            manager.activePortals.updatePointers(atAndAbove: srcPtr, below: aliPtr, toNewBase: dstPtr)
         }
         
         countValue -= 1
