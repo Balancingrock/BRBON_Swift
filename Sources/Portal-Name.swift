@@ -191,7 +191,8 @@ public extension Portal {
     @discardableResult
     internal func _updateValue(_ value: Coder?, forName name: String) -> Result {
         
-        guard isDictionary || isSequence else { return .operationNotSupported }
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return .portalInvalid }
+        guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return .operationNotSupported }
         
         guard let nfd = NameFieldDescriptor(name), nfd.data != nil else { return .illegalNameField }
 
@@ -273,31 +274,7 @@ public extension Portal {
     }
     
     @discardableResult
-    public func updateValue(_ value: Bool?, forName name: String) -> Result { return _updateValue(value, forName: name) }
-    @discardableResult
-    public func updateValue(_ value: Int8?, forName name: String) -> Result { return _updateValue(value, forName: name) }
-    @discardableResult
-    public func updateValue(_ value: Int16?, forName name: String) -> Result { return _updateValue(value, forName: name) }
-    @discardableResult
-    public func updateValue(_ value: Int32?, forName name: String) -> Result { return _updateValue(value, forName: name) }
-    @discardableResult
-    public func updateValue(_ value: Int64?, forName name: String) -> Result { return _updateValue(value, forName: name) }
-    @discardableResult
-    public func updateValue(_ value: UInt8?, forName name: String) -> Result { return _updateValue(value, forName: name) }
-    @discardableResult
-    public func updateValue(_ value: UInt16?, forName name: String) -> Result { return _updateValue(value, forName: name) }
-    @discardableResult
-    public func updateValue(_ value: UInt32?, forName name: String) -> Result { return _updateValue(value, forName: name) }
-    @discardableResult
-    public func updateValue(_ value: UInt64?, forName name: String) -> Result { return _updateValue(value, forName: name) }
-    @discardableResult
-    public func updateValue(_ value: Float32?, forName name: String) -> Result { return _updateValue(value, forName: name) }
-    @discardableResult
-    public func updateValue(_ value: Float64?, forName name: String) -> Result { return _updateValue(value, forName: name) }
-    @discardableResult
-    public func updateValue(_ value: String?, forName name: String) -> Result { return _updateValue(value, forName: name) }
-    @discardableResult
-    public func updateValue(_ value: Data?, forName name: String) -> Result { return _updateValue(value, forName: name) }
+    public func updateValue(_ value: IsBrbon?, forName name: String) -> Result { return _updateValue(value as? Coder, forName: name) }
     
     
     /// Removes an item with the given name from the dictionary or all items wit hthe given name from a sequence.
@@ -309,7 +286,8 @@ public extension Portal {
     @discardableResult
     public func removeValue(forName name: String) -> Result {
 
-        guard isDictionary || isSequence else { return .operationNotSupported }
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return .portalInvalid }
+        guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return .operationNotSupported }
         
         var item = findItem(forName: name)
         

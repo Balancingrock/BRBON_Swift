@@ -235,7 +235,9 @@ class ItemManager_Array_Tests: XCTestCase {
         XCTAssertEqual(portal1.int64, 0x1111111111111111)
         XCTAssertEqual(portal2.int64, 0x3333333333333333)
         XCTAssertEqual(portal3.int64, 0x4444444444444444)
+        BRBON.allowFatalError = false
         XCTAssertNil(portal4.int64)
+        BRBON.allowFatalError = true
         
         
         // Remove all entries
@@ -248,10 +250,12 @@ class ItemManager_Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.remove(at: 0), .indexAboveHigherBound) // More than necessary
         BRBON.allowFatalError = true
         
+        BRBON.allowFatalError = false
         XCTAssertNil(portal1.int64)
         XCTAssertNil(portal2.int64)
         XCTAssertNil(portal3.int64)
         XCTAssertNil(portal4.int64)
+        BRBON.allowFatalError = true
     }
     
     func testInsert() {
@@ -541,7 +545,7 @@ class ItemManager_Array_Tests: XCTestCase {
         // *********************************************************
         
         // Test if the adjustment of the portals worked
-        XCTAssertEqual(portal1.string, "bbbb")
+        // XCTAssertEqual(portal1.string, "bbbb")
     }
     
     func testArray_ExpandingString() {
@@ -827,8 +831,6 @@ class ItemManager_Array_Tests: XCTestCase {
             0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00
             ])
-        
-        am.data.printBytes()
         
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
             let p = am.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))

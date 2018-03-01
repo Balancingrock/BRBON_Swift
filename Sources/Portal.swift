@@ -20,6 +20,7 @@ import BRUtils
 /// It is recommened to set this to 'true' during develeopment and testing. Depending on the application, you may consider setting this to 'false' on the shipping application.
 
 public var allowFatalError = true
+public var allowFatalOnTypeChange = true
 
 
 @discardableResult
@@ -27,6 +28,11 @@ internal func fatalOrNull(_ message: String = "") -> Portal {
     if allowFatalError { fatalError(message) }
     return Portal.nullPortal
 }
+
+internal func fatalOnTypeChange() {
+    if allowFatalOnTypeChange { fatalError("Type change not allowed") }
+}
+
 
 internal struct PortalKey: Equatable, Hashable {
     let itemPtr: UnsafeMutableRawPointer
@@ -83,6 +89,8 @@ public final class Portal {
     
     
     // Derived values
+    
+    var isElement: Bool { return index != nil }
     
     var key: PortalKey { return PortalKey(itemPtr: itemPtr, index: index) }
     
@@ -696,7 +704,7 @@ extension Portal {
         
         var ptr = itemPtr.brbonItemValuePtr
         var c = 0
-        while c < countValue {
+        while c < index {
             ptr = nextItemPtr(after: ptr)
             c += 1
         }
@@ -816,155 +824,163 @@ extension Portal {
 extension Portal {
     
     public var portal: Portal {
+        guard isValid else { return fatalOrNull("Portal is no longer valid") }
         return manager.getPortal(for: itemPtr, index: index)
     }
     
     public var isNull: Bool {
-        guard isValid else { return false }
-        return (index == nil) ?
-            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.null.rawValue
-            :
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        return isElement ?
             itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.null.rawValue
+            :
+            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.null.rawValue
     }
     
     public var isBool: Bool {
-        guard isValid else { return false }
-        return (index == nil) ?
-            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.bool.rawValue
-            :
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        return isElement ?
             itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.bool.rawValue
-
+            :
+            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.bool.rawValue
     }
     
     public var isUInt8: Bool {
-        guard isValid else { return false }
-        return (index == nil) ?
-            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint8.rawValue
-            :
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        return isElement ?
             itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint8.rawValue
+            :
+            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint8.rawValue
     }
     
     public var isUInt16: Bool {
-        guard isValid else { return false }
-        return (index == nil) ?
-            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint16.rawValue
-            :
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        return isElement ?
             itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint16.rawValue
+            :
+            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint16.rawValue
     }
     
     public var isUInt32: Bool {
-        guard isValid else { return false }
-        return (index == nil) ?
-            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint32.rawValue
-            :
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        return isElement ?
             itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint32.rawValue
+            :
+            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint32.rawValue
     }
     
     public var isUInt64: Bool {
-        guard isValid else { return false }
-        return (index == nil) ?
-            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint64.rawValue
-            :
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        return isElement ?
             itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint64.rawValue
+            :
+            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint64.rawValue
     }
     
     public var isInt8: Bool {
-        guard isValid else { return false }
-        return (index == nil) ?
-            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int8.rawValue
-            :
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        return isElement ?
             itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int8.rawValue
+            :
+            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int8.rawValue
     }
     
     public var isInt16: Bool {
-        guard isValid else { return false }
-        return (index == nil) ?
-            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int16.rawValue
-            :
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        return isElement ?
             itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int16.rawValue
+            :
+            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int16.rawValue
     }
     
     public var isInt32: Bool {
-        guard isValid else { return false }
-        return (index == nil) ?
-            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int32.rawValue
-            :
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        return isElement ?
             itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int32.rawValue
+            :
+            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int32.rawValue
     }
     
     public var isInt64: Bool {
-        guard isValid else { return false }
-        return (index == nil) ?
-            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int64.rawValue
-            :
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        return isElement ?
             itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int64.rawValue
+            :
+            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int64.rawValue
     }
     
     public var isFloat32: Bool {
-        guard isValid else { return false }
-        return (index == nil) ?
-            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.float32.rawValue
-            :
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        return isElement ?
             itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.float32.rawValue
+            :
+            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.float32.rawValue
     }
     
     public var isFloat64: Bool {
-        guard isValid else { return false }
-        return (index == nil) ?
-            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.float64.rawValue
-            :
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        return isElement ?
             itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.float64.rawValue
+            :
+            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.float64.rawValue
     }
     
     public var isString: Bool {
-        guard isValid else { return false }
-        return (index == nil) ?
-            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.string.rawValue
-            :
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        return isElement ?
             itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.string.rawValue
+            :
+            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.string.rawValue
     }
     
     public var isBinary: Bool {
-        guard isValid else { return false }
-        return (index == nil) ?
-            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.binary.rawValue
-            :
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        return isElement ?
             itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.binary.rawValue
+            :
+        itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.binary.rawValue
     }
     
     public var isArray: Bool {
-        guard isValid else { return false }
-        return (index == nil) ?
-            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.array.rawValue
-            :
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        return isElement ?
             itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.array.rawValue
+            :
+            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.array.rawValue
     }
     
     public var isDictionary: Bool {
-        guard isValid else { return false }
-        return (index == nil) ?
-            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.dictionary.rawValue
-            :
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        return isElement ?
             itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.dictionary.rawValue
+            :
+            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.dictionary.rawValue
     }
     
     public var isSequence: Bool {
-        guard isValid else { return false }
-        return (index == nil) ?
-            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.sequence.rawValue
-            :
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        return isElement ?
             itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.sequence.rawValue
+            :
+            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.sequence.rawValue
     }
     
     
     public var null: Bool? {
-        get { return isNull ? true : nil }
-        set { return }
+        get {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            return isNull ? true : nil
+        }
+        set {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
+            if isElement { return }
+            changeSelfToNull()
+        }
     }
     
     public var bool: Bool? {
         get {
-            guard isValid, isBool else { return nil }
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard isBool else { fatalOrNull("Attempt to access \(itemType) as a bool"); return nil }
             if let index = index {
                 return Bool(elementPtr: elementPtr(for: index), endianness)
             } else {
@@ -972,17 +988,23 @@ extension Portal {
             }
         }
         set {
-            guard isValid else { return }
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
             if let index = index {
-                guard isBool else { return }
+                guard isBool else {
+                    fatalOrNull("Element type change not allowed (is: \(itemType))")
+                    return
+                }
                 newValue?.storeAsElement(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
-                    if isNull { itemType = .bool }
-                    guard isBool else { return }
+                    if !isBool && !isNull {
+                        fatalOnTypeChange()
+                        changeSelfToNull()
+                    }
+                    itemType = .bool
                     newValue.storeValue(atPtr: itemPtr.brbonItemCountValuePtr, endianness)
                 } else {
-                    if isBool { itemType = .null }
+                    changeSelfToNull()
                 }
             }
         }
@@ -990,7 +1012,8 @@ extension Portal {
     
     public var uint8: UInt8? {
         get {
-            guard isValid, isUInt8 else { return nil }
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard isUInt8 else { fatalOrNull("Attempt to access \(itemType) as a UInt8"); return nil }
             if let index = index {
                 return UInt8(elementPtr: elementPtr(for: index), endianness)
             } else {
@@ -998,17 +1021,23 @@ extension Portal {
             }
         }
         set {
-            guard isValid else { return }
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
             if let index = index {
-                guard isUInt8 else { return }
+                guard isUInt8 else {
+                    fatalOrNull("Element type change not allowed (is: \(itemType))")
+                    return
+                }
                 newValue?.storeAsElement(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
-                    if isNull { itemType = .uint8 }
-                    guard isUInt8 else { return }
+                    if !isUInt8 && !isNull {
+                        fatalOnTypeChange()
+                        changeSelfToNull()
+                    }
+                    itemType = .uint8
                     newValue.storeValue(atPtr: itemPtr.brbonItemCountValuePtr, endianness)
                 } else {
-                    if isUInt8 { itemType = .null }
+                    changeSelfToNull()
                 }
             }
         }
@@ -1016,7 +1045,8 @@ extension Portal {
     
     public var uint16: UInt16? {
         get {
-            guard isValid, isUInt16 else { return nil }
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard isUInt16 else { fatalOrNull("Attempt to access \(itemType) as a UInt16"); return nil }
             if let index = index {
                 return UInt16(elementPtr: elementPtr(for: index), endianness)
             } else {
@@ -1024,17 +1054,23 @@ extension Portal {
             }
         }
         set {
-            guard isValid else { return }
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
             if let index = index {
-                guard isUInt16 else { return }
+                guard isUInt16 else {
+                    fatalOrNull("Element type change not allowed (is: \(itemType))")
+                    return
+                }
                 newValue?.storeAsElement(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
-                    if isNull { itemType = .uint16 }
-                    guard isUInt16 else { return }
+                    if !isUInt16 && !isNull {
+                        fatalOnTypeChange()
+                        changeSelfToNull()
+                    }
+                    itemType = .uint16
                     newValue.storeValue(atPtr: itemPtr.brbonItemCountValuePtr, endianness)
                 } else {
-                    if isUInt16 { itemType = .null }
+                    changeSelfToNull()
                 }
             }
         }
@@ -1042,7 +1078,8 @@ extension Portal {
     
     public var uint32: UInt32? {
         get {
-            guard isValid, isUInt32 else { return nil }
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard isUInt32 else { fatalOrNull("Attempt to access \(itemType) as a UInt32"); return nil }
             if let index = index {
                 return UInt32(elementPtr: elementPtr(for: index), endianness)
             } else {
@@ -1050,17 +1087,23 @@ extension Portal {
             }
         }
         set {
-            guard isValid else { return }
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
             if let index = index {
-                guard isUInt32 else { return }
+                guard isUInt32 else {
+                    fatalOrNull("Element type change not allowed (is: \(itemType))")
+                    return
+                }
                 newValue?.storeAsElement(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
-                    if isNull { itemType = .uint32 }
-                    guard isUInt32 else { return }
+                    if !isUInt32 && !isNull {
+                        fatalOnTypeChange()
+                        changeSelfToNull()
+                    }
+                    itemType = .uint32
                     newValue.storeValue(atPtr: itemPtr.brbonItemCountValuePtr, endianness)
                 } else {
-                    if isUInt32 { itemType = .null }
+                    changeSelfToNull()
                 }
             }
         }
@@ -1068,7 +1111,8 @@ extension Portal {
     
     public var uint64: UInt64? {
         get {
-            guard isValid, isUInt64 else { return nil }
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard isUInt64 else { fatalOrNull("Attempt to access \(itemType) as a UInt64"); return nil }
             if let index = index {
                 return UInt64(elementPtr: elementPtr(for: index), endianness)
             } else {
@@ -1076,22 +1120,26 @@ extension Portal {
             }
         }
         set {
-            guard isValid else { return }
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
             if let index = index {
-                guard isUInt64 else { return }
+                guard isUInt64 else {
+                    fatalOrNull("Element type change not allowed (is: \(itemType))")
+                    return
+                }
                 newValue?.storeAsElement(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
-                    if isNull {
+                    if !isUInt64 {
+                        if !isNull {
+                            fatalOnTypeChange()
+                            changeSelfToNull()
+                        }
                         guard ensureValueByteCount(for: newValue.valueByteCount) == .success else { return }
-                        itemType = .uint64
                     }
-                    guard isUInt64 else { return }
+                    itemType = .uint64
                     newValue.storeValue(atPtr: itemPtr.brbonItemValuePtr, endianness)
                 } else {
-                    if isUInt64 {
-                        itemType = .null
-                    }
+                    changeSelfToNull()
                 }
             }
         }
@@ -1099,7 +1147,8 @@ extension Portal {
     
     public var int8: Int8? {
         get {
-            guard isValid, isInt8 else { return nil }
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard isInt8 else { fatalOrNull("Attempt to access \(itemType) as a Int8"); return nil }
             if let index = index {
                 return Int8(elementPtr: elementPtr(for: index), endianness)
             } else {
@@ -1107,17 +1156,23 @@ extension Portal {
             }
         }
         set {
-            guard isValid else { return }
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
             if let index = index {
-                guard isInt8 else { return }
+                guard isInt8 else {
+                    fatalOrNull("Element type change not allowed (is: \(itemType))")
+                    return
+                }
                 newValue?.storeAsElement(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
-                    if isNull { itemType = .int8 }
-                    guard isInt8 else { return }
+                    if !isInt8 && !isNull {
+                        fatalOnTypeChange()
+                        changeSelfToNull()
+                    }
+                    itemType = .int8
                     newValue.storeValue(atPtr: itemPtr.brbonItemCountValuePtr, endianness)
                 } else {
-                    if isInt8 { itemType = .null }
+                    changeSelfToNull()
                 }
             }
         }
@@ -1125,7 +1180,8 @@ extension Portal {
     
     public var int16: Int16? {
         get {
-            guard isValid, isInt16 else { return nil }
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard isInt16 else { fatalOrNull("Attempt to access \(itemType) as a Int16"); return nil }
             if let index = index {
                 return Int16(elementPtr: elementPtr(for: index), endianness)
             } else {
@@ -1133,17 +1189,23 @@ extension Portal {
             }
         }
         set {
-            guard isValid else { return }
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
             if let index = index {
-                guard isInt16 else { return }
+                guard isInt16 else {
+                    fatalOrNull("Element type change not allowed (is: \(itemType))")
+                    return
+                }
                 newValue?.storeAsElement(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
-                    if isNull { itemType = .int16 }
-                    guard isInt16 else { return }
+                    if !isInt16 && !isNull {
+                        fatalOnTypeChange()
+                        changeSelfToNull()
+                    }
+                    itemType = .int16
                     newValue.storeValue(atPtr: itemPtr.brbonItemCountValuePtr, endianness)
                 } else {
-                    if isInt16 { itemType = .null }
+                    changeSelfToNull()
                 }
             }
         }
@@ -1151,7 +1213,8 @@ extension Portal {
     
     public var int32: Int32? {
         get {
-            guard isValid, isInt32 else { return nil }
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard isInt32 else { fatalOrNull("Attempt to access \(itemType) as a Int32"); return nil }
             if let index = index {
                 return Int32(elementPtr: elementPtr(for: index), endianness)
             } else {
@@ -1159,17 +1222,23 @@ extension Portal {
             }
         }
         set {
-            guard isValid else { return }
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
             if let index = index {
-                guard isInt32 else { return }
+                guard isInt32 else {
+                    fatalOrNull("Element type change not allowed (is: \(itemType))")
+                    return
+                }
                 newValue?.storeAsElement(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
-                    if isNull { itemType = .int32 }
-                    guard isInt32 else { return }
+                    if !isInt32 && !isNull {
+                        fatalOnTypeChange()
+                        changeSelfToNull()
+                    }
+                    itemType = .int32
                     newValue.storeValue(atPtr: itemPtr.brbonItemCountValuePtr, endianness)
                 } else {
-                    if isInt32 { itemType = .null }
+                    changeSelfToNull()
                 }
             }
         }
@@ -1177,7 +1246,8 @@ extension Portal {
     
     public var int64: Int64? {
         get {
-            guard isValid, isInt64 else { return nil }
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard isInt64 else { fatalOrNull("Attempt to access \(itemType) as a Int64"); return nil }
             if let index = index {
                 return Int64(elementPtr: elementPtr(for: index), endianness)
             } else {
@@ -1185,22 +1255,26 @@ extension Portal {
             }
         }
         set {
-            guard isValid else { return }
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
             if let index = index {
-                guard isInt64 else { return }
+                guard isInt64 else {
+                    fatalOrNull("Element type change not allowed (is: \(itemType))")
+                    return
+                }
                 newValue?.storeAsElement(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
-                    if isNull {
+                    if !isInt64 {
+                        if !isNull {
+                            fatalOnTypeChange()
+                            changeSelfToNull()
+                        }
                         guard ensureValueByteCount(for: newValue.valueByteCount) == .success else { return }
-                        itemType = .int64
                     }
-                    guard isInt64 else { return }
+                    itemType = .int64
                     newValue.storeValue(atPtr: itemPtr.brbonItemValuePtr, endianness)
                 } else {
-                    if isInt64 {
-                        itemType = .null
-                    }
+                    changeSelfToNull()
                 }
             }
         }
@@ -1208,7 +1282,8 @@ extension Portal {
     
     public var float32: Float32? {
         get {
-            guard isValid, isFloat32 else { return nil }
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard isFloat32 else { fatalOrNull("Attempt to access \(itemType) as a Float32"); return nil }
             if let index = index {
                 return Float32(elementPtr: elementPtr(for: index), endianness)
             } else {
@@ -1216,17 +1291,23 @@ extension Portal {
             }
         }
         set {
-            guard isValid else { return }
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
             if let index = index {
-                guard isFloat32 else { return }
+                guard isFloat32 else {
+                    fatalOrNull("Element type change not allowed (is: \(itemType))")
+                    return
+                }
                 newValue?.storeAsElement(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
-                    if isNull { itemType = .float32 }
-                    guard isFloat32 else { return }
+                    if !isFloat32 && !isNull {
+                        fatalOnTypeChange()
+                        changeSelfToNull()
+                    }
+                    itemType = .float32
                     newValue.storeValue(atPtr: itemPtr.brbonItemCountValuePtr, endianness)
                 } else {
-                    if isFloat32 { itemType = .null }
+                    changeSelfToNull()
                 }
             }
         }
@@ -1234,7 +1315,8 @@ extension Portal {
     
     public var float64: Float64? {
         get {
-            guard isValid, isFloat64 else { return nil }
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard isFloat64 else { fatalOrNull("Attempt to access \(itemType) as a Float64"); return nil }
             if let index = index {
                 return Float64(elementPtr: elementPtr(for: index), endianness)
             } else {
@@ -1242,22 +1324,29 @@ extension Portal {
             }
         }
         set {
-            guard isValid else { return }
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
             if let index = index {
-                guard isFloat64 else { return }
+                guard isFloat64 else {
+                    fatalOrNull("Element type change not allowed (is: \(itemType))")
+                    return
+                }
                 newValue?.storeAsElement(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
-                    if isNull {
-                        guard ensureValueByteCount(for: newValue.valueByteCount) == .success else { return }
-                        itemType = .float64
+                    if !isFloat64 {
+                        if !isNull {
+                            fatalOnTypeChange()
+                            changeSelfToNull()
+                        }
+                        guard ensureValueByteCount(for: newValue.valueByteCount) == .success else {
+                            fatalOrNull("Could not allocate additional memory")
+                            return
+                        }
                     }
-                    guard isFloat64 else { return }
+                    itemType = .float64
                     newValue.storeValue(atPtr: itemPtr.brbonItemValuePtr, endianness)
                 } else {
-                    if isFloat64 {
-                        itemType = .null
-                    }
+                    changeSelfToNull()
                 }
             }
         }
@@ -1265,7 +1354,8 @@ extension Portal {
     
     public var string: String? {
         get {
-            guard isValid, isString else { return nil }
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard isString else { fatalOrNull("Attempt to access \(itemType) as a String"); return nil }
             if let index = index {
                 return String(elementPtr: elementPtr(for: index), endianness)
             } else {
@@ -1273,19 +1363,31 @@ extension Portal {
             }
         }
         set {
-            guard isValid else { return }
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
             if let index = index {
-                guard let newValue = newValue, isString else { return }
-                guard ensureValueByteCount(for: newValue.elementByteCount) == .success else { return }
+                guard let newValue = newValue, isString else {
+                    fatalOrNull("Element type change not allowed (is: \(itemType))")
+                    return
+                }
+                guard ensureValueByteCount(for: newValue.valueByteCount) == .success else {
+                    fatalOrNull("Could not allocate additional memory")
+                    return
+                }
                 newValue.storeAsElement(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
-                    if isNull { itemType = .string }
-                    guard isString else { return }
-                    guard ensureValueByteCount(for: newValue.valueByteCount) == .success else { return }
+                    if !isString && !isNull {
+                        fatalOnTypeChange()
+                        changeSelfToNull()
+                    }
+                    itemType = .string
+                    guard ensureValueByteCount(for: newValue.valueByteCount) == .success else {
+                        fatalOrNull("Could not allocate additional memory")
+                        return
+                    }
                     newValue.storeValue(atPtr: itemPtr.brbonItemValuePtr, endianness)
                 } else {
-                    if isString { itemType = .null }
+                    changeSelfToNull()
                 }
             }
         }
@@ -1293,7 +1395,8 @@ extension Portal {
     
     public var binary: Data? {
         get {
-            guard isValid, isBinary else { return nil }
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard isBinary else { fatalOrNull("Attempt to access \(itemType) as a Binary"); return nil }
             if let index = index {
                 return Data(elementPtr: elementPtr(for: index), endianness)
             } else {
@@ -1301,21 +1404,47 @@ extension Portal {
             }
         }
         set {
-            guard isValid else { return }
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
             if let index = index {
-                guard let newValue = newValue, isString else { return }
-                guard ensureValueByteCount(for: newValue.elementByteCount) == .success else { return }
+                guard let newValue = newValue, isString else {
+                    fatalOrNull("Element type change not allowed (is: \(itemType))")
+                    return
+                }
+                guard ensureValueByteCount(for: newValue.valueByteCount) == .success else {
+                    fatalOrNull("Could not allocate additional memory")
+                    return
+                }
                 newValue.storeAsElement(atPtr: elementPtr(for: index), endianness)
             } else {
                 if let newValue = newValue {
-                    if isNull { itemType = .binary }
-                    guard isBinary else { return }
-                    guard ensureValueByteCount(for: newValue.valueByteCount) == .success else { return }
+                    if !isBinary && !isNull {
+                        fatalOnTypeChange()
+                        changeSelfToNull()
+                    }
+                    itemType = .binary
+                    guard ensureValueByteCount(for: newValue.valueByteCount) == .success else {
+                        fatalOrNull("Could not allocate additional memory")
+                        return
+                    }
                     newValue.storeValue(atPtr: itemPtr.brbonItemValuePtr, endianness)
                 } else {
-                    if isBinary { itemType = .null }
+                    changeSelfToNull()
                 }
             }
+        }
+    }
+    
+    
+    /// Changes the type of self to a null.
+    ///
+    /// If self is a container, all portal for the contained items and elements are removed from the active portal list.
+    
+    internal func changeSelfToNull(_ removeSelf: Bool = false) {
+        if isArray || isDictionary || isSequence {
+            forEachAbortOnTrue({ $0.changeSelfToNull(true); return false })
+        }
+        if removeSelf {
+            manager.activePortals.removePortal(for: self.key)
         }
     }
 }
