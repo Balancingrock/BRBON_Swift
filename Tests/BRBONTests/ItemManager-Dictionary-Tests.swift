@@ -189,7 +189,7 @@ class ItemManager_Dictionary_Tests: XCTestCase {
         
         // Remove first item
         
-        XCTAssertEqual(dm.root.removeValue(forKey: "ooo"), .success)
+        XCTAssertEqual(dm.root.removeValue(forName: "ooo"), .success)
         
         exp = Data(bytes: [
             0x42, 0x00, 0x00, 0x00,
@@ -220,7 +220,7 @@ class ItemManager_Dictionary_Tests: XCTestCase {
         
         // Remove last item
         
-        XCTAssertEqual(dm.root.removeValue(forKey: "eee"), .success)
+        XCTAssertEqual(dm.root.removeValue(forName: "eee"), .success)
         
         exp = Data(bytes: [
             0x42, 0x00, 0x00, 0x00,
@@ -247,7 +247,7 @@ class ItemManager_Dictionary_Tests: XCTestCase {
         
         // Remove remaining item
         
-        XCTAssertEqual(dm.root.removeValue(forKey: "nnn"), .success)
+        XCTAssertEqual(dm.root.removeValue(forName: "nnn"), .success)
         
         exp = Data(bytes: [
             0x42, 0x00, 0x00, 0x00,

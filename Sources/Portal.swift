@@ -713,7 +713,7 @@ extension Portal {
     
     /// Returns the item for a given name.
     
-    internal func findItem(for name: String) -> Portal {
+    internal func findItem(forName name: String) -> Portal {
         
         guard let nameData = name.data(using: .utf8) else { return Portal.nullPortal }
         
@@ -750,6 +750,22 @@ extension Portal {
         }
     }
     
+    
+    /// Returns a pointer to the last item in a dictionary of sequence.
+    
+    internal var lastItemPtr: UnsafeMutableRawPointer? {
+        var ptr = itemPtr.brbonItemValuePtr
+        var remainder = countValue
+        if remainder == 0 { return nil }
+        while remainder > 1 {
+            ptr = ptr.advanced(by: Int(UInt32(valuePtr: ptr.brbonItemByteCountPtr, endianness)))
+            remainder -= 1
+        }
+        return ptr
+    }
+    
+    
+    /// Returns a pointer to the next byte after the last item in a dictionary or sequence.
     
     internal var afterLastItemPtr: UnsafeMutableRawPointer {
         var ptr = itemPtr.brbonItemValuePtr

@@ -243,7 +243,10 @@ class ItemManager_Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.remove(at: 0), .success)
         XCTAssertEqual(am.root.remove(at: 0), .success)
         XCTAssertEqual(am.root.remove(at: 0), .success)
+        
+        BRBON.allowFatalError = false
         XCTAssertEqual(am.root.remove(at: 0), .indexAboveHigherBound) // More than necessary
+        BRBON.allowFatalError = true
         
         XCTAssertNil(portal1.int64)
         XCTAssertNil(portal2.int64)
@@ -275,7 +278,7 @@ class ItemManager_Array_Tests: XCTestCase {
         
         // Insert an element at the beginning
         
-        XCTAssertEqual(am.root.insert(Int64(0x5555555555555555), at: 0), .success)
+        XCTAssertEqual(am.root.insert(Int64(0x5555555555555555), atIndex: 0), .success)
         
         let portal5 = am.root[4].portal
 
@@ -288,7 +291,7 @@ class ItemManager_Array_Tests: XCTestCase {
         
         // Insert an element at the end
         
-        XCTAssertEqual(am.root.insert(Int64(0x5555555555555555), at: 4), .success)
+        XCTAssertEqual(am.root.insert(Int64(0x5555555555555555), atIndex: 4), .success)
         
         let portal6 = am.root[5].portal
         
@@ -301,8 +304,9 @@ class ItemManager_Array_Tests: XCTestCase {
 
         
         // Insert an element past the end
-        
-        XCTAssertEqual(am.root.insert(Int64(0x5555555555555555), at: 6), .indexAboveHigherBound)
+        BRBON.allowFatalError = false
+        XCTAssertEqual(am.root.insert(Int64(0x5555555555555555), atIndex: 6), .indexAboveHigherBound)
+        BRBON.allowFatalError = true
     }
     
     func testCreateNewElements() {

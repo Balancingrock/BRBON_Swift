@@ -15,10 +15,8 @@ public enum Result: Int {
     case nameFieldError = 1
     case outOfStorage = 2
     case dataInconsistency = 3
-    case onlySupportedOnArray = 4
     case indexBelowLowerBound = 5
     case indexAboveHigherBound = 6
-    case onlySupportedOnDictionary = 7
     case itemNotFound = 8
     case noManager = 9
     case increaseFailed = 10
@@ -40,10 +38,8 @@ public enum Result: Int {
         case .nameFieldError: return "Name field error"
         case .outOfStorage: return "Out of storage"
         case .dataInconsistency: return "Data inconsistency"
-        case .onlySupportedOnArray: return "Operation only supported on arrays"
         case .indexBelowLowerBound: return "Index below lower bound"
         case .indexAboveHigherBound: return "Index above higher bound"
-        case .onlySupportedOnDictionary: return "Operation only supported on dictionaries"
         case .itemNotFound: return "Item not found"
         case .noManager: return "No manager available"
         case .increaseFailed: return "Memory increase failed"
