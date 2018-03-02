@@ -112,14 +112,16 @@ public enum ItemType: UInt8 {
     case binary         = 0x44
     
     
-    /// A table is an array with identical dictionaries as elements.
-    
-    //case table          = 0x45
-    
-    
     /// A string preceded by a CRC-16 value for faster searching.
     
-    //case idString       = 0x46
+    case idString       = 0x45
+
+    
+    /// A table is an array with identical dictionaries as elements.
+    
+    //case table          = 0x46
+    
+    
 
     /// ===================================================
     /// These types do use the count/value field as a value
@@ -181,7 +183,7 @@ public enum ItemType: UInt8 {
         case .int16, .uint16: return 2
         case .int32, .uint32, .float32: return 4
         case .int64, .uint64, .float64: return 8
-        case .string, .binary: return 256
+        case .string, .idString, .binary: return 256
         case .array, .dictionary, .sequence: return 1024
         }
     }
@@ -190,7 +192,7 @@ public enum ItemType: UInt8 {
         switch self {
         case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32, .string, .binary, .dictionary, .sequence:
             return BRBON.minimumItemByteCount
-        case .int64, .uint64, .float64, .array:
+        case .int64, .uint64, .float64, .array, .idString:
             return BRBON.minimumItemByteCount + 8
         }
     }
@@ -201,7 +203,7 @@ public enum ItemType: UInt8 {
         case .bool, .int8, .uint8: return 1
         case .int16, .uint16: return 2
         case .int32, .uint32, .float32: return 4
-        case .int64, .uint64, .float64: return 8
+        case .int64, .uint64, .float64, .idString: return 8
         case .string, .binary: return 4
         case .array, .dictionary, .sequence: return self.minimumItemByteCount
         }
@@ -210,13 +212,13 @@ public enum ItemType: UInt8 {
     public var hasVariableLength: Bool {
         switch self {
         case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32, .int64, .uint64, .float64: return false
-        case .string, .binary, .array, .dictionary, .sequence: return true
+        case .string, .idString, .binary, .array, .dictionary, .sequence: return true
         }
     }
     
     public var isContainer: Bool {
         switch self {
-        case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32, .int64, .uint64, .float64, .string, .binary: return false
+        case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32, .int64, .uint64, .float64, .string, .idString, .binary: return false
         case .array, .dictionary, .sequence: return true
         }
     }

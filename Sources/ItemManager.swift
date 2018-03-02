@@ -276,6 +276,11 @@ public final class ItemManager {
             "".storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
 
             
+        case .idString:
+            
+            "".idString.storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
+            
+            
         case .array:
             
             guard let elementType = elementType else { buffer.deallocate() ; return nil }

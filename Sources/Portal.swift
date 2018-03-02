@@ -171,6 +171,9 @@ extension Portal: Equatable {
             case .string:
                 return lhs.string == rhs.string
                 
+            case .idString:
+                return lhs.idString == rhs.idString
+                
             case .binary:
                 return lhs.binary == rhs.binary
                 
@@ -232,6 +235,7 @@ extension Portal: Equatable {
             case .float32: return lhs.float32 == rhs.float32
             case .float64: return lhs.float64 == rhs.float64
             case .string: return lhs.string == rhs.string
+            case .idString: return lhs.idString == rhs.idString
             case .binary: return lhs.binary == rhs.binary
             case .array, .dictionary, .sequence:
                 let lPortal = Portal(itemPtr: lhs.elementPtr(for: lhs.index!), index: nil, manager: lhs.manager, endianness: lhs.endianness)
@@ -349,10 +353,11 @@ extension Portal {
         case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32: return 0
         case .int64, .uint64, .float64: return 8
         case .string, .binary: return countValue
+        case .idString: return max(Int(UInt32(valuePtr: itemPtr.brbonItemValuePtr, endianness) + 2), 8)
         case .array: return 8 + countValue * elementByteCount
         case .dictionary, .sequence:
             var usedByteCount: Int = 0
-            forEachAbortOnTrue({ usedByteCount += Int($0.itemByteCount) ; return false })
+            forEachAbortOnTrue({ usedByteCount += $0.itemByteCount ; return false })
             return usedByteCount
         }
     }
@@ -952,6 +957,14 @@ extension Portal {
             itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.string.rawValue
     }
     
+    public var isIdString: Bool {
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        return isElement ?
+            itemPtr.brbonArrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.idString.rawValue
+            :
+            itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.idString.rawValue
+    }
+
     public var isBinary: Bool {
         guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
         return isElement ?
@@ -1412,6 +1425,48 @@ extension Portal {
             }
         }
     }
+    
+    public var idString: IdString? {
+        get {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard isString else { fatalOrNull("Attempt to access \(itemType) as a String"); return nil }
+            if let index = index {
+                return IdString(elementPtr: elementPtr(for: index), endianness)
+            } else {
+                return IdString(itemPtr: itemPtr, endianness)
+            }
+        }
+        set {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
+            if let index = index {
+                guard let newValue = newValue, isString else {
+                    fatalOrNull("Element type change not allowed (is: \(itemType))")
+                    return
+                }
+                guard ensureElementByteCount(for: newValue) == .success else {
+                    fatalOrNull("Could not allocate additional memory")
+                    return
+                }
+                newValue.storeAsElement(atPtr: elementPtr(for: index), endianness)
+            } else {
+                if let newValue = newValue {
+                    if !isIdString && !isNull {
+                        fatalOnTypeChange()
+                        changeSelfToNull()
+                    }
+                    itemType = .string
+                    guard ensureValueByteCount(for: newValue.valueByteCount) == .success else {
+                        fatalOrNull("Could not allocate additional memory")
+                        return
+                    }
+                    newValue.storeValue(atPtr: itemPtr.brbonItemValuePtr, endianness)
+                } else {
+                    changeSelfToNull()
+                }
+            }
+        }
+    }
+
     
     public var binary: Data? {
         get {
