@@ -350,7 +350,7 @@ public extension Portal {
     /// - Returns: success or an error indicator.
     
     @discardableResult
-    private func _append(_ value: Coder, with name: String? = nil) -> Result {
+    private func _append(_ value: Coder, forName name: String? = nil) -> Result {
         
         guard isValid else { return .portalInvalid }
         
@@ -411,7 +411,7 @@ public extension Portal {
     
     
     @discardableResult
-    public func append(_ value: IsBrbon) -> Result { return _append(value as! Coder) }
+    public func append(_ value: IsBrbon, forName name: String? = nil) -> Result { return _append(value as! Coder, forName: name) }
     @discardableResult
     public func append(_ value: Array<Bool>) -> Result { return _append(BrbonArray(content: value, type: .bool)) }
     @discardableResult
@@ -482,7 +482,7 @@ public extension Portal {
             let dstPtr = itm.itemPtr
             let len = srcPtr.distance(to: aliPtr)
             
-            manager.activePortals.removePortal(for: PortalKey(itemPtr: lastItemPtr!, index: nil))
+            manager.activePortals.removePortal(for: itm.key)
 
             if len > 0 {
                 moveBlock(dstPtr, srcPtr, len)

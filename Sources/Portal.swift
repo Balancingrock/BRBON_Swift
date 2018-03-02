@@ -207,8 +207,8 @@ extension Portal: Equatable {
             case .sequence:
 
                 for index in 0 ..< lhs.countValue {
-                    let lPortal = Portal(itemPtr: lhs.itemPtr, index: index, manager: lhs.manager, endianness: lhs.endianness)
-                    let rPortal = Portal(itemPtr: rhs.itemPtr, index: index, manager: rhs.manager, endianness: rhs.endianness)
+                    let lPortal = lhs[index].portal
+                    let rPortal = rhs[index].portal
                     if lPortal != rPortal { return false }
                 }
                 return true
@@ -576,7 +576,7 @@ extension Portal {
 
                 // Check if the byte count of the parent must be grown
                 
-                let necessaryParentItemByteCount = minimumItemByteCount + parent.nameFieldByteCount + parent.valueByteCount + newByteCount
+                let necessaryParentItemByteCount = minimumItemByteCount + parent.nameFieldByteCount + parent.valueByteCount - itemByteCount + newByteCount
                 
                 if parent.itemByteCount < necessaryParentItemByteCount {
                     
@@ -584,6 +584,26 @@ extension Portal {
                     guard result == .success else { return result }
                 }
                 
+                
+                // Increase the size of self, first copy all the items above this item out of reach
+                
+                let srcPtr = itemPtr.advanced(by: itemByteCount)
+                let pastLastItemPtr = parent.afterLastItemPtr
+                if srcPtr != pastLastItemPtr {
+                    
+                    // Items must be moved
+                    
+                    let len = pastLastItemPtr - srcPtr
+                    let dstPtr = srcPtr.advanced(by: newByteCount - itemByteCount)
+                    
+                    moveBlock(dstPtr, srcPtr, len)
+                    
+                    
+                    // Update active pointers
+                    
+                    manager.activePortals.updatePointers(atAndAbove: srcPtr, below: dstPtr.advanced(by: len), toNewBase: dstPtr)
+                }
+
                 
                 // Increase the byte count of self
                 
@@ -1369,7 +1389,7 @@ extension Portal {
                     fatalOrNull("Element type change not allowed (is: \(itemType))")
                     return
                 }
-                guard ensureValueByteCount(for: newValue.valueByteCount) == .success else {
+                guard ensureElementByteCount(for: newValue) == .success else {
                     fatalOrNull("Could not allocate additional memory")
                     return
                 }
@@ -1410,7 +1430,7 @@ extension Portal {
                     fatalOrNull("Element type change not allowed (is: \(itemType))")
                     return
                 }
-                guard ensureValueByteCount(for: newValue.valueByteCount) == .success else {
+                guard ensureElementByteCount(for: newValue) == .success else {
                     fatalOrNull("Could not allocate additional memory")
                     return
                 }
