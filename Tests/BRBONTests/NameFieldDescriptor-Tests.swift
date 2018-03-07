@@ -28,7 +28,7 @@ class NameFieldDescriptor_Tests: XCTestCase {
         
         XCTAssertEqual(nfd!.crc, 0xa64c) // CRC value from https://www.lammertbies.nl/comm/info/nl_crc-calculation.html. (CRC-16)
         XCTAssertEqual(nfd!.byteCount, 11 + 3 + 2)
-        XCTAssertEqual(nfd!.data!, "A long name".data(using: .utf8))
+        XCTAssertEqual(nfd!.data, "A long name".data(using: .utf8))
         
         nfd = NameFieldDescriptor("A long name", fixedLength: 37)
         XCTAssertEqual(nfd!.byteCount, 40)

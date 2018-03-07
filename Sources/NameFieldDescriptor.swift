@@ -10,36 +10,36 @@ import Foundation
 import BRUtils
 
 
-public struct NameFieldDescriptor: Equatable {
+public struct NameFieldDescriptor: Equatable, Hashable {
     
-    internal let data: Data?
+    internal let data: Data
     internal let crc: UInt16
     internal let byteCount: Int
     
+    public internal(set) var hashValue: Int
+    
     internal init?(_ name: String?, fixedLength: Int? = nil) {
+        
+        guard let name = name else { return nil }
         
         var length: Int = 0
         
         
         // Create a data object from the name with maximal 245 bytes
         
-        if let name = name {
-            guard let (nameData, charRemoved) = name.utf8CodeMaxBytes(245) else { return nil }
-            guard !charRemoved else { return nil }
-            self.data = nameData
-        } else {
-            self.data = nil
-        }
+        guard let (nameData, charRemoved) = name.utf8CodeMaxBytes(245) else { return nil }
+        guard !charRemoved else { return nil }
+        self.data = nameData
         
         
         // If a fixed length is specified, determine if it can be used
         
         if let fixedLength = fixedLength {
             guard fixedLength <= 245 else { return nil }
-            if Int(fixedLength) < (data?.count ?? 0) { return nil }
+            if fixedLength < data.count { return nil }
             length = Int(fixedLength)
         } else {
-            length = self.data?.count ?? 0
+            length = self.data.count
         }
         
         
@@ -50,13 +50,19 @@ public struct NameFieldDescriptor: Equatable {
         
         // Create the crc
         
-        self.crc = data?.crc16() ?? 0
+        self.crc = data.crc16()
+        
+        
+        // And the hash
+        
+        self.hashValue = data.hashValue
     }
     
-    fileprivate init(data: Data?, crc: UInt16, byteCount: Int) {
+    internal init(data: Data, crc: UInt16, byteCount: Int) {
         self.data = data
         self.crc = crc
         self.byteCount = byteCount
+        self.hashValue = data.hashValue
     }
     
     public static func ==(lhs: NameFieldDescriptor, rhs: NameFieldDescriptor) -> Bool {
@@ -67,7 +73,6 @@ public struct NameFieldDescriptor: Equatable {
     }
     
     internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        guard let data = data else { return }
         crc.storeValue(atPtr: atPtr, endianness)
         UInt8(data.count).storeValue(atPtr: atPtr.advanced(by: 2), endianness)
         let dataPtr = atPtr.advanced(by: 3).assumingMemoryBound(to: UInt8.self)

@@ -198,7 +198,7 @@ public extension Portal {
 
         if let value = value {
         
-            if let item = findItem(with: nfd.crc, utf8ByteCode: nfd.data!) {
+            if let item = findItem(with: nfd.crc, utf8ByteCode: nfd.data) {
             
                 // Replace a value
                 
@@ -238,7 +238,7 @@ public extension Portal {
             
             // Set the item to null, or add a new null item
             
-            if let item = findItem(with: nfd.crc, utf8ByteCode: nfd.data!) {
+            if let item = findItem(with: nfd.crc, utf8ByteCode: nfd.data) {
                 
                 // Replace a value
                 

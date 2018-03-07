@@ -46,6 +46,7 @@ internal class BrbonArray: Coder, IsBrbon {
                 if bc > ebc { ebc = bc }
             }
             return (content.count * ebc + 8)
+        case .table: fatalError("option table not implemented yet")
         }
     }
     
@@ -109,6 +110,7 @@ internal class BrbonArray: Coder, IsBrbon {
                 if bc > ebc { ebc = bc }
             }
             elemBC = ebc
+        case .table: fatalError("option table not implemented yet")
         }
 
         if elemBC == 0 { elemBC = elementType.assumedValueByteCount }
@@ -175,6 +177,7 @@ internal class BrbonArray: Coder, IsBrbon {
                 $0.storeAsElement(atPtr: p, endianness)
             case .array, .dictionary, .sequence:
                 $0.storeAsItem(atPtr: p, bufferPtr: bufferPtr, parentPtr: atPtr, nameField: nil, valueByteCount: nil, endianness)
+            case .table: fatalError("option table not implemented yet")
             }
             
             let remainder = elemBC - $0.elementByteCount

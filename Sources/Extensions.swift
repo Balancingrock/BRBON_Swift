@@ -51,7 +51,7 @@
 import Foundation
 
 
-internal extension String {
+public extension String {
     
     
     /// Returns a Data item with the UTF8 encoded bytes of self, limited to a maximum number of bytes. Excess characters are ignored.
@@ -85,6 +85,11 @@ internal extension String {
         }
         
         return (utf8Code, charactersWereRemoved)
+    }
+    
+    
+    public var nameFieldDescriptor: NameFieldDescriptor? {
+        return NameFieldDescriptor(self)
     }
 }
 

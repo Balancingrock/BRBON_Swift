@@ -119,7 +119,7 @@ public enum ItemType: UInt8 {
     
     /// A table is an array with identical dictionaries as elements.
     
-    //case table          = 0x46
+    case table          = 0x46
     
     
 
@@ -184,7 +184,7 @@ public enum ItemType: UInt8 {
         case .int32, .uint32, .float32: return 4
         case .int64, .uint64, .float64: return 8
         case .string, .idString, .binary: return 256
-        case .array, .dictionary, .sequence: return 1024
+        case .array, .dictionary, .sequence, .table: return 1024
         }
     }
     
@@ -192,7 +192,7 @@ public enum ItemType: UInt8 {
         switch self {
         case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32, .string, .binary, .dictionary, .sequence:
             return BRBON.minimumItemByteCount
-        case .int64, .uint64, .float64, .array, .idString:
+        case .int64, .uint64, .float64, .array, .idString, .table:
             return BRBON.minimumItemByteCount + 8
         }
     }
@@ -205,21 +205,21 @@ public enum ItemType: UInt8 {
         case .int32, .uint32, .float32: return 4
         case .int64, .uint64, .float64, .idString: return 8
         case .string, .binary: return 4
-        case .array, .dictionary, .sequence: return self.minimumItemByteCount
+        case .array, .dictionary, .sequence, .table: return self.minimumItemByteCount
         }
     }
     
     public var hasVariableLength: Bool {
         switch self {
         case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32, .int64, .uint64, .float64: return false
-        case .string, .idString, .binary, .array, .dictionary, .sequence: return true
+        case .string, .idString, .binary, .array, .dictionary, .sequence, .table: return true
         }
     }
     
     public var isContainer: Bool {
         switch self {
         case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32, .int64, .uint64, .float64, .string, .idString, .binary: return false
-        case .array, .dictionary, .sequence: return true
+        case .array, .dictionary, .sequence, .table: return true
         }
     }
     

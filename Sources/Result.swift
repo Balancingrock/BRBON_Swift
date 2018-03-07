@@ -31,6 +31,7 @@ public enum Result: Int {
     case allDictionaryKeysMustBeString = 19
     case emptyKey = 20
     case portalInvalid = 21
+    case invalidTableColumnType = 22
     
     public var description: String {
         switch self {
@@ -54,6 +55,7 @@ public enum Result: Int {
         case .allDictionaryKeysMustBeString: return "All dictionary keys must be strings"
         case .emptyKey: return "Empty key"
         case .portalInvalid: return "Portal invalid"
+        case .invalidTableColumnType: return "Invalid Table Column Type"
         }
     }
 }

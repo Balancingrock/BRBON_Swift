@@ -296,6 +296,8 @@ public final class ItemManager {
             dict.storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
             
         case .sequence: break
+            
+        case .table: fatalError("option table not implemented yet")
         }
         
         self.root = Portal(itemPtr: bufferPtr, manager: self, endianness: endianness)
