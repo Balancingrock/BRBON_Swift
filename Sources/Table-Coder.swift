@@ -54,7 +54,7 @@ public struct ColumnSpecification {
     /// The offset for the column value in a row, will be computed when storingto memory
     
     internal var valueOffset: Int = 0
-
+    
     
     /// Creates a new column descriptor.
     ///
@@ -64,18 +64,32 @@ public struct ColumnSpecification {
     ///   - valueType: The type of value that will be stored in this column.
     ///   - initialValueByteCount: The initial byte count reserved for items in this column. Maximum byte count is Int32.max, minimum is the minimum byte count possible for the type. Will always be rounded up to a multiple of 8 bytes. If not specified, the assumed byte count as specified for that type will be used. (Note that 8 bytes is the minimum possible, even for booleans)
     
-    public init?(name: String, initialNameFieldByteCount: Int? = nil, valueType: ItemType, initialValueByteCount: Int? = nil) {
+    public init?(
+        name: String,
+        initialNameFieldByteCount: Int? = nil,
+        valueType: ItemType,
+        initialValueByteCount: Int? = nil) {
+        
         guard let temp = NameFieldDescriptor(name, fixedLength: initialNameFieldByteCount) else { return nil }
+        
         self.nfd = temp
         self.valueType = valueType
         self.valueByteCount = (initialValueByteCount ?? valueType.assumedValueByteCount).roundUpToNearestMultipleOf8()
     }
     
     internal init?(valueAreaPtr: UnsafeMutableRawPointer, forColumn column: Int, _ endianness: Endianness) {
+        
+        // Start of the column descriptor
         let ptr = valueAreaPtr.advanced(by: 16 + column * 16)
+        
+        // Get value type
         guard let type = ItemType(atPtr: ptr.advanced(by: columnValueTypeOffset)) else { return nil }
         self.valueType = type
+        
+        // Get value byte count
         self.valueByteCount = Int(UInt32(valuePtr: ptr.advanced(by: columnValueByteCountOffset), endianness))
+        
+        // Get nfd
         let nameCrc = UInt16(valuePtr: ptr.advanced(by: columnNameCrc16Offset), endianness)
         let nameByteCount = Int(UInt32(valuePtr: ptr.advanced(by: columnNameByteCountOffset), endianness))
         let nameUtf8Offset = Int(UInt32(valuePtr: ptr.advanced(by: columnNameUtf8OffsetOffset), endianness))
@@ -157,8 +171,8 @@ public class Table: Coder, IsBrbon {
             columns[i].valueOffset = valueOffset
             valueOffset += columns[i].valueByteCount
         }
-        let rowOffset = nameOffset
         let rowByteCount = valueOffset
+        let rowsOffset = nameOffset
 
 
         let ptr = atPtr.brbonItemValuePtr
@@ -175,7 +189,7 @@ public class Table: Coder, IsBrbon {
         
         
         // Rows Offset
-        UInt32(rowOffset).storeValue(atPtr: ptr.advanced(by: tableRowsOffsetOffset), endianness)
+        UInt32(rowsOffset).storeValue(atPtr: ptr.advanced(by: tableRowsOffsetOffset), endianness)
         
         // Row Byte Count
         UInt32(rowByteCount).storeValue(atPtr: ptr.advanced(by: tableRowByteCountOffset), endianness)
@@ -199,7 +213,7 @@ public class Table: Coder, IsBrbon {
             column.nfd.data.storeValue(atPtr: columnNamePtr.advanced(by: 1), endianness)
             columnNamePtr = columnNamePtr.advanced(by: (column.nfd.data.count + 1))
         }
-        
+                
         return .success
     }
     

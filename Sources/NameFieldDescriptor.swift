@@ -18,6 +18,8 @@ public struct NameFieldDescriptor: Equatable, Hashable {
     
     public internal(set) var hashValue: Int
     
+    public var string: String { return String(data: data, encoding: .utf8)! }
+    
     internal init?(_ name: String?, fixedLength: Int? = nil) {
         
         guard let name = name else { return nil }

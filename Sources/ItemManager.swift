@@ -113,7 +113,7 @@ public final class ItemManager {
     internal var buffer: UnsafeMutableRawBufferPointer
     internal var bufferPtr: UnsafeMutableRawPointer
     
-    
+        
     /// A data object with the entire rootItem in it as a sequence of bytes.
     
     public var data: Data {

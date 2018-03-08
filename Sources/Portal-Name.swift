@@ -194,7 +194,7 @@ public extension Portal {
         guard isValid else { fatalOrNull("Portal is no longer valid"); return .portalInvalid }
         guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return .operationNotSupported }
         
-        guard let nfd = NameFieldDescriptor(name), nfd.data != nil else { return .illegalNameField }
+        guard let nfd = NameFieldDescriptor(name) else { return .illegalNameField }
 
         if let value = value {
         

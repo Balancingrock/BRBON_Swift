@@ -1,0 +1,45 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1404\cocoasubrtf470
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+\margl1440\margr1440\vieww9000\viewh8400\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 These are the coding guidelines for the BRBON Project.\
+\
+These are guidelines but should be adhered to. If deviated, the reason should be included in the comments.\
+\
+
+\b Operations limited to a single type
+\b0 \
+Operations that are only valid for a specific item type should start with that identifier. E.g. tableRowCount, or arrayElementCount\
+\
+
+\b Potentially dangerous operations
+\b0 \
+Operations that are not protected against overflow/illegal access/out of limits/wrong type etc must start with an '_'. E.g. _tableRowCount.\
+\
+
+\b Speed
+\b0 \
+Speed is the most important consideration. Code duplication, non-localized access etc are used to achieve the best possible speed. However, there are still area's of code that can be optimized.\
+\
+- 
+\i Decreasing size\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\i0 \cf0 When removing things from containers or decreasing the size of data, the free area is not reclaimed. Reclaiming is potentially time-expensive and is thus left as an operation that must be performed explicitly.\
+\
+- 
+\i Increasing size
+\i0 \
+Increasing size is also potentially time-expensive. However there is no way the API can prevent this. It is up to the (API) user to make sure that the original layout of the BRBON data structure allows all possible data to be stored without resorting to run-time restructuring. However the API should automatically increase the size of items when necessary to implement the API request.\
+\
+- 
+\i 'Duplicate' var's locally
+\i0 \
+Many functions are implemented as var-accessors. This also means that for each access to these var's the function is executed. It seems preferable that these function execution results are stored as let constants locally inside an operation if needed more than once.\
+\
+
+\b Changing the column index
+\b0 \
+Any operation that changes the column index must be clearly documented. Any operation that is not documented to change the column index, may never (in the future) be modified to change the column index.}
