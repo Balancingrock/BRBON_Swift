@@ -100,7 +100,7 @@ public struct ColumnSpecification {
 }
 
 
-public class Table: Coder, IsBrbon {
+public class Table: Coder {
 
     
     public init(columnSpecifications: Array<ColumnSpecification>) {

@@ -15,7 +15,7 @@ extension String {
 }
 
 
-public class IdString: Coder, IsBrbon, Initialize, Equatable {
+public class IdString: Coder, Initialize, Equatable {
     
     public static func ==(lhs: IdString, rhs: IdString) -> Bool { return lhs.data == rhs.data }
     

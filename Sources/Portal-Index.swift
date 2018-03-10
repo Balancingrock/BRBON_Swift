@@ -49,7 +49,7 @@ public extension Portal {
             guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
             guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
             if isArray { element(at: index).bool = newValue }
-            else if isSequence { _ = item(at: index).replaceWith(newValue) }
+            else if isSequence { _ = item(at: index)._sequenceReplaceWith(newValue) }
             else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
         }
     }
@@ -73,7 +73,7 @@ public extension Portal {
             guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
             guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
             if isArray { element(at: index).int8 = newValue }
-            else if isSequence { _ = item(at: index).replaceWith(newValue) }
+            else if isSequence { _ = item(at: index)._sequenceReplaceWith(newValue) }
             else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
         }
     }
@@ -97,7 +97,7 @@ public extension Portal {
             guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
             guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
             if isArray { element(at: index).int16 = newValue }
-            else if isSequence { _ = item(at: index).replaceWith(newValue) }
+            else if isSequence { _ = item(at: index)._sequenceReplaceWith(newValue) }
             else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
         }
     }
@@ -121,7 +121,7 @@ public extension Portal {
             guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
             guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
             if isArray { element(at: index).int32 = newValue }
-            else if isSequence { _ = item(at: index).replaceWith(newValue) }
+            else if isSequence { _ = item(at: index)._sequenceReplaceWith(newValue) }
             else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
         }
     }
@@ -145,7 +145,7 @@ public extension Portal {
             guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
             guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
             if isArray { element(at: index).int64 = newValue }
-            else if isSequence { _ = item(at: index).replaceWith(newValue) }
+            else if isSequence { _ = item(at: index)._sequenceReplaceWith(newValue) }
             else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
         }
     }
@@ -169,7 +169,7 @@ public extension Portal {
             guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
             guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
             if isArray { element(at: index).uint8 = newValue }
-            else if isSequence { _ = item(at: index).replaceWith(newValue) }
+            else if isSequence { _ = item(at: index)._sequenceReplaceWith(newValue) }
             else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
         }
     }
@@ -193,7 +193,7 @@ public extension Portal {
             guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
             guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
             if isArray { element(at: index).uint16 = newValue }
-            else if isSequence { _ = item(at: index).replaceWith(newValue) }
+            else if isSequence { _ = item(at: index)._sequenceReplaceWith(newValue) }
             else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
         }
     }
@@ -217,7 +217,7 @@ public extension Portal {
             guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
             guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
             if isArray { element(at: index).uint32 = newValue }
-            else if isSequence { _ = item(at: index).replaceWith(newValue) }
+            else if isSequence { _ = item(at: index)._sequenceReplaceWith(newValue) }
             else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
         }
     }
@@ -241,7 +241,7 @@ public extension Portal {
             guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
             guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
             if isArray { element(at: index).uint64 = newValue }
-            else if isSequence { _ = item(at: index).replaceWith(newValue) }
+            else if isSequence { _ = item(at: index)._sequenceReplaceWith(newValue) }
             else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
         }
     }
@@ -265,7 +265,7 @@ public extension Portal {
             guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
             guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
             if isArray { element(at: index).float32 = newValue }
-            else if isSequence { _ = item(at: index).replaceWith(newValue) }
+            else if isSequence { _ = item(at: index)._sequenceReplaceWith(newValue) }
             else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
         }
     }
@@ -289,7 +289,7 @@ public extension Portal {
             guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
             guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
             if isArray { element(at: index).float64 = newValue }
-            else if isSequence { _ = item(at: index).replaceWith(newValue) }
+            else if isSequence { _ = item(at: index)._sequenceReplaceWith(newValue) }
             else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
         }
     }
@@ -313,7 +313,7 @@ public extension Portal {
             guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
             guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
             if isArray { element(at: index).string = newValue }
-            else if isSequence { _ = item(at: index).replaceWith(newValue) }
+            else if isSequence { _ = item(at: index)._sequenceReplaceWith(newValue) }
             else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
         }
     }
@@ -337,447 +337,17 @@ public extension Portal {
             guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
             guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
             if isArray { element(at: index).binary = newValue }
-            else if isSequence { _ = item(at: index).replaceWith(newValue) }
+            else if isSequence { _ = item(at: index)._sequenceReplaceWith(newValue) }
             else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
         }
     }
     
     
-    /// Adds a new bool value to the end of the array.
-    ///
-    /// - Parameter value: The value to be added to the array.
-    ///
-    /// - Returns: success or an error indicator.
-    
-    @discardableResult
-    private func _append(_ value: Coder, forName name: String? = nil) -> Result {
-        
-        guard isValid else { return .portalInvalid }
-        
-        if isArray {
-            
-            guard elementType == value.brbonType else { return .typeConflict }
-            
-            
-            // Ensure that the element byte count is sufficient
-            
-            let result = ensureElementByteCount(for: value)
-            guard result == .success else { return result }
-            
-            
-            // The new value can be added
-            
-            if value.brbonType.isContainer {
-                value.storeAsItem(atPtr: elementPtr(for: countValue), bufferPtr: manager.bufferPtr, parentPtr: itemPtr, nameField: nil, valueByteCount: nil, endianness)
-            } else {
-                value.storeAsElement(atPtr: elementPtr(for: countValue), endianness)
-            }
-            
-            
-            // Increase child counter
-            
-            countValue += 1
-            
-            return .success
-        
-        } else if isSequence {
-            
-            
-            // Ensure that there is enough space available
-            
-            let nfd: NameFieldDescriptor? = {
-                guard let name = name else { return nil }
-                return NameFieldDescriptor(name)
-            }()
-            
-            let newItemByteCount = value.itemByteCount(nfd)
-                        
-            if valueByteCount - usedValueByteCount < newItemByteCount {
-                let result = increaseItemByteCount(to: minimumItemByteCount + usedValueByteCount + newItemByteCount)
-                guard result == .success else { return result }
-            }
-            
-            value.storeAsItem(atPtr: afterLastItemPtr, bufferPtr: manager.bufferPtr, parentPtr: itemPtr, nameField: nfd, valueByteCount: nil, endianness)
-            
-            countValue += 1
-            
-            return .success
-            
-        } else {
-            fatalOrNull("Append operation not valid on \(itemType)")
-            return .operationNotSupported
-        }
-    }
-    
-    
-    /// Appends a new value to an array or sequence.
-    ///
-    /// - Parameters:
-    ///   - value: A
-    
-    @discardableResult
-    public func append(_ value: IsBrbon, forName name: String? = nil) -> Result {
-        return _append(value as! Coder, forName: name)
-    }
-    
-    @discardableResult
-    public func append(_ value: Array<Bool>) -> Result { return _append(BrbonArray(content: value, type: .bool)) }
-    @discardableResult
-    public func append(_ value: Array<UInt8>) -> Result { return _append(BrbonArray(content: value, type: .uint8)) }
-    @discardableResult
-    public func append(_ value: Array<UInt16>) -> Result { return _append(BrbonArray(content: value, type: .uint16)) }
-    @discardableResult
-    public func append(_ value: Array<UInt32>) -> Result { return _append(BrbonArray(content: value, type: .uint32)) }
-    @discardableResult
-    public func append(_ value: Array<UInt64>) -> Result { return _append(BrbonArray(content: value, type: .uint64)) }
-    @discardableResult
-    public func append(_ value: Array<Int8>) -> Result { return _append(BrbonArray(content: value, type: .int8)) }
-    @discardableResult
-    public func append(_ value: Array<Int16>) -> Result { return _append(BrbonArray(content: value, type: .int16)) }
-    @discardableResult
-    public func append(_ value: Array<Int32>) -> Result { return _append(BrbonArray(content: value, type: .int32)) }
-    @discardableResult
-    public func append(_ value: Array<Int64>) -> Result { return _append(BrbonArray(content: value, type: .int64)) }
-    @discardableResult
-    public func append(_ value: Array<Float32>) -> Result { return _append(BrbonArray(content: value, type: .float32)) }
-    @discardableResult
-    public func append(_ value: Array<Float64>) -> Result { return _append(BrbonArray(content: value, type: .float64)) }
-    @discardableResult
-    public func append(_ value: Array<String>) -> Result { return _append(BrbonArray(content: value, type: .string)) }
-    @discardableResult
-    public func append(_ value: Array<Data>) -> Result { return _append(BrbonArray(content: value, type: .binary)) }
-    @discardableResult
-    public func append(_ value: Dictionary<String, IsBrbon>) -> Result { return _append(BrbonDictionary(content: value)) }
-
-    
-    /// Removes an item from the array.
-    ///
-    /// The array will decrease by item as a result. If the index is out of bounds the operation will fail. Notice that the bytecount of the array will not decrease. To remove unnecessary bytes use the "minimizeByteCount" operation.
-    ///
-    /// - Parameter index: The index of the element to remove.
-    ///
-    /// - Returns: success or an error indicator.
-    
-    @discardableResult
-    public func remove(at index: Int) -> Result {
-        
-        guard isValid else { fatalOrNull("Portal is invalid"); return .portalInvalid }
-        
-        guard index >= 0 else { fatalOrNull("Index (\(index)) below zero"); return .indexBelowLowerBound }
-        guard index < countValue else { fatalOrNull("Index (\(index)) above high bound (\(countValue))"); return .indexAboveHigherBound }
-
-        if isArray {
-            /*
-            let srcPtr = elementPtr(for: index + 1)
-            let dstPtr = elementPtr(for: index)
-            let len = (countValue - 1 - index) * elementByteCount
-            
-            manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: elementByteCount, updateMovedPortals: true, updateRemovedPortals: true)
-            
-            countValue -= 1
-            */
-            
-            // Remove the active portals for the items inside the element to be removed, but not the element itself.
-            
-            let eptr = elementPtr(for: index)
-            manager.removeActivePortals(atAndAbove: eptr.advanced(by: 1), below: eptr.advanced(by: elementByteCount))
-            
-            
-            // Shift the remaining elements into their new place
-            
-            let srcPtr = elementPtr(for: index + 1)
-            let dstPtr = elementPtr(for: index)
-            let len = (countValue - 1 - index) * elementByteCount
-            
-            manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
-
-            
-            // The last index portal (if present) must be removed
-            
-            let lptr = elementPtr(for: countValue - 1)
-            manager.removeActivePortals(atAndAbove: lptr, below: lptr.advanced(by: 1))
-            
-            
-            // Decrease the number of elements
-            
-            countValue -= 1
-            
-            
-            return .success
-        
-        } else if isSequence {
-            
-            let itm = item(at: index)
-            let aliPtr = afterLastItemPtr
-                
-            let srcPtr = itm.itemPtr.advanced(by: itm.itemByteCount)
-            let dstPtr = itm.itemPtr
-            let len = srcPtr.distance(to: aliPtr)
-            
-            manager.removeActivePortal(itm)
-
-            if len > 0 {
-                manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
-            }
-            
-            countValue -= 1
-
-            return .success
-            
-        } else {
-            
-            fatalOrNull("remove(int) not supported on \(itemPtr)")
-            return .operationNotSupported
-        }
-    }
-
-    
-    /// Creates 1 or a number of new elements at the end of the array. If a default value is given, it will be used. If no default value is specified the content bytes will be set to zero.
-    ///
-    /// - Parameters:
-    ///   - amount: The number of elements to create, default = 1.
-    ///   - value: The default value for the new elements, default = nil.
-    ///
-    /// - Returns: .success or an error indicator.
-    
-    @discardableResult
-    private func createNewElements(_ value: Coder, _ amount: Int = 1) -> Result {
-        
-        guard isValid else { fatalOrNull("Portal is invalid"); return .portalInvalid }
-
-        guard isArray else { fatalOrNull("_createNewElements not supported for \(itemType)"); return .operationNotSupported }
-        guard amount > 0 else { fatalOrNull("createNewElements must have amount > 0, found \(amount)"); return .success }
-        
-        
-        // Ensure that the element byte count is sufficient
-        
-        var result = ensureElementByteCount(for: value)
-        guard result == .success else { return result }
-        
-        
-        // Ensure that the item storage capacity is sufficient
-
-        let newCount = countValue + amount
-        let neccesaryValueByteCount = 8 + elementByteCount * newCount
-        result = ensureValueByteCount(for: neccesaryValueByteCount)
-        guard result == .success else { return result }
-        
-        
-        // Use default value to populate the new items
-            
-        var loopCount = amount
-        repeat {
-            value.storeValue(atPtr: elementPtr(for: countValue + loopCount - 1), endianness)
-            loopCount -= 1
-        } while loopCount > 0
-        
-        
-        // Increment the number of elements
-
-        countValue += amount
-        
-        
-        return .success
-    }
-    
-    @discardableResult
-    public func createNewElements(_ value: IsBrbon, amount: Int = 1) -> Result {
-        return createNewElements(value as! Coder, amount)
-    }
-    @discardableResult
-    public func createNewElements(_ value: Array<Bool>, amount: Int = 1) -> Result {
-        return createNewElements(BrbonArray(content: value, type: .bool), amount)
-    }
-    @discardableResult
-    public func createNewElements(_ value: Array<UInt8>, amount: Int = 1) -> Result {
-        return createNewElements(BrbonArray(content: value, type: .uint8), amount)
-    }
-    @discardableResult
-    public func createNewElements(_ value: Array<UInt16>, amount: Int = 1) -> Result {
-        return createNewElements(BrbonArray(content: value, type: .uint16), amount)
-    }
-    @discardableResult
-    public func createNewElements(_ value: Array<UInt32>, amount: Int = 1) -> Result {
-        return createNewElements(BrbonArray(content: value, type: .uint32), amount)
-    }
-    @discardableResult
-    public func createNewElements(_ value: Array<UInt64>, amount: Int = 1) -> Result {
-        return createNewElements(BrbonArray(content: value, type: .uint64), amount)
-    }
-    @discardableResult
-    public func createNewElements(_ value: Array<Int8>, amount: Int = 1) -> Result {
-        return createNewElements(BrbonArray(content: value, type: .int8), amount)
-    }
-    @discardableResult
-    public func createNewElements(_ value: Array<Int16>, amount: Int = 1) -> Result {
-        return createNewElements(BrbonArray(content: value, type: .int16), amount)
-    }
-    @discardableResult
-    public func createNewElements(_ value: Array<Int32>, amount: Int = 1) -> Result {
-        return createNewElements(BrbonArray(content: value, type: .int32), amount)
-    }
-    @discardableResult
-    public func createNewElements(_ value: Array<Int64>, amount: Int = 1) -> Result {
-        return createNewElements(BrbonArray(content: value, type: .int64), amount)
-    }
-    @discardableResult
-    public func createNewElements(_ value: Array<Float32>, amount: Int = 1) -> Result {
-        return createNewElements(BrbonArray(content: value, type: .float32), amount)
-    }
-    @discardableResult
-    public func createNewElements(_ value: Array<Float64>, amount: Int = 1) -> Result {
-        return createNewElements(BrbonArray(content: value, type: .float64), amount)
-    }
-    @discardableResult
-    public func createNewElements(_ value: Array<String>, amount: Int = 1) -> Result {
-        return createNewElements(BrbonArray(content: value, type: .string), amount)
-    }
-    @discardableResult
-    public func createNewElements(_ value: Array<Data>, amount: Int = 1) -> Result {
-        return createNewElements(BrbonArray(content: value, type: .binary), amount)
-    }
-    @discardableResult
-    public func createNewElements(_ value: Dictionary<String, IsBrbon>, amount: Int = 1) -> Result {
-        return createNewElements(BrbonDictionary(content: value), amount)
-    }
-
-    
-    /// Inserts a new element at the given position.
-    
-    @discardableResult
-    private func _insert(_ value: Coder, atIndex index: Int, withName name: String? = nil) -> Result {
-
-        
-        guard isValid else { fatalOrNull("Portal is invalid"); return .portalInvalid }
-        
-        guard index >= 0 else { fatalOrNull("Index (\(index)) below zero"); return .indexBelowLowerBound }
-        guard index < countValue else { fatalOrNull("Index (\(index)) above high bound (\(countValue))"); return .indexAboveHigherBound }
-        
-        
-        if isArray {
-            
-            // Type must match the element type
-            
-            guard value.brbonType == elementType else { return .typeConflict }
-            
-            
-            // Ensure that the element byte count is sufficient
-            
-            var result = ensureElementByteCount(for: value)
-            guard result == .success else { return result }
-            
-            
-            // Ensure that the item storage capacity is sufficient
-            
-            let newCount = countValue + 1
-            let neccesaryValueByteCount = 8 + elementByteCount * newCount
-            result = ensureValueByteCount(for: neccesaryValueByteCount)
-            guard result == .success else { return result }
-            
-            
-            // Copy the existing elements upward
-            
-            let dstPtr = elementPtr(for: index + 1)
-            let srcPtr = elementPtr(for: index)
-            let length = (countValue - index) * elementByteCount
-            manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: length, removeCount: 0, updateMovedPortals: false, updateRemovedPortals: false)
-            
-            
-            // Insert the new element
-            
-            value.storeValue(atPtr: elementPtr(for: index), endianness)
-            
-            
-            // Increase the number of elements
-            
-            countValue += 1
-            
-            
-            return .success
-            
-            
-        } else if isSequence {
-            
-            // Ensure that there is enough space available
-            
-            let nfd: NameFieldDescriptor? = {
-                guard let name = name else { return nil }
-                return NameFieldDescriptor(name)
-            }()
-            
-            let newItemByteCount = value.itemByteCount(nfd)
-            
-            if valueByteCount - usedValueByteCount < newItemByteCount {
-                let result = increaseItemByteCount(to: minimumItemByteCount + usedValueByteCount + newItemByteCount)
-                guard result == .success else { return result }
-            }
-            
-            
-            // Copy the existing items upward
-            
-            let itm = item(at: index)
-            
-            let dstPtr = itm.itemPtr.advanced(by: newItemByteCount)
-            let srcPtr = itm.itemPtr
-            let length = newItemByteCount
-            
-            manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: length, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
-            
-            
-            // Insert the new element
-            
-            value.storeAsItem(atPtr: srcPtr, bufferPtr: manager.bufferPtr, parentPtr: itemPtr, nameField: nfd, valueByteCount: nil, endianness)
-            
-            
-            countValue += 1
-            
-            return .success
-
-            
-        } else {
-            
-            fatalOrNull("insert(Coder, int) not supported on \(itemPtr)")
-            return .operationNotSupported
-        }
-    }
-
-    @discardableResult
-    public func insert(_ value: IsBrbon, atIndex index: Int) -> Result { return _insert(value as! Coder, atIndex: index) }
-    @discardableResult
-    public func insert(_ value: Array<Bool>, at index: Int) -> Result { return _insert(BrbonArray(content: value, type: .bool), atIndex: index) }
-    @discardableResult
-    public func insert(_ value: Array<UInt8>, at index: Int) -> Result { return _insert(BrbonArray(content: value, type: .uint8), atIndex: index) }
-    @discardableResult
-    public func insert(_ value: Array<UInt16>, at index: Int) -> Result { return _insert(BrbonArray(content: value, type: .uint16), atIndex: index) }
-    @discardableResult
-    public func insert(_ value: Array<UInt32>, at index: Int) -> Result { return _insert(BrbonArray(content: value, type: .uint32), atIndex: index) }
-    @discardableResult
-    public func insert(_ value: Array<UInt64>, at index: Int) -> Result { return _insert(BrbonArray(content: value, type: .uint64), atIndex: index) }
-    @discardableResult
-    public func insert(_ value: Array<Int8>, at index: Int) -> Result { return _insert(BrbonArray(content: value, type: .int8), atIndex: index) }
-    @discardableResult
-    public func insert(_ value: Array<Int16>, at index: Int) -> Result { return _insert(BrbonArray(content: value, type: .int16), atIndex: index) }
-    @discardableResult
-    public func insert(_ value: Array<Int32>, at index: Int) -> Result { return _insert(BrbonArray(content: value, type: .int32), atIndex: index) }
-    @discardableResult
-    public func insert(_ value: Array<Int64>, at index: Int) -> Result { return _insert(BrbonArray(content: value, type: .int64), atIndex: index) }
-    @discardableResult
-    public func insert(_ value: Array<Float32>, at index: Int) -> Result { return _insert(BrbonArray(content: value, type: .float32),atIndex:  index) }
-    @discardableResult
-    public func insert(_ value: Array<Float64>, at index: Int) -> Result { return _insert(BrbonArray(content: value, type: .float64),atIndex:  index) }
-    @discardableResult
-    public func insert(_ value: Array<String>, at index: Int) -> Result { return _insert(BrbonArray(content: value, type: .string), atIndex: index) }
-    @discardableResult
-    public func insert(_ value: Array<Data>, at index: Int) -> Result { return _insert(BrbonArray(content: value, type: .binary), atIndex: index) }
-    @discardableResult
-    public func insert(_ value: Dictionary<String, IsBrbon>, at index: Int) -> Result { return _insert(BrbonDictionary(content: value), atIndex: index) }
-
-    
     /// Replaces the item at self.
     ///
     /// The item at self is replaced by the new value. The byte count will be preserved as is, or enlarged as necessary. If there is an existing name it will be preserved. If the new value is nil, the item will be converted into a null.
     
-    internal func replaceWith(_ value: Coder?) -> Result {
+    internal func _sequenceReplaceWith(_ value: Coder?) -> Result {
         
         if let value = value {
             
@@ -814,5 +384,455 @@ public extension Portal {
             itemType = .null
             return .success
         }
+    }
+
+    
+    /// Makes sure the element byte count is sufficient.
+    ///
+    /// - Parameter for: The Coder value that must be accomodated.
+    ///
+    /// - Returns: Success if the value can be allocated, an error identifier when not.
+    
+    internal func _arrayEnsureElementByteCount(for value: Coder) -> Result {
+        
+        
+        // Check to see if the element byte count of the array must be increased.
+        
+        if value.elementByteCount > elementByteCount {
+            
+            
+            // The value byte count is bigger than the existing element byte count.
+            // Enlarge the item to accomodate extra bytes.
+            
+            let necessaryElementByteCount: Int
+            if value.brbonType.isContainer {
+                necessaryElementByteCount = value.elementByteCount.roundUpToNearestMultipleOf8()
+            } else {
+                necessaryElementByteCount = value.elementByteCount
+            }
+            
+            
+            // This is the byte count that self has to become in order to accomodate the new value
+            
+            let necessaryItemByteCount = itemByteCount - valueByteCount + 8 + ((countValue + 1) * necessaryElementByteCount)
+            
+            
+            if necessaryItemByteCount > itemByteCount {
+                // It is necessary to increase the bytecount for the array item itself
+                let result = increaseItemByteCount(to: necessaryItemByteCount.roundUpToNearestMultipleOf8())
+                guard result == .success else { return result }
+            }
+            
+            
+            // Increase the byte count of the elements by shifting them up inside the enlarged array.
+            
+            increaseElementByteCount(to: necessaryElementByteCount)
+            
+            
+        } else {
+            
+            
+            // The element byte count of the array is big enough to hold the new value.
+            
+            // Make sure a new value can be added to the array
+            
+            let necessaryItemByteCount = itemByteCount - valueByteCount + 8 + ((countValue + 1) * elementByteCount)
+            
+            if necessaryItemByteCount > itemByteCount {
+                let result = increaseItemByteCount(to: necessaryItemByteCount.roundUpToNearestMultipleOf8())
+                guard result == .success else { return result }
+            }
+        }
+        
+        return .success
+    }
+    
+    
+    /// Adds a new bool value to the end of the array.
+    ///
+    /// - Parameter value: The value to be added to the array.
+    ///
+    /// - Returns: 'success' or an error indicator.
+    
+    @discardableResult
+    private func _arrayAppend(_ value: Coder) -> Result {
+        
+
+        // Ensure that the element byte count is sufficient
+        
+        let result = _arrayEnsureElementByteCount(for: value)
+        guard result == .success else { return result }
+        
+        
+        // Ensure that the new value can be added
+        
+        if valueByteCount - usedValueByteCount < value.elementByteCount {
+            let result = increaseItemByteCount(to: minimumItemByteCount + usedValueByteCount + value.elementByteCount)
+            guard result == .success else { return result }
+        }
+        
+        
+        // The new value can be added
+        
+        if value.brbonType.isContainer {
+            value.storeAsItem(atPtr: elementPtr(for: countValue), bufferPtr: manager.bufferPtr, parentPtr: itemPtr, nameField: nil, valueByteCount: nil, endianness)
+        } else {
+            value.storeAsElement(atPtr: elementPtr(for: countValue), endianness)
+        }
+        
+        
+        // Increase child counter
+        
+        countValue += 1
+        
+        return .success
+    }
+    
+    
+    /// Adds a new bool value to the end of the sequence.
+    ///
+    /// - Parameters:
+    ///   - value: The value to be added to the sequence.
+    ///   - forName: The name for the new value.
+    ///
+    /// - Returns: 'success' or an error indicator.
+    
+    @discardableResult
+    private func _sequenceAppend(_ value: Coder, forName name: String? = nil) -> Result {
+        
+        
+        // Create the name field descriptor (if used)
+        
+        let nfd: NameFieldDescriptor? = {
+            guard let name = name else { return nil }
+            return NameFieldDescriptor(name)
+        }()
+
+        
+        // Ensure that there is enough space available
+        
+        let newItemByteCount = value.itemByteCount(nfd)
+        
+        if valueByteCount - usedValueByteCount < newItemByteCount {
+            let result = increaseItemByteCount(to: minimumItemByteCount + usedValueByteCount + newItemByteCount)
+            guard result == .success else { return result }
+        }
+        
+        value.storeAsItem(atPtr: afterLastItemPtr, bufferPtr: manager.bufferPtr, parentPtr: itemPtr, nameField: nfd, valueByteCount: nil, endianness)
+        
+        countValue += 1
+        
+        return .success
+    }
+
+    
+    /// Appends a new value to an array or sequence.
+    ///
+    /// - Parameters:
+    ///   - value: A Coder compatible value.
+    ///   - forName: An optional name, only used when the target is a sequence. Ignored for array's.
+    ///
+    /// - Returns: 'success' or an error indicator.
+    
+    @discardableResult
+    public func append(_ value: IsBrbon, forName name: String? = nil) -> Result {
+        
+        guard isValid else { return .portalInvalid }
+        
+        guard let value = value as? Coder else { return .missingCoder }
+        
+        
+        if isArray {
+            guard elementType == value.brbonType else { return .typeConflict }
+            return _arrayAppend(value)
+        }
+        
+        
+        if isSequence {
+            return _sequenceAppend(value, forName: name)
+        }
+        
+        
+        fatalOrNull("Append operation not valid on \(itemType)")
+        
+        return .operationNotSupported
+    }
+
+    
+    /// Removes an item from an array.
+    ///
+    /// - Parameter index: The index of the element to remove.
+    ///
+    /// - Returns: success or an error indicator.
+    
+    @discardableResult
+    private func _arrayRemove(at index: Int) -> Result {
+        
+
+        // Remove the active portals for the items inside the element to be removed, but not the element itself.
+        
+        let eptr = elementPtr(for: index)
+        manager.removeActivePortals(atAndAbove: eptr.advanced(by: 1), below: eptr.advanced(by: elementByteCount))
+        
+        
+        // Shift the remaining elements into their new place
+        
+        let srcPtr = elementPtr(for: index + 1)
+        let dstPtr = elementPtr(for: index)
+        let len = (countValue - 1 - index) * elementByteCount
+        
+        manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
+        
+        
+        // The last index portal (if present) must be removed
+        
+        let lptr = elementPtr(for: countValue - 1)
+        manager.removeActivePortals(atAndAbove: lptr, below: lptr.advanced(by: 1))
+        
+        
+        // Decrease the number of elements
+        
+        countValue -= 1
+        
+        
+        return .success
+    }
+    
+    
+    /// Removes an item from a sequence.
+    ///
+    /// - Parameter index: The index of the element to remove.
+    ///
+    /// - Returns: success or an error indicator.
+
+    @discardableResult
+    private func _sequenceRemove(at index: Int) -> Result {
+        
+        let itm = item(at: index)
+        let aliPtr = afterLastItemPtr
+        
+        let srcPtr = itm.itemPtr.advanced(by: itm.itemByteCount)
+        let dstPtr = itm.itemPtr
+        let len = srcPtr.distance(to: aliPtr)
+        
+        manager.removeActivePortal(itm)
+        
+        if len > 0 {
+            manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
+        }
+        
+        countValue -= 1
+        
+        return .success
+    }
+
+    
+    /// Removes an item from an array or sequence.
+    ///
+    /// If the index is out of bounds the operation will fail. Notice that the itemByteCount of the array will not decrease.
+    ///
+    /// - Parameter index: The index of the element to remove.
+    ///
+    /// - Returns: success or an error indicator.
+
+    @discardableResult
+    public func remove(at index: Int) -> Result {
+        
+        guard isValid else { fatalOrNull("Portal is invalid"); return .portalInvalid }
+        
+        guard index >= 0 else { fatalOrNull("Index (\(index)) below zero"); return .indexBelowLowerBound }
+        guard index < countValue else { fatalOrNull("Index (\(index)) above high bound (\(countValue))"); return .indexAboveHigherBound }
+
+        if isArray { return _arrayRemove(at: index) }
+        
+        if isSequence { return _sequenceRemove(at: index) }
+        
+        fatalOrNull("remove(int) not supported on \(itemPtr)")
+        return .operationNotSupported
+    }
+    
+    
+    /// Appends one or a number of new elements to the end of an array. The elf must be an array.
+    ///
+    /// If a default value is given, it will be used. If no default value is specified the content bytes will be set to zero.
+    ///
+    /// - Parameters:
+    ///   - amount: The number of elements to create, default = 1.
+    ///   - value: The default value for the new elements, default = nil.
+    ///
+    /// - Returns: 'success' or an error indicator.
+    
+    @discardableResult
+    public func createNewElements(_ value: IsBrbon, amount: Int = 1) -> Result {
+        
+        guard isValid else { fatalOrNull("Portal is invalid"); return .portalInvalid }
+        guard amount > 0 else { fatalOrNull("createNewElements must have amount > 0, found \(amount)"); return .illegalAmount }
+        guard let value = value as? Coder else { return .missingCoder }
+
+        guard isArray else {
+            fatalOrNull("_createNewElements not supported for \(itemType)")
+            return .operationNotSupported
+        }
+        
+        // Ensure that the element byte count is sufficient
+        
+        var result = _arrayEnsureElementByteCount(for: value)
+        guard result == .success else { return result }
+        
+        
+        // Ensure that the item storage capacity is sufficient
+        
+        let newCount = countValue + amount
+        let neccesaryValueByteCount = 8 + elementByteCount * newCount
+        result = ensureValueByteCount(for: neccesaryValueByteCount)
+        guard result == .success else { return result }
+        
+        
+        // Use default value to populate the new items
+        
+        var loopCount = amount
+        repeat {
+            value.storeValue(atPtr: elementPtr(for: countValue + loopCount - 1), endianness)
+            loopCount -= 1
+        } while loopCount > 0
+        
+        
+        // Increment the number of elements
+        
+        countValue += amount
+        
+        
+        return .success
+    }
+
+    
+    /// Inserts a new element.
+    ///
+    /// - Parameters:
+    ///   - value: The value to be inserted.
+    ///   - atIndex: The index at which to insert the value.
+    ///
+    /// - Returns: 'success' or an error indicator.
+
+    @discardableResult
+    private func _arrayInsert(_ value: Coder, atIndex index: Int) -> Result {
+
+        
+        // Ensure that the element byte count is sufficient
+        
+        var result = _arrayEnsureElementByteCount(for: value)
+        guard result == .success else { return result }
+        
+        
+        // Ensure that the item storage capacity is sufficient
+        
+        let newCount = countValue + 1
+        let neccesaryValueByteCount = 8 + elementByteCount * newCount
+        result = ensureValueByteCount(for: neccesaryValueByteCount)
+        guard result == .success else { return result }
+        
+        
+        // Copy the existing elements upward
+        
+        let dstPtr = elementPtr(for: index + 1)
+        let srcPtr = elementPtr(for: index)
+        let length = (countValue - index) * elementByteCount
+        manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: length, removeCount: 0, updateMovedPortals: false, updateRemovedPortals: false)
+        
+        
+        // Insert the new element
+        
+        value.storeValue(atPtr: elementPtr(for: index), endianness)
+        
+        
+        // Increase the number of elements
+        
+        countValue += 1
+        
+        
+        return .success
+    }
+    
+    
+    /// Inserts a new element.
+    ///
+    /// - Parameters:
+    ///   - value: The value to be inserted.
+    ///   - atIndex: The index at which to insert the value.
+    ///   - withName: A name for the value.
+    ///
+    /// - Returns: 'success' or an error indicator.
+
+    @discardableResult
+    private func _sequenceInsert(_ value: Coder, atIndex index: Int, withName name: String? = nil) -> Result {
+        
+        
+        // Ensure that there is enough space available
+        
+        let nfd: NameFieldDescriptor? = {
+            guard let name = name else { return nil }
+            return NameFieldDescriptor(name)
+        }()
+        
+        let newItemByteCount = value.itemByteCount(nfd)
+        
+        if valueByteCount - usedValueByteCount < newItemByteCount {
+            let result = increaseItemByteCount(to: minimumItemByteCount + usedValueByteCount + newItemByteCount)
+            guard result == .success else { return result }
+        }
+        
+        
+        // Copy the existing items upward
+        
+        let itm = item(at: index)
+        
+        let dstPtr = itm.itemPtr.advanced(by: newItemByteCount)
+        let srcPtr = itm.itemPtr
+        let length = newItemByteCount
+        
+        manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: length, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
+        
+        
+        // Insert the new element
+        
+        value.storeAsItem(atPtr: srcPtr, bufferPtr: manager.bufferPtr, parentPtr: itemPtr, nameField: nfd, valueByteCount: nil, endianness)
+        
+        
+        countValue += 1
+        
+        return .success
+    }
+
+    
+    /// Inserts a new element.
+    ///
+    /// - Parameters:
+    ///   - value: The value to be inserted.
+    ///   - atIndex: The index at which to insert the value.
+    ///   - withName: A name for the value, only used if the target is a sequence. Ignorded for arrays.
+    ///
+    /// - Returns: 'success' or an error indicator.
+
+    @discardableResult
+    public func insert(_ value: IsBrbon, atIndex index: Int, withName name: String? = nil) -> Result {
+        
+        guard isValid else { fatalOrNull("Portal is invalid"); return .portalInvalid }
+        
+        guard index >= 0 else { fatalOrNull("Index (\(index)) below zero"); return .indexBelowLowerBound }
+        guard index < countValue else { fatalOrNull("Index (\(index)) above high bound (\(countValue))"); return .indexAboveHigherBound }
+
+        guard let value = value as? Coder else { return .missingCoder }
+
+        if isArray {
+            guard value.brbonType == elementType else { return .typeConflict }
+            return _arrayInsert(value, atIndex: index)
+        }
+        
+        if isSequence {
+            return _sequenceInsert(value, atIndex: index, withName: name)
+        }
+        
+        fatalOrNull("insert(Coder, int) not supported on \(itemPtr)")
+        return .operationNotSupported
     }
 }

@@ -607,6 +607,8 @@ extension Portal {
     
     public func getRow(_ index: Int) -> Dictionary<String, Portal> {
         
+        guard isTable else { return [:] }
+
         var dict: Dictionary<String, Portal> = [:]
         
         for ci in 0 ..< _tableColumnCount {
@@ -618,20 +620,35 @@ extension Portal {
     }
     
     
-    /// Adds new rows with the given default content to the table.
+    /// Adds new rows to the table.
     ///
-    /// If the dictionary with default values specifies new column names, these columns will be added.
-    ///
-    ///
-    /// - Note: If this operation is used to add rows, then the existing __COLUMN INDEX__'s must be considered __INVALID__.
+    /// The fields of the new rows will be set to zero.
     ///
     /// - Parameters:
-    ///   - fields: An optional dictionary with default values for the fields. If a field has no default value it will be set to zero. If a field is specified that has no corresponding column in the table, an additional column will be added. If an out of memory occurs, some columns may still have been added.
-    ///   - count: The number of rows that must be added. If an out of memory occurs, then the maximum possible number of rows will have been added.
+    ///   - count: The number of rows that must be added.
     ///
-    /// - Returns:
+    /// - Returns: 'success' or an error indicator.
+    
     @discardableResult
-    public func addRows(_ fields: Dictionary<String, IsBrbon>?, count: Int = 1) -> Result {
+    public func addRows(_ count: Int) -> Result {
+       
+        guard isTable else { return .operationNotSupported }
+        
+        let necessaryValueByteCount = _tableRowsOffset + ((_tableRowCount + count) * _tableRowByteCount)
+        
+        if valueByteCount < necessaryValueByteCount {
+            let result = increaseItemByteCount(to: minimumItemByteCount + necessaryValueByteCount)
+            guard result == .success else { return result }
+        }
+        
+        let data = Data(count: count * _tableRowByteCount)
+        
+        let ptr = _tableFieldValuePtr(row: _tableRowCount, column: 0)
+        
+        data.storeValue(atPtr: ptr, endianness)
+        
+        _tableRowCount += count
+
         return .success
     }
     
@@ -644,11 +661,26 @@ extension Portal {
     
     @discardableResult
     public func removeRow(_ index: Int) -> Result {
-        fatalError("Not yet implemented")
+        
+        guard isTable else { return .operationNotSupported }
+        
+        guard index >= 0 else { return .indexBelowLowerBound }
+        guard index < _tableRowCount else { return .indexAboveHigherBound }
+        
+        let dstPtr = _tableFieldValuePtr(row: index, column: 0)
+        let srcPtr = dstPtr.advanced(by: _tableRowByteCount)
+        let moveCount = (_tableRowCount - index - 1) * _tableRowByteCount
+        let removeCount = _tableRowByteCount
+        
+        manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: moveCount, removeCount: removeCount, updateMovedPortals: true, updateRemovedPortals: true)
+        
+        _tableRowCount -= 1
+        
+        return .success
     }
     
     
-    /// Removes the column with the given name from the table. The space that is freed is removed from the table rows, but not the item. Hence the item will remain the same size as before, but the rowByteCount is reduced.
+    /// Removes the column with the given name from the table. The column-field is removed from the table rows, but not the table-item. Hence the itemByteCount will remain the same size as before, but the rowByteCount is reduced.
     ///
     /// - Note: If this operation is successful, then the existing __COLUMN INDEX__'s must be considered __INVALID__.
     ///
@@ -658,6 +690,8 @@ extension Portal {
     
     @discardableResult
     public func removeColumn(_ name: String) -> Result {
+        
+        guard isTable else { return .operationNotSupported }
         
         
         // Get the index of the column to remove
@@ -858,5 +892,4 @@ extension Portal {
         
         return .success
     }
-    
 }

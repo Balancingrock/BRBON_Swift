@@ -9,7 +9,7 @@
 import Foundation
 import BRUtils
 
-internal class BrbonSequence: Coder, IsBrbon {
+internal class BrbonSequence: Coder {
     
     
     init(array: Array<IsBrbon>? = nil, dict: Dictionary<String, IsBrbon>? = nil) {

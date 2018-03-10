@@ -10,7 +10,7 @@ import Foundation
 import BRUtils
 
 
-internal class BrbonArray: Coder, IsBrbon {
+internal class BrbonArray: Coder {
 
     init(content: Array<Coder>, type: ItemType, elementByteCount: Int? = nil) {
         self.content = content

@@ -493,67 +493,6 @@ extension Portal {
     }
     
     
-    /// Makes sure the element byte count is sufficient.
-    ///
-    /// - Parameter for: The Coder value that must be accomodated.
-    ///
-    /// - Returns: Success if the value can be allocated, an error identifier when not.
-    
-    internal func ensureElementByteCount(for value: Coder) -> Result {
-        
-        
-        // Check to see if the element byte count of the array must be increased.
-        
-        if value.elementByteCount > elementByteCount {
-            
-            
-            // The value byte count is bigger than the existing element byte count.
-            // Enlarge the item to accomodate extra bytes.
-            
-            let necessaryElementByteCount: Int
-            if value.brbonType.isContainer {
-                necessaryElementByteCount = value.elementByteCount.roundUpToNearestMultipleOf8()
-            } else {
-                necessaryElementByteCount = value.elementByteCount
-            }
-            
-            
-            // This is the byte count that self has to become in order to accomodate the new value
-            
-            let necessaryItemByteCount = itemByteCount - valueByteCount + 8 + ((countValue + 1) * necessaryElementByteCount)
-            
-            
-            if necessaryItemByteCount > itemByteCount {
-                // It is necessary to increase the bytecount for the array item itself
-                let result = increaseItemByteCount(to: necessaryItemByteCount.roundUpToNearestMultipleOf8())
-                guard result == .success else { return result }
-            }
-            
-            
-            // Increase the byte count of the elements by shifting them up inside the enlarged array.
-            
-            increaseElementByteCount(to: necessaryElementByteCount)
-            
-            
-        } else {
-            
-            
-            // The element byte count of the array is big enough to hold the new value.
-            
-            // Make sure a new value can be added to the array
-            
-            let necessaryItemByteCount = itemByteCount - valueByteCount + 8 + ((countValue + 1) * elementByteCount)
-            
-            if necessaryItemByteCount > itemByteCount {
-                let result = increaseItemByteCount(to: necessaryItemByteCount.roundUpToNearestMultipleOf8())
-                guard result == .success else { return result }
-            }
-        }
-        
-        return .success
-    }
-    
-    
     /// Increases the byte count of self.
     ///
     /// This operation might affect the itemByteCount and elementByteCount of multiple items if self is contained in other items. This can result in a total size increase many times the value in this call.
@@ -892,7 +831,7 @@ extension Portal {
     
     public var portal: Portal {
         guard isValid else { return fatalOrNull("Portal is no longer valid") }
-        return manager.getActivePortal(for: itemPtr, index: index)
+        return manager.getActivePortal(for: itemPtr, index: index, column: column)
     }
     
     public var isNull: Bool {
@@ -1548,7 +1487,7 @@ extension Portal {
                     newValue.storeAsElement(atPtr: _tableFieldValuePtr(row: index, column: column), endianness)
                 } else {
                     guard let newValue = newValue, isString else { fatalOrNull("Element type change not allowed (is: \(itemType))"); return }
-                    guard ensureElementByteCount(for: newValue) == .success else { fatalOrNull("Could not allocate additional memory"); return }
+                    guard _arrayEnsureElementByteCount(for: newValue) == .success else { fatalOrNull("Could not allocate additional memory"); return }
                     newValue.storeAsElement(atPtr: elementPtr(for: index), endianness)
                 }
             } else {
@@ -1595,7 +1534,7 @@ extension Portal {
                     newValue.storeAsElement(atPtr: _tableFieldValuePtr(row: index, column: column), endianness)
                 } else {
                     guard let newValue = newValue, isString else { fatalOrNull("Element type change not allowed (is: \(itemType))"); return }
-                    guard ensureElementByteCount(for: newValue) == .success else {
+                    guard _arrayEnsureElementByteCount(for: newValue) == .success else {
                         fatalOrNull("Could not allocate additional memory"); return
                     }
                     newValue.storeAsElement(atPtr: elementPtr(for: index), endianness)
@@ -1641,7 +1580,7 @@ extension Portal {
                     guard let newValue = newValue, isString else {
                         fatalOrNull("Element type change not allowed (is: \(itemType))"); return
                     }
-                    guard ensureElementByteCount(for: newValue) == .success else {
+                    guard _arrayEnsureElementByteCount(for: newValue) == .success else {
                         fatalOrNull("Could not allocate additional memory"); return
                     }
                     newValue.storeAsElement(atPtr: elementPtr(for: index), endianness)

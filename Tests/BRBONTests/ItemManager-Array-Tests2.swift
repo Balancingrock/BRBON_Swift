@@ -35,9 +35,14 @@ class ItemManager_Array_Tests2: XCTestCase {
         let arr1: Array<UInt32> = [UInt32(0x11111111), UInt32(0x22222222)]
         let arr2: Array<String> = ["1111", "2222", "3333"]
         let arr3: Array<UInt8>  = [UInt8(0x48), UInt8(0x49), UInt8(0x4A), UInt8(0x4B)]
-        XCTAssertEqual(am.root.append(arr1), .success)
-        XCTAssertEqual(am.root.append(arr2), .success)
-        XCTAssertEqual(am.root.append(arr3), .success)
+        
+        let barr1 = BrbonArray(content: arr1, type: .uint32)
+        let barr2 = BrbonArray(content: arr2, type: .string)
+        let barr3 = BrbonArray(content: arr3, type: .uint8)
+        
+        XCTAssertEqual(am.root.append(barr1), .success)
+        XCTAssertEqual(am.root.append(barr2), .success)
+        XCTAssertEqual(am.root.append(barr3), .success)
         
         let exp = Data(bytes: [
             0x41, 0x00, 0x00, 0x00,  0xA8, 0x00, 0x00, 0x00,

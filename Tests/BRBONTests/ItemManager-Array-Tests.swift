@@ -622,7 +622,8 @@ class ItemManager_Array_Tests: XCTestCase {
         
         // Append an array
         
-        XCTAssertEqual(am.root.append([UInt16(0x1234), UInt16(0xAABB)]), .success)
+        let barr1 = BrbonArray(content: [UInt16(0x1234), UInt16(0xAABB)], type: .uint16)
+        XCTAssertEqual(am.root.append(barr1), .success)
         
         exp = Data(bytes: [
             0x41, 0x00, 0x00, 0x00,
@@ -654,7 +655,8 @@ class ItemManager_Array_Tests: XCTestCase {
         
         // Add another array of a different size
         
-        XCTAssertEqual(am.root.append([Int32(0x12345678), Int32(0x7ABBCCDD), Int32(0x4888CCCC)]), .success)
+        let barr2 = BrbonArray(content: [Int32(0x12345678), Int32(0x7ABBCCDD), Int32(0x4888CCCC)], type: .int32)
+        XCTAssertEqual(am.root.append(barr2), .success)
         
         exp = Data(bytes: [
             0x41, 0x00, 0x00, 0x00,

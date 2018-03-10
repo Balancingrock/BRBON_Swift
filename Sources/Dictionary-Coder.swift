@@ -10,7 +10,7 @@ import Foundation
 import BRUtils
 
 
-internal class BrbonDictionary: Coder, IsBrbon {
+internal class BrbonDictionary: Coder {
 
     
     init(content: Dictionary<String, IsBrbon>? = nil) {

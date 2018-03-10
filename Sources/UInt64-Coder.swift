@@ -10,7 +10,7 @@ import Foundation
 import BRUtils
 
 
-/// Adds the BrbonCoder protocol
+/// Adds the Coder protocol
 
 extension UInt64: Coder {
     

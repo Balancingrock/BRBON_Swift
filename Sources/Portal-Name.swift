@@ -188,11 +188,33 @@ public extension Portal {
     }
 
 
+    /// Updates the value of the item or adds a new item.
+    ///
+    /// Only valid for dictionary and sequence items.
+    ///
+    /// - Parameters:
+    ///   - value: The new value, may be nil. If nil, the value will be changed to a .null.
+    ///   -forName: The name of the item to update. If the portal points to a sequence, only the first item wit this name will be updated.
+    ///
+    /// - Returns: 'success' or an error indicator.
+    
     @discardableResult
-    internal func _updateValue(_ value: Coder?, forName name: String) -> Result {
+    public func updateValue(_ value: IsBrbon?, forName name: String) -> Result {
         
         guard isValid else { fatalOrNull("Portal is no longer valid"); return .portalInvalid }
         guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return .operationNotSupported }
+        
+        if value != nil {
+            guard let value = value as? Coder else { return .missingCoder }
+            return _updateValue(value, forName: name)
+        } else {
+            return _updateValue(nil, forName: name)
+        }
+    }
+
+    @discardableResult
+    private func _updateValue(_ value: Coder?, forName name: String) -> Result {
+        
         
         guard let nfd = NameFieldDescriptor(name) else { return .illegalNameField }
 
@@ -273,15 +295,15 @@ public extension Portal {
         return .success
     }
     
-    @discardableResult
-    public func updateValue(_ value: IsBrbon?, forName name: String) -> Result { return _updateValue(value as? Coder, forName: name) }
     
     
-    /// Removes an item with the given name from the dictionary or all items with the given name from a sequence.
+    /// Removes an item with the given name from the dictionary or all the items with the given name from a sequence.
+    ///
+    /// Works only on dictionaries and sequences.
     ///
     /// - Parameter forName: The name of the item to remove.
     ///
-    /// - Returns: success or itemNotFound.
+    /// - Returns: 'success' or an error indicator (including 'itemNotFound').
     
     @discardableResult
     public func removeValue(forName name: String) -> Result {

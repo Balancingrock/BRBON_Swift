@@ -126,6 +126,9 @@ internal protocol Coder: IsBrbon {
         _ endianness: Endianness) -> Result
 }
 
+
+/// An add-on protocol to the Coder protocol for those items that can be initialized from a byte stream.
+
 internal protocol Initialize {
     
     init(valuePtr: UnsafeMutableRawPointer, count: Int, _ endianness: Endianness)
