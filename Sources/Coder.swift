@@ -57,35 +57,64 @@ import BRUtils
 internal protocol Coder: IsBrbon {
 
     
-    /// The number of bytes needed to encode self into an BrbonBytes stream
+    /// The number of bytes needed to encode the raw value of self into bytes.
     
     var valueByteCount: Int { get }
     
-    func itemByteCount(_ nfd: NameFieldDescriptor?) -> Int
+    
+    /// The number of bytes needed to encode self as a BRBON element.
     
     var elementByteCount: Int { get }
-
     
-    /// Stores the value without any other information in the memory area pointed at.
+    
+    /// The number of bytes needed to encode self as a BRBON item.
+    
+    func itemByteCount(_ nfd: NameFieldDescriptor?) -> Int
+    
+    
+    /// Stores the raw bytes of the value.
+    ///
+    /// This operation is not always supported and may result in a fatal error.
+    ///
+    /// - Note: A fatal error will occur for container types. Container types must always be stored as items.
     ///
     /// - Parameters:
-    ///   - atPtr: The pointer at which the first byte will be stored. On return the pointer will be incremented for the number of bytes stored.
-    ///   - endianness: Specifies the endianness of the bytes.
+    ///   - atPtr: The address at which the first byte will be stored.
+    ///   - endianness: Specifies the endian ordering of the bytes. Only used when necessary.
+    ///
+    /// - Returns: Either 'success' or an error code.
     
     @discardableResult
     func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Result
-
-    /// Stores the value as an item.
+    
+    
+    /// Stores the raw bytes of the value preceeded by any information necessary to restore the value.
+    ///
+    /// This operation is not always supported and may result in a fatal error.
+    ///
+    /// - Note: A fatal error will occur for container types. Container types must always be stored as items.
     ///
     /// - Parameters:
-    ///   - atPtr: The address of the first byte to be stored.
-    ///   - bufferPtr: The startaddress of the buffer of in which the item will be stored.
-    ///   - parentPtr: The address of the first byte of the parent item of the to be stored item. Must be equal to bufferPtr for the first item in a buffer.
-    ///   - nameField: A name field descriptor if the item has a name.
-    ///   - valueByteCount: If present, then the item will have a value field of at least this many bytes.
-    ///   - endianness: The endianness for the value and its item structure.
+    ///   - atPtr: The address at which the first byte will be stored.
+    ///   - endianness: Specifies the endian ordering of the bytes. Only used when necessary.
     ///
-    /// - Returns: Either .success or an error code.
+    /// - Returns: Either 'success' or an error code.
+    
+    @discardableResult
+    func storeAsElement(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Result
+
+    
+    /// Stores the value as a BRBON item.
+    ///
+    /// - Parameters:
+    ///   - atPtr: The address at which the first byte will be stored.
+    ///   - bufferPtr: The startaddress of the buffer in which the item will be stored.
+    ///   - parentPtr: The address of the first byte of the parent item of self. Must be equal to bufferPtr for the first item in a buffer.
+    ///   - nameField: An optional name field descriptor if the item has a name.
+    ///   - valueByteCount: If present, then the item will have a value field of at least this many bytes.
+    ///   - endianness: Specifies the endian ordering of the bytes. Only used when necessary.
+    ///
+    /// - Returns: Either 'success' or an error code.
     
     @discardableResult
     func storeAsItem(
@@ -95,20 +124,6 @@ internal protocol Coder: IsBrbon {
         nameField nfd: NameFieldDescriptor?,
         valueByteCount: Int?,
         _ endianness: Endianness) -> Result
-    
-    
-    /// Stores the value in an array.
-    ///
-    /// This operation is only usable for non-containers. Containers are always stored as items, even in an array. The container types are: .array, .dictionary, .sequence and .table. All other types are value types.
-    ///
-    /// - Parameters:
-    ///   - atPtr: The address of the first byte where the value will be stored.
-    ///   - endianness: The endianness for the value and its item structure.
-    ///
-    /// - Returns: Either .success or an error code.
-
-    @discardableResult
-    func storeAsElement(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Result
 }
 
 internal protocol Initialize {

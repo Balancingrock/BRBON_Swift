@@ -257,6 +257,14 @@ extension Portal {
     }
     
     
+    /// Returns a pointer to the first byte of the first item in a row
+    
+    internal func _tableGetRowPtr(row: Int) -> UnsafeMutableRawPointer {
+        let rowOffset = row * _tableRowByteCount
+        return itemPtr.brbonItemValuePtr.advanced(by: _tableRowsOffset + rowOffset)
+    }
+    
+    
     /// Returns a NFD for the column.
     
     internal func _tableColumnNameFieldDescriptor(_ column: Int) -> NameFieldDescriptor {
@@ -337,14 +345,14 @@ extension Portal {
         }
         
         // Move the table values up
-        moveBlock(dstPtr, srcPtr, len)
+        manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
         
         // Rebuild the table and column description area
         var cols: Array<ColumnSpecification> = []
         for i in 0 ..< _tableColumnCount {
             guard let colSpec = ColumnSpecification(valueAreaPtr: itemPtr.brbonItemValuePtr, forColumn: i, endianness) else {
-                // Move the table back to its original place
-                moveBlock(srcPtr, dstPtr, len)
+                // Undo: Move the table back to its original place
+                manager.moveBlock(to: srcPtr, from: dstPtr, moveCount: len, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
                 return .invalidTableColumnType
             }
             cols.append(colSpec)
@@ -353,8 +361,6 @@ extension Portal {
         cols[column].nfd = nfd
         _tableWriteSpecification(&cols)
 
-        // Update the portals (only needed for the containers in the table content)
-        manager.activePortals.updatePointers(atAndAbove: srcPtr, below: srcPtr.advanced(by: len), toNewBase: dstPtr)
 
         return .success
     }
@@ -418,14 +424,12 @@ extension Portal {
             if bytesAfterIncrease > 0 {
                 let srcPtr = oldRowStartPtr.advanced(by: offsetOfFirstByteAfterIncreasedByteCount)
                 let dstPtr = newRowStartPtr.advanced(by: offsetOfFirstByteAfterIncreasedByteCount)
-                moveBlock(dstPtr, srcPtr, bytesAfterIncrease)
-                manager.activePortals.updatePointers(atAndAbove: srcPtr, below: srcPtr.advanced(by: bytesAfterIncrease), toNewBase: dstPtr)
+                manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: bytesAfterIncrease, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
             }
             
             // There are always bytes 'before'
             
-            moveBlock(newRowStartPtr, oldRowStartPtr, bytesBeforeIncrease)
-            manager.activePortals.updatePointers(atAndAbove: oldRowStartPtr, below: oldRowStartPtr.advanced(by: bytesBeforeIncrease), toNewBase: newRowStartPtr)
+            manager.moveBlock(to: newRowStartPtr, from: oldRowStartPtr, moveCount: bytesBeforeIncrease, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
         }
         
         // Update the column value byte count to the new value
@@ -517,7 +521,7 @@ extension Portal {
             guard let column = column else { return fatalOrNull("No column specified") }
             guard row >= 0, row < _tableRowCount else { return fatalOrNull("Row must be >= 0 and < \(_tableRowCount)") }
             guard let columnIndex = _tableColumnIndex(for: column) else { return fatalOrNull("No column with this name (\(column.string))") }
-            return Portal(itemPtr: itemPtr, index: row, column: columnIndex, manager: manager, endianness: endianness)
+            return manager.getActivePortal(for: itemPtr, index: row, column: columnIndex)
         }
     }
     
@@ -537,7 +541,7 @@ extension Portal {
             guard isTable else { return fatalOrNull("Self is not a table") }
             guard row >= 0, row < _tableRowCount else { return fatalOrNull("Row must be >= 0 and < \(_tableRowCount)") }
             guard let columnIndex = _tableColumnIndex(for: column) else { return fatalOrNull("No column with this name (\(column))") }
-            return Portal(itemPtr: itemPtr, index: row, column: columnIndex, manager: manager, endianness: endianness)
+            return manager.getActivePortal(for: itemPtr, index: row, column: columnIndex)
         }
     }
     
@@ -554,11 +558,66 @@ extension Portal {
         get {
             guard isTable else { return fatalOrNull("Self is not a table") }
             guard row >= 0, row < _tableRowCount else { return fatalOrNull("Row must be >= 0 and < \(_tableRowCount)") }
-            return Portal(itemPtr: itemPtr, index: row, column: column, manager: manager, endianness: endianness)
+            return manager.getActivePortal(for: itemPtr, index: index, column: column)
         }
     }
 
+    
+    /// Execute the given closure on each column item at the requested row.
+    ///
+    /// - Parameters:
+    ///   - atRow: The row for which to execute the closure.
+    ///   - closure: The closure to eecte for each column value. Note that the portal in the closure parameter is not registered with the active portals manager and thus should not be used/stored outside the closure.
+    
+    public func forEachColumn(atRow index: Int, closure: (String, Portal) -> ()) {
+        
+        guard isTable else { fatalOrNull("Self is not a table"); return }
+        guard index >= 0 && index < _tableRowCount else { fatalOrNull("No row at provided index (\(index))"); return }
+        
+        for ci in 0 ..< _tableColumnCount {
+            closure(_tableGetColumnName(for: ci), Portal(itemPtr: itemPtr, index: index, column: ci, manager: manager, endianness: endianness))
+        }
+    }
+    
+    
+    /// Execute the given closure for each row value for the given column or until the closure returns 'true'.
+    ///
+    /// The closure is not executed if the column cannot be found.
+    ///
+    /// - Parameters:
+    ///   - column: The name of the string that identifies the column value to be processed by the closure.
+    ///   - closure: The closure to execute on each row value for the requested column. Aborts when the closure returns 'true'. Note that the portal in the closure parameter is not registered with the active portals manager and thus should not be used/stored outside the closure.
+    
+    public func forEachRowAbortOnTrue(column: String, closure: (Portal) -> (Bool)) {
+        
+        guard isTable else { fatalOrNull("Self is not a table"); return }
+        guard let ci = _tableColumnIndex(for: column) else { fatalOrNull("Cannot find column (\(column))"); return }
+        
+        for ri in 0 ..< _tableRowCount {
+            if closure(Portal(itemPtr: itemPtr, index: ri, column: ci, manager: manager, endianness: endianness)) { break }
+        }
+    }
+    
 
+    /// Returns a dictionary with the columns at the given row.
+    ///
+    /// - Parameter index: The index of the row to retrieve.
+    ///
+    /// - Returns: A dictionary with the columns at the given row.
+    
+    public func getRow(_ index: Int) -> Dictionary<String, Portal> {
+        
+        var dict: Dictionary<String, Portal> = [:]
+        
+        for ci in 0 ..< _tableColumnCount {
+            let name = _tableGetColumnName(for: ci)
+            dict[name] = manager.getActivePortal(for: itemPtr, index: index, column: ci)
+        }
+        
+        return dict
+    }
+    
+    
     /// Adds new rows with the given default content to the table.
     ///
     /// If the dictionary with default values specifies new column names, these columns will be added.
@@ -589,7 +648,7 @@ extension Portal {
     }
     
     
-    /// Removes the column with the given name from the table.
+    /// Removes the column with the given name from the table. The space that is freed is removed from the table rows, but not the item. Hence the item will remain the same size as before, but the rowByteCount is reduced.
     ///
     /// - Note: If this operation is successful, then the existing __COLUMN INDEX__'s must be considered __INVALID__.
     ///
@@ -599,7 +658,95 @@ extension Portal {
     
     @discardableResult
     public func removeColumn(_ name: String) -> Result {
-        fatalError("Not yet implemented")
+        
+        
+        // Get the index of the column to remove
+        
+        guard let column = _tableColumnIndex(for: name) else { fatalOrNull("Column Not Found"); return .columnNotFound }
+        
+        
+        // Build an array of column descriptors to re-create the table descriptor without the removed column
+        
+        var cols: Array<ColumnSpecification> = []
+        for i in 0 ..< _tableColumnCount {
+            if i != column {
+                guard let colSpec = ColumnSpecification(valueAreaPtr: itemPtr.brbonItemValuePtr, forColumn: i, endianness) else {
+                    return .invalidTableColumnType
+                }
+                cols.append(colSpec)
+            }
+        }
+        
+        
+        // Cached variables (before they are changed by rebuilding the table descriptor)
+        
+        let valuePtr = itemPtr.brbonItemValuePtr
+        let valueByteCount = _tableGetColumnValueByteCount(for: column)
+        
+        let firstByteToBeRemovedOffset = _tableGetColumnValueOffset(for: column)
+        let bytesToBeRemoved = _tableGetColumnValueByteCount(for: column)
+        let firstByteNotToRemoveOffset = firstByteToBeRemovedOffset + bytesToBeRemoved
+
+        let oldRowByteCount = _tableRowByteCount
+        let newRowByteCount = oldRowByteCount - valueByteCount
+        
+        let oldRowsOffset = _tableRowsOffset
+        
+        
+        // Remove active portals in the regions to be deleted
+        
+        for i in 0 ..< _tableRowCount {
+            manager.removeActivePortal(Portal(itemPtr: itemPtr, index: i, column: column, manager: manager, endianness: endianness))
+        }
+        
+        
+        // Rewrite table specification
+        
+        _tableWriteSpecification(&cols)
+        
+        
+        // Done if there is no data
+        
+        if _tableRowCount == 0 { return .success }
+        
+        
+        // Shift the table data to the new locations.
+        // This always moves data from higher addresses to lower addresses hence we start at the beginning of the table.
+        
+        var dstPtr = valuePtr.advanced(by: _tableRowsOffset)
+        var srcPtr = valuePtr.advanced(by: oldRowsOffset)
+        
+        
+        // The first block
+        
+        if firstByteToBeRemovedOffset > 0 {
+            
+            manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: firstByteToBeRemovedOffset, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
+            
+            srcPtr = srcPtr.advanced(by: firstByteNotToRemoveOffset)
+            dstPtr = dstPtr.advanced(by: firstByteToBeRemovedOffset)
+        }
+        
+        
+        // Move blocks of memory (rowcount - 1) times
+        
+        for _ in 0 ..< (_tableRowCount - 1) {
+
+            manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: newRowByteCount, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
+            
+            dstPtr = dstPtr.advanced(by: newRowByteCount)
+            srcPtr = srcPtr.advanced(by: oldRowByteCount)
+        }
+        
+        
+        // The last block
+        
+        if firstByteNotToRemoveOffset < oldRowByteCount {
+            
+            manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: (oldRowByteCount - firstByteNotToRemoveOffset), removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
+        }
+        
+        return .success
     }
     
     
@@ -611,13 +758,105 @@ extension Portal {
     ///   - withName: The name for the new column.
     ///   - nameFieldByteCount: A byte count for the name field (must be a multiple of 8 and <= 248, the name itself can use 1 byte less than specified)
     ///   - valueType: The type stored in this column.
-    ///   - defaultValue: A default value that will be assigned to existing and new rows. When not specified, the bytes containing the value will be set to zero.
-    ///   - valueByteCount: The number of bytes reserved for value storage.
+    ///   - defaultValue: A default value that will be assigned to existing and new rows. When not specified, the bytes containing the value will be set to zero. Reserved bytes will also be set to zero. Note that the defaultValue must implement the Coder protocol.
+    ///   - valueByteCount: The number of bytes reserved for the new column value. If less than the defaultValue elementByteCount, the defaultValue elementByteCount will be used.
     ///
     /// - Returns: Success of an error indicator.
     
     @discardableResult
-    public func addColumn(withName name: String, nameFieldByteCount: Int? = nil, valueType type: ItemType, defaultValue: IsBrbon? = nil, valueByteCount: Int? = nil) -> Result {
-        fatalError("Not yet implemented")
+    public func addColumn(withName name: String, nameFieldByteCount: Int? = nil, valueType: ItemType, defaultValue: IsBrbon? = nil, valueByteCount vbc: Int? = nil) -> Result {
+        
+        
+        // There should be type harmony
+        
+        guard defaultValue?.brbonType == valueType else { return .typeConflict }
+        if let defaultValue = defaultValue {
+            guard defaultValue is Coder else { return .missingCoder }
+        }
+        
+        
+        // The name may not exist already
+        
+        guard _tableColumnIndex(for: name) == nil else { return .nameExists }
+        
+        
+        // A new colspec must be creatable
+        
+        var valueBc = (defaultValue as? Coder)?.elementByteCount ?? 0
+        if valueBc < vbc ?? 0 { valueBc = vbc! }
+        guard let newSpec = ColumnSpecification(name: name, initialNameFieldByteCount: nameFieldByteCount, valueType: valueType, initialValueByteCount: vbc) else { return .nameFieldError }
+        
+        
+        // Build an array of column descriptors to re-create the table descriptor without the removed column
+        
+        var cols: Array<ColumnSpecification> = []
+        for i in 0 ..< _tableColumnCount {
+            if i != column {
+                guard let colSpec = ColumnSpecification(valueAreaPtr: itemPtr.brbonItemValuePtr, forColumn: i, endianness) else {
+                    return .invalidTableColumnType
+                }
+                cols.append(colSpec)
+            }
+        }
+        
+        
+        // Add the new colspec
+        
+        cols.append(newSpec)
+
+        
+        // Calculate some new values to move the data into the new locations
+        
+        let rows = _tableRowCount
+
+        let oldRowsOffset = _tableRowsOffset
+        let oldRowByteCount = _tableRowByteCount
+        
+        var newRowsOffset = 16 + cols.count * 16
+        for col in cols { newRowsOffset += (col.nfd.data.count + 1) }
+        let newRowByteCount = oldRowByteCount + newSpec.valueByteCount
+        
+        
+        // Create necessary space
+        
+        let necessaryTableValueByteCount = rows * newRowByteCount + newRowsOffset
+        
+        if valueByteCount < necessaryTableValueByteCount {
+            let result = ensureValueByteCount(for: necessaryTableValueByteCount)
+            guard result == .success else { return result }
+        }
+        
+        
+        // Shift the data into its new space
+        
+        let valuePtr = itemPtr.brbonItemValuePtr
+        
+        for i in (0 ..< rows).reversed() {
+            let dstPtr = valuePtr.advanced(by: newRowsOffset + (i * newRowByteCount))
+            let srcPtr = valuePtr.advanced(by: oldRowsOffset + (i * oldRowByteCount))
+            manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: oldRowByteCount, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
+        }
+        
+        
+        // Create the new table descriptor
+        
+        _tableWriteSpecification(&cols)
+        
+        
+        // Set the default value
+        
+        let empty = Data(count: newSpec.valueByteCount)
+        let ci = _tableColumnCount - 1
+        for i in 0 ..< rows {
+            let ptr = _tableFieldValuePtr(row: i, column: ci)
+            empty.storeValue(atPtr: ptr, endianness)
+            if let defaultValue = defaultValue {
+                (defaultValue as? Coder)?.storeAsElement(atPtr: ptr, endianness)
+            }
+        }
+        
+        
+        return .success
     }
+    
 }

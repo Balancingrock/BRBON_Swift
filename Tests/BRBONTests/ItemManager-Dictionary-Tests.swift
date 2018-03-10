@@ -41,7 +41,7 @@ class ItemManager_Dictionary_Tests: XCTestCase {
             ])
         
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = dm.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
+            let p = dm.getActivePortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == dm.root)
         }
 
@@ -62,7 +62,7 @@ class ItemManager_Dictionary_Tests: XCTestCase {
             ])
         
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = dm.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
+            let p = dm.getActivePortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == dm.root)
         }
         
@@ -85,7 +85,7 @@ class ItemManager_Dictionary_Tests: XCTestCase {
             ])
         
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = dm.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
+            let p = dm.getActivePortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == dm.root)
         }
     }
@@ -108,7 +108,7 @@ class ItemManager_Dictionary_Tests: XCTestCase {
             ])
         
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = dm.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
+            let p = dm.getActivePortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == dm.root)
         }
         
@@ -147,7 +147,7 @@ class ItemManager_Dictionary_Tests: XCTestCase {
             ])
         
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = dm.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
+            let p = dm.getActivePortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == dm.root)
         }
         
@@ -178,7 +178,7 @@ class ItemManager_Dictionary_Tests: XCTestCase {
             ])
         
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = dm.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
+            let p = dm.getActivePortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == dm.root)
         }
         
@@ -209,7 +209,7 @@ class ItemManager_Dictionary_Tests: XCTestCase {
             ])
         
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = dm.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
+            let p = dm.getActivePortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == dm.root)
         }
         
@@ -236,7 +236,7 @@ class ItemManager_Dictionary_Tests: XCTestCase {
             ])
         
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = dm.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
+            let p = dm.getActivePortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == dm.root)
         }
         
@@ -257,7 +257,7 @@ class ItemManager_Dictionary_Tests: XCTestCase {
             ])
         
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = dm.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
+            let p = dm.getActivePortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == dm.root)
         }
         

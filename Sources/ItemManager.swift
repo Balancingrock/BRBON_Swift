@@ -12,7 +12,7 @@ import BRUtils
 
 /// This struct is used to keep track of the number of portals that have been returned to the API user.
 
-internal struct ActivePortals {
+fileprivate struct ActivePortals {
     
     
     /// The dictionary that associates an item pointer with a valueItem entry
@@ -22,8 +22,8 @@ internal struct ActivePortals {
     
     /// Return the portal for the given parameters. A new one is created if it was not found in the dictionary.
     
-    mutating func getPortal(for ptr: UnsafeMutableRawPointer, index: Int? = nil, mgr: ItemManager) -> Portal {
-        let newPortal = Portal(itemPtr: ptr, index: index, manager: mgr, endianness: mgr.endianness)
+    mutating func getPortal(for ptr: UnsafeMutableRawPointer, index: Int? = nil, column: Int? = nil, mgr: ItemManager) -> Portal {
+        let newPortal = Portal(itemPtr: ptr, index: index, column: column, manager: mgr, endianness: mgr.endianness)
         if let portal = dict[newPortal.key], portal.isValid {
             portal.refCount += 1
             return portal
@@ -34,13 +34,79 @@ internal struct ActivePortals {
         }
     }
     
-    
-    /// Remove a portal from the list.
-    
-    mutating func removePortal(for key: PortalKey) {
-        if let portal = dict[key] {
+
+    mutating func remove(_ portal: Portal) {
+        
+        // Remove any portal that may be contained inside an item or element within this portal
+        
+        let startAddress: UnsafeMutableRawPointer
+        let endAddress: UnsafeMutableRawPointer
+        
+        if let column = portal.column, let index = portal.index {
+            
+            startAddress = portal._tableFieldValuePtr(row: index, column: column)
+            endAddress = startAddress.advanced(by: portal._tableGetColumnValueByteCount(for: column))
+            
             portal.isValid = false
             dict.removeValue(forKey: portal.key)
+        
+        } else if let index = portal.index {
+            
+            startAddress = portal.elementPtr(for: index)
+            endAddress = startAddress.advanced(by: portal.elementByteCount)
+
+            portal.isValid = false
+            dict.removeValue(forKey: portal.key)
+            
+        } else {
+            
+            startAddress = portal.itemPtr
+            endAddress = startAddress.advanced(by: portal.itemByteCount)
+            
+            // The portal itself will be removed in the loop below.
+        }
+        
+        for (key, value) in dict {
+            if value.itemPtr >= startAddress && value.itemPtr < endAddress {
+                value.isValid = false
+                dict.removeValue(forKey: key)
+            }
+        }
+    }
+    
+    
+    /// Remove a series of portals from the list.
+    
+    mutating func removePortals(atAndAbove: UnsafeMutableRawPointer, below: UnsafeMutableRawPointer) {
+        
+        for (key, portal) in dict {
+            
+            if portal.itemPtr >= atAndAbove && portal.itemPtr < below {
+            
+                portal.isValid = false
+                dict.removeValue(forKey: key)
+
+            } else {
+                
+                if let column = portal.column, let index = portal.index {
+                    
+                    let ptr = portal._tableFieldValuePtr(row: index, column: column)
+                    
+                    if ptr >= atAndAbove && ptr < below {
+                        portal.isValid = false
+                        dict.removeValue(forKey: key)
+                    }
+                    
+                } else if let index = portal.index {
+                    
+                    let ptr = portal.elementPtr(for: index)
+                    
+                    if ptr >= atAndAbove && ptr < below {
+                        portal.isValid = false
+                        dict.removeValue(forKey: key)
+                    }
+                }
+            }
         }
     }
     
@@ -123,7 +189,7 @@ public final class ItemManager {
     
     /// The array with all active portals.
     
-    internal var activePortals = ActivePortals()
+    fileprivate var activePortals = ActivePortals()
     
 
     /// Create a new manager.
@@ -317,11 +383,27 @@ public final class ItemManager {
         buffer.deallocate()
     }
     
-    internal func getPortal(for ptr: UnsafeMutableRawPointer, index: Int? = nil) -> Portal {
-        return activePortals.getPortal(for: ptr, index: index, mgr: self)
+    internal func getActivePortal(for ptr: UnsafeMutableRawPointer, index: Int? = nil, column: Int? = nil) -> Portal {
+        return activePortals.getPortal(for: ptr, index: index, column: column, mgr: self)
     }
     
-    internal func unsubscribe(portal: Portal) {
+//    internal func removePortal(for key: PortalKey) {
+//        activePortals.removePortal(for: key)
+//    }
+    
+    internal func removeActivePortal(_ portal: Portal) {
+        activePortals.remove(portal)
+    }
+    
+    internal func removeActivePortals(atAndAbove: UnsafeMutableRawPointer, below: UnsafeMutableRawPointer) {
+        activePortals.removePortals(atAndAbove: atAndAbove, below: below)
+    }
+
+    internal func updateActivePortalPointers(atAndAbove: UnsafeMutableRawPointer, below: UnsafeMutableRawPointer, toNewBase: UnsafeMutableRawPointer) {
+        activePortals.updatePointers(atAndAbove: atAndAbove, below: below, toNewBase: toNewBase)
+    }
+    
+    internal func decrementActivePortalRefcountAndRemoveOnZero(for portal: Portal) {
         activePortals.decrementRefcountAndRemoveOnZero(for: portal)
     }
 }
@@ -367,7 +449,33 @@ extension ItemManager {
     }
 
     
-    internal func moveBlock(_ dstPtr: UnsafeMutableRawPointer, _ srcPtr: UnsafeMutableRawPointer, _ length: Int) {
-        _ = Darwin.memmove(dstPtr, srcPtr, length)
+    /// Moves a block of memory.
+    ///
+    /// The active portals can be updated, if so, the portals in the destination area will be removed and the portals in the source area will be updated for the amount moved.
+    ///
+    /// - Parameters:
+    ///   - to: The address to move the block to.
+    ///   - from: The address to copy the block from.
+    ///   - moveCount: The number of bytes to move and the size of the area for which active portals must be updated.
+    ///   - removeCount: The size of the area from which active portals must be removed. Starts at the 'to' address.
+    ///   - updateRemovedPortals: When set to true, the active portals in dstPtr..dstPtr+byteCount will be removed.
+    ///   - updateMovedPortals: When set to true, the active portals in srcPtr..srcPtr+byteCount will be updated.
+    
+    internal func moveBlock(
+        to dstPtr: UnsafeMutableRawPointer,
+        from srcPtr: UnsafeMutableRawPointer,
+        moveCount: Int,
+        removeCount: Int,
+        updateMovedPortals: Bool,
+        updateRemovedPortals: Bool) {
+        
+        _ = Darwin.memmove(dstPtr, srcPtr, moveCount)
+        
+        if updateRemovedPortals {
+            activePortals.removePortals(atAndAbove: dstPtr, below: dstPtr.advanced(by: removeCount))
+        }
+        if updateMovedPortals {
+            activePortals.updatePointers(atAndAbove: srcPtr, below: srcPtr.advanced(by: moveCount), toNewBase: dstPtr)
+        }
     }
 }

@@ -18,7 +18,7 @@ public enum Result: Int {
     case indexBelowLowerBound = 5
     case indexAboveHigherBound = 6
     case itemNotFound = 8
-    case noManager = 9
+    case missingCoder = 9
     case increaseFailed = 10
     case illegalNameField = 11
     case typeConflict = 12
@@ -32,6 +32,8 @@ public enum Result: Int {
     case emptyKey = 20
     case portalInvalid = 21
     case invalidTableColumnType = 22
+    case columnNotFound = 23
+    case nameExists = 24
     
     public var description: String {
         switch self {
@@ -42,7 +44,7 @@ public enum Result: Int {
         case .indexBelowLowerBound: return "Index below lower bound"
         case .indexAboveHigherBound: return "Index above higher bound"
         case .itemNotFound: return "Item not found"
-        case .noManager: return "No manager available"
+        case .missingCoder: return "Missing Coder"
         case .increaseFailed: return "Memory increase failed"
         case .illegalNameField: return "Illegal name field values"
         case .typeConflict: return "Type conflict"
@@ -56,6 +58,8 @@ public enum Result: Int {
         case .emptyKey: return "Empty key"
         case .portalInvalid: return "Portal invalid"
         case .invalidTableColumnType: return "Invalid Table Column Type"
+        case .columnNotFound: return "Column Not Found"
+        case .nameExists: return "Name exists"
         }
     }
 }

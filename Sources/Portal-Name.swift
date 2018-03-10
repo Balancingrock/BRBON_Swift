@@ -277,7 +277,7 @@ public extension Portal {
     public func updateValue(_ value: IsBrbon?, forName name: String) -> Result { return _updateValue(value as? Coder, forName: name) }
     
     
-    /// Removes an item with the given name from the dictionary or all items wit hthe given name from a sequence.
+    /// Removes an item with the given name from the dictionary or all items with the given name from a sequence.
     ///
     /// - Parameter forName: The name of the item to remove.
     ///
@@ -301,7 +301,7 @@ public extension Portal {
             if aliPtr == item.itemPtr.advanced(by: item.itemByteCount) {
                 
                 // Update the active portals list (remove deleted item)
-                manager.activePortals.removePortal(for: item.key)
+                manager.removeActivePortal(item)
                 
             } else {
                 
@@ -311,11 +311,7 @@ public extension Portal {
                 let dstPtr = item.itemPtr
                 let len = srcPtr.distance(to: aliPtr)
                 
-                moveBlock(dstPtr, srcPtr, len)
-                
-                // Update the active portals list
-                manager.activePortals.removePortal(for: item.key)
-                manager.activePortals.updatePointers(atAndAbove: srcPtr, below: aliPtr, toNewBase: dstPtr)
+                manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: item.itemByteCount, updateMovedPortals: true, updateRemovedPortals: true)
             }
             
             countValue -= 1

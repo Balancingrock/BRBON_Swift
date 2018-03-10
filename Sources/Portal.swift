@@ -37,9 +37,10 @@ internal func fatalOnTypeChange() {
 internal struct PortalKey: Equatable, Hashable {
     let itemPtr: UnsafeMutableRawPointer
     let index: Int?
-    var hashValue: Int { return itemPtr.hashValue ^ (index ?? 0).hashValue }
+    let column: Int?
+    var hashValue: Int { return itemPtr.hashValue ^ (index ?? 0).hashValue ^ (column ?? 0).hashValue }
     static func == (lhs: PortalKey, rhs: PortalKey) -> Bool {
-        return (lhs.itemPtr == rhs.itemPtr) && (lhs.index == rhs.index)
+        return (lhs.itemPtr == rhs.itemPtr) && (lhs.index == rhs.index) && (lhs.column == rhs.column)
     }
 }
 
@@ -72,7 +73,7 @@ public final class Portal {
     
     deinit {
         if refCount > 0 {
-            manager?.unsubscribe(portal: self)
+            manager?.decrementActivePortalRefcountAndRemoveOnZero(for: self)
         }
     }
     
@@ -96,7 +97,7 @@ public final class Portal {
     
     var isElement: Bool { return index != nil }
     
-    var key: PortalKey { return PortalKey(itemPtr: itemPtr, index: index) }
+    var key: PortalKey { return PortalKey(itemPtr: itemPtr, index: index, column: column) }
     
     var parentIsArray: Bool {
         guard let manager = manager else { return false }
@@ -630,12 +631,7 @@ extension Portal {
                     let len = pastLastItemPtr - srcPtr
                     let dstPtr = srcPtr.advanced(by: newByteCount - itemByteCount)
                     
-                    moveBlock(dstPtr, srcPtr, len)
-                    
-                    
-                    // Update active pointers
-                    
-                    manager.activePortals.updatePointers(atAndAbove: srcPtr, below: dstPtr.advanced(by: len), toNewBase: dstPtr)
+                    manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
                 }
                 
                 
@@ -670,12 +666,7 @@ extension Portal {
                     let len = pastLastItemPtr - srcPtr
                     let dstPtr = srcPtr.advanced(by: newByteCount - itemByteCount)
                     
-                    moveBlock(dstPtr, srcPtr, len)
-                    
-                    
-                    // Update active pointers
-                    
-                    manager.activePortals.updatePointers(atAndAbove: srcPtr, below: dstPtr.advanced(by: len), toNewBase: dstPtr)
+                    manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
                 }
 
                 
@@ -694,9 +685,7 @@ extension Portal {
         } else {
             
             // There is no parent, this must be the root item.
-            
-            guard let manager = manager else { return .noManager }
-            
+
             
             // If the buffer manager cannot accomodate the increase of the item, then increase the buffer size.
             
@@ -717,19 +706,6 @@ extension Portal {
         }
     }
 
-    
-    /// Moves a block of memory from the source pointer to the destination pointer.
-    ///
-    /// This operation is passed on to the buffer manager to allow updating of pointer values in items that the API has made visible. If no manager is available it is done directly.
-    
-    internal func moveBlock(_ dstPtr: UnsafeMutableRawPointer, _ srcPtr: UnsafeMutableRawPointer, _ length: Int) {
-        if let manager = manager {
-            manager.moveBlock(dstPtr, srcPtr, length)
-        } else {
-            _ = Darwin.memmove(dstPtr, srcPtr, length)
-        }
-    }
-    
 
     internal func increaseElementByteCount(to newByteCount: Int) {
 
@@ -739,8 +715,7 @@ extension Portal {
         for index in (0 ..< countValue).reversed() {
             let dstPtr = elementBasePtr.advanced(by: index * newByteCount)
             let srcPtr = elementBasePtr.advanced(by: index * oldByteCount)
-            moveBlock(dstPtr, srcPtr, oldByteCount)
-            manager.activePortals.updatePointers(atAndAbove: srcPtr, below: dstPtr, toNewBase: dstPtr)
+            manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: oldByteCount, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
         }
         
         elementByteCount = newByteCount
@@ -917,7 +892,7 @@ extension Portal {
     
     public var portal: Portal {
         guard isValid else { return fatalOrNull("Portal is no longer valid") }
-        return manager.getPortal(for: itemPtr, index: index)
+        return manager.getActivePortal(for: itemPtr, index: index)
     }
     
     public var isNull: Bool {
@@ -1697,7 +1672,7 @@ extension Portal {
             forEachAbortOnTrue({ $0.changeSelfToNull(true); return false })
         }
         if removeSelf {
-            manager.activePortals.removePortal(for: self.key)
+            manager.removeActivePortal(self)
         }
     }
 }

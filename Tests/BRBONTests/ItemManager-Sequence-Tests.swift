@@ -34,7 +34,7 @@ class ItemManager_Sequence_Tests: XCTestCase {
             ])
         
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = sm.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
+            let p = sm.getActivePortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == sm.root)
         }
 
@@ -52,7 +52,7 @@ class ItemManager_Sequence_Tests: XCTestCase {
             ])
         
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = sm.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
+            let p = sm.getActivePortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == sm.root)
         }
 
@@ -74,7 +74,7 @@ class ItemManager_Sequence_Tests: XCTestCase {
             ])
                 
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = sm.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
+            let p = sm.getActivePortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == sm.root)
         }
 
@@ -101,7 +101,7 @@ class ItemManager_Sequence_Tests: XCTestCase {
             ])
         
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = sm.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
+            let p = sm.getActivePortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == sm.root)
         }
         
@@ -129,7 +129,7 @@ class ItemManager_Sequence_Tests: XCTestCase {
             ])
         
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = sm.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
+            let p = sm.getActivePortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == sm.root)
         }
         
@@ -158,7 +158,7 @@ class ItemManager_Sequence_Tests: XCTestCase {
         sm.data.printBytes()
         
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = sm.getPortal(for: UnsafeMutableRawPointer(mutating: ptr))
+            let p = sm.getActivePortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == sm.root)
         }
         

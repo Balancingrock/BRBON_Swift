@@ -410,8 +410,16 @@ public extension Portal {
     }
     
     
+    /// Appends a new value to an array or sequence.
+    ///
+    /// - Parameters:
+    ///   - value: A
+    
     @discardableResult
-    public func append(_ value: IsBrbon, forName name: String? = nil) -> Result { return _append(value as! Coder, forName: name) }
+    public func append(_ value: IsBrbon, forName name: String? = nil) -> Result {
+        return _append(value as! Coder, forName: name)
+    }
+    
     @discardableResult
     public func append(_ value: Array<Bool>) -> Result { return _append(BrbonArray(content: value, type: .bool)) }
     @discardableResult
@@ -459,17 +467,41 @@ public extension Portal {
         guard index < countValue else { fatalOrNull("Index (\(index)) above high bound (\(countValue))"); return .indexAboveHigherBound }
 
         if isArray {
+            /*
+            let srcPtr = elementPtr(for: index + 1)
+            let dstPtr = elementPtr(for: index)
+            let len = (countValue - 1 - index) * elementByteCount
+            
+            manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: elementByteCount, updateMovedPortals: true, updateRemovedPortals: true)
+            
+            countValue -= 1
+            */
+            
+            // Remove the active portals for the items inside the element to be removed, but not the element itself.
+            
+            let eptr = elementPtr(for: index)
+            manager.removeActivePortals(atAndAbove: eptr.advanced(by: 1), below: eptr.advanced(by: elementByteCount))
+            
+            
+            // Shift the remaining elements into their new place
             
             let srcPtr = elementPtr(for: index + 1)
             let dstPtr = elementPtr(for: index)
             let len = (countValue - 1 - index) * elementByteCount
             
-            moveBlock(dstPtr, srcPtr, len)
+            manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
+
+            
+            // The last index portal (if present) must be removed
+            
+            let lptr = elementPtr(for: countValue - 1)
+            manager.removeActivePortals(atAndAbove: lptr, below: lptr.advanced(by: 1))
+            
+            
+            // Decrease the number of elements
             
             countValue -= 1
             
-            let key = PortalKey(itemPtr: itemPtr, index: countValue)
-            manager.activePortals.removePortal(for: key)
             
             return .success
         
@@ -482,11 +514,10 @@ public extension Portal {
             let dstPtr = itm.itemPtr
             let len = srcPtr.distance(to: aliPtr)
             
-            manager.activePortals.removePortal(for: itm.key)
+            manager.removeActivePortal(itm)
 
             if len > 0 {
-                moveBlock(dstPtr, srcPtr, len)
-                manager.activePortals.updatePointers(atAndAbove: srcPtr, below: aliPtr, toNewBase: dstPtr)
+                manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
             }
             
             countValue -= 1
@@ -649,9 +680,7 @@ public extension Portal {
             let dstPtr = elementPtr(for: index + 1)
             let srcPtr = elementPtr(for: index)
             let length = (countValue - index) * elementByteCount
-            moveBlock(dstPtr, srcPtr, length)
-
-            // Note that the active portals are not updated.
+            manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: length, removeCount: 0, updateMovedPortals: false, updateRemovedPortals: false)
             
             
             // Insert the new element
@@ -692,9 +721,7 @@ public extension Portal {
             let srcPtr = itm.itemPtr
             let length = newItemByteCount
             
-            manager.activePortals.updatePointers(atAndAbove: srcPtr, below: afterLastItemPtr, toNewBase: dstPtr)
-            
-            moveBlock(dstPtr, srcPtr, length)
+            manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: length, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
             
             
             // Insert the new element
