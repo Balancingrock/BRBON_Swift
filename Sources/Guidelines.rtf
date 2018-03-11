@@ -42,4 +42,13 @@ Many functions are implemented as var-accessors. This also means that for each a
 
 \b Changing the column index
 \b0 \
-Any operation that changes the column index must be clearly documented. Any operation that is not documented to change the column index, may never (in the future) be modified to change the column index.}
+Any operation that changes the column index must be clearly documented. Any operation that is not documented to change the column index, may never (in the future) be modified to change the column index.\
+\
+
+\b Naming
+\b0 \
+A BRBON structure consist of Items or Items in a Block.\
+An Item may be a value, in which case it is called an Item.\
+An Item may contain an array, in which case a single datum in the array is called an Element.\
+An Item may contain a table with columns and rows. A single datum in the table is called a Field.\
+Note that the a sequence of bytes in the BRBON structure is also called a field, however there is little danger of confusion between these two usages of 'field'.}

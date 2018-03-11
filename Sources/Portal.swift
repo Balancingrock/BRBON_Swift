@@ -13,15 +13,12 @@ import Foundation
 import BRUtils
 
 
-/// This variable controls the raising of fatal errors on problems in the BRBON API.
-///
-/// Some usage errors can create a recoverable error condition as far as the BRBON API is considered. This variable controls if the usage error should result in a fatal error, or if it should be ignored. If a return value is expected, then ignoring will return a nil or the nullPortal.
-///
-/// It is recommened to set this to 'true' during develeopment and testing. Depending on the application, you may consider setting this to 'false' on the shipping application.
+/// Allows fatal error's for recoverable conditions. I.e. the API can continue, but there is a chance that the API user has made an error.
 
 public var allowFatalError = true
-public var allowFatalOnTypeChange = true
 
+
+/// Raises a fatal error if 'allowFatalError' is set to true. Otherwise returns the NullPortal.
 
 @discardableResult
 internal func fatalOrNull(_ message: String = "") -> Portal {
@@ -29,10 +26,20 @@ internal func fatalOrNull(_ message: String = "") -> Portal {
     return Portal.nullPortal
 }
 
+
+/// Allows the value accessors to raise a fatal error when a type change is implied.
+
+public var allowFatalOnTypeChange = true
+
+
+/// Raises a fatal error when the value-access set operator receives a different type than stored in the item.
+
 internal func fatalOnTypeChange() {
     if allowFatalOnTypeChange { fatalError("Type change not allowed") }
 }
 
+
+/// This key is used to keep tracl of active portals. Active portals are tracked by the item manager to update the portals when data is shifted and to invalidate them when the data has been removed.
 
 internal struct PortalKey: Equatable, Hashable {
     let itemPtr: UnsafeMutableRawPointer
@@ -44,25 +51,59 @@ internal struct PortalKey: Equatable, Hashable {
     }
 }
 
+
+/// A portal is an access point for items in the BRBON data structure. It hides the implementation of the BRBON data structure and provides an API to manipulate it at a higher abstraction level.
+
 public final class Portal {
     
-    var itemPtr: UnsafeMutableRawPointer
     
-    var index: Int? // Only set for array, sequence and table
+    /// This pointer points to the first byte of the item.
+    //
+    // It is a 'var' because the pointer value must be updated when the data is shifted around by insert/add/remove operations.
     
-    var column: Int? // Only set for table
+    internal var itemPtr: UnsafeMutableRawPointer
+    
+    
+    /// If the portal refers to an element of an array, or a row in a table, then this is the index of that element/row.
 
-    var endianness: Endianness
+    internal let index: Int?
     
-    weak var manager: ItemManager!
     
-    var isValid: Bool
+    /// If the portal refers to a field of a table, this is the index of the column.
     
-    // This variable is for the active portals manager.
+    internal let column: Int?
+
     
-    var refCount = 0;
+    /// The endianness of the data and its surrounding structure.
     
-    init(itemPtr: UnsafeMutableRawPointer, index: Int? = nil, column: Int? = nil, manager: ItemManager, endianness: Endianness) {
+    internal let endianness: Endianness
+    
+    
+    /// The item manager used to keep track of active portals and manage the memory buffer used for the items.
+    
+    internal weak var manager: ItemManager!
+    
+    
+    /// The portal can be used when this variable is 'true'. Portals may become invalid, when that happens the active portals manager will signal the invalidity of a portal by setting this flag to 'false'.
+    
+    public var isValid: Bool
+    
+    
+    /// This variable is used by the active portal manager. The portal will be removed from the active portals when this variable goes from 1 to 0.
+    
+    internal var refCount = 0
+    
+    
+    /// Create a new portal.
+    ///
+    /// - Parameters:
+    ///   - itemPtr: A pointer to the first byte of the item.
+    ///   - index: The index for a row or element.
+    ///   - column: The column index for a table field.
+    ///   - manager: The memory and portals manager.
+    ///   - endianness: The endianness of the data in the item.
+    
+    internal init(itemPtr: UnsafeMutableRawPointer, index: Int? = nil, column: Int? = nil, manager: ItemManager, endianness: Endianness) {
         self.itemPtr = itemPtr
         self.endianness = endianness
         self.manager = manager
@@ -70,6 +111,9 @@ public final class Portal {
         self.index = index
         self.column = column
     }
+    
+    
+    /// Deinitializes this portal. I.e. it removes it from the active portals.
     
     deinit {
         if refCount > 0 {
@@ -80,9 +124,12 @@ public final class Portal {
     
     // The null portal is used to avoid an excess of unwrapping for the API user. API calls that must return a portal can return the null portal instead of returing nil.
     
-    static var nullPortal: Portal = {
+    public static var nullPortal: Portal = {
         return Portal()
     }()
+    
+    
+    /// Initializer for the nullPortal only.
     
     private init() {
         isValid = false
@@ -93,19 +140,14 @@ public final class Portal {
     }
     
     
-    // Derived values
+    /// The key for this portal as used by the active portals manager
     
-    var isElement: Bool { return index != nil }
+    internal var key: PortalKey { return PortalKey(itemPtr: itemPtr, index: index, column: column) }
     
-    var key: PortalKey { return PortalKey(itemPtr: itemPtr, index: index, column: column) }
     
-    var parentIsArray: Bool {
-        guard let manager = manager else { return false }
-        let parentPtr = manager.bufferPtr.advanced(by: parentOffset)
-        return parentPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.array.rawValue
-    }
+    /// The NameFieldDescriptor for this item, nil if there is none.
     
-    var nameFieldDescriptor: NameFieldDescriptor? {
+    public var nameFieldDescriptor: NameFieldDescriptor? {
         if nameFieldByteCount == 0 { return nil }
         return NameFieldDescriptor.readValue(atPtr: itemPtr.brbonItemNameFieldPtr, endianness)
     }
@@ -128,10 +170,13 @@ extension Portal: Equatable {
         // Check indicies
         if lhs.index != rhs.index { return false }
         
-        // Test a single element or the entire array, depending on the index validity
+        // Check columns
+        if lhs.column != rhs.column { return false }
+
         if lhs.index == nil {
 
-            // Test entire array
+            // Compare items
+            
             // Test type
             guard let lType = lhs.itemType else { return false }
             guard let rType = rhs.itemType else { return false }
@@ -288,8 +333,18 @@ extension Portal: Equatable {
             
         } else {
             
+            // The lhs and rhs are an array element or a table field.
+            
+            let valueType: ItemType
+            
+            if lhs.column == nil {
+                valueType = lhs.elementType!
+            } else {
+                valueType = lhs._tableGetColumnType(for: lhs.column!)!
+            }
+            
             // Test a single value
-            switch lhs.elementType! {
+            switch valueType {
                 
             case .null: return true
             case .bool: return lhs.bool == rhs.bool
