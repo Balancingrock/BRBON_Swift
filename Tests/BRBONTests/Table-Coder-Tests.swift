@@ -51,8 +51,6 @@ class Table_Coder_Tests: XCTestCase {
         ])
         
         let data = Data(bytesNoCopy: buffer.baseAddress!, count: 24, deallocator: Data.Deallocator.none)
-
-        data.printBytes()
         
         XCTAssertEqual(exp, data)
     }
@@ -93,8 +91,6 @@ class Table_Coder_Tests: XCTestCase {
             ])
         
         let data = Data(bytesNoCopy: buffer.baseAddress!, count: 52, deallocator: Data.Deallocator.none)
-        
-        data.printBytes()
         
         XCTAssertEqual(exp, data)
     }

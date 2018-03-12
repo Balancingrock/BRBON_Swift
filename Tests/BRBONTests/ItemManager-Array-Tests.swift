@@ -570,7 +570,7 @@ class ItemManager_Array_Tests: XCTestCase {
             XCTAssertTrue(p == am.root)
         }
         
-        // Add 2 strings
+        // Add 4 strings
         
         am.root.append("aa")
         am.root.append("bb")

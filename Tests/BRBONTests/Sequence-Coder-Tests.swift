@@ -166,8 +166,6 @@ class Sequence_Coder_Tests: XCTestCase {
             0x02, 0x00, 0x00, 0x00
             ])
         
-        data.printBytes()
-
         XCTAssertEqual(data, exp)
     }
 }

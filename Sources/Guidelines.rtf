@@ -51,4 +51,10 @@ A BRBON structure consist of Items or Items in a Block.\
 An Item may be a value, in which case it is called an Item.\
 An Item may contain an array, in which case a single datum in the array is called an Element.\
 An Item may contain a table with columns and rows. A single datum in the table is called a Field.\
-Note that the a sequence of bytes in the BRBON structure is also called a field, however there is little danger of confusion between these two usages of 'field'.}
+Note that the a sequence of bytes in the BRBON structure is also called a field, however there is little danger of confusion between these two usages of 'field'.\
+\
+
+\b Portals
+\b0 \
+Portals are used as shortcuts into a BRBON structure. A portal always refers to a single item, and may refer to an element of field in that item. In many ways a portal can be seen as a proxy for the value that is stored in the item. While some operations may shift the data in the BRBON structure around, portals will be kept up-to-date and always refer to the appropriate value. Portals will observe the 'path' when referring to a item. For an array that means that the index is used. If the data the index will remain the same, and may thus refer to a different value. For a dictionary the name is used, and hence the portal will always refer to the same item. A sequence behaves like a dictionary. In a table, the row index will remain unaffected, but a column addition/removal may invalidate the portal.\
+When the item is removed from the BRBON structure, portals are made invalid. Reading a value will then always produce a 'nil'.}

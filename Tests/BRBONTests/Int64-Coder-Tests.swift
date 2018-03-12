@@ -75,7 +75,7 @@ class Int64_BrbonCoder_Tests: XCTestCase {
             0x44, 0x33, 0x22, 0x11,
             0, 0, 0, 0, 0, 0, 0, 0
             ])
-        data.printBytes()
+
         XCTAssertEqual(data, exp2)
         
         i.storeAsElement(atPtr: buffer.baseAddress!, machineEndianness)

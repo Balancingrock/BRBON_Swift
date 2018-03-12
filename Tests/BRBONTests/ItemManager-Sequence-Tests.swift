@@ -154,9 +154,7 @@ class ItemManager_Sequence_Tests: XCTestCase {
             0x00, 0x00, 0x00, 0x00,  0x66, 0x66, 0x00, 0x00,
             0xb9, 0xa6, 0x03, 0x61,  0x61, 0x61, 0x00, 0x00
             ])
-        
-        sm.data.printBytes()
-        
+                
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
             let p = sm.getActivePortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == sm.root)

@@ -340,7 +340,7 @@ extension Portal {
 
         let bytesNeeded = len + delta
         if (itemByteCount - 16) < bytesNeeded {
-            let result = ensureValueByteCount(for: bytesNeeded)
+            let result = ensureValueFieldByteCount(of: bytesNeeded)
             guard result == .success else { return result }
         }
         
@@ -636,7 +636,7 @@ extension Portal {
         
         let necessaryValueByteCount = _tableRowsOffset + ((_tableRowCount + count) * _tableRowByteCount)
         
-        if valueByteCount < necessaryValueByteCount {
+        if valueFieldByteCount < necessaryValueByteCount {
             let result = increaseItemByteCount(to: minimumItemByteCount + necessaryValueByteCount)
             guard result == .success else { return result }
         }
@@ -855,8 +855,8 @@ extension Portal {
         
         let necessaryTableValueByteCount = rows * newRowByteCount + newRowsOffset
         
-        if valueByteCount < necessaryTableValueByteCount {
-            let result = ensureValueByteCount(for: necessaryTableValueByteCount)
+        if valueFieldByteCount < necessaryTableValueByteCount {
+            let result = ensureValueFieldByteCount(of: necessaryTableValueByteCount)
             guard result == .success else { return result }
         }
         

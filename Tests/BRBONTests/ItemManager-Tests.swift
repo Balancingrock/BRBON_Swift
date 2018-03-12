@@ -1237,7 +1237,7 @@ class ItemManager_Tests: XCTestCase {
             ])
         
         data = mgr4.data
-        data.printBytes()
+
         XCTAssertEqual(data, exp)
         
         

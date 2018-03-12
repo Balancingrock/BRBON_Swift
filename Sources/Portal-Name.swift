@@ -14,7 +14,7 @@ public extension Portal {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return Portal.nullPortal }
             guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return Portal.nullPortal }
-            return findItem(forName: name)
+            return _dictionaryPortalForItem(withName: name) ?? Portal.nullPortal
         }
     }
     
@@ -22,7 +22,7 @@ public extension Portal {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
             guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return nil }
-            return findItem(forName: name).bool
+            return _dictionaryPortalForItem(withName: name)?.bool
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
@@ -35,7 +35,7 @@ public extension Portal {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
             guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return nil }
-            return findItem(forName: name).int8
+            return _dictionaryPortalForItem(withName: name)?.int8
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
@@ -48,7 +48,7 @@ public extension Portal {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
             guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return nil }
-            return findItem(forName: name).int16
+            return _dictionaryPortalForItem(withName: name)?.int16
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
@@ -61,7 +61,7 @@ public extension Portal {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
             guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return nil }
-            return findItem(forName: name).int32
+            return _dictionaryPortalForItem(withName: name)?.int32
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
@@ -74,7 +74,7 @@ public extension Portal {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
             guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return nil }
-            return findItem(forName: name).int64
+            return _dictionaryPortalForItem(withName: name)?.int64
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
@@ -87,7 +87,7 @@ public extension Portal {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
             guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return nil }
-            return findItem(forName: name).uint8
+            return _dictionaryPortalForItem(withName: name)?.uint8
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
@@ -100,7 +100,7 @@ public extension Portal {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
             guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return nil }
-            return findItem(forName: name).uint16
+            return _dictionaryPortalForItem(withName: name)?.uint16
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
@@ -113,7 +113,7 @@ public extension Portal {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
             guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return nil }
-            return findItem(forName: name).uint32
+            return _dictionaryPortalForItem(withName: name)?.uint32
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
@@ -126,7 +126,7 @@ public extension Portal {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
             guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return nil }
-            return findItem(forName: name).uint64
+            return _dictionaryPortalForItem(withName: name)?.uint64
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
@@ -139,7 +139,7 @@ public extension Portal {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
             guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return nil }
-            return findItem(forName: name).float32
+            return _dictionaryPortalForItem(withName: name)?.float32
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
@@ -152,7 +152,7 @@ public extension Portal {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
             guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return nil }
-            return findItem(forName: name).float64
+            return _dictionaryPortalForItem(withName: name)?.float64
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
@@ -165,7 +165,7 @@ public extension Portal {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
             guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return nil }
-            return findItem(forName: name).string
+            return _dictionaryPortalForItem(withName: name)?.string
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
@@ -178,7 +178,7 @@ public extension Portal {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
             guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return nil }
-            return findItem(forName: name).binary
+            return _dictionaryPortalForItem(withName: name)?.binary
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
@@ -220,7 +220,7 @@ public extension Portal {
 
         if let value = value {
         
-            if let item = findItem(with: nfd.crc, utf8ByteCode: nfd.data) {
+            if let item = findPortalForItem(with: nfd.crc, utf8ByteCode: nfd.data) {
             
                 // Replace a value
                 
@@ -248,7 +248,7 @@ public extension Portal {
                     guard result == .success else { return result }
                 }
                 
-                let result =  value.storeAsItem(atPtr: afterLastItemPtr, bufferPtr: manager!.bufferPtr, parentPtr: itemPtr, nameField: nfd, valueByteCount: nil, endianness)
+                let result =  value.storeAsItem(atPtr: _afterLastItemPtr, bufferPtr: manager!.bufferPtr, parentPtr: itemPtr, nameField: nfd, valueByteCount: nil, endianness)
                 guard result == .success else { return result }
 
                 countValue += 1
@@ -260,7 +260,7 @@ public extension Portal {
             
             // Set the item to null, or add a new null item
             
-            if let item = findItem(with: nfd.crc, utf8ByteCode: nfd.data) {
+            if let item = findPortalForItem(with: nfd.crc, utf8ByteCode: nfd.data) {
                 
                 // Replace a value
                 
@@ -284,7 +284,7 @@ public extension Portal {
                     guard result == .success else { return result }
                 }
                 
-                let result = null.storeAsItem(atPtr: afterLastItemPtr, bufferPtr: manager!.bufferPtr, parentPtr: itemPtr, nameField: nfd, valueByteCount: nil, endianness)
+                let result = null.storeAsItem(atPtr: _afterLastItemPtr, bufferPtr: manager!.bufferPtr, parentPtr: itemPtr, nameField: nfd, valueByteCount: nil, endianness)
                 guard result == .success else { return result }
 
                 countValue += 1
@@ -311,36 +311,50 @@ public extension Portal {
         guard isValid else { fatalOrNull("Portal is no longer valid"); return .portalInvalid }
         guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return .operationNotSupported }
         
-        var item = findItem(forName: name)
+        var item = _dictionaryPortalForItem(withName: name)
         
-        if item === Portal.nullPortal { return .itemNotFound }
+        if item == nil { return .itemNotFound }
         
-        while !(item === Portal.nullPortal) {
+        while item != nil {
             
-            let aliPtr = afterLastItemPtr
+            let aliPtr = _afterLastItemPtr
             
             // Last item does not need a block move
-            if aliPtr == item.itemPtr.advanced(by: item.itemByteCount) {
+            if aliPtr == item!.itemPtr.advanced(by: item!.itemByteCount) {
                 
                 // Update the active portals list (remove deleted item)
-                manager.removeActivePortal(item)
+                manager.removeActivePortal(item!)
                 
             } else {
                 
                 // Move the items after the found item over the found item
                 
-                let srcPtr = item.itemPtr.advanced(by: item.itemByteCount)
-                let dstPtr = item.itemPtr
+                let srcPtr = item!.itemPtr.advanced(by: item!.itemByteCount)
+                let dstPtr = item!.itemPtr
                 let len = srcPtr.distance(to: aliPtr)
                 
-                manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: item.itemByteCount, updateMovedPortals: true, updateRemovedPortals: true)
+                manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: item!.itemByteCount, updateMovedPortals: true, updateRemovedPortals: true)
             }
             
             countValue -= 1
             
-            item = findItem(forName: name)
+            item = _dictionaryPortalForItem(withName: name)
         }
         
         return .success
+    }
+    
+    
+    /// Returns a portal refering to the first item for a given name.
+    ///
+    /// - Returns: nil if the name cannot be found.
+    
+    internal func _dictionaryPortalForItem(withName name: String) -> Portal? {
+        
+        guard let nameData = name.data(using: .utf8) else { return nil }
+        
+        let crc = nameData.crc16()
+        
+        return findPortalForItem(with: crc, utf8ByteCode: nameData)
     }
 }

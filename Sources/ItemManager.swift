@@ -52,8 +52,8 @@ fileprivate struct ActivePortals {
         
         } else if let index = portal.index {
             
-            startAddress = portal.elementPtr(for: index)
-            endAddress = startAddress.advanced(by: portal.elementByteCount)
+            startAddress = portal._arrayElementPtr(for: index)
+            endAddress = startAddress.advanced(by: portal._arrayElementByteCount)
 
             portal.isValid = false
             dict.removeValue(forKey: portal.key)
@@ -99,7 +99,7 @@ fileprivate struct ActivePortals {
                     
                 } else if let index = portal.index {
                     
-                    let ptr = portal.elementPtr(for: index)
+                    let ptr = portal._arrayElementPtr(for: index)
                     
                     if ptr >= atAndAbove && ptr < below {
                         portal.isValid = false
