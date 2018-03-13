@@ -39,7 +39,7 @@ internal class BrbonArray: Coder {
         case .int16, .uint16: return content.count * 2 + 8
         case .int32, .uint32, .float32: return content.count * 4 + 8
         case .int64, .uint64, .float64: return content.count * 8 + 8
-        case .string, .idString, .binary, .array, .dictionary, .sequence:
+        case .string, .brbonString, .binary, .array, .dictionary, .sequence:
             var ebc = elementValueByteCount ?? 0
             content.forEach(){
                 let bc = $0.elementByteCount
@@ -103,7 +103,7 @@ internal class BrbonArray: Coder {
         case .int16, .uint16: elemBC = 2
         case .int32, .uint32, .float32: elemBC = 4
         case .int64, .uint64, .float64: elemBC = 8
-        case .string, .idString, .binary, .array, .dictionary, .sequence:
+        case .string, .brbonString, .binary, .array, .dictionary, .sequence:
             var ebc = elementValueByteCount ?? 0
             content.forEach(){
                 let bc = $0.elementByteCount
@@ -173,7 +173,7 @@ internal class BrbonArray: Coder {
             
             switch $0.brbonType {
             case .null: break
-            case .bool, .int8, .int16, .int32, .int64, .uint8, .uint16, .uint32, .uint64, .float32, .float64, .string, .idString, .binary:
+            case .bool, .int8, .int16, .int32, .int64, .uint8, .uint16, .uint32, .uint64, .float32, .float64, .string, .brbonString, .binary:
                 $0.storeAsElement(atPtr: p, endianness)
             case .array, .dictionary, .sequence:
                 $0.storeAsItem(atPtr: p, bufferPtr: bufferPtr, parentPtr: atPtr, nameField: nil, valueByteCount: nil, endianness)

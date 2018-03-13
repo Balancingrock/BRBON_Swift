@@ -24,14 +24,14 @@ class Table_Coder_Tests: XCTestCase {
 
     func test_1() {
 
-        let t = Table(columnSpecifications: [])
+        let t = BrbonTable(columnSpecifications: [])
         
         // Properties
         
         XCTAssertEqual(t.brbonType, ItemType.table)
-        XCTAssertEqual(t.valueByteCount, 8)
-        XCTAssertEqual(t.itemByteCount(), 24)
-        XCTAssertEqual(t.elementByteCount, 24)
+        XCTAssertEqual(t.valueByteCount, 16)
+        XCTAssertEqual(t.itemByteCount(), 32)
+        XCTAssertEqual(t.elementByteCount, 32)
         
         
         // Storing
@@ -45,19 +45,21 @@ class Table_Coder_Tests: XCTestCase {
         XCTAssertEqual(t.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!, nameField: nil, valueByteCount: nil, machineEndianness), .success)
         
         let exp = Data(bytes: [
-            0x46, 0x00, 0x00, 0x00,  0x18, 0x00, 0x00, 0x00,
+            0x46, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00
+            
+            0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
+            0x10, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00
         ])
         
-        let data = Data(bytesNoCopy: buffer.baseAddress!, count: 24, deallocator: Data.Deallocator.none)
-        
+        let data = Data(bytesNoCopy: buffer.baseAddress!, count: 32, deallocator: Data.Deallocator.none)
+        data.printBytes()
         XCTAssertEqual(exp, data)
     }
     
     func test_2() {
         
-        let t = Table(columnSpecifications: [ColumnSpecification.init(name: "aaa", valueType: ItemType.bool)!])
+        let t = BrbonTable(columnSpecifications: [ColumnSpecification.init(name: "aaa", valueType: ItemType.bool)!])
         
         // Properties
         

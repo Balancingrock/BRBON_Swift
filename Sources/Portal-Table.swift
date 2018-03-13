@@ -131,9 +131,9 @@ extension Portal {
     /// Returns the column name for a column.
     
     internal func _tableGetColumnName(for column: Int) -> String {
-        let nameCount = _tableGetColumnNameByteCount(for: column)
         let nameUtf8Ptr = itemPtr.brbonItemValuePtr.advanced(by: _tableGetColumnNameUtf8Offset(for: column))
-        return String(valuePtr: nameUtf8Ptr, count: nameCount, endianness)
+        let nameCount = Int(UInt8(valuePtr: nameUtf8Ptr, endianness))
+        return String(valuePtr: nameUtf8Ptr.advanced(by: 1), count: nameCount, endianness)
     }
     
     
@@ -320,11 +320,9 @@ extension Portal {
         }
         
         // Column names
-        var columnNamePtr = columnDescriptorsPtr.advanced(by: arr.count * columnDescriptorByteCount)
         for column in arr {
-            UInt8(column.nfd.data.count).storeValue(atPtr: columnNamePtr, endianness)
-            column.nfd.data.storeValue(atPtr: columnNamePtr.advanced(by: 1), endianness)
-            columnNamePtr = columnNamePtr.advanced(by: (column.nfd.data.count + 1))
+            UInt8(column.nfd.data.count).storeValue(atPtr: ptr.advanced(by: column.nameOffset), endianness)
+            column.nfd.data.storeValue(atPtr: ptr.advanced(by: column.nameOffset + 1), endianness)
         }
     }
     
@@ -803,8 +801,8 @@ extension Portal {
         
         // There should be type harmony
         
-        guard defaultValue?.brbonType == valueType else { return .typeConflict }
         if let defaultValue = defaultValue {
+            guard defaultValue.brbonType == valueType else { return .typeConflict }
             guard defaultValue is Coder else { return .missingCoder }
         }
         
@@ -817,7 +815,7 @@ extension Portal {
         // A new colspec must be creatable
         
         var valueBc = (defaultValue as? Coder)?.elementByteCount ?? 0
-        if valueBc < vbc ?? 0 { valueBc = vbc! }
+        if valueBc < vbc ?? 0 { valueBc = vbc! }        
         guard let newSpec = ColumnSpecification(name: name, initialNameFieldByteCount: nameFieldByteCount, valueType: valueType, initialValueByteCount: vbc) else { return .nameFieldError }
         
         
@@ -825,12 +823,10 @@ extension Portal {
         
         var cols: Array<ColumnSpecification> = []
         for i in 0 ..< _tableColumnCount {
-            if i != column {
-                guard let colSpec = ColumnSpecification(valueAreaPtr: itemPtr.brbonItemValuePtr, forColumn: i, endianness) else {
+            guard let colSpec = ColumnSpecification(valueAreaPtr: itemPtr.brbonItemValuePtr, forColumn: i, endianness) else {
                     return .invalidTableColumnType
-                }
-                cols.append(colSpec)
             }
+            cols.append(colSpec)
         }
         
         
@@ -847,7 +843,8 @@ extension Portal {
         let oldRowByteCount = _tableRowByteCount
         
         var newRowsOffset = 16 + cols.count * 16
-        for col in cols { newRowsOffset += (col.nfd.data.count + 1) }
+        for col in cols { newRowsOffset += col.nfd.byteCount }
+        newRowsOffset = newRowsOffset.roundUpToNearestMultipleOf8()
         let newRowByteCount = oldRowByteCount + newSpec.valueByteCount
         
         
@@ -855,10 +852,8 @@ extension Portal {
         
         let necessaryTableValueByteCount = rows * newRowByteCount + newRowsOffset
         
-        if valueFieldByteCount < necessaryTableValueByteCount {
-            let result = ensureValueFieldByteCount(of: necessaryTableValueByteCount)
-            guard result == .success else { return result }
-        }
+        let result = ensureValueFieldByteCount(of: necessaryTableValueByteCount)
+        guard result == .success else { return result }
         
         
         // Shift the data into its new space

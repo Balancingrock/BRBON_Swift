@@ -342,9 +342,9 @@ public final class ItemManager {
             "".storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
 
             
-        case .idString:
+        case .brbonString:
             
-            "".idString.storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
+            "".brbonString.storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
             
             
         case .array:
@@ -363,7 +363,10 @@ public final class ItemManager {
             
         case .sequence: break
             
-        case .table: fatalError("option table not implemented yet")
+        case .table:
+            
+            let tb = BrbonTable(columnSpecifications: [])
+            tb.storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
         }
         
         self.root = Portal(itemPtr: bufferPtr, manager: self, endianness: endianness)

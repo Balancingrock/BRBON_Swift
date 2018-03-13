@@ -91,16 +91,16 @@ public struct ColumnSpecification {
         
         // Get nfd
         let nameCrc = UInt16(valuePtr: ptr.advanced(by: columnNameCrc16Offset), endianness)
-        let nameByteCount = Int(UInt32(valuePtr: ptr.advanced(by: columnNameByteCountOffset), endianness))
+        let nameByteCount = Int(UInt8(valuePtr: ptr.advanced(by: columnNameByteCountOffset), endianness))
         let nameUtf8Offset = Int(UInt32(valuePtr: ptr.advanced(by: columnNameUtf8OffsetOffset), endianness))
-        let nameDataCount = Int(Int8(valuePtr: ptr.advanced(by: nameUtf8Offset), endianness))
-        let nameData = Data(valuePtr: ptr.advanced(by: nameUtf8Offset + 1), count: nameDataCount, endianness)
+        let nameDataCount = Int(Int8(valuePtr: valueAreaPtr.advanced(by: nameUtf8Offset), endianness))
+        let nameData = Data(valuePtr: valueAreaPtr.advanced(by: nameUtf8Offset + 1), count: nameDataCount, endianness)
         self.nfd = NameFieldDescriptor(data: nameData, crc: nameCrc, byteCount: nameByteCount)
     }
 }
 
 
-public class Table: Coder {
+public class BrbonTable: Coder {
 
     
     public init(columnSpecifications: Array<ColumnSpecification>) {
@@ -112,9 +112,8 @@ public class Table: Coder {
     public var brbonType: ItemType { return ItemType.table }
     
     public var valueByteCount: Int {
-        var total = 8
+        var total = 16
         if columns.count == 0 { return total }
-        total += 8
         total += columns.count * 16
         columns.forEach() {
             total += $0.nfd.byteCount
@@ -133,6 +132,7 @@ public class Table: Coder {
         fatalError("Do not use storeValue, use storeAsItem instead")
     }
     
+    @discardableResult
     func storeAsItem(atPtr: UnsafeMutableRawPointer, bufferPtr: UnsafeMutableRawPointer, parentPtr: UnsafeMutableRawPointer, nameField nfd: NameFieldDescriptor?, valueByteCount: Int?, _ endianness: Endianness) -> Result {
         
         var byteCount = itemByteCount(nfd)
@@ -184,15 +184,15 @@ public class Table: Coder {
         // Column Count
         UInt32(columns.count).storeValue(atPtr: ptr.advanced(by: tableColumnCountOffset), endianness)
         
-        
-        if columns.count == 0 { return .success }
-        
-        
         // Rows Offset
         UInt32(rowsOffset).storeValue(atPtr: ptr.advanced(by: tableRowsOffsetOffset), endianness)
         
         // Row Byte Count
         UInt32(rowByteCount).storeValue(atPtr: ptr.advanced(by: tableRowByteCountOffset), endianness)
+
+        
+        if columns.count == 0 { return .success }
+
         
         // Column Descriptors
         let columnDescriptorsPtr = ptr.advanced(by: columnDescriptorBaseOffset)

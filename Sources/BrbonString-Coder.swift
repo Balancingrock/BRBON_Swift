@@ -11,13 +11,13 @@ import BRUtils
 
 
 extension String {
-    var idString: IdString { return IdString(self) }
+    var brbonString: BrbonString { return BrbonString(self) }
 }
 
 
-public class IdString: Coder, Initialize, Equatable {
+public class BrbonString: Coder, Initialize, Equatable {
     
-    public static func ==(lhs: IdString, rhs: IdString) -> Bool { return lhs.data == rhs.data }
+    public static func ==(lhs: BrbonString, rhs: BrbonString) -> Bool { return lhs.data == rhs.data }
     
     public let string: String
     public let data: Data
@@ -38,7 +38,7 @@ public class IdString: Coder, Initialize, Equatable {
         self.crc = data.crc16()
     }
     
-    public var brbonType: ItemType { return ItemType.idString }
+    public var brbonType: ItemType { return ItemType.brbonString }
     
     
     internal var valueByteCount: Int { return max(data.count + 6, 8) }

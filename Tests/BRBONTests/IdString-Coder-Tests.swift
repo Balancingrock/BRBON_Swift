@@ -28,12 +28,12 @@ class IdString_Coder_Tests: XCTestCase {
         
         // Instance
         
-        let s = IdString("test") // 0x74 0x65 0x73 0x74
+        let s = BrbonString("test") // 0x74 0x65 0x73 0x74
         
         
         // Properties
         
-        XCTAssertEqual(s.brbonType, ItemType.idString)
+        XCTAssertEqual(s.brbonType, ItemType.brbonString)
         XCTAssertEqual(s.valueByteCount, 10)
         XCTAssertEqual(s.itemByteCount(), 32)
         XCTAssertEqual(s.elementByteCount, 16)
@@ -99,7 +99,7 @@ class IdString_Coder_Tests: XCTestCase {
             0x73, 0x74
             ])
         
-        var str = IdString(valuePtr: buffer.baseAddress!, count: 4, machineEndianness)
+        var str = BrbonString(valuePtr: buffer.baseAddress!, count: 4, machineEndianness)
         XCTAssertEqual(str.string, "test")
         
         
@@ -116,7 +116,7 @@ class IdString_Coder_Tests: XCTestCase {
             0x00, 0x00, 0x00, 0x00
             ])
         
-        str = IdString(itemPtr: buffer.baseAddress!, machineEndianness)
+        str = BrbonString(itemPtr: buffer.baseAddress!, machineEndianness)
         XCTAssertEqual(str.string, "test")
         
         
@@ -128,7 +128,7 @@ class IdString_Coder_Tests: XCTestCase {
             0x73, 0x74
             ])
 
-        str = IdString(elementPtr: buffer.baseAddress!, machineEndianness)
+        str = BrbonString(elementPtr: buffer.baseAddress!, machineEndianness)
         XCTAssertEqual(str.string, "test")
     }
     
