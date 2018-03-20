@@ -45,7 +45,7 @@ fileprivate struct ActivePortals {
         if let column = portal.column, let index = portal.index {
             
             startAddress = portal._tableFieldValuePtr(row: index, column: column)
-            endAddress = startAddress.advanced(by: portal._tableGetColumnValueByteCount(for: column))
+            endAddress = startAddress.advanced(by: portal._tableGetColumnValueFieldByteCount(for: column))
             
             portal.isValid = false
             dict.removeValue(forKey: portal.key)
@@ -229,7 +229,7 @@ public final class ItemManager {
 
         value.storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: itemValueByteCount, endianness)
         
-        self.root = Portal(itemPtr: bufferPtr, manager: self, endianness: endianness)
+        self.root = getActivePortal(for: bufferPtr, index: nil, column: nil)
     }
 
     
@@ -369,7 +369,7 @@ public final class ItemManager {
             tb.storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
         }
         
-        self.root = Portal(itemPtr: bufferPtr, manager: self, endianness: endianness)
+        self.root = getActivePortal(for: bufferPtr, index: nil, column: nil)
     }
     
     
@@ -389,11 +389,7 @@ public final class ItemManager {
     internal func getActivePortal(for ptr: UnsafeMutableRawPointer, index: Int? = nil, column: Int? = nil) -> Portal {
         return activePortals.getPortal(for: ptr, index: index, column: column, mgr: self)
     }
-    
-//    internal func removePortal(for key: PortalKey) {
-//        activePortals.removePortal(for: key)
-//    }
-    
+        
     internal func removeActivePortal(_ portal: Portal) {
         activePortals.remove(portal)
     }
@@ -482,3 +478,4 @@ extension ItemManager {
         }
     }
 }
+

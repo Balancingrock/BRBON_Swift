@@ -117,7 +117,7 @@ public enum ItemType: UInt8 {
     case brbonString    = 0x45
 
     
-    /// A table is an array with identical dictionaries as elements.
+    /// A table is an array with multiple columns.
     
     case table          = 0x46
     

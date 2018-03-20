@@ -7,62 +7,285 @@
 //
 
 import Foundation
+import BRUtils
 
-public struct TableRow {
-    
-    internal let table: Portal
-    
-    init(portal: Portal) {
-        self.table = portal
-    }
-    
-    public subscript(column: NameFieldDescriptor?) -> Portal {
-        get {
-            // Guarding against failure
-            guard table.isValid else { fatalOrNull("Portal is no longer valid"); return Portal.nullPortal }
-            guard let nfd = column else { fatalOrNull("Name descriptor failure"); return Portal.nullPortal }
-            
-            // Get pointer to column descriptor
-            guard let cIndex = columnIndex(for: nfd) else { return Portal.nullPortal }
-            
-            // Create and return portal
-            return Portal(itemPtr: table.itemPtr, index: table.index, column: cIndex, manager: table.manager, endianness: table.endianness)
-        }
-    }
-    
-    public subscript(column: String) -> Portal {
-        get {
-            
-            return self[NameFieldDescriptor(column)]
-        }
-        set {}
-    }
-    
-    internal func columnIndex(for nfd: NameFieldDescriptor) -> Int? {
-        var columnIndex = columnCount
-        let tableValuePtr = table.itemPtr.brbonItemValuePtr
-        let columnDescriptorPtr = tableValuePtr.advanced(by: columnDescriptorBaseOffset)
-        while columnIndex > 0 {
-            let ptr = columnDescriptorPtr.advanced(by: 16 * (columnIndex - 1))
-            if nfd.crc != UInt16(valuePtr: ptr.advanced(by: columnNameCrc16Offset), table.endianness) { continue }
-            let nameByteCount = Int(UInt16(valuePtr: ptr.advanced(by: columnNameByteCountOffset), table.endianness))
-            if nfd.data.count != nameByteCount { continue }
-            let nameDataOffset = Int(UInt32(valuePtr: ptr.advanced(by: columnNameUtf8OffsetOffset), table.endianness))
-            let nameData = Data(valuePtr: tableValuePtr.advanced(by: nameDataOffset), count: nameByteCount, table.endianness)
-            if nfd.data == nameData { return columnIndex }
-            columnIndex -= 1
-        }
-        return nil
-    }
-    
-    var columnCount: Int {
-        return Int(UInt32(valuePtr: table.itemPtr.brbonItemValuePtr.advanced(by: tableColumnCountOffset), table.endianness))
-    }
-}
+
+/// This is the signature of a closure that can be used to provide default values for table fields.
+///
+/// Note: The portal parameter is not managed by the active-portals manager.
+
+public typealias SetTableFieldDefaultValue = (Portal) -> ()
 
 
 extension Portal {
     
+    
+    /// Return a portal for the request table value field.
+    ///
+    /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remain constant over many subscript requests.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The column of the portal to retrieve.
+    ///
+    /// - Returns: The requested portal or the nullPortal if either column or row could not be matched.
+    
+    public subscript(row: Int, column: NameFieldDescriptor?) -> Portal {
+        get {
+            guard isTable else { return fatalOrNull("Self is not a table") }
+            guard let column = column else { return fatalOrNull("No column specified") }
+            guard row >= 0, row < _tableRowCount else { return fatalOrNull("Row must be >= 0 and < \(_tableRowCount)") }
+            guard let columnIndex = _tableColumnIndex(for: column) else { return fatalOrNull("No column with this name (\(column.string))") }
+            if _tableGetColumnType(for: columnIndex)!.isContainer {
+                return manager.getActivePortal(for: _tableFieldValuePtr(row: row, column: columnIndex), index: row, column: columnIndex)
+            } else {
+                return manager.getActivePortal(for: itemPtr, index: row, column: columnIndex)
+            }
+        }
+    }
+    
+    
+    /// Return a portal for the request table value field.
+    ///
+    /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remain constant over many subscript requests.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The column of the portal to retrieve.
+    ///
+    /// - Returns: The requested portal or the nullPortal if either column or row could not be matched.
+    
+    public subscript(row: Int, column: String) -> Portal {
+        get {
+            guard isTable else { return fatalOrNull("Self is not a table") }
+            guard row >= 0, row < _tableRowCount else { return fatalOrNull("Row must be >= 0 and < \(_tableRowCount)") }
+            guard let columnIndex = _tableColumnIndex(for: column) else { return fatalOrNull("No column with this name (\(column))") }
+            if _tableGetColumnType(for: columnIndex)!.isContainer {
+                return manager.getActivePortal(for: _tableFieldValuePtr(row: row, column: columnIndex), index: row, column: columnIndex)
+            } else {
+                return manager.getActivePortal(for: itemPtr, index: row, column: columnIndex)
+            }
+        }
+    }
+    
+    
+    /// Return a portal for the request table value field.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The column of the portal to retrieve.
+    ///
+    /// - Returns: The requested portal or the nullPortal if either column or row could not be matched.
+    
+    public subscript(row: Int, column: Int) -> Portal {
+        get {
+            guard isTable else { return fatalOrNull("Self is not a table") }
+            guard row >= 0, row < _tableRowCount else { return fatalOrNull("Row must be >= 0 and < \(_tableRowCount)") }
+            guard column >= 0, column < _tableColumnCount else { return fatalOrNull("Illegal column index") }
+            if _tableGetColumnType(for: column)!.isContainer {
+                return manager.getActivePortal(for: _tableFieldValuePtr(row: row, column: column), index: row, column: column)
+            } else {
+                return manager.getActivePortal(for: itemPtr, index: row, column: column)
+            }
+        }
+    }
+    
+    
+    public subscript(row: Int, column: NameFieldDescriptor) -> Bool? {
+        get { return self[row, column].bool }
+        set { self[row, column].bool = newValue }
+    }
+    public subscript(row: Int, column: String) -> Bool? {
+        get { return self[row, column].bool }
+        set { self[row, column].bool = newValue }
+    }
+    public subscript(row: Int, column: Int) -> Bool? {
+        get { return self[row, column].bool }
+        set { self[row, column].bool = newValue }
+    }
+
+    
+    public subscript(row: Int, column: NameFieldDescriptor) -> UInt8? {
+        get { return self[row, column].uint8 }
+        set { self[row, column].uint8 = newValue }
+    }
+    public subscript(row: Int, column: String) -> UInt8? {
+        get { return self[row, column].uint8 }
+        set { self[row, column].uint8 = newValue }
+    }
+    public subscript(row: Int, column: Int) -> UInt8? {
+        get { return self[row, column].uint8 }
+        set { self[row, column].uint8 = newValue }
+    }
+
+    
+    public subscript(row: Int, column: NameFieldDescriptor) -> UInt16? {
+        get { return self[row, column].uint16 }
+        set { self[row, column].uint16 = newValue }
+    }
+    public subscript(row: Int, column: String) -> UInt16? {
+        get { return self[row, column].uint16 }
+        set { self[row, column].uint16 = newValue }
+    }
+    public subscript(row: Int, column: Int) -> UInt16? {
+        get { return self[row, column].uint16 }
+        set { self[row, column].uint16 = newValue }
+    }
+
+    
+    public subscript(row: Int, column: NameFieldDescriptor) -> UInt32? {
+        get { return self[row, column].uint32 }
+        set { self[row, column].uint32 = newValue }
+    }
+    public subscript(row: Int, column: String) -> UInt32? {
+        get { return self[row, column].uint32 }
+        set { self[row, column].uint32 = newValue }
+    }
+    public subscript(row: Int, column: Int) -> UInt32? {
+        get { return self[row, column].uint32 }
+        set { self[row, column].uint32 = newValue }
+    }
+
+    
+    public subscript(row: Int, column: NameFieldDescriptor) -> UInt64? {
+        get { return self[row, column].uint64 }
+        set { self[row, column].uint64 = newValue }
+    }
+    public subscript(row: Int, column: String) -> UInt64? {
+        get { return self[row, column].uint64 }
+        set { self[row, column].uint64 = newValue }
+    }
+    public subscript(row: Int, column: Int) -> UInt64? {
+        get { return self[row, column].uint64 }
+        set { self[row, column].uint64 = newValue }
+    }
+
+    
+    public subscript(row: Int, column: NameFieldDescriptor) -> Int8? {
+        get { return self[row, column].int8 }
+        set { self[row, column].int8 = newValue }
+    }
+    public subscript(row: Int, column: String) -> Int8? {
+        get { return self[row, column].int8 }
+        set { self[row, column].int8 = newValue }
+    }
+    public subscript(row: Int, column: Int) -> Int8? {
+        get { return self[row, column].int8 }
+        set { self[row, column].int8 = newValue }
+    }
+    
+    
+    public subscript(row: Int, column: NameFieldDescriptor) -> Int16? {
+        get { return self[row, column].int16 }
+        set { self[row, column].int16 = newValue }
+    }
+    public subscript(row: Int, column: String) -> Int16? {
+        get { return self[row, column].int16 }
+        set { self[row, column].int16 = newValue }
+    }
+    public subscript(row: Int, column: Int) -> Int16? {
+        get { return self[row, column].int16 }
+        set { self[row, column].int16 = newValue }
+    }
+    
+    
+    public subscript(row: Int, column: NameFieldDescriptor) -> Int32? {
+        get { return self[row, column].int32 }
+        set { self[row, column].int32 = newValue }
+    }
+    public subscript(row: Int, column: String) -> Int32? {
+        get { return self[row, column].int32 }
+        set { self[row, column].int32 = newValue }
+    }
+    public subscript(row: Int, column: Int) -> Int32? {
+        get { return self[row, column].int32 }
+        set { self[row, column].int32 = newValue }
+    }
+    
+    
+    public subscript(row: Int, column: NameFieldDescriptor) -> Int64? {
+        get { return self[row, column].int64 }
+        set { self[row, column].int64 = newValue }
+    }
+    public subscript(row: Int, column: String) -> Int64? {
+        get { return self[row, column].int64 }
+        set { self[row, column].int64 = newValue }
+    }
+    public subscript(row: Int, column: Int) -> Int64? {
+        get { return self[row, column].int64 }
+        set { self[row, column].int64 = newValue }
+    }
+    
+
+    public subscript(row: Int, column: NameFieldDescriptor) -> Float32? {
+        get { return self[row, column].float32 }
+        set { self[row, column].float32 = newValue }
+    }
+    public subscript(row: Int, column: String) -> Float32? {
+        get { return self[row, column].float32 }
+        set { self[row, column].float32 = newValue }
+    }
+    public subscript(row: Int, column: Int) -> Float32? {
+        get { return self[row, column].float32 }
+        set { self[row, column].float32 = newValue }
+    }
+    
+    
+    public subscript(row: Int, column: NameFieldDescriptor) -> Float64? {
+        get { return self[row, column].float64 }
+        set { self[row, column].float64 = newValue }
+    }
+    public subscript(row: Int, column: String) -> Float64? {
+        get { return self[row, column].float64 }
+        set { self[row, column].float64 = newValue }
+    }
+    public subscript(row: Int, column: Int) -> Float64? {
+        get { return self[row, column].float64 }
+        set { self[row, column].float64 = newValue }
+    }
+
+    
+    public subscript(row: Int, column: NameFieldDescriptor) -> String? {
+        get { return self[row, column].string }
+        set { self[row, column].string = newValue }
+    }
+    public subscript(row: Int, column: String) -> String? {
+        get { return self[row, column].string }
+        set { self[row, column].string = newValue }
+    }
+    public subscript(row: Int, column: Int) -> String? {
+        get { return self[row, column].string }
+        set { self[row, column].string = newValue }
+    }
+
+    
+    public subscript(row: Int, column: NameFieldDescriptor) -> BrbonString? {
+        get { return self[row, column].brbonString }
+        set { self[row, column].brbonString = newValue }
+    }
+    public subscript(row: Int, column: String) -> BrbonString? {
+        get { return self[row, column].brbonString }
+        set { self[row, column].brbonString = newValue }
+    }
+    public subscript(row: Int, column: Int) -> BrbonString? {
+        get { return self[row, column].brbonString }
+        set { self[row, column].brbonString = newValue }
+    }
+
+    
+    public subscript(row: Int, column: NameFieldDescriptor) -> Data? {
+        get { return self[row, column].binary }
+        set { self[row, column].binary = newValue }
+    }
+    public subscript(row: Int, column: String) -> Data? {
+        get { return self[row, column].binary }
+        set { self[row, column].binary = newValue }
+    }
+    public subscript(row: Int, column: Int) -> Data? {
+        get { return self[row, column].binary }
+        set { self[row, column].binary = newValue }
+    }
+
     
     /// A pointer to the first byte of the column descriptors.
     
@@ -181,13 +404,13 @@ extension Portal {
     /// Returns the byte count for the column name field.
     
     internal func _tableGetColumnNameByteCount(for column: Int) -> Int {
-        return Int(UInt16(valuePtr: _tableColumnDescriptorPtr(for: column).advanced(by: columnNameByteCountOffset), endianness))
+        return Int(UInt8(valuePtr: _tableColumnDescriptorPtr(for: column).advanced(by: columnNameByteCountOffset), endianness))
     }
     
     
     /// Sets a new byte count for the column name field.
     
-    internal func _tableSetColumnNameByteCount(_ value: UInt16, for column: Int) {
+    internal func _tableSetColumnNameByteCount(_ value: UInt8, for column: Int) {
         value.storeValue(atPtr: _tableColumnDescriptorPtr(for: column).advanced(by: columnNameByteCountOffset), endianness)
     }
 
@@ -236,17 +459,17 @@ extension Portal {
     
     /// Returns the byte count that is reserved for the value in the column.
     
-    internal func _tableGetColumnValueByteCount(for column: Int) -> Int {
+    internal func _tableGetColumnValueFieldByteCount(for column: Int) -> Int {
         return Int(UInt32(valuePtr: _tableColumnDescriptorPtr(for: column).advanced(by: columnValueByteCountOffset), endianness))
     }
     
     
     /// Sets a new value in the column descriptor table for the number of bytes that can be stored in the column.
     
-    internal func _tableSetColumnValueByteCount(_ value: Int, for column: Int) {
+    internal func _tableSetColumnValueFieldByteCount(_ value: Int, for column: Int) {
         UInt32(value).storeValue(atPtr: _tableColumnDescriptorPtr(for: column).advanced(by: columnValueByteCountOffset), endianness)
     }
-
+    
     
     /// Returns a pointer to the first byte of the value in the row/column combination.
     
@@ -366,12 +589,12 @@ extension Portal {
     
     /// Makes sure the byte count for the column's value is sufficient to store the value.
     
-    internal func _tableEnsureColumnValueByteCount(for value: Coder, in column: Int) -> Result {
+    internal func _tableEnsureColumnValueByteCount(of bytes: Int, in column: Int) -> Result {
 
         guard let cspec = ColumnSpecification(valueAreaPtr: itemPtr.brbonItemValuePtr, forColumn: column, endianness) else { return .invalidTableColumnType }
 
-        if value.elementByteCount > cspec.valueByteCount {
-            let result = _tableIncreaseColumnValueByteCount(to: value.elementByteCount.roundUpToNearestMultipleOf8(), for: column)
+        if bytes > cspec.valueByteCount {
+            let result = _tableIncreaseColumnValueByteCount(to: bytes.roundUpToNearestMultipleOf8(), for: column)
             guard result == .success else { return result }
         }
         
@@ -431,7 +654,7 @@ extension Portal {
         }
         
         // Update the column value byte count to the new value
-        _tableSetColumnValueByteCount(colValueByteCount + columnValueByteCountIncrease, for: column)
+        _tableSetColumnValueFieldByteCount(colValueByteCount + columnValueByteCountIncrease, for: column)
         
         // Update the row byte count
         _tableRowByteCount = newRowByteCount
@@ -503,64 +726,6 @@ extension Portal {
     }
     
     
-    /// Return a portal for the request table value field.
-    ///
-    /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remain constant over many subscript requests.
-    ///
-    /// - Parameters:
-    ///   - row: The row for which to retrieve the portal.
-    ///   - column: The column of the portal to retrieve.
-    ///
-    /// - Returns: The requested portal or the nullPortal if either column or row could not be matched.
-    
-    public subscript(row: Int, column: NameFieldDescriptor?) -> Portal {
-        get {
-            guard isTable else { return fatalOrNull("Self is not a table") }
-            guard let column = column else { return fatalOrNull("No column specified") }
-            guard row >= 0, row < _tableRowCount else { return fatalOrNull("Row must be >= 0 and < \(_tableRowCount)") }
-            guard let columnIndex = _tableColumnIndex(for: column) else { return fatalOrNull("No column with this name (\(column.string))") }
-            return manager.getActivePortal(for: itemPtr, index: row, column: columnIndex)
-        }
-    }
-    
-    
-    /// Return a portal for the request table value field.
-    ///
-    /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remain constant over many subscript requests.
-    ///
-    /// - Parameters:
-    ///   - row: The row for which to retrieve the portal.
-    ///   - column: The column of the portal to retrieve.
-    ///
-    /// - Returns: The requested portal or the nullPortal if either column or row could not be matched.
-
-    public subscript(row: Int, column: String) -> Portal {
-        get {
-            guard isTable else { return fatalOrNull("Self is not a table") }
-            guard row >= 0, row < _tableRowCount else { return fatalOrNull("Row must be >= 0 and < \(_tableRowCount)") }
-            guard let columnIndex = _tableColumnIndex(for: column) else { return fatalOrNull("No column with this name (\(column))") }
-            return manager.getActivePortal(for: itemPtr, index: row, column: columnIndex)
-        }
-    }
-    
-    
-    /// Return a portal for the request table value field.
-    ///
-    /// - Parameters:
-    ///   - row: The row for which to retrieve the portal.
-    ///   - column: The column of the portal to retrieve.
-    ///
-    /// - Returns: The requested portal or the nullPortal if either column or row could not be matched.
-
-    public subscript(row: Int, column: Int) -> Portal {
-        get {
-            guard isTable else { return fatalOrNull("Self is not a table") }
-            guard row >= 0, row < _tableRowCount else { return fatalOrNull("Row must be >= 0 and < \(_tableRowCount)") }
-            return manager.getActivePortal(for: itemPtr, index: index, column: column)
-        }
-    }
-
-    
     /// Execute the given closure on each column item at the requested row.
     ///
     /// - Parameters:
@@ -620,33 +785,41 @@ extension Portal {
     
     /// Adds new rows to the table.
     ///
-    /// The fields of the new rows will be set to zero.
+    /// The fields of the new rows will be set to zero, after which the defaultValues closure is called.
     ///
-    /// - Parameters:
-    ///   - count: The number of rows that must be added.
+    /// - Parameter amount: The number of rows that must be added.
     ///
     /// - Returns: 'success' or an error indicator.
     
     @discardableResult
-    public func addRows(_ count: Int) -> Result {
+    public func addRows(_ amount: Int, defaultValues closure: SetTableFieldDefaultValue? = nil) -> Result {
        
         guard isTable else { return .operationNotSupported }
         
-        let necessaryValueByteCount = _tableRowsOffset + ((_tableRowCount + count) * _tableRowByteCount)
+        let necessaryValueByteCount = _tableRowsOffset + ((_tableRowCount + amount) * _tableRowByteCount)
         
         if valueFieldByteCount < necessaryValueByteCount {
             let result = increaseItemByteCount(to: minimumItemByteCount + necessaryValueByteCount)
             guard result == .success else { return result }
         }
         
-        let data = Data(count: count * _tableRowByteCount)
+        let data = Data(count: amount * _tableRowByteCount)
         
         let ptr = _tableFieldValuePtr(row: _tableRowCount, column: 0)
         
         data.storeValue(atPtr: ptr, endianness)
         
-        _tableRowCount += count
+        _tableRowCount += amount
 
+        if let closure = closure {
+            for ri in (_tableRowCount - amount) ..< _tableRowCount {
+                for ci in 0 ..< _tableColumnCount {
+                    let portal = manager.getActivePortal(for: itemPtr, index: ri, column: ci)
+                    closure(portal)
+                }
+            }
+        }
+        
         return .success
     }
     
@@ -713,10 +886,10 @@ extension Portal {
         // Cached variables (before they are changed by rebuilding the table descriptor)
         
         let valuePtr = itemPtr.brbonItemValuePtr
-        let valueByteCount = _tableGetColumnValueByteCount(for: column)
+        let valueByteCount = _tableGetColumnValueFieldByteCount(for: column)
         
         let firstByteToBeRemovedOffset = _tableGetColumnValueOffset(for: column)
-        let bytesToBeRemoved = _tableGetColumnValueByteCount(for: column)
+        let bytesToBeRemoved = _tableGetColumnValueFieldByteCount(for: column)
         let firstByteNotToRemoveOffset = firstByteToBeRemovedOffset + bytesToBeRemoved
 
         let oldRowByteCount = _tableRowByteCount
@@ -749,6 +922,11 @@ extension Portal {
         var srcPtr = valuePtr.advanced(by: oldRowsOffset)
         
         
+        // Adjust the source pointer if the first column must be removed.
+        
+        if column == 0 { srcPtr = srcPtr.advanced(by: valueByteCount) }
+        
+        
         // The first block
         
         if firstByteToBeRemovedOffset > 0 {
@@ -778,6 +956,12 @@ extension Portal {
             manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: (oldRowByteCount - firstByteNotToRemoveOffset), removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
         }
         
+        
+        // If there are no columns left, then set the rows count to zero
+        
+        if _tableColumnCount == 0 { _tableRowCount = 0 }
+        
+        
         return .success
     }
     
@@ -790,33 +974,61 @@ extension Portal {
     ///   - withName: The name for the new column.
     ///   - nameFieldByteCount: A byte count for the name field (must be a multiple of 8 and <= 248, the name itself can use 1 byte less than specified)
     ///   - valueType: The type stored in this column.
-    ///   - defaultValue: A default value that will be assigned to existing and new rows. When not specified, the bytes containing the value will be set to zero. Reserved bytes will also be set to zero. Note that the defaultValue must implement the Coder protocol.
-    ///   - valueByteCount: The number of bytes reserved for the new column value. If less than the defaultValue elementByteCount, the defaultValue elementByteCount will be used.
+    ///   - valueByteCount: The number of bytes reserved for the new column value.
+    ///   - closure: A closure that can be used to set the default value for each new field.
     ///
-    /// - Returns: Success of an error indicator.
+    /// - Returns: Success or an error indicator.
+
+    @discardableResult
+    public func addColumn(withName name: String, nameFieldByteCount: Int? = nil, valueType: ItemType, valueByteCount vbc: Int? = nil, defaultValues closure: SetTableFieldDefaultValue? = nil) -> Result {
+        
+        
+        // Create a new column specification
+        
+        guard let newSpec = ColumnSpecification(name: name, initialNameFieldByteCount: nameFieldByteCount, valueType: valueType, initialValueByteCount: vbc) else { return .nameFieldError }
+
+        
+        // Add the new spec
+        
+        return addColumn(newSpec, defaultValues: closure)
+    }
+    
+    
+    /// Adds a series of columns to the table.
+    ///
+    /// The columns will be added at the end in the sequence given by the array.
+    ///
+    /// - Parameter specs: An array with column specifications.
+    ///
+    /// - Returns: Either .success or an error indicator. If an error indicator is returned some columns may still have been added.
     
     @discardableResult
-    public func addColumn(withName name: String, nameFieldByteCount: Int? = nil, valueType: ItemType, defaultValue: IsBrbon? = nil, valueByteCount vbc: Int? = nil) -> Result {
-        
-        
-        // There should be type harmony
-        
-        if let defaultValue = defaultValue {
-            guard defaultValue.brbonType == valueType else { return .typeConflict }
-            guard defaultValue is Coder else { return .missingCoder }
+    public func addColumns(_ specs: Array<ColumnSpecification>, defaultValues closure: SetTableFieldDefaultValue? = nil) -> Result {
+        for spec in specs {
+            let result = addColumn(spec, defaultValues: closure)
+            guard result == .success else { return result }
         }
+        return .success
+    }
+    
+    
+    /// Adds a new column to the table.
+    ///
+    /// - Note: If this operation is successful, then the existing __COLUMN INDEX__'s must be considered __INVALID__.
+    ///
+    /// - Parameters:
+    ///   - colSpec: The column specification for the new column.
+    ///   - defaultValue: A default value that will be assigned to existing and new rows. When not specified, the bytes containing the value will be set to zero. Reserved bytes will also be set to zero. Note that the defaultValue must implement the Coder protocol.
+    ///
+    /// - Returns: Success or an error indicator.
+    
+    @discardableResult
+    public func addColumn(_ colSpec: ColumnSpecification, defaultValues closure: SetTableFieldDefaultValue? = nil) -> Result {
         
         
         // The name may not exist already
         
-        guard _tableColumnIndex(for: name) == nil else { return .nameExists }
-        
-        
-        // A new colspec must be creatable
-        
-        var valueBc = (defaultValue as? Coder)?.elementByteCount ?? 0
-        if valueBc < vbc ?? 0 { valueBc = vbc! }        
-        guard let newSpec = ColumnSpecification(name: name, initialNameFieldByteCount: nameFieldByteCount, valueType: valueType, initialValueByteCount: vbc) else { return .nameFieldError }
+        guard _tableColumnIndex(for: colSpec.nfd) == nil else { return .nameExists }
         
         
         // Build an array of column descriptors to re-create the table descriptor without the removed column
@@ -832,7 +1044,7 @@ extension Portal {
         
         // Add the new colspec
         
-        cols.append(newSpec)
+        cols.append(colSpec)
 
         
         // Calculate some new values to move the data into the new locations
@@ -845,7 +1057,7 @@ extension Portal {
         var newRowsOffset = 16 + cols.count * 16
         for col in cols { newRowsOffset += col.nfd.byteCount }
         newRowsOffset = newRowsOffset.roundUpToNearestMultipleOf8()
-        let newRowByteCount = oldRowByteCount + newSpec.valueByteCount
+        let newRowByteCount = oldRowByteCount + colSpec.valueByteCount
         
         
         // Create necessary space
@@ -874,17 +1086,213 @@ extension Portal {
         
         // Set the default value
         
-        let empty = Data(count: newSpec.valueByteCount)
-        let ci = _tableColumnCount - 1
-        for i in 0 ..< rows {
-            let ptr = _tableFieldValuePtr(row: i, column: ci)
-            empty.storeValue(atPtr: ptr, endianness)
-            if let defaultValue = defaultValue {
-                (defaultValue as? Coder)?.storeAsElement(atPtr: ptr, endianness)
+        if let closure = closure {
+            
+            let ci = _tableColumnCount - 1
+            for ri in 0 ..< rows {
+                let portal = manager.getActivePortal(for: itemPtr, index: ri, column: ci)
+                closure(portal)
+            }
+            
+        } else {
+
+            let empty = Data(count: colSpec.valueByteCount)
+            let ci = _tableColumnCount - 1
+            for i in 0 ..< rows {
+                let ptr = _tableFieldValuePtr(row: i, column: ci)
+                empty.storeValue(atPtr: ptr, endianness)
             }
         }
         
         
         return .success
+    }
+    
+    
+    /// Inserts a new row into a table item.
+    ///
+    /// The content of the fields will be set to zero. After inserting the new row(s) a closure will be invoked for all new fields to allow a setup with default values.
+    ///
+    /// - Parameter at: The index at which a new row will be inserted. The index must be an existing index otherwise an error is returned.
+    ///
+    /// - Returns: Success or an error indicator.
+    
+    public func insertRows(at index: Int, amount: Int = 1, defaultValues closure: SetTableFieldDefaultValue? = nil) -> Result {
+        
+        guard isTable else { return .operationNotSupported }
+        
+        guard index >= 0 else { return .indexBelowLowerBound }
+        guard index < _tableRowCount else { return .indexAboveHigherBound }
+        
+        guard (amount > 0) && (amount < Int(Int32.max)) else { return .illegalAmount }
+        
+        let necessaryValueByteCount = _tableRowsOffset + ((_tableRowCount + amount) * _tableRowByteCount)
+        
+        if valueFieldByteCount < necessaryValueByteCount {
+            let result = increaseItemByteCount(to: minimumItemByteCount + necessaryValueByteCount)
+            guard result == .success else { return result }
+        }
+        
+        let data = Data(count: amount * _tableRowByteCount)
+        
+        let srcPtr = _tableFieldValuePtr(row: index, column: 0)
+        let dstPtr = _tableFieldValuePtr(row: (index + amount), column: 0)
+        let len = (_tableRowCount - index) * _tableRowByteCount
+        
+        manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: 0, updateMovedPortals: false, updateRemovedPortals: false)
+        
+        data.storeValue(atPtr: srcPtr, endianness)
+        
+        _tableRowCount += amount
+        
+        if let closure = closure {
+            for ri in index ..< (index + amount) {
+                for ci in 0 ..< _tableColumnCount {
+                    let portal = manager.getActivePortal(for: itemPtr, index: ri, column: ci)
+                    closure(portal)
+                }
+            }
+        }
+        
+        return .success
+    }
+
+    
+    /// Copies the content of an ItemManager to a table field.
+    ///
+    /// The table field must be of the same type as the root type in the item manager. Also, the table field must be a container type (.array, .dictionary .sequence or .table)
+    ///
+    /// - Parameters:
+    ///   - at: The row index of the table field.
+    ///   - in: The column index of the table field.
+    ///   - withManager: The manager with the root item to be copied.
+    ///
+    /// - Returns: Either .success or an error id.
+    
+    @discardableResult
+    public func assignField(at row: Int, in column: Int, fromManager im: ItemManager) -> Result {
+        
+        
+        // Prevent errors
+        
+        guard parentPtr.brbonItemTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.table.rawValue else { return Result.operationNotSupported }
+        
+        guard row >= 0 else { return Result.indexBelowLowerBound }
+        guard row < _tableRowCount else { return Result.indexAboveHigherBound }
+        
+        guard (column >= 0) && (column < _tableColumnCount) else { return Result.columnNotFound }
+        
+        guard im.root.itemType?.isContainer ?? false else { return Result.dataInconsistency }
+        
+        guard _tableGetColumnType(for: column)?.isContainer ?? false else { return Result.invalidTableColumnType }
+        
+        
+        // Ensure that there is sufficient space
+        
+        let result = _tableEnsureColumnValueByteCount(of: manager.count, in: column)
+        
+        guard result == .success else { return result }
+        
+        
+        // Copy the container to the field
+        
+        let ptr = _tableFieldValuePtr(row: row, column: column)
+        
+        _ = Darwin.memmove(ptr, im.bufferPtr, manager.count)
+
+        
+        // Adjust the parent offset
+        
+        let pOffset = manager.bufferPtr.distance(to: itemPtr)
+                
+        UInt32(pOffset).storeValue(atPtr: ptr.brbonItemParentOffsetPtr, endianness)
+        
+        return .success
+    }
+    
+    
+    /// Convenience method: Create an array in a table field.
+    ///
+    /// This operation uses assignField to create the requested table.
+    ///
+    /// - Parameters:
+    ///   - at: The row index of the field.
+    ///   - in: The column index of the field.
+    ///   - elementType: The type to be stored in the array.
+    ///   - elementByteCount: The byte count for the array elements.
+    ///   - valueByteCount: The initial byte count for the value field in the array.
+    ///
+    /// - Returns: Either .success or an error indicator.
+    
+    @discardableResult
+    public func createFieldArray(at row: Int, in column: Int, elementType: ItemType, elementByteCount: Int? = nil, valueByteCount: Int? = nil) -> Result {
+        
+        let arr = BrbonArray(content: [], type: elementType, elementByteCount: elementByteCount)
+        guard let im = ItemManager(value: arr, name: nil, itemValueByteCount: valueByteCount, endianness: endianness) else { return Result.dataInconsistency }
+        
+        return assignField(at: row, in: column, fromManager: im)
+    }
+    
+    
+    /// Convenience method: Create a sequence in a table field.
+    ///
+    /// This operation uses assignField to create the requested table.
+    ///
+    /// - Parameters:
+    ///   - at: The row index of the field.
+    ///   - in: The column index of the field.
+    ///   - valueByteCount: The initial byte count for the value field of the sequence.
+    ///
+    /// - Returns: Either .success or an error indicator.
+
+    @discardableResult
+    public func createFieldSequence(at row: Int, in column: Int, valueByteCount: Int? = nil) -> Result {
+        
+        let seq = BrbonSequence()
+        guard let im = ItemManager(value: seq, name: nil, itemValueByteCount: valueByteCount, endianness: endianness) else { return Result.dataInconsistency }
+        
+        return assignField(at: row, in: column, fromManager: im)
+    }
+    
+    
+    /// Convenience method: Create a dictionary in a table field.
+    ///
+    /// This operation uses assignField to create the requested table.
+    ///
+    /// - Parameters:
+    ///   - at: The row index of the field.
+    ///   - in: The column index of the field.
+    ///   - valueByteCount: The initial byte count for the value field of the sequence.
+    ///
+    /// - Returns: Either .success or an error indicator.
+
+    @discardableResult
+    public func createFieldDictionary(at row: Int, in column: Int, valueByteCount: Int? = nil) -> Result {
+        
+        let dict = BrbonDictionary()
+        guard let im = ItemManager(value: dict, name: nil, itemValueByteCount: valueByteCount, endianness: endianness) else { return Result.dataInconsistency }
+        
+        return assignField(at: row, in: column, fromManager: im)
+    }
+    
+    
+    /// Convenience method: Create a table in a table field.
+    ///
+    /// This operation uses assignField to create the requested table.
+    ///
+    /// - Parameters:
+    ///   - at: The row index of the field.
+    ///   - in: The column index of the field.
+    ///   - valueByteCount: The initial byte count for the value field of the sequence.
+    ///
+    /// - Returns: Either .success or an error indicator.
+
+    @discardableResult
+    public func createFieldTable(at row: Int, in column: Int, columnSpecifications: Array<ColumnSpecification>, valueByteCount: Int? = nil) -> Result {
+        
+        let tab = BrbonTable(columnSpecifications: columnSpecifications)
+        guard let im = ItemManager(value: tab, name: nil, itemValueByteCount: valueByteCount, endianness: endianness) else { return Result.dataInconsistency }
+        
+        return assignField(at: row, in: column, fromManager: im)
     }
 }

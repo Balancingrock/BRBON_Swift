@@ -112,12 +112,29 @@ public class BrbonTable: Coder {
     public var brbonType: ItemType { return ItemType.table }
     
     public var valueByteCount: Int {
+        
+        // Start with the first 4 table parameters, each 4 bytes long
+        
         var total = 16
+
+        
+        // Exit if there are no columns
+        
         if columns.count == 0 { return total }
+        
+        
+        // Add the column descriptor, 16 bytes for each column
+        
         total += columns.count * 16
+        
+        
+        // Add the name field byte counts
+        
         columns.forEach() {
             total += $0.nfd.byteCount
         }
+        
+        
         return total
     }
     
@@ -211,7 +228,7 @@ public class BrbonTable: Coder {
         for column in columns {
             UInt8(column.nfd.data.count).storeValue(atPtr: columnNamePtr, endianness)
             column.nfd.data.storeValue(atPtr: columnNamePtr.advanced(by: 1), endianness)
-            columnNamePtr = columnNamePtr.advanced(by: (column.nfd.data.count + 1))
+            columnNamePtr = columnNamePtr.advanced(by: (column.nfd.byteCount))
         }
                 
         return .success

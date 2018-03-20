@@ -511,12 +511,12 @@ extension Portal {
     
     /// A string with the name fo the item this portal refers to.
     ///
-    /// Empty if the item does not have a name. Nil if the conversion of UTF8 code to a string failed.
+    /// Nil if the item does not have a name. Empty if the conversion of UTF8 code to a string failed.
     
     public internal(set) var name: String? {
         get {
             guard isValid else { return nil }
-            if nameFieldByteCount == 0 { return "" }
+            if nameFieldByteCount == 0 { return nil }
             return String.init(data: _nameData, encoding: .utf8) ?? ""
         }
         set {
@@ -606,7 +606,6 @@ extension Portal {
                     
                     // Calculate the necessary byte count for the parent array
                     
-                    //let necessaryParentItemByteCount = parent.itemByteCount - parent.valueByteCount + 8 + parent.countValue * newByteCount
                     let necessaryParentItemByteCount = ItemType.array.minimumItemByteCount + parent.countValue * newByteCount
                     
                     
@@ -701,14 +700,28 @@ extension Portal {
 
                 
                 return .success
-            
+                
+                
+            } else if parent.isTable {
+                
+                // The column index must be set
+                
+                assert(column != nil)
+                
+                
+                // Check if the column is big enough (or is made bigger)
+                
+                return parent._tableEnsureColumnValueByteCount(of: newByteCount, in: column!)
+
+                
             } else {
                 
                 return .outOfStorage
             }
             
-        } else {
             
+        } else {
+        
             // There is no parent, this must be the root item.
 
             
@@ -1509,7 +1522,7 @@ extension Portal {
             if let index = index {
                 if let column = column {
                     guard let newValue = newValue, isString else { fatalOrNull("Column type change not allowed"); return }
-                    guard _tableEnsureColumnValueByteCount(for: newValue, in: column) == .success else { fatalOrNull("Could not allocate additional memory"); return }
+                    guard _tableEnsureColumnValueByteCount(of: newValue.elementByteCount, in: column) == .success else { fatalOrNull("Could not allocate additional memory"); return }
                     newValue.storeAsElement(atPtr: _tableFieldValuePtr(row: index, column: column), endianness)
                 } else {
                     guard let newValue = newValue, isString else { fatalOrNull("Element type change not allowed (is: \(itemType))"); return }
@@ -1557,7 +1570,7 @@ extension Portal {
             if let index = index {
                 if let column = column {
                     guard let newValue = newValue, isString else { fatalOrNull("Column type change not allowed"); return }
-                    guard _tableEnsureColumnValueByteCount(for: newValue, in: column) == .success else {
+                    guard _tableEnsureColumnValueByteCount(of: newValue.elementByteCount, in: column) == .success else {
                         fatalOrNull("Could not allocate additional memory"); return
                     }
                     newValue.storeAsElement(atPtr: _tableFieldValuePtr(row: index, column: column), endianness)
@@ -1603,7 +1616,7 @@ extension Portal {
             if let index = index {
                 if let column = column {
                     guard let newValue = newValue, isString else { fatalOrNull("Column type change not allowed"); return }
-                    guard _tableEnsureColumnValueByteCount(for: newValue, in: column) == .success else {
+                    guard _tableEnsureColumnValueByteCount(of: newValue.elementByteCount, in: column) == .success else {
                         fatalOrNull("Could not allocate additional memory"); return
                     }
                     newValue.storeAsElement(atPtr: _tableFieldValuePtr(row: index, column: column), endianness)
