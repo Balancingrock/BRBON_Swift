@@ -607,7 +607,6 @@ extension Portal {
     internal func _tableIncreaseColumnValueByteCount(to bytes: Int, for column: Int) -> Result {
         
         let valueAreaPtr = itemPtr.brbonItemValuePtr
-        let contentAreaPtr = valueAreaPtr.advanced(by: _tableRowsOffset)
         
         // Calculate the needed bytes for the entire table content
         
@@ -626,31 +625,26 @@ extension Portal {
         
         
         // Shift the column value fields to their new place
-        
-        let colOffsetPtr = itemPtr.brbonItemValuePtr.advanced(by: 16 + column * 16 + columnValueOffsetOffset)
-        let colOffset = Int(UInt32(valuePtr: colOffsetPtr, endianness))
-        let colValueByteCountPtr = itemPtr.brbonItemValuePtr.advanced(by: 16 + column * 16 + columnValueByteCountOffset)
-        let colValueByteCount = Int(UInt32(valuePtr: colValueByteCountPtr, endianness))
-        
+
+        let colOffset = _tableGetColumnValueOffset(for: column)
+        let colValueByteCount = _tableGetColumnValueFieldByteCount(for: column)
         let offsetOfFirstByteAfterIncreasedByteCount = colOffset + colValueByteCount
-        
         let bytesAfterIncrease = oldRowByteCount - offsetOfFirstByteAfterIncreasedByteCount
-        let bytesBeforeIncrease = oldRowByteCount - bytesAfterIncrease
         
-        for ri in (0 ..< _tableRowCount).reversed() {
-            
-            let oldRowStartPtr = contentAreaPtr.advanced(by: oldRowByteCount * ri)
-            let newRowStartPtr = contentAreaPtr.advanced(by: newRowByteCount * ri)
-            
-            if bytesAfterIncrease > 0 {
-                let srcPtr = oldRowStartPtr.advanced(by: offsetOfFirstByteAfterIncreasedByteCount)
-                let dstPtr = newRowStartPtr.advanced(by: offsetOfFirstByteAfterIncreasedByteCount)
-                manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: bytesAfterIncrease, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
+        if bytesAfterIncrease > 0 {
+            let lastRowPtr = _tableGetRowPtr(row: _tableRowCount - 1)
+            let srcPtr = lastRowPtr.advanced(by: offsetOfFirstByteAfterIncreasedByteCount)
+            let dstPtr = srcPtr.advanced(by: _tableRowCount * columnValueByteCountIncrease)
+            manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: bytesAfterIncrease, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
+        }
+        
+        if _tableRowCount > 1 {
+            for ri in (1 ..< _tableRowCount).reversed() {
+                let rowPtr = _tableGetRowPtr(row: ri)
+                let srcPtr = rowPtr.advanced(by: offsetOfFirstByteAfterIncreasedByteCount - oldRowByteCount)
+                let dstPtr = srcPtr.advanced(by: ri * columnValueByteCountIncrease)
+                manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: oldRowByteCount, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
             }
-            
-            // There are always bytes 'before'
-            
-            manager.moveBlock(to: newRowStartPtr, from: oldRowStartPtr, moveCount: bytesBeforeIncrease, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
         }
         
         // Update the column value byte count to the new value

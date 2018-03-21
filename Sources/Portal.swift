@@ -704,14 +704,23 @@ extension Portal {
                 
             } else if parent.isTable {
                 
-                // The column index must be set
+                // The column index could be nil if the column contains a container and the container must grow in size.
+                // So determine the column index by searching for it.
                 
-                assert(column != nil)
+                let rowColOffset = parent.itemPtr.brbonItemValuePtr.distance(to: itemPtr)
+                let colOffset = rowColOffset % parent._tableRowByteCount
+                
+                var columnIndex: Int?
+                for i in 0 ..< parent._tableColumnCount {
+                    if colOffset == parent._tableGetColumnValueOffset(for: i) { columnIndex = i; break }
+                }
+                
+                assert(columnIndex != nil)
                 
                 
                 // Check if the column is big enough (or is made bigger)
                 
-                return parent._tableEnsureColumnValueByteCount(of: newByteCount, in: column!)
+                return parent._tableEnsureColumnValueByteCount(of: newByteCount, in: columnIndex!)
 
                 
             } else {

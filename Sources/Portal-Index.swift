@@ -433,7 +433,7 @@ public extension Portal {
             _arrayIncreaseElementByteCount(to: necessaryElementByteCount)
             
             
-        } else {
+        } /*else {
             
             
             // The element byte count of the array is big enough to hold the new value.
@@ -446,7 +446,7 @@ public extension Portal {
                 let result = increaseItemByteCount(to: necessaryItemByteCount.roundUpToNearestMultipleOf8())
                 guard result == .success else { return result }
             }
-        }
+        }*/
         
         return .success
     }
@@ -471,7 +471,7 @@ public extension Portal {
         // Ensure that the new value can be added
         
         if valueFieldByteCount - usedValueByteCount < value.elementByteCount {
-            let result = increaseItemByteCount(to: minimumItemByteCount + usedValueByteCount + value.elementByteCount)
+            let result = increaseItemByteCount(to: itemByteCount + value.elementByteCount)
             guard result == .success else { return result }
         }
         

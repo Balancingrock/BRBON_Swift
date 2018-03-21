@@ -901,5 +901,20 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(im.root[1, "aa"].countValue, 1)
         
         XCTAssertEqual(im.root[1, "aa"][0].int16, 66)
+        
+        
+        // Grow the second array so it has to increase the byte count
+        
+        for _ in 1 ... 15 {
+            XCTAssertEqual(im.root[1, "aa"].append(Int16(0x77)), .success) // filling the available space
+        }
+
+        XCTAssertEqual(im.root[1, "aa"].append(Int16(0x77)), .success) // increases byte count
+
+        XCTAssertEqual(im.root[1, "aa"].countValue, 17)
+        
+        XCTAssertEqual(im.root[1, "aa"][0].int16, 66)
+
+        XCTAssertEqual(im.root[0, "bb"].int8, 5)
     }
 }
