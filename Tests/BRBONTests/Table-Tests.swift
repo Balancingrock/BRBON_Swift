@@ -887,7 +887,7 @@ class Table_Tests: XCTestCase {
             }
         }
         
-        guard let col1 = ColumnSpecification(name: "aa", initialNameFieldByteCount: nil, valueType: .array, initialValueByteCount: nil) else { XCTFail(); return }
+        guard let col1 = ColumnSpecification(name: "aa", initialNameFieldByteCount: nil, valueType: .array, initialValueByteCount: 32) else { XCTFail(); return }
         guard let col2 = ColumnSpecification(name: "bb", initialNameFieldByteCount: nil, valueType: .int8, initialValueByteCount: nil) else { XCTFail(); return }
 
         guard let im = ItemManager(rootItemType: .table) else { XCTFail(); return }

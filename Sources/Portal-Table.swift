@@ -37,7 +37,7 @@ extension Portal {
             guard row >= 0, row < _tableRowCount else { return fatalOrNull("Row must be >= 0 and < \(_tableRowCount)") }
             guard let columnIndex = _tableColumnIndex(for: column) else { return fatalOrNull("No column with this name (\(column.string))") }
             if _tableGetColumnType(for: columnIndex)!.isContainer {
-                return manager.getActivePortal(for: _tableFieldValuePtr(row: row, column: columnIndex), index: row, column: columnIndex)
+                return manager.getActivePortal(for: _tableFieldValuePtr(row: row, column: columnIndex), index: nil, column: nil)
             } else {
                 return manager.getActivePortal(for: itemPtr, index: row, column: columnIndex)
             }
@@ -61,7 +61,7 @@ extension Portal {
             guard row >= 0, row < _tableRowCount else { return fatalOrNull("Row must be >= 0 and < \(_tableRowCount)") }
             guard let columnIndex = _tableColumnIndex(for: column) else { return fatalOrNull("No column with this name (\(column))") }
             if _tableGetColumnType(for: columnIndex)!.isContainer {
-                return manager.getActivePortal(for: _tableFieldValuePtr(row: row, column: columnIndex), index: row, column: columnIndex)
+                return manager.getActivePortal(for: _tableFieldValuePtr(row: row, column: columnIndex), index: nil, column: nil)
             } else {
                 return manager.getActivePortal(for: itemPtr, index: row, column: columnIndex)
             }
@@ -83,7 +83,7 @@ extension Portal {
             guard row >= 0, row < _tableRowCount else { return fatalOrNull("Row must be >= 0 and < \(_tableRowCount)") }
             guard column >= 0, column < _tableColumnCount else { return fatalOrNull("Illegal column index") }
             if _tableGetColumnType(for: column)!.isContainer {
-                return manager.getActivePortal(for: _tableFieldValuePtr(row: row, column: column), index: row, column: column)
+                return manager.getActivePortal(for: _tableFieldValuePtr(row: row, column: column), index: nil, column: nil)
             } else {
                 return manager.getActivePortal(for: itemPtr, index: row, column: column)
             }
@@ -656,6 +656,15 @@ extension Portal {
         // Update the column value byte count to the new value
         _tableSetColumnValueFieldByteCount(colValueByteCount + columnValueByteCountIncrease, for: column)
         
+        // Update column value offsets
+        if (column + 1) < _tableColumnCount {
+            for ci in (column + 1) ..< _tableColumnCount {
+                let old = _tableGetColumnValueOffset(for: ci)
+                let new = old + columnValueByteCountIncrease
+                _tableSetColumnValueOffset(new, for: ci)
+            }
+        }
+        
         // Update the row byte count
         _tableRowByteCount = newRowByteCount
         
@@ -1170,26 +1179,26 @@ extension Portal {
     /// - Returns: Either .success or an error id.
     
     @discardableResult
-    public func assignField(at row: Int, in column: Int, fromManager im: ItemManager) -> Result {
+    public func assignField(at row: Int, in column: Int, fromManager source: ItemManager) -> Result {
         
         
         // Prevent errors
         
-        guard parentPtr.brbonItemTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.table.rawValue else { return Result.operationNotSupported }
+        guard itemPtr.brbonItemTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.table.rawValue else { return Result.operationNotSupported }
         
         guard row >= 0 else { return Result.indexBelowLowerBound }
         guard row < _tableRowCount else { return Result.indexAboveHigherBound }
         
         guard (column >= 0) && (column < _tableColumnCount) else { return Result.columnNotFound }
         
-        guard im.root.itemType?.isContainer ?? false else { return Result.dataInconsistency }
+        guard source.root.itemType?.isContainer ?? false else { return Result.dataInconsistency }
         
         guard _tableGetColumnType(for: column)?.isContainer ?? false else { return Result.invalidTableColumnType }
         
         
         // Ensure that there is sufficient space
         
-        let result = _tableEnsureColumnValueByteCount(of: manager.count, in: column)
+        let result = _tableEnsureColumnValueByteCount(of: source.count, in: column)
         
         guard result == .success else { return result }
         
@@ -1198,7 +1207,7 @@ extension Portal {
         
         let ptr = _tableFieldValuePtr(row: row, column: column)
         
-        _ = Darwin.memmove(ptr, im.bufferPtr, manager.count)
+        _ = Darwin.memmove(ptr, source.bufferPtr, manager.count)
 
         
         // Adjust the parent offset
