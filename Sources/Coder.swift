@@ -62,78 +62,119 @@ internal protocol Coder: IsBrbon {
     var valueByteCount: Int { get }
     
     
-    /// The number of bytes needed to encode self as a BRBON element.
+    /// The number of bytes needed to encode self into an item.
     
-    var elementByteCount: Int { get }
-    
-    
-    /// The number of bytes needed to encode self as a BRBON item.
-    
-    func itemByteCount(_ nfd: NameFieldDescriptor?) -> Int
+    func itemByteCount(_ nfd: NameField?) -> Int
     
     
     /// Stores the raw bytes of the value.
     ///
-    /// This operation is not always supported and may result in a fatal error.
-    ///
-    /// - Note: A fatal error will occur for container types. Container types must always be stored as items.
+    /// - Note: A fatal error will occur for container types and the null type. Container types and the null type must always be stored as items.
     ///
     /// - Parameters:
     ///   - atPtr: The address at which the first byte will be stored.
     ///   - endianness: Specifies the endian ordering of the bytes. Only used when necessary.
-    ///
-    /// - Returns: Either 'success' or an error code.
     
-    @discardableResult
-    func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Result
+    func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness)
     
+
+    /// Initializes a new type from a byte stream
+    ///
+    /// - Note: Objects that cannot be created from a byte stream will raise a fatal error
     
-    /// Stores the raw bytes of the value preceeded by any information necessary to restore the value.
-    ///
-    /// This operation is not always supported and may result in a fatal error.
-    ///
-    /// - Note: A fatal error will occur for container types. Container types must always be stored as items.
-    ///
-    /// - Parameters:
-    ///   - atPtr: The address at which the first byte will be stored.
-    ///   - endianness: Specifies the endian ordering of the bytes. Only used when necessary.
-    ///
-    /// - Returns: Either 'success' or an error code.
-    
-    @discardableResult
-    func storeAsElement(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Result
+    init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness)
 
     
     /// Stores the value as a BRBON item.
     ///
     /// - Parameters:
     ///   - atPtr: The address at which the first byte will be stored.
-    ///   - bufferPtr: The startaddress of the buffer in which the item will be stored.
-    ///   - parentPtr: The address of the first byte of the parent item of self. Must be equal to bufferPtr for the first item in a buffer.
-    ///   - nameField: An optional name field descriptor if the item has a name.
-    ///   - valueByteCount: If present, then the item will have a value field of at least this many bytes.
+    ///   - options: The item options field content.
+    ///   - flags: The item flags field content.
+    ///   - name: An optional name field descriptor if the item has a name.
+    ///   - parentOffset: The offset of the parent item this item is located in. The offset of the parent should be given in bytes from the first byte of the buffer the parent is in..
+    ///   - initialValueByteCount: If present, then the item will have a value field of at least this many bytes. Note that this value has 'suggestive' value only, if the actual byte count is larger, the larger value will be used. Any value will be rounded up to the nearest mutiple of 8. Range 0 ... Int32.max. Note: If this parameter is set, there will be a value field, even if the small-value field is used to store the data.
     ///   - endianness: Specifies the endian ordering of the bytes. Only used when necessary.
-    ///
-    /// - Returns: Either 'success' or an error code.
     
-    @discardableResult
     func storeAsItem(
         atPtr: UnsafeMutableRawPointer,
-        bufferPtr: UnsafeMutableRawPointer,
-        parentPtr: UnsafeMutableRawPointer,
-        nameField nfd: NameFieldDescriptor?,
-        valueByteCount: Int?,
-        _ endianness: Endianness) -> Result
+        options: ItemOptions,
+        flags: ItemFlags,
+        name: NameField?,
+        parentOffset: Int,
+        initialValueByteCount: Int?,
+        _ endianness: Endianness)
 }
 
+extension Coder {
+    
+    func itemByteCount(_ nfd: NameField?) -> Int {
+        return itemMinimumByteCount + (nfd?.byteCount ?? 0) + (itemType.usesSmallValue ? 0 : valueByteCount).roundUpToNearestMultipleOf8()
+    }
+    
+    func storeAsItem(
+        atPtr: UnsafeMutableRawPointer,
+        options: ItemOptions = ItemOptions.none,
+        flags: ItemFlags = ItemFlags.none,
+        name: NameField? = nil,
+        parentOffset: Int,
+        initialValueByteCount: Int? = nil,
+        _ endianness: Endianness) {
+        
+        let nameFieldByteCount = name?.byteCount ?? 0
 
-/// An add-on protocol to the Coder protocol for those items that can be initialized from a byte stream.
-
-internal protocol Initialize {
+        let itemByteCount: Int
+        
+        if let initialValueByteCount = initialValueByteCount {
+            
+            // Using a fixed byte count means not using the value field even if the small-value field would be enough.
+            
+            if valueByteCount > initialValueByteCount {
+                itemByteCount = itemMinimumByteCount + nameFieldByteCount + valueByteCount.roundUpToNearestMultipleOf8()
+            } else {
+                itemByteCount = itemMinimumByteCount + nameFieldByteCount + initialValueByteCount.roundUpToNearestMultipleOf8()
+            }
+            
+        } else {
+            
+            // Using the default value means ignoring the value field if possible
+            
+            itemByteCount = itemMinimumByteCount + nameFieldByteCount + (itemType.usesSmallValue ? 0 : valueByteCount.roundUpToNearestMultipleOf8())
+        }
+        
+        // Type
+        itemType.storeValue(atPtr: atPtr.advanced(by: itemTypeOffset))
+        
+        // Options
+        options.storeValue(atPtr: atPtr.advanced(by: itemOptionsOffset))
+        
+        // Flags
+        flags.storeValue(atPtr: atPtr.advanced(by:itemFlagsOffset))
+        
+        // Name field byte count
+        UInt8(nameFieldByteCount).storeValue(atPtr: atPtr.advanced(by: itemNameFieldByteCountOffset), endianness)
+        
+        // Item byte count
+        UInt32(itemByteCount).storeValue(atPtr: atPtr.advanced(by: itemByteCountOffset), endianness)
+        
+        // Parent offset
+        UInt32(parentOffset).storeValue(atPtr: atPtr.advanced(by: itemParentOffsetOffset), endianness)
+        
+        // Small-value
+        UInt32(0).storeValue(atPtr: atPtr.advanced(by: itemSmallValueOffset), endianness)
+        
+        // Name field (if present)
+        name?.storeValue(atPtr: atPtr.advanced(by: itemNameFieldOffset), endianness)
+        
+        // Value
+        if itemType.usesSmallValue {
+            storeValue(atPtr: atPtr.advanced(by: itemSmallValueOffset), endianness)
+        } else {
+            storeValue(atPtr: atPtr.advanced(by: itemValueFieldOffset + nameFieldByteCount), endianness)
+        }
+    }
     
-    init(valuePtr: UnsafeMutableRawPointer, count: Int, _ endianness: Endianness)
-    
-    init(itemPtr: UnsafeMutableRawPointer, _ endianness: Endianness)
-    
-    init(elementPtr: UnsafeMutableRawPointer, _ endianness: Endianness)
+    init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+        fatalError("This type cannot be recreated from a byte stream")
+    }
 }

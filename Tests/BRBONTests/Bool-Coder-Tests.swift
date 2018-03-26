@@ -1,5 +1,5 @@
 //
-//  Bool-BrbonCoder-Tests.swift
+//  Bool-Coder-Tests.swift
 //  BRBON
 //
 //  Created by Marinus van der Lugt on 06/02/18.
@@ -10,7 +10,7 @@ import XCTest
 import BRUtils
 @testable import BRBON
 
-class Bool_BrbonCoder_Tests: XCTestCase {
+class Bool_Coder_Tests: XCTestCase {
 
     override func setUp() {
         super.setUp()
@@ -22,37 +22,42 @@ class Bool_BrbonCoder_Tests: XCTestCase {
         super.tearDown()
     }
 
-    func test_NoNameField() {
+    func test() {
         
         
         // Instance
         
-        let b: Bool = true
+        var b: Bool = true
         
         
         // Properties
         
-        XCTAssertEqual(b.brbonType, ItemType.bool)
+        XCTAssertEqual(b.itemType, .bool)
         XCTAssertEqual(b.valueByteCount, 1)
-        XCTAssertEqual(b.itemByteCount(), 16)
-        XCTAssertEqual(b.elementByteCount, 1)
 
         
         // Storing
         
         let buffer = UnsafeMutableRawBufferPointer.allocate(count: 100)
+        _ = Darwin.memset(buffer.baseAddress, 0, 100)
         defer { buffer.deallocate() }
+        
+        
+        // Store as value
         
         b.storeValue(atPtr: buffer.baseAddress!, machineEndianness)
         
         XCTAssertEqual(buffer.baseAddress!.assumingMemoryBound(to: UInt8.self).pointee, 1)
         
-        b.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!.advanced(by: 0x12345678), machineEndianness)
+        
+        // Store as item without name, with initial byte count
+        
+        b.storeAsItem(atPtr: buffer.baseAddress!, parentOffset: 0x12345678, machineEndianness)
         
         var data = Data(bytesNoCopy: buffer.baseAddress!, count: 16, deallocator: Data.Deallocator.none)
         
-        let exp = Data(bytes: [
-            0x81, 0x00, 0x00, 0x00,
+        var exp = Data(bytes: [
+            0x02, 0x00, 0x00, 0x00,
             0x10, 0x00, 0x00, 0x00,
             0x78, 0x56, 0x34, 0x12,
             0x01, 0x00, 0x00, 0x00
@@ -60,12 +65,15 @@ class Bool_BrbonCoder_Tests: XCTestCase {
         
         XCTAssertEqual(data, exp)
         
-        b.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!.advanced(by: 0x12345678), valueByteCount: 5, machineEndianness)
+        
+        // Store as item without name, with initial byte count 5
+        
+        b.storeAsItem(atPtr: buffer.baseAddress!, parentOffset: 0x12345678, initialValueByteCount: 5, machineEndianness)
         
         data = Data(bytesNoCopy: buffer.baseAddress!, count: 24, deallocator: Data.Deallocator.none)
         
-        let exp2 = Data(bytes: [
-            0x81, 0x00, 0x00, 0x00,
+        exp = Data(bytes: [
+            0x02, 0x00, 0x00, 0x00,
             0x18, 0x00, 0x00, 0x00,
             0x78, 0x56, 0x34, 0x12,
             0x01, 0x00, 0x00, 0x00,
@@ -73,72 +81,27 @@ class Bool_BrbonCoder_Tests: XCTestCase {
             0x00, 0x00, 0x00, 0x00
             ])
         
-        XCTAssertEqual(data, exp2)
-        
-        b.storeAsElement(atPtr: buffer.baseAddress!, machineEndianness)
-        
-        XCTAssertEqual(buffer.baseAddress!.assumingMemoryBound(to: UInt8.self).pointee, 1)
+        XCTAssertEqual(data, exp)
         
         
-        // Reading
+        // Change value
         
-        buffer.copyBytes(from: [0x00])
-        
-        XCTAssertEqual(Bool(valuePtr: buffer.baseAddress!, machineEndianness), false)
-
-        buffer.copyBytes(from: [0x01])
-        
-        XCTAssertEqual(Bool(valuePtr: buffer.baseAddress!, machineEndianness), true)
-
-        buffer.copyBytes(from: [0x56])
-        
-        XCTAssertEqual(Bool(valuePtr: buffer.baseAddress!, machineEndianness), false)
-        
-        buffer.copyBytes(from: exp)
-        
-        XCTAssertEqual(Bool(itemPtr: buffer.baseAddress!, machineEndianness), true)
-        
-        buffer.copyBytes(from: [0])
-        
-        XCTAssertEqual(Bool(elementPtr: buffer.baseAddress!, machineEndianness), false)
-    }
-    
-    func test_WithNameField() {
-        
-        
-        // Instance
-        
-        let b: Bool = true
+        b = true
         
         
         // The name field to be used
         
-        let nfd = NameFieldDescriptor("one")
+        let name = NameField("one")
         
         
-        // Properties
+        // Store as item with name, without initial byte count
         
-        XCTAssertEqual(b.brbonType, ItemType.bool)
-        XCTAssertEqual(b.valueByteCount, 1)
-        XCTAssertEqual(b.itemByteCount(nfd), 24)
-        XCTAssertEqual(b.elementByteCount, 1)
+        b.storeAsItem(atPtr: buffer.baseAddress!, name: name, parentOffset: 0x12345678, machineEndianness)
         
-        
-        // Storing
-        
-        let buffer = UnsafeMutableRawBufferPointer.allocate(count: 100)
-        defer { buffer.deallocate() }
-        
-        b.storeValue(atPtr: buffer.baseAddress!, machineEndianness)
-        
-        XCTAssertEqual(buffer.baseAddress!.assumingMemoryBound(to: UInt8.self).pointee, 1)
-        
-        b.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!.advanced(by: 0x12345678), nameField: nfd, machineEndianness)
-        
-        var data = Data(bytesNoCopy: buffer.baseAddress!, count: 24, deallocator: Data.Deallocator.none)
+        data = Data(bytesNoCopy: buffer.baseAddress!, count: 24, deallocator: Data.Deallocator.none)
 
-        let exp = Data(bytes: [
-            0x81, 0x00, 0x00, 0x08,
+        exp = Data(bytes: [
+            0x02, 0x00, 0x00, 0x08,
             0x18, 0x00, 0x00, 0x00,
             0x78, 0x56, 0x34, 0x12,
             0x01, 0x00, 0x00, 0x00,
@@ -148,12 +111,15 @@ class Bool_BrbonCoder_Tests: XCTestCase {
         
         XCTAssertEqual(data, exp)
         
-        b.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!.advanced(by: 0x12345678), nameField: nfd, valueByteCount: 5, machineEndianness)
+        
+        // Store as item with name and initial byte count 5
+        
+        b.storeAsItem(atPtr: buffer.baseAddress!, name: name, parentOffset: 0x12345678, initialValueByteCount: 5, machineEndianness)
         
         data = Data(bytesNoCopy: buffer.baseAddress!, count: 32, deallocator: Data.Deallocator.none)
 
-        let exp2 = Data(bytes: [
-            0x81, 0x00, 0x00, 0x08,
+        exp = Data(bytes: [
+            0x02, 0x00, 0x00, 0x08,
             0x20, 0x00, 0x00, 0x00,
             0x78, 0x56, 0x34, 0x12,
             0x01, 0x00, 0x00, 0x00,
@@ -162,36 +128,23 @@ class Bool_BrbonCoder_Tests: XCTestCase {
             0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00
             ])
-        
-        XCTAssertEqual(data, exp2)
+        data.printBytes()
 
-        b.storeAsElement(atPtr: buffer.baseAddress!, machineEndianness)
-        
-        XCTAssertEqual(buffer.baseAddress!.assumingMemoryBound(to: UInt8.self).pointee, 1)
+        XCTAssertEqual(data, exp)
         
         
         // Reading
         
         buffer.copyBytes(from: [0x00])
         
-        XCTAssertEqual(Bool(valuePtr: buffer.baseAddress!, machineEndianness), false)
+        XCTAssertEqual(Bool(fromPtr: buffer.baseAddress!, machineEndianness), false)
         
         buffer.copyBytes(from: [0x01])
         
-        XCTAssertEqual(Bool(valuePtr: buffer.baseAddress!, machineEndianness), true)
+        XCTAssertEqual(Bool(fromPtr: buffer.baseAddress!, machineEndianness), true)
         
         buffer.copyBytes(from: [0x56])
         
-        XCTAssertEqual(Bool(valuePtr: buffer.baseAddress!, machineEndianness), false)
-        
-        buffer.copyBytes(from: exp)
-        
-        XCTAssertEqual(Bool(itemPtr: buffer.baseAddress!, machineEndianness), true)
-        
-        buffer.copyBytes(from: [0])
-        
-        XCTAssertEqual(Bool(elementPtr: buffer.baseAddress!, machineEndianness), false)
+        XCTAssertEqual(Bool(fromPtr: buffer.baseAddress!, machineEndianness), true)
     }
-
-
 }

@@ -25,13 +25,13 @@ class ItemManager_Dictionary_Tests: XCTestCase {
 
     func testDictionary() {
 
-        let dict = BrbonDictionary(content: [:])
+        let dict = BrbonDictionary(content: [:])!
         
         guard let dm = ItemManager(value: dict) else { XCTFail(); return }
         
         XCTAssertTrue(dm.root.isDictionary)
-        XCTAssertEqual(dm.root.countValue, 0)
-        XCTAssertEqual(dm.root.itemByteCount, 16)
+        XCTAssertEqual(dm.root.count, 0)
+        XCTAssertEqual(dm.root._itemByteCount, 16)
         
         var exp = Data(bytes: [
             0x42, 0x00, 0x00, 0x00,
@@ -92,13 +92,13 @@ class ItemManager_Dictionary_Tests: XCTestCase {
     
     func testDictionary2() {
         
-        let dict = BrbonDictionary(content: [:])
+        let dict = BrbonDictionary(content: [:])!
         
         guard let dm = ItemManager(value: dict) else { XCTFail(); return }
         
         XCTAssertTrue(dm.root.isDictionary)
-        XCTAssertEqual(dm.root.countValue, 0)
-        XCTAssertEqual(dm.root.itemByteCount, 16)
+        XCTAssertEqual(dm.root.count, 0)
+        XCTAssertEqual(dm.root._itemByteCount, 16)
         
         var exp = Data(bytes: [
             0x42, 0x00, 0x00, 0x00,

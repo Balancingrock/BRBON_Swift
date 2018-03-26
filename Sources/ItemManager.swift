@@ -44,8 +44,8 @@ fileprivate struct ActivePortals {
         
         if let column = portal.column, let index = portal.index {
             
-            startAddress = portal._tableFieldValuePtr(row: index, column: column)
-            endAddress = startAddress.advanced(by: portal._tableGetColumnValueFieldByteCount(for: column))
+            startAddress = portal._tableFieldPtr(row: index, column: column)
+            endAddress = startAddress.advanced(by: portal._tableGetColumnFieldByteCount(for: column))
             
             portal.isValid = false
             dict.removeValue(forKey: portal.key)
@@ -61,7 +61,7 @@ fileprivate struct ActivePortals {
         } else {
             
             startAddress = portal.itemPtr
-            endAddress = startAddress.advanced(by: portal.itemByteCount)
+            endAddress = startAddress.advanced(by: portal._itemByteCount)
             
             // The portal itself will be removed in the loop below.
         }
@@ -90,7 +90,7 @@ fileprivate struct ActivePortals {
                 
                 if let column = portal.column, let index = portal.index {
                     
-                    let ptr = portal._tableFieldValuePtr(row: index, column: column)
+                    let ptr = portal._tableFieldPtr(row: index, column: column)
                     
                     if ptr >= atAndAbove && ptr < below {
                         portal.isValid = false
@@ -166,7 +166,7 @@ public final class ItemManager {
     
     /// The number of bytes used by the root item (equal to all bytes that are used in the buffer)
     
-    public var count: Int { return root.itemByteCount }
+    public var count: Int { return root._itemByteCount }
     
     
     /// The number of unused bytes in the buffer
@@ -183,7 +183,7 @@ public final class ItemManager {
     /// A data object with the entire rootItem in it as a sequence of bytes.
     
     public var data: Data {
-        return Data(bytesNoCopy: bufferPtr, count: root.itemByteCount, deallocator: Data.Deallocator.none)
+        return Data(bytesNoCopy: bufferPtr, count: root._itemByteCount, deallocator: Data.Deallocator.none)
     }
     
     
@@ -213,9 +213,9 @@ public final class ItemManager {
         guard initialBufferByteCount > 0 else { return nil }
         guard minimalBufferIncrements >= 0 else { return nil }
         
-        var nfd: NameFieldDescriptor?
+        var nfd: NameField?
         if name != nil {
-            guard let n = NameFieldDescriptor(name) else { return nil }
+            guard let n = NameField(name) else { return nil }
             nfd = n
         }
         
@@ -227,7 +227,7 @@ public final class ItemManager {
 
         let value: Coder = value as! Coder
 
-        value.storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: itemValueByteCount, endianness)
+        value.storeAsItem(atPtr: bufferPtr, name: nfd, parentOffset: 0, initialValueByteCount: itemValueByteCount, endianness)
         
         self.root = getActivePortal(for: bufferPtr, index: nil, column: nil)
     }
@@ -258,9 +258,9 @@ public final class ItemManager {
         guard initialBufferByteCount > 0 else { return nil }
         guard minimalBufferIncrements >= 0 else { return nil }
         
-        var nfd: NameFieldDescriptor?
+        var nfd: NameField?
         if name != nil {
-            guard let n = NameFieldDescriptor(name) else { return nil }
+            guard let n = NameField(name) else { return nil }
             nfd = n
         }
 
@@ -274,99 +274,103 @@ public final class ItemManager {
         switch rootItemType {
         case .null:
             
-            Null().storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
+            Null().storeAsItem(atPtr: bufferPtr, name: nfd, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
             
             
         case .bool:
             
-            false.storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
+            false.storeAsItem(atPtr: bufferPtr, name: nfd, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
 
             
         case .int8:
             
-            Int8(0).storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
+            Int8(0).storeAsItem(atPtr: bufferPtr, name: nfd, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
             
             
         case .int16:
             
-            Int16(0).storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
+            Int16(0).storeAsItem(atPtr: bufferPtr, name: nfd, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
             
             
         case .int32:
             
-            Int32(0).storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
+            Int32(0).storeAsItem(atPtr: bufferPtr, name: nfd, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
             
             
         case .int64:
             
-            Int64(0).storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
+            Int64(0).storeAsItem(atPtr: bufferPtr, name: nfd, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
             
             
         case .uint8:
             
-            UInt8(0).storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
+            UInt8(0).storeAsItem(atPtr: bufferPtr, name: nfd, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
             
             
         case .uint16:
             
-            UInt16(0).storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
+            UInt16(0).storeAsItem(atPtr: bufferPtr, name: nfd, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
             
             
         case .uint32:
             
-            UInt32(0).storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
+            UInt32(0).storeAsItem(atPtr: bufferPtr, name: nfd, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
             
             
         case .uint64:
             
-            UInt64(0).storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
+            UInt64(0).storeAsItem(atPtr: bufferPtr, name: nfd, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
             
             
         case .float32:
             
-            Float32(0).storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
+            Float32(0).storeAsItem(atPtr: bufferPtr, name: nfd, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
             
             
         case .float64:
             
-            Float64(0).storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
+            Float64(0).storeAsItem(atPtr: bufferPtr, name: nfd, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
             
-            
-        case .binary:
-            
-            Data().storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
-
             
         case .string:
             
-            "".storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
+            "".storeAsItem(atPtr: bufferPtr, name: nfd, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
 
             
-        case .brbonString:
+        case .crcString:
             
-            "".brbonString.storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
+            "".crcString.storeAsItem(atPtr: bufferPtr, name: nfd, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
+            
+
+        case .binary:
+            
+            Data().storeAsItem(atPtr: bufferPtr, name: nfd, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
             
             
+        case .crcBinary:
+            Data().crcBinary.storeAsItem(atPtr: bufferPtr, name: nfd, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
+            
+
         case .array:
             
             guard let elementType = elementType else { buffer.deallocate() ; return nil }
             if elementType == .array {
-                guard let elementValueByteCount = elementValueByteCount, elementValueByteCount >= (minimumItemByteCount + 16) else { buffer.deallocate() ;return nil }
+                guard let elementValueByteCount = elementValueByteCount, elementValueByteCount >= (itemMinimumByteCount + 16) else { buffer.deallocate() ;return nil }
             }
             let arr = BrbonArray(content: [], type: elementType, elementByteCount: elementValueByteCount)
-            arr.storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
+            arr.storeAsItem(atPtr: bufferPtr, name: nfd, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
             
         case .dictionary:
             
-            let dict = BrbonDictionary(content: [:])
-            dict.storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
+            let dict = BrbonDictionary()!
+            dict.storeAsItem(atPtr: bufferPtr, name: nfd, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
             
         case .sequence: break
             
         case .table:
             
             let tb = BrbonTable(columnSpecifications: [])
-            tb.storeAsItem(atPtr: bufferPtr, bufferPtr: bufferPtr, parentPtr: bufferPtr, nameField: nfd, valueByteCount: rootValueByteCount, endianness)
+            tb.storeAsItem(atPtr: bufferPtr, name: nfd, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
         }
         
         self.root = getActivePortal(for: bufferPtr, index: nil, column: nil)
@@ -409,7 +413,7 @@ public final class ItemManager {
 
 extension ItemManager {
     
-    internal var unusedByteCount: Int { return buffer.count - root.itemByteCount }
+    internal var unusedByteCount: Int { return buffer.count - root._itemByteCount }
     
     internal func increaseBufferSize(by bytes: Int) -> Bool {
         

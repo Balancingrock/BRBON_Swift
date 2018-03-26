@@ -19,284 +19,79 @@ public extension Portal {
         get {
             guard isValid else { return fatalOrNull("Portal is no longer valid") }
             guard index >= 0 else { return fatalOrNull("Index (\(index)) is negative") }
-            guard index < countValue else { return fatalOrNull("Index (\(index)) out of high bound (\(countValue))") }
-            if isArray { return _arrayPortalForElement(at: index)
-            } else if isSequence { return _sequencePortalForItem(at: index)
+            if isArray {
+                guard index < _arrayElementCount else { return fatalOrNull("Index (\(index)) out of high bound (\(_arrayElementCount))") }
+                return _arrayPortalForElement(at: index)
+            } else if isSequence {
+                guard index < _sequenceItemCount else { return fatalOrNull("Index (\(index)) out of high bound (\(_sequenceItemCount))") }
+                return _sequencePortalForItem(at: index)
             } else { return fatalOrNull("Integer index subscript not supported on \(itemType)") }
         }
     }
 
     public subscript(index: Int) -> Bool? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return nil }
-            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return nil }
-            if isArray { return _arrayPortalForElement(at: index).bool
-            } else if isSequence { return _sequencePortalForItem(at: index).bool
-            } else { fatalOrNull("Integer index subscript not supported on \(itemType)"); return nil }
-        }
-        set {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
-            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
-            if isArray { _arrayPortalForElement(at: index).bool = newValue }
-            else if isSequence { _ = _sequencePortalForItem(at: index)._sequenceReplaceWith(newValue) }
-            else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
-        }
+        get { return self[index].bool }
+        set { self[index].bool = newValue }
     }
     
     public subscript(index: Int) -> Int8? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return nil }
-            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return nil }
-            if isArray { return _arrayPortalForElement(at: index).int8
-            } else if isSequence { return _sequencePortalForItem(at: index).int8
-            } else { fatalOrNull("Integer index subscript not supported on \(itemType)"); return nil }
-        }
-        set {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
-            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
-            if isArray { _arrayPortalForElement(at: index).int8 = newValue }
-            else if isSequence { _ = _sequencePortalForItem(at: index)._sequenceReplaceWith(newValue) }
-            else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
-        }
+        get { return self[index].int8 }
+        set { self[index].int8 = newValue }
     }
     
     public subscript(index: Int) -> Int16? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return nil }
-            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return nil }
-            if isArray { return _arrayPortalForElement(at: index).int16
-            } else if isSequence { return _sequencePortalForItem(at: index).int16
-            } else { fatalOrNull("Integer index subscript not supported on \(itemType)"); return nil }
-        }
-        set {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
-            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
-            if isArray { _arrayPortalForElement(at: index).int16 = newValue }
-            else if isSequence { _ = _sequencePortalForItem(at: index)._sequenceReplaceWith(newValue) }
-            else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
-        }
+        get { return self[index].int16 }
+        set { self[index].int16 = newValue }
     }
     
     public subscript(index: Int) -> Int32? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return nil }
-            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return nil }
-            if isArray { return _arrayPortalForElement(at: index).int32
-            } else if isSequence { return _sequencePortalForItem(at: index).int32
-            } else { fatalOrNull("Integer index subscript not supported on \(itemType)"); return nil }
-        }
-        set {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
-            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
-            if isArray { _arrayPortalForElement(at: index).int32 = newValue }
-            else if isSequence { _ = _sequencePortalForItem(at: index)._sequenceReplaceWith(newValue) }
-            else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
-        }
+        get { return self[index].int32 }
+        set { self[index].int32 = newValue }
     }
     
     public subscript(index: Int) -> Int64? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return nil }
-            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return nil }
-            if isArray { return _arrayPortalForElement(at: index).int64
-            } else if isSequence { return _sequencePortalForItem(at: index).int64
-            } else { fatalOrNull("Integer index subscript not supported on \(itemType)"); return nil }
-        }
-        set {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
-            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
-            if isArray { _arrayPortalForElement(at: index).int64 = newValue }
-            else if isSequence { _ = _sequencePortalForItem(at: index)._sequenceReplaceWith(newValue) }
-            else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
-        }
+        get { return self[index].int64 }
+        set { self[index].int64 = newValue }
     }
     
     public subscript(index: Int) -> UInt8? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return nil }
-            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return nil }
-            if isArray { return _arrayPortalForElement(at: index).uint8
-            } else if isSequence { return _sequencePortalForItem(at: index).uint8
-            } else { fatalOrNull("Integer index subscript not supported on \(itemType)"); return nil }
-        }
-        set {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
-            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
-            if isArray { _arrayPortalForElement(at: index).uint8 = newValue }
-            else if isSequence { _ = _sequencePortalForItem(at: index)._sequenceReplaceWith(newValue) }
-            else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
-        }
+        get { return self[index].uint8 }
+        set { self[index].uint8 = newValue }
     }
     
     public subscript(index: Int) -> UInt16? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return nil }
-            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return nil }
-            if isArray { return _arrayPortalForElement(at: index).uint16
-            } else if isSequence { return _sequencePortalForItem(at: index).uint16
-            } else { fatalOrNull("Integer index subscript not supported on \(itemType)"); return nil }
-        }
-        set {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
-            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
-            if isArray { _arrayPortalForElement(at: index).uint16 = newValue }
-            else if isSequence { _ = _sequencePortalForItem(at: index)._sequenceReplaceWith(newValue) }
-            else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
-        }
+        get { return self[index].uint16 }
+        set { self[index].uint16 = newValue }
     }
     
     public subscript(index: Int) -> UInt32? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return nil }
-            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return nil }
-            if isArray { return _arrayPortalForElement(at: index).uint32
-            } else if isSequence { return _sequencePortalForItem(at: index).uint32
-            } else { fatalOrNull("Integer index subscript not supported on \(itemType)"); return nil }
-        }
-        set {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
-            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
-            if isArray { _arrayPortalForElement(at: index).uint32 = newValue }
-            else if isSequence { _ = _sequencePortalForItem(at: index)._sequenceReplaceWith(newValue) }
-            else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
-        }
+        get { return self[index].uint32 }
+        set { self[index].uint32 = newValue }
     }
     
     public subscript(index: Int) -> UInt64? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return nil }
-            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return nil }
-            if isArray { return _arrayPortalForElement(at: index).uint64
-            } else if isSequence { return _sequencePortalForItem(at: index).uint64
-            } else { fatalOrNull("Integer index subscript not supported on \(itemType)"); return nil }
-        }
-        set {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
-            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
-            if isArray { _arrayPortalForElement(at: index).uint64 = newValue }
-            else if isSequence { _ = _sequencePortalForItem(at: index)._sequenceReplaceWith(newValue) }
-            else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
-        }
+        get { return self[index].uint64 }
+        set { self[index].uint64 = newValue }
     }
     
     public subscript(index: Int) -> Float32? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return nil }
-            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return nil }
-            if isArray { return _arrayPortalForElement(at: index).float32
-            } else if isSequence { return _sequencePortalForItem(at: index).float32
-            } else { fatalOrNull("Integer index subscript not supported on \(itemType)"); return nil }
-        }
-        set {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
-            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
-            if isArray { _arrayPortalForElement(at: index).float32 = newValue }
-            else if isSequence { _ = _sequencePortalForItem(at: index)._sequenceReplaceWith(newValue) }
-            else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
-        }
+        get { return self[index].float32 }
+        set { self[index].float32 = newValue }
     }
     
     public subscript(index: Int) -> Float64? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return nil }
-            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return nil }
-            if isArray { return _arrayPortalForElement(at: index).float64
-            } else if isSequence { return _sequencePortalForItem(at: index).float64
-            } else { fatalOrNull("Integer index subscript not supported on \(itemType)"); return nil }
-        }
-        set {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
-            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
-            if isArray { _arrayPortalForElement(at: index).float64 = newValue }
-            else if isSequence { _ = _sequencePortalForItem(at: index)._sequenceReplaceWith(newValue) }
-            else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
-        }
+        get { return self[index].float64 }
+        set { self[index].float64 = newValue }
     }
     
     public subscript(index: Int) -> String? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return nil }
-            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return nil }
-            if isArray { return _arrayPortalForElement(at: index).string
-            } else if isSequence { return _sequencePortalForItem(at: index).string
-            } else { fatalOrNull("Integer index subscript not supported on \(itemType)"); return nil }
-        }
-        set {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
-            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
-            if isArray { _arrayPortalForElement(at: index).string = newValue }
-            else if isSequence { _ = _sequencePortalForItem(at: index)._sequenceReplaceWith(newValue) }
-            else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
-        }
+        get { return self[index].string }
+        set { self[index].string = newValue }
     }
     
     public subscript(index: Int) -> Data? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return nil }
-            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return nil }
-            if isArray { return _arrayPortalForElement(at: index).binary
-            } else if isSequence { return _sequencePortalForItem(at: index).binary
-            } else { fatalOrNull("Integer index subscript not supported on \(itemType)"); return nil }
-        }
-        set {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard index >= 0 else { fatalOrNull("Index (\(index)) is negative"); return }
-            guard index < countValue else { fatalOrNull("Index (\(index)) out of high bound (\(countValue))"); return }
-            if isArray { _arrayPortalForElement(at: index).binary = newValue }
-            else if isSequence { _ = _sequencePortalForItem(at: index)._sequenceReplaceWith(newValue) }
-            else { fatalOrNull("Integer index subscript not supported on \(itemType)") }
-        }
-    }
-    
-    
-    /// Returns the type of the element stored in the array this portal refers to.
-    
-    internal var _arrayElementType: ItemType? {
-        get {
-            return ItemType.readValue(atPtr: itemPtr.brbonArrayElementTypePtr)
-        }
-    }
-    
-    
-    /// The byte count of the elements contained in the array this portal refers to.
-    
-    internal var _arrayElementByteCount: Int {
-        get { return Int(UInt32(valuePtr: itemPtr.brbonArrayElementByteCountPtr, endianness)) }
-        set { UInt32(newValue).storeValue(atPtr: itemPtr.brbonArrayElementByteCountPtr, endianness) }
-    }
-
-    
-    /// Returns the element pointer for a given index.
-    
-    internal func _arrayElementPtr(for index: Int) -> UnsafeMutableRawPointer {
-        let elementBasePtr = itemPtr.brbonItemValuePtr.advanced(by: 8)
-        let elementOffset = index * _arrayElementByteCount
-        return elementBasePtr.advanced(by: elementOffset)
+        get { return self[index].binary }
+        set { self[index].binary = newValue }
     }
     
     
@@ -319,10 +114,10 @@ public extension Portal {
     
     internal func _sequencePortalForItem(at index: Int) -> Portal {
         
-        var ptr = itemPtr.brbonItemValuePtr
+        var ptr = itemValueFieldPtr
         var c = 0
         while c < index {
-            let bc = ptr.brbonItemByteCountPtr.assumingMemoryBound(to: UInt32.self).pointee
+            let bc = ptr.advanced(by: itemByteCountOffset).assumingMemoryBound(to: UInt32.self).pointee
             ptr = ptr.advanced(by: Int(bc))
             c += 1
         }
@@ -334,10 +129,10 @@ public extension Portal {
     
     internal func _arrayIncreaseElementByteCount(to newByteCount: Int) {
         
-        let elementBasePtr = itemPtr.brbonArrayElementsBasePtr
+        let elementBasePtr = _arrayElementBasePtr
         let oldByteCount = _arrayElementByteCount
         
-        for index in (0 ..< countValue).reversed() {
+        for index in (0 ..< _arrayElementCount).reversed() {
             let dstPtr = elementBasePtr.advanced(by: index * newByteCount)
             let srcPtr = elementBasePtr.advanced(by: index * oldByteCount)
             manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: oldByteCount, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
@@ -347,9 +142,9 @@ public extension Portal {
     }
 
     
-    /// Replaces the item at self.
+    /// Replaces the referenced item.
     ///
-    /// The item at self is replaced by the new value. The byte count will be preserved as is, or enlarged as necessary. If there is an existing name it will be preserved. If the new value is nil, the item will be converted into a null.
+    /// The item referenced byt his portal is replaced by the new value. The byte count will be preserved as is, or enlarged as necessary. If there is an existing name it will be preserved. If the new value is nil, the item will be converted into a null.
     
     internal func _sequenceReplaceWith(_ value: Coder?) -> Result {
         
@@ -358,9 +153,9 @@ public extension Portal {
             
             // Make sure the item byte count is big enough
             
-            let necessaryItemByteCount = value.itemByteCount(nameFieldDescriptor)
+            let necessaryItemByteCount = value.itemByteCount(nameField)
             
-            if itemByteCount < necessaryItemByteCount {
+            if _itemByteCount < necessaryItemByteCount {
                 let result = increaseItemByteCount(to: necessaryItemByteCount)
                 guard result == .success else { return result }
             }
@@ -368,17 +163,18 @@ public extension Portal {
             
             // Create the new item, but remember the old size as it must be re-used
             
-            let oldByteCount = itemByteCount
+            let oldByteCount = _itemByteCount
             
             
             // Write the new value as an item
             
-            value.storeAsItem(atPtr: itemPtr, bufferPtr: manager.bufferPtr, parentPtr: parentPtr, nameField: nameFieldDescriptor, valueByteCount: nil, endianness)
+            let offset = manager.bufferPtr.distance(to: itemPtr)
+            value.storeAsItem(atPtr: itemPtr, name: nameField, parentOffset: offset, initialValueByteCount: nil, endianness)
             
             
             // Restore the old byte count
             
-            itemByteCount = oldByteCount
+            _itemByteCount = oldByteCount
             
             
             return .success
@@ -402,26 +198,26 @@ public extension Portal {
         
         // Check to see if the element byte count of the array must be increased.
         
-        if value.elementByteCount > _arrayElementByteCount {
+        if value.valueByteCount > _arrayElementByteCount {
             
             
             // The value byte count is bigger than the existing element byte count.
             // Enlarge the item to accomodate extra bytes.
             
             let necessaryElementByteCount: Int
-            if value.brbonType.isContainer {
-                necessaryElementByteCount = value.elementByteCount.roundUpToNearestMultipleOf8()
+            if value.itemType.isContainer {
+                necessaryElementByteCount = value.valueByteCount.roundUpToNearestMultipleOf8()
             } else {
-                necessaryElementByteCount = value.elementByteCount
+                necessaryElementByteCount = value.valueByteCount
             }
             
             
             // This is the byte count that self has to become in order to accomodate the new value
             
-            let necessaryItemByteCount = itemByteCount - valueFieldByteCount + 8 + ((countValue + 1) * necessaryElementByteCount)
+            let necessaryItemByteCount = _itemByteCount - actualValueFieldByteCount + arrayElementBaseOffset + ((_arrayElementCount + 1) * necessaryElementByteCount)
             
             
-            if necessaryItemByteCount > itemByteCount {
+            if necessaryItemByteCount > _itemByteCount {
                 // It is necessary to increase the bytecount for the array item itself
                 let result = increaseItemByteCount(to: necessaryItemByteCount.roundUpToNearestMultipleOf8())
                 guard result == .success else { return result }
@@ -433,20 +229,7 @@ public extension Portal {
             _arrayIncreaseElementByteCount(to: necessaryElementByteCount)
             
             
-        } /*else {
-            
-            
-            // The element byte count of the array is big enough to hold the new value.
-            
-            // Make sure a new value can be added to the array
-            
-            let necessaryItemByteCount = itemByteCount - valueFieldByteCount + 8 + ((countValue + 1) * _arrayElementByteCount)
-            
-            if necessaryItemByteCount > itemByteCount {
-                let result = increaseItemByteCount(to: necessaryItemByteCount.roundUpToNearestMultipleOf8())
-                guard result == .success else { return result }
-            }
-        }*/
+        }
         
         return .success
     }
@@ -470,24 +253,25 @@ public extension Portal {
         
         // Ensure that the new value can be added
         
-        if valueFieldByteCount - usedValueByteCount < value.elementByteCount {
-            let result = increaseItemByteCount(to: itemByteCount + value.elementByteCount)
+        if actualValueFieldByteCount - usedValueFieldByteCount < value.valueByteCount {
+            let result = increaseItemByteCount(to: _itemByteCount + value.valueByteCount)
             guard result == .success else { return result }
         }
         
         
         // The new value can be added
         
-        if value.brbonType.isContainer {
-            value.storeAsItem(atPtr: _arrayElementPtr(for: countValue), bufferPtr: manager.bufferPtr, parentPtr: itemPtr, nameField: nil, valueByteCount: nil, endianness)
+        if value.itemType.isContainer {
+            let pOffset = manager.bufferPtr.distance(to: itemPtr)
+            value.storeAsItem(atPtr: _arrayElementPtr(for: _arrayElementCount), parentOffset: pOffset, endianness)
         } else {
-            value.storeAsElement(atPtr: _arrayElementPtr(for: countValue), endianness)
+            value.storeValue(atPtr: _arrayElementPtr(for: _arrayElementCount), endianness)
         }
         
         
         // Increase child counter
         
-        countValue += 1
+        _arrayElementCount += 1
         
         return .success
     }
@@ -507,9 +291,9 @@ public extension Portal {
         
         // Create the name field descriptor (if used)
         
-        let nfd: NameFieldDescriptor? = {
+        let nfd: NameField? = {
             guard let name = name else { return nil }
-            return NameFieldDescriptor(name)
+            return NameField(name)
         }()
 
         
@@ -517,14 +301,15 @@ public extension Portal {
         
         let newItemByteCount = value.itemByteCount(nfd)
         
-        if valueFieldByteCount - usedValueByteCount < newItemByteCount {
-            let result = increaseItemByteCount(to: minimumItemByteCount + usedValueByteCount + newItemByteCount)
+        if actualValueFieldByteCount - usedValueFieldByteCount < newItemByteCount {
+            let result = increaseItemByteCount(to: itemMinimumByteCount + usedValueFieldByteCount + newItemByteCount)
             guard result == .success else { return result }
         }
         
-        value.storeAsItem(atPtr: _afterLastItemPtr, bufferPtr: manager.bufferPtr, parentPtr: itemPtr, nameField: nfd, valueByteCount: nil, endianness)
+        let pOffset = manager.bufferPtr.distance(to: itemPtr)
+        value.storeAsItem(atPtr: _afterLastItemPtr, name: nfd, parentOffset: pOffset, endianness)
         
-        countValue += 1
+        _arrayElementCount += 1
         
         return .success
     }
@@ -547,7 +332,7 @@ public extension Portal {
         
         
         if isArray {
-            guard _arrayElementType == value.brbonType else { return .typeConflict }
+            guard _arrayElementType == value.itemType else { return .typeConflict }
             return _arrayAppend(value)
         }
         
@@ -583,20 +368,20 @@ public extension Portal {
         
         let srcPtr = _arrayElementPtr(for: index + 1)
         let dstPtr = _arrayElementPtr(for: index)
-        let len = (countValue - 1 - index) * _arrayElementByteCount
+        let len = (_arrayElementCount - 1 - index) * _arrayElementByteCount
         
         manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
         
         
         // The last index portal (if present) must be removed
         
-        let lptr = _arrayElementPtr(for: countValue - 1)
+        let lptr = _arrayElementPtr(for: _arrayElementCount - 1)
         manager.removeActivePortals(atAndAbove: lptr, below: lptr.advanced(by: 1))
         
         
         // Decrease the number of elements
         
-        countValue -= 1
+        _arrayElementCount -= 1
         
         
         return .success
@@ -615,7 +400,7 @@ public extension Portal {
         let itm = _sequencePortalForItem(at: index)
         let aliPtr = _afterLastItemPtr
         
-        let srcPtr = itm.itemPtr.advanced(by: itm.itemByteCount)
+        let srcPtr = itm.itemPtr.advanced(by: itm._itemByteCount)
         let dstPtr = itm.itemPtr
         let len = srcPtr.distance(to: aliPtr)
         
@@ -625,7 +410,7 @@ public extension Portal {
             manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
         }
         
-        countValue -= 1
+        _sequenceItemCount -= 1
         
         return .success
     }
@@ -645,11 +430,16 @@ public extension Portal {
         guard isValid else { fatalOrNull("Portal is invalid"); return .portalInvalid }
         
         guard index >= 0 else { fatalOrNull("Index (\(index)) below zero"); return .indexBelowLowerBound }
-        guard index < countValue else { fatalOrNull("Index (\(index)) above high bound (\(countValue))"); return .indexAboveHigherBound }
 
-        if isArray { return _arrayRemove(at: index) }
+        if isArray {
+            guard index < _arrayElementCount else { fatalOrNull("Index (\(index)) above high bound (\(_arrayElementCount))"); return .indexAboveHigherBound }
+            return _arrayRemove(at: index)
+        }
         
-        if isSequence { return _sequenceRemove(at: index) }
+        if isSequence {
+            guard index < _sequenceItemCount else { fatalOrNull("Index (\(index)) above high bound (\(_sequenceItemCount))"); return .indexAboveHigherBound }
+            return _sequenceRemove(at: index)
+        }
         
         fatalOrNull("remove(int) not supported on \(itemPtr)")
         return .operationNotSupported
@@ -670,13 +460,13 @@ public extension Portal {
     public func createNewElements(_ value: IsBrbon, amount: Int = 1) -> Result {
         
         guard isValid else { fatalOrNull("Portal is invalid"); return .portalInvalid }
-        guard amount > 0 else { fatalOrNull("createNewElements must have amount > 0, found \(amount)"); return .illegalAmount }
-        guard let value = value as? Coder else { return .missingCoder }
-
         guard isArray else {
             fatalOrNull("_createNewElements not supported for \(itemType)")
             return .operationNotSupported
         }
+        guard amount > 0 else { fatalOrNull("createNewElements must have amount > 0, found \(amount)"); return .illegalAmount }
+        guard let value = value as? Coder else { return .missingCoder }
+
         
         // Ensure that the element byte count is sufficient
         
@@ -686,7 +476,7 @@ public extension Portal {
         
         // Ensure that the item storage capacity is sufficient
         
-        let newCount = countValue + amount
+        let newCount = _arrayElementCount + amount
         let neccesaryValueByteCount = 8 + _arrayElementByteCount * newCount
         result = ensureValueFieldByteCount(of: neccesaryValueByteCount)
         guard result == .success else { return result }
@@ -696,14 +486,14 @@ public extension Portal {
         
         var loopCount = amount
         repeat {
-            value.storeValue(atPtr: _arrayElementPtr(for: countValue + loopCount - 1), endianness)
+            value.storeValue(atPtr: _arrayElementPtr(for: _arrayElementCount + loopCount - 1), endianness)
             loopCount -= 1
         } while loopCount > 0
         
         
         // Increment the number of elements
         
-        countValue += amount
+        _arrayElementCount += amount
         
         
         return .success
@@ -730,7 +520,7 @@ public extension Portal {
         
         // Ensure that the item storage capacity is sufficient
         
-        let newCount = countValue + 1
+        let newCount = _arrayElementCount + 1
         let neccesaryValueByteCount = 8 + _arrayElementByteCount * newCount
         result = ensureValueFieldByteCount(of: neccesaryValueByteCount)
         guard result == .success else { return result }
@@ -740,7 +530,7 @@ public extension Portal {
         
         let dstPtr = _arrayElementPtr(for: index + 1)
         let srcPtr = _arrayElementPtr(for: index)
-        let length = (countValue - index) * _arrayElementByteCount
+        let length = (_arrayElementCount - index) * _arrayElementByteCount
         manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: length, removeCount: 0, updateMovedPortals: false, updateRemovedPortals: false)
         
         
@@ -751,7 +541,7 @@ public extension Portal {
         
         // Increase the number of elements
         
-        countValue += 1
+        _arrayElementCount += 1
         
         
         return .success
@@ -773,15 +563,15 @@ public extension Portal {
         
         // Ensure that there is enough space available
         
-        let nfd: NameFieldDescriptor? = {
+        let nfd: NameField? = {
             guard let name = name else { return nil }
-            return NameFieldDescriptor(name)
+            return NameField(name)
         }()
         
         let newItemByteCount = value.itemByteCount(nfd)
         
-        if valueFieldByteCount - usedValueByteCount < newItemByteCount {
-            let result = increaseItemByteCount(to: minimumItemByteCount + usedValueByteCount + newItemByteCount)
+        if actualValueFieldByteCount - usedValueFieldByteCount < newItemByteCount {
+            let result = increaseItemByteCount(to: itemMinimumByteCount + usedValueFieldByteCount + newItemByteCount)
             guard result == .success else { return result }
         }
         
@@ -799,10 +589,11 @@ public extension Portal {
         
         // Insert the new element
         
-        value.storeAsItem(atPtr: srcPtr, bufferPtr: manager.bufferPtr, parentPtr: itemPtr, nameField: nfd, valueByteCount: nil, endianness)
+        let pOffset = manager.bufferPtr.distance(to: itemPtr)
+        value.storeAsItem(atPtr: srcPtr, name: nfd, parentOffset: pOffset, endianness)
         
         
-        countValue += 1
+        _sequenceItemCount += 1
         
         return .success
     }
@@ -823,16 +614,17 @@ public extension Portal {
         guard isValid else { fatalOrNull("Portal is invalid"); return .portalInvalid }
         
         guard index >= 0 else { fatalOrNull("Index (\(index)) below zero"); return .indexBelowLowerBound }
-        guard index < countValue else { fatalOrNull("Index (\(index)) above high bound (\(countValue))"); return .indexAboveHigherBound }
 
         guard let value = value as? Coder else { return .missingCoder }
 
         if isArray {
-            guard value.brbonType == _arrayElementType else { return .typeConflict }
+            guard index < _arrayElementCount else { fatalOrNull("Index (\(index)) above high bound (\(_arrayElementCount))"); return .indexAboveHigherBound }
+            guard value.itemType == _arrayElementType else { return .typeConflict }
             return _arrayInsert(value, atIndex: index)
         }
         
         if isSequence {
+            guard index < _sequenceItemCount else { fatalOrNull("Index (\(index)) above high bound (\(_sequenceItemCount))"); return .indexAboveHigherBound }
             return _sequenceInsert(value, atIndex: index, withName: name)
         }
         

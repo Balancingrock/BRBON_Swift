@@ -28,15 +28,13 @@ class Sequence_Coder_Tests: XCTestCase {
         
         // Instance
         
-        let b = BrbonSequence()
+        let b = BrbonSequence()!
         
         
         // Properties
         
-        XCTAssertEqual(b.brbonType, ItemType.sequence)
+        XCTAssertEqual(b.itemType, ItemType.sequence)
         XCTAssertEqual(b.valueByteCount, 0)
-        XCTAssertEqual(b.itemByteCount(), 16)
-        XCTAssertEqual(b.elementByteCount, 16)
         
         
         // Create a buffer for storage tests
@@ -44,7 +42,7 @@ class Sequence_Coder_Tests: XCTestCase {
         var buffer = UnsafeMutableRawBufferPointer.allocate(count: 1024)
         defer { buffer.deallocate() }
         
-        b.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!, machineEndianness)
+        b.storeAsItem(atPtr: buffer.baseAddress!, parentOffset: 0, machineEndianness)
         
         let exp = Data(bytes: [
             0x43, 0x00, 0x00, 0x00,
@@ -64,15 +62,13 @@ class Sequence_Coder_Tests: XCTestCase {
         // Instance
         
         let dict: Dictionary<String, IsBrbon> = ["one":UInt8(1), "two":UInt32(2), "three":true]
-        let b = BrbonSequence(dict: dict)
+        let b = BrbonSequence(dict: dict)!
         
         
         // Properties
         
-        XCTAssertEqual(b.brbonType, ItemType.sequence)
+        XCTAssertEqual(b.itemType, ItemType.sequence)
         XCTAssertEqual(b.valueByteCount, 72)
-        XCTAssertEqual(b.itemByteCount(), 88)
-        XCTAssertEqual(b.elementByteCount, 88)
         
         
         // Create a buffer for storage tests
@@ -80,7 +76,7 @@ class Sequence_Coder_Tests: XCTestCase {
         var buffer = UnsafeMutableRawBufferPointer.allocate(count: 1024)
         defer { buffer.deallocate() }
         
-        b.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!, machineEndianness)
+        b.storeAsItem(atPtr: buffer.baseAddress!, options: ItemOptions.none, flags: ItemFlags.none, nameField: nil, parentOffset: 0, initialValueByteCount: nil, machineEndianness)
         
         let exp = Data(bytes: [
             0x43, 0x00, 0x00, 0x00,
@@ -122,7 +118,7 @@ class Sequence_Coder_Tests: XCTestCase {
         // Instance
         
         let ia: Array<Int8> = [1, 2]
-        let a = BrbonSequence(array: ia)
+        let a = BrbonSequence(array: ia)!
         
         
         // The name field to be used
@@ -132,10 +128,8 @@ class Sequence_Coder_Tests: XCTestCase {
         
         // Properties
         
-        XCTAssertEqual(a.brbonType, ItemType.sequence)
+        XCTAssertEqual(a.itemType, ItemType.sequence)
         XCTAssertEqual(a.valueByteCount, 32)
-        XCTAssertEqual(a.itemByteCount(nfd), 56)
-        XCTAssertEqual(a.elementByteCount, 48)
         
         
         // Storing
@@ -143,7 +137,7 @@ class Sequence_Coder_Tests: XCTestCase {
         let buffer = UnsafeMutableRawBufferPointer.allocate(count: 100)
         defer { buffer.deallocate() }
         
-        a.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!.advanced(by: 0x12345678), nameField: nfd, machineEndianness)
+        a.storeAsItem(atPtr: buffer.baseAddress!, options: ItemOptions.none, flags: ItemFlags.none, nameField: nfd, parentOffset: 0x12345678, initialValueByteCount: nil, machineEndianness)
         
         let data = Data(bytesNoCopy: buffer.baseAddress!, count: 56, deallocator: Data.Deallocator.none)
         

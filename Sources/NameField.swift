@@ -1,5 +1,5 @@
 //
-//  NameFieldDescriptor.swift
+//  NameField.swift
 //  BRBON
 //
 //  Created by Marinus van der Lugt on 26/01/18.
@@ -10,7 +10,7 @@ import Foundation
 import BRUtils
 
 
-public struct NameFieldDescriptor: Equatable, Hashable {
+public struct NameField: Equatable, Hashable {
     
     internal let data: Data
     internal let crc: UInt16
@@ -67,7 +67,7 @@ public struct NameFieldDescriptor: Equatable, Hashable {
         self.hashValue = data.hashValue
     }
     
-    public static func ==(lhs: NameFieldDescriptor, rhs: NameFieldDescriptor) -> Bool {
+    public static func ==(lhs: NameField, rhs: NameField) -> Bool {
         guard lhs.crc == rhs.crc else { return false }
         guard lhs.byteCount == rhs.byteCount else { return false }
         guard lhs.data == rhs.data else { return false }
@@ -86,11 +86,11 @@ public struct NameFieldDescriptor: Equatable, Hashable {
         }
     }
 
-    internal static func readValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) -> NameFieldDescriptor {
-        let crc = UInt16(valuePtr: atPtr, endianness)
-        let count = Int(UInt8(valuePtr: atPtr.advanced(by: 2), endianness))
+    internal static func readValue(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) -> NameField {
+        let crc = UInt16(fromPtr: fromPtr, endianness)
+        let count = Int(UInt8(fromPtr: fromPtr.advanced(by: 2), endianness))
         let byteCount = 3 + count
-        let data = Data(valuePtr: atPtr.advanced(by: 3), count: count, endianness)
-        return NameFieldDescriptor(data: data, crc: crc, byteCount: byteCount)
+        let data = Data(bytes: fromPtr.advanced(by: 3), count: count)
+        return NameField(data: data, crc: crc, byteCount: byteCount)
     }
 }

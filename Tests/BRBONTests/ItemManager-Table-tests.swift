@@ -43,7 +43,7 @@ class ItemManager_Table_tests: XCTestCase {
         
         // Add a column
         
-        XCTAssertEqual(tm.root.addColumn(withName: "aa", valueType: .bool), .success)
+        XCTAssertEqual(tm.root.addColumn(fieldType: .bool, nameField: NameField("aa")!, fieldByteCount: 1), .success)
         
         exp = Data(bytes: [
             0x46, 0x00, 0x00, 0x00,  0x38, 0x00, 0x00, 0x00,
@@ -72,7 +72,7 @@ class ItemManager_Table_tests: XCTestCase {
         
         // Add a second column
         
-        XCTAssertEqual(tm.root.addColumn(withName: "bb", valueType: .int64), .success)
+        XCTAssertEqual(tm.root.addColumn(fieldType: .int64, nameField: NameField("bb")!, fieldByteCount: 8), .success)
 
         exp = Data(bytes: [
             0x46, 0x00, 0x00, 0x00,  0x50, 0x00, 0x00, 0x00,
@@ -109,7 +109,7 @@ class ItemManager_Table_tests: XCTestCase {
         
         // Add a third column
         
-        XCTAssertEqual(tm.root.addColumn(withName: "cc", valueType: .uint16), .success)
+        XCTAssertEqual(tm.root.addColumn(fieldType: .uint16, nameField: NameFieldDescriptor("cc")!, fieldByteCount: 8), .success)
         
         exp = Data(bytes: [
             0x46, 0x00, 0x00, 0x00,  0x68, 0x00, 0x00, 0x00,

@@ -22,155 +22,79 @@ class String_Coder_Tests: XCTestCase {
         super.tearDown()
     }
 
-    func test_NoNameField() {
+    func test() {
         
         
         // Instance
         
-        let s = "test" // 0x74 0x65 0x73 0x74
+        var s = "test" // 0x74 0x65 0x73 0x74
         
         
         // Properties
         
-        XCTAssertEqual(s.brbonType, ItemType.string)
-        XCTAssertEqual(s.valueByteCount, 4)
-        XCTAssertEqual(s.itemByteCount(), 24)
-        XCTAssertEqual(s.elementByteCount, 8)
+        XCTAssertEqual(s.itemType, ItemType.string)
+        XCTAssertEqual(s.valueByteCount, 8)
         
         
-        // Storing
+        // Buffer
         
         let buffer = UnsafeMutableRawBufferPointer.allocate(count: 100)
+        _ = Darwin.memset(buffer.baseAddress, 0, 100)
         defer { buffer.deallocate() }
+        
+        
+        // Store value
         
         s.storeValue(atPtr: buffer.baseAddress!, machineEndianness)
         
-        XCTAssertEqual(buffer.baseAddress!.assumingMemoryBound(to: UInt8.self).pointee, 0x74)
-        XCTAssertEqual(buffer.baseAddress!.advanced(by: 1).assumingMemoryBound(to: UInt8.self).pointee, 0x65)
-        XCTAssertEqual(buffer.baseAddress!.advanced(by: 2).assumingMemoryBound(to: UInt8.self).pointee, 0x73)
-        XCTAssertEqual(buffer.baseAddress!.advanced(by: 3).assumingMemoryBound(to: UInt8.self).pointee, 0x74)
+        var data = Data(bytesNoCopy: buffer.baseAddress!, count: 8, deallocator: Data.Deallocator.none)
         
-        s.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!.advanced(by: 0x12345678), machineEndianness)
-        
-        var data = Data(bytesNoCopy: buffer.baseAddress!, count: 24, deallocator: Data.Deallocator.none)
+        var exp = Data(bytes: [
+            0x04, 0x00, 0x00, 0x00,
+            0x74, 0x65, 0x73, 0x74,
+            ])
 
-        let exp = Data(bytes: [
-            0x40, 0x00, 0x00, 0x00,
+        XCTAssertEqual(data, exp)
+
+        
+        // Read value
+        
+        buffer.copyBytes(from: [0x04, 0x00, 0x00, 0x00, 0x74, 0x65, 0x73, 0x74])
+        
+        let str = String(fromPtr: buffer.baseAddress!, machineEndianness)
+        XCTAssertEqual(str, "test")
+
+        
+        // Store as item, no name, no initialValueByteCount
+
+        s.storeAsItem(atPtr: buffer.baseAddress!, parentOffset: 0x12345678, machineEndianness)
+        
+        data = Data(bytesNoCopy: buffer.baseAddress!, count: 24, deallocator: Data.Deallocator.none)
+
+        exp = Data(bytes: [
+            0x0D, 0x00, 0x00, 0x00,
             0x18, 0x00, 0x00, 0x00,
             0x78, 0x56, 0x34, 0x12,
-            0x04, 0x00, 0x00, 0x00,
-            0x74, 0x65, 0x73, 0x74,
-            0x00, 0x00, 0x00, 0x00
-            ])
-        
-        XCTAssertEqual(data, exp)
-        
-        s.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!.advanced(by: 0x12345678), valueByteCount: 10, machineEndianness)
-        
-        data = Data(bytesNoCopy: buffer.baseAddress!, count: 32, deallocator: Data.Deallocator.none)
-        
-        let exp2 = Data(bytes: [
-            0x40, 0x00, 0x00, 0x00,
-            0x20, 0x00, 0x00, 0x00,
-            0x78, 0x56, 0x34, 0x12,
-            0x04, 0x00, 0x00, 0x00,
-            0x74, 0x65, 0x73, 0x74,
             0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00
-            ])
-        
-        XCTAssertEqual(data, exp2)
-        
-        s.storeAsElement(atPtr: buffer.baseAddress!, machineEndianness)
-        
-        XCTAssertEqual(buffer.baseAddress!.assumingMemoryBound(to: UInt32.self).pointee, 4)
-        XCTAssertEqual(buffer.baseAddress!.advanced(by: 4).assumingMemoryBound(to: UInt8.self).pointee, 0x74)
-        XCTAssertEqual(buffer.baseAddress!.advanced(by: 5).assumingMemoryBound(to: UInt8.self).pointee, 0x65)
-        XCTAssertEqual(buffer.baseAddress!.advanced(by: 6).assumingMemoryBound(to: UInt8.self).pointee, 0x73)
-        XCTAssertEqual(buffer.baseAddress!.advanced(by: 7).assumingMemoryBound(to: UInt8.self).pointee, 0x74)
-        
-        
-        // Reading
-        
-        buffer.copyBytes(from: [0x74, 0x65, 0x73, 0x74])
-        
-        var str = String(valuePtr: buffer.baseAddress!, count: 4, machineEndianness)
-        XCTAssertEqual(str, "test")
-        
-        buffer.copyBytes(from: exp)
-        
-        str = String(itemPtr: buffer.baseAddress!, machineEndianness)
-        XCTAssertEqual(str, "test")
-        
-        buffer.copyBytes(from: [0x04, 0, 0, 0, 0x74, 0x65, 0x73, 0x74])
-        
-        str = String(elementPtr: buffer.baseAddress!, machineEndianness)
-        XCTAssertEqual(str, "test")
-    }
-    
-    func test_WithNameField() {
-        
-        
-        // Instance
-        
-        let s = "testtest" // 0x74 0x65 0x73 0x74 0x74 0x65 0x73 0x74
-        
-        
-        // The name field to be used
-        
-        let nfd = NameFieldDescriptor("one")
-        
-        
-        // Properties
-        
-        XCTAssertEqual(s.brbonType, ItemType.string)
-        XCTAssertEqual(s.valueByteCount, 8)
-        XCTAssertEqual(s.itemByteCount(), 24)
-        XCTAssertEqual(s.elementByteCount, 16)
-        
-        
-        // Storing
-        
-        let buffer = UnsafeMutableRawBufferPointer.allocate(count: 100)
-        defer { buffer.deallocate() }
-        
-        s.storeValue(atPtr: buffer.baseAddress!, machineEndianness)
-        
-        XCTAssertEqual(buffer.baseAddress!.assumingMemoryBound(to: UInt8.self).pointee, 0x74)
-        XCTAssertEqual(buffer.baseAddress!.advanced(by: 1).assumingMemoryBound(to: UInt8.self).pointee, 0x65)
-        XCTAssertEqual(buffer.baseAddress!.advanced(by: 2).assumingMemoryBound(to: UInt8.self).pointee, 0x73)
-        XCTAssertEqual(buffer.baseAddress!.advanced(by: 3).assumingMemoryBound(to: UInt8.self).pointee, 0x74)
-        
-        s.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!.advanced(by: 0x12345678), nameField: nfd, machineEndianness)
-        
-        var data = Data(bytesNoCopy: buffer.baseAddress!, count: 32, deallocator: Data.Deallocator.none)
-        
-        let exp = Data(bytes: [
-            0x40, 0x00, 0x00, 0x08,
-            0x20, 0x00, 0x00, 0x00,
-            0x78, 0x56, 0x34, 0x12,
-            0x08, 0x00, 0x00, 0x00,
-            0xdc, 0x56, 0x03, 0x6F,
-            0x6E, 0x65, 0x00, 0x00,
-            0x74, 0x65, 0x73, 0x74,
+            0x04, 0x00, 0x00, 0x00,
             0x74, 0x65, 0x73, 0x74
             ])
         
         XCTAssertEqual(data, exp)
         
-        s.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!.advanced(by: 0x12345678), nameField: nfd, valueByteCount: 10, machineEndianness)
         
-        data = Data(bytesNoCopy: buffer.baseAddress!, count: 40, deallocator: Data.Deallocator.none)
+        // Store as item, no name, initialValueByteCount = 10
+
+        s.storeAsItem(atPtr: buffer.baseAddress!, parentOffset: 0x12345678, initialValueByteCount: 10, machineEndianness)
+        
+        data = Data(bytesNoCopy: buffer.baseAddress!, count: 32, deallocator: Data.Deallocator.none)
         
         let exp2 = Data(bytes: [
-            0x40, 0x00, 0x00, 0x08,
-            0x28, 0x00, 0x00, 0x00,
+            0x0D, 0x00, 0x00, 0x00,
+            0x20, 0x00, 0x00, 0x00,
             0x78, 0x56, 0x34, 0x12,
-            0x08, 0x00, 0x00, 0x00,
-            0xdc, 0x56, 0x03, 0x6F,
-            0x6E, 0x65, 0x00, 0x00,
-            0x74, 0x65, 0x73, 0x74,
+            0x00, 0x00, 0x00, 0x00,
+            0x04, 0x00, 0x00, 0x00,
             0x74, 0x65, 0x73, 0x74,
             0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00
@@ -178,30 +102,53 @@ class String_Coder_Tests: XCTestCase {
         
         XCTAssertEqual(data, exp2)
         
-        s.storeAsElement(atPtr: buffer.baseAddress!, machineEndianness)
         
-        XCTAssertEqual(buffer.baseAddress!.assumingMemoryBound(to: UInt32.self).pointee, 8)
-        XCTAssertEqual(buffer.baseAddress!.advanced(by: 4).assumingMemoryBound(to: UInt8.self).pointee, 0x74)
-        XCTAssertEqual(buffer.baseAddress!.advanced(by: 5).assumingMemoryBound(to: UInt8.self).pointee, 0x65)
-        XCTAssertEqual(buffer.baseAddress!.advanced(by: 6).assumingMemoryBound(to: UInt8.self).pointee, 0x73)
-        XCTAssertEqual(buffer.baseAddress!.advanced(by: 7).assumingMemoryBound(to: UInt8.self).pointee, 0x74)
+        // Instance
+        
+        s = "testtest" // 0x74 0x65 0x73 0x74 0x74 0x65 0x73 0x74
         
         
-        // Reading
+        // The name field to be used
         
-        buffer.copyBytes(from: [0x74, 0x65, 0x73, 0x74, 0x74, 0x65, 0x73, 0x74])
+        let name = NameField("one")
         
-        var str = String(valuePtr: buffer.baseAddress!, count: 8, machineEndianness)
-        XCTAssertEqual(str, "testtest")
+
+        // Store as item, name = "one", no initialValueByteCount
+
+        s.storeAsItem(atPtr: buffer.baseAddress!, name: name, parentOffset: 0x12345678, machineEndianness)
         
-        buffer.copyBytes(from: exp)
+        data = Data(bytesNoCopy: buffer.baseAddress!, count: 40, deallocator: Data.Deallocator.none)
         
-        str = String(itemPtr: buffer.baseAddress!, machineEndianness)
-        XCTAssertEqual(str, "testtest")
+        exp = Data(bytes: [
+            0x0D, 0x00, 0x00, 0x08,  0x28, 0x00, 0x00, 0x00,
+            0x78, 0x56, 0x34, 0x12,  0x00, 0x00, 0x00, 0x00,
+            
+            0xdc, 0x56, 0x03, 0x6F,  0x6E, 0x65, 0x00, 0x00,
+            
+            0x08, 0x00, 0x00, 0x00,  0x74, 0x65, 0x73, 0x74,
+            0x74, 0x65, 0x73, 0x74,  0x00, 0x00, 0x00, 0x00
+            ])
+
+        XCTAssertEqual(data, exp)
         
-        buffer.copyBytes(from: [0x08, 0, 0, 0, 0x74, 0x65, 0x73, 0x74, 0x74, 0x65, 0x73, 0x74])
         
-        str = String(elementPtr: buffer.baseAddress!, machineEndianness)
-        XCTAssertEqual(str, "testtest")
+        // Store as item, name = "one", initialValueByteCount = 17
+
+        s.storeAsItem(atPtr: buffer.baseAddress!, name: name, parentOffset: 0x12345678, initialValueByteCount: 17, machineEndianness)
+        
+        data = Data(bytesNoCopy: buffer.baseAddress!, count: 48, deallocator: Data.Deallocator.none)
+        
+        exp = Data(bytes: [
+            0x0D, 0x00, 0x00, 0x08,  0x30, 0x00, 0x00, 0x00,
+            0x78, 0x56, 0x34, 0x12,  0x00, 0x00, 0x00, 0x00,
+            
+            0xdc, 0x56, 0x03, 0x6F,  0x6E, 0x65, 0x00, 0x00,
+            
+            0x08, 0x00, 0x00, 0x00,  0x74, 0x65, 0x73, 0x74,
+            0x74, 0x65, 0x73, 0x74,  0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00
+            ])
+        
+        XCTAssertEqual(data, exp)
     }
 }

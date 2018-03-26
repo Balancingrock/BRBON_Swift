@@ -86,11 +86,6 @@ public extension String {
         
         return (utf8Code, charactersWereRemoved)
     }
-    
-    
-    public var nameFieldDescriptor: NameFieldDescriptor? {
-        return NameFieldDescriptor(self)
-    }
 }
 
 public extension Data {

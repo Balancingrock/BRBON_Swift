@@ -28,10 +28,8 @@ class Table_Coder_Tests: XCTestCase {
         
         // Properties
         
-        XCTAssertEqual(t.brbonType, ItemType.table)
+        XCTAssertEqual(t.itemType, ItemType.table)
         XCTAssertEqual(t.valueByteCount, 16)
-        XCTAssertEqual(t.itemByteCount(), 32)
-        XCTAssertEqual(t.elementByteCount, 32)
         
         
         // Storing
@@ -42,7 +40,7 @@ class Table_Coder_Tests: XCTestCase {
         
         // Store as item
         
-        XCTAssertEqual(t.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!, nameField: nil, valueByteCount: nil, machineEndianness), .success)
+        XCTAssertEqual(t.storeAsItem(atPtr: buffer.baseAddress!, options: ItemOptions.none, flags: ItemFlags.none, nameField: nil, parentOffset: 0, initialValueByteCount: nil, machineEndianness), Result.success)
         
         let exp = Data(bytes: [
             0x46, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
@@ -59,14 +57,13 @@ class Table_Coder_Tests: XCTestCase {
     
     func test_2() {
         
-        let t = BrbonTable(columnSpecifications: [ColumnSpecification.init(name: "aaa", valueType: ItemType.bool)!])
+        let col = ColumnSpecification(fieldType: .bool, nameFieldDescriptor: NameFieldDescriptor("aaa")!, initialValueByteCount: 8)
+        let t = BrbonTable(columnSpecifications: [col])
         
         // Properties
         
-        XCTAssertEqual(t.brbonType, ItemType.table)
+        XCTAssertEqual(t.itemType, ItemType.table)
         XCTAssertEqual(t.valueByteCount, 16 + 16 + 8)
-        XCTAssertEqual(t.itemByteCount(), 56)
-        XCTAssertEqual(t.elementByteCount, 56)
         
         
         // Storing
@@ -77,7 +74,7 @@ class Table_Coder_Tests: XCTestCase {
         
         // Store as item
         
-        XCTAssertEqual(t.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!, nameField: nil, valueByteCount: nil, machineEndianness), .success)
+        XCTAssertEqual(t.storeAsItem(atPtr: buffer.baseAddress!, options: ItemOptions.none, flags: ItemFlags.none, nameField: nil, parentOffset: 0, initialValueByteCount: nil, machineEndianness), Result.success)
         
         let exp = Data(bytes: [
             0x46, 0x00, 0x00, 0x00,  0x38, 0x00, 0x00, 0x00,

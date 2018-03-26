@@ -20,7 +20,7 @@ public enum ItemFlags: UInt8 {
     }
     
     internal static func readValue(atPtr: UnsafeMutableRawPointer) -> ItemFlags? {
-        let v = UInt8(valuePtr: atPtr, machineEndianness)
+        let v = UInt8(fromPtr: atPtr, machineEndianness)
         return self.init(rawValue: v)
     }
 }

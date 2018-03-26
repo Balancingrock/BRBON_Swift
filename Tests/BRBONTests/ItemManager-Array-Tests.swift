@@ -331,7 +331,7 @@ class ItemManager_Array_Tests: XCTestCase {
         XCTAssertEqual(portal1.int64, 0x5555555555555555)
         XCTAssertEqual(portal2.int64, 0x5555555555555555)
         
-        XCTAssertEqual(am.root.countValue, 2)
+        XCTAssertEqual(am.root.count, 2)
     }
     
     func testArray_String() {

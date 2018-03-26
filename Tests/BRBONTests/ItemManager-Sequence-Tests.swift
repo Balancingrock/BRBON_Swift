@@ -24,7 +24,7 @@ class ItemManager_Sequence_Tests: XCTestCase {
 
     func test_1() {
 
-        let bs = BrbonSequence()
+        let bs = BrbonSequence()!
         
         guard let sm = ItemManager(value: bs) else { XCTFail() ; return }
         

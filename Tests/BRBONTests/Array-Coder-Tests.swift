@@ -33,10 +33,8 @@ class Array_Coder_Tests: XCTestCase {
         
         // Properties
         
-        XCTAssertEqual(a.brbonType, ItemType.array)
+        XCTAssertEqual(a.itemType, ItemType.array)
         XCTAssertEqual(a.valueByteCount, 13)
-        XCTAssertEqual(a.itemByteCount(), 32)
-        XCTAssertEqual(a.elementByteCount, 32)
         
         
         // Storing
@@ -44,7 +42,7 @@ class Array_Coder_Tests: XCTestCase {
         let buffer = UnsafeMutableRawBufferPointer.allocate(count: 100)
         defer { buffer.deallocate() }
         
-        var success = a.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!.advanced(by: 0x12345678), machineEndianness)
+        var success = a.storeAsItem(atPtr: buffer.baseAddress!, options: ItemOptions.none, flags: ItemFlags.none, nameField: nil, parentOffset: 0x12345678, initialValueByteCount: nil, machineEndianness)
         
         XCTAssertEqual(success, .success)
         
@@ -63,9 +61,9 @@ class Array_Coder_Tests: XCTestCase {
         
         XCTAssertEqual(data, exp)
         
-        success = a.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!.advanced(by: 0x12345678), valueByteCount: 10, machineEndianness)
+        success = a.storeAsItem(atPtr: buffer.baseAddress!, options: ItemOptions.none, flags: ItemFlags.none, nameField: nil, parentOffset: 0x12345678, initialValueByteCount: 10, machineEndianness)
         
-        XCTAssertEqual(success, .success)
+        XCTAssertEqual(success, Result.success)
 
         data = Data(bytesNoCopy: buffer.baseAddress!, count: 40, deallocator: Data.Deallocator.none)
 
@@ -101,10 +99,8 @@ class Array_Coder_Tests: XCTestCase {
         
         // Properties
         
-        XCTAssertEqual(a.brbonType, ItemType.array)
+        XCTAssertEqual(a.itemType, ItemType.array)
         XCTAssertEqual(a.valueByteCount, 13)
-        XCTAssertEqual(a.itemByteCount(nfd), 40)
-        XCTAssertEqual(a.elementByteCount, 32)
         
         
         // Storing

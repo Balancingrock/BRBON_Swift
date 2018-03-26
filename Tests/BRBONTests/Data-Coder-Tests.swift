@@ -32,10 +32,8 @@ class Data_BrbonCoder_Tests: XCTestCase {
         
         // Properties
         
-        XCTAssertEqual(d.brbonType, ItemType.binary)
+        XCTAssertEqual(d.itemType, ItemType.binary)
         XCTAssertEqual(d.valueByteCount, 3)
-        XCTAssertEqual(d.itemByteCount(), 24)
-        XCTAssertEqual(d.elementByteCount, 8)
         
         
         // Storing
@@ -49,7 +47,7 @@ class Data_BrbonCoder_Tests: XCTestCase {
         XCTAssertEqual(buffer.baseAddress!.advanced(by: 1).assumingMemoryBound(to: UInt8.self).pointee, 0x22)
         XCTAssertEqual(buffer.baseAddress!.advanced(by: 2).assumingMemoryBound(to: UInt8.self).pointee, 0x03)
         
-        d.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!.advanced(by: 0x12345678), machineEndianness)
+        d.storeAsItem(atPtr: buffer.baseAddress!, options: ItemOptions.none, flags: ItemFlags.none, nameField: nil, parentOffset: 0x12345678, initialValueByteCount: nil, machineEndianness)
         
         var data = Data(bytesNoCopy: buffer.baseAddress!, count: 24, deallocator: Data.Deallocator.none)
         
@@ -64,7 +62,7 @@ class Data_BrbonCoder_Tests: XCTestCase {
         
         XCTAssertEqual(data, exp)
         
-        d.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!.advanced(by: 0x12345678), valueByteCount: 10, machineEndianness)
+        d.storeAsItem(atPtr: buffer.baseAddress!, options: ItemOptions.none, flags: ItemFlags.none, nameField: nil, parentOffset: 0x12345678, initialValueByteCount: 10, machineEndianness)
         
         data = Data(bytesNoCopy: buffer.baseAddress!, count: 32, deallocator: Data.Deallocator.none)
         
@@ -81,29 +79,12 @@ class Data_BrbonCoder_Tests: XCTestCase {
         
         XCTAssertEqual(data, exp2)
         
-        d.storeAsElement(atPtr: buffer.baseAddress!, machineEndianness)
-        
-        XCTAssertEqual(buffer.baseAddress!.assumingMemoryBound(to: UInt32.self).pointee, 3)
-        XCTAssertEqual(buffer.baseAddress!.advanced(by: 4).assumingMemoryBound(to: UInt8.self).pointee, 0x10)
-        XCTAssertEqual(buffer.baseAddress!.advanced(by: 5).assumingMemoryBound(to: UInt8.self).pointee, 0x22)
-        XCTAssertEqual(buffer.baseAddress!.advanced(by: 6).assumingMemoryBound(to: UInt8.self).pointee, 0x03)
-        
         
         // Reading
         
-        buffer.copyBytes(from: [0x07, 0x80])
+        buffer.copyBytes(from: [0x02, 0x00, 0x00, 0x00, 0x07, 0x80])
         
-        data = Data(valuePtr: buffer.baseAddress!, count: 2, machineEndianness)
-        XCTAssertEqual(data, Data(bytes: [0x07, 0x80]))
-        
-        buffer.copyBytes(from: exp)
-        
-        data = Data(itemPtr: buffer.baseAddress!, machineEndianness)
-        XCTAssertEqual(data, Data(bytes: [0x10, 0x22, 0x03]))
-        
-        buffer.copyBytes(from: [0x02, 0, 0, 0, 0x07, 0x80])
-        
-        data = Data(elementPtr: buffer.baseAddress!, machineEndianness)
+        data = Data(fromPtr: buffer.baseAddress!, machineEndianness)
         XCTAssertEqual(data, Data(bytes: [0x07, 0x80]))
     }
     
@@ -117,15 +98,13 @@ class Data_BrbonCoder_Tests: XCTestCase {
         
         // The name field to be used
         
-        let nfd = NameFieldDescriptor("one")
+        let nfd = NameField("one")
         
         
         // Properties
         
-        XCTAssertEqual(d.brbonType, ItemType.binary)
+        XCTAssertEqual(d.itemType, ItemType.binary)
         XCTAssertEqual(d.valueByteCount, 3)
-        XCTAssertEqual(d.itemByteCount(nfd), 32)
-        XCTAssertEqual(d.elementByteCount, 8)
         
         
         // Storing
@@ -139,7 +118,7 @@ class Data_BrbonCoder_Tests: XCTestCase {
         XCTAssertEqual(buffer.baseAddress!.advanced(by: 1).assumingMemoryBound(to: UInt8.self).pointee, 0x22)
         XCTAssertEqual(buffer.baseAddress!.advanced(by: 2).assumingMemoryBound(to: UInt8.self).pointee, 0x03)
         
-        d.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!.advanced(by: 0x12345678), nameField: nfd, machineEndianness)
+        d.storeAsItem(atPtr: buffer.baseAddress!, options: ItemOptions.none, flags: ItemFlags.none, nameField: nfd, parentOffset: 0x12345678, initialValueByteCount: nil, machineEndianness)
         
         var data = Data(bytesNoCopy: buffer.baseAddress!, count: 32, deallocator: Data.Deallocator.none)
         
@@ -156,7 +135,7 @@ class Data_BrbonCoder_Tests: XCTestCase {
         
         XCTAssertEqual(data, exp)
         
-        d.storeAsItem(atPtr: buffer.baseAddress!, bufferPtr: buffer.baseAddress!, parentPtr: buffer.baseAddress!.advanced(by: 0x12345678), nameField: nfd, valueByteCount: 10, machineEndianness)
+        d.storeAsItem(atPtr: buffer.baseAddress!, options: ItemOptions.none, flags: ItemFlags.none, nameField: nfd, parentOffset: 0x12345678, initialValueByteCount: 10, machineEndianness)
         
         data = Data(bytesNoCopy: buffer.baseAddress!, count: 40, deallocator: Data.Deallocator.none)
         
@@ -174,30 +153,5 @@ class Data_BrbonCoder_Tests: XCTestCase {
             ])
         
         XCTAssertEqual(data, exp2)
-        
-        d.storeAsElement(atPtr: buffer.baseAddress!, machineEndianness)
-        
-        XCTAssertEqual(buffer.baseAddress!.assumingMemoryBound(to: UInt32.self).pointee, 3)
-        XCTAssertEqual(buffer.baseAddress!.advanced(by: 4).assumingMemoryBound(to: UInt8.self).pointee, 0x10)
-        XCTAssertEqual(buffer.baseAddress!.advanced(by: 5).assumingMemoryBound(to: UInt8.self).pointee, 0x22)
-        XCTAssertEqual(buffer.baseAddress!.advanced(by: 6).assumingMemoryBound(to: UInt8.self).pointee, 0x03)
-        
-        
-        // Reading
-        
-        buffer.copyBytes(from: [0x07, 0x80])
-        
-        data = Data(valuePtr: buffer.baseAddress!, count: 2, machineEndianness)
-        XCTAssertEqual(data, Data(bytes: [0x07, 0x80]))
-        
-        buffer.copyBytes(from: exp)
-        
-        data = Data(itemPtr: buffer.baseAddress!, machineEndianness)
-        XCTAssertEqual(data, Data(bytes: [0x10, 0x22, 0x03]))
-        
-        buffer.copyBytes(from: [0x02, 0, 0, 0, 0x07, 0x80])
-        
-        data = Data(elementPtr: buffer.baseAddress!, machineEndianness)
-        XCTAssertEqual(data, Data(bytes: [0x07, 0x80]))
     }
 }

@@ -44,13 +44,13 @@ class Table_Tests: XCTestCase {
         // Item properties
         
         XCTAssertEqual(tm.root.itemType, .table)
-        XCTAssertEqual(tm.root.options, ItemOptions.none)
-        XCTAssertEqual(tm.root.flags, ItemFlags.none)
-        XCTAssertEqual(tm.root.nameFieldByteCount, 0)
+        XCTAssertEqual(tm.root.itemOptions, ItemOptions.none)
+        XCTAssertEqual(tm.root.itemFlags, ItemFlags.none)
+        XCTAssertEqual(tm.root._itemNameFieldByteCount, 0)
         
-        XCTAssertEqual(tm.root.itemByteCount, 0x20)
-        XCTAssertEqual(tm.root.parentOffset, 0)
-        XCTAssertEqual(tm.root.countValue, 0)
+        XCTAssertEqual(tm.root._itemByteCount, 0x20)
+        XCTAssertEqual(tm.root._itemParentOffset, 0)
+        XCTAssertEqual(tm.root._tableRowCount, 0)
         XCTAssertEqual(tm.root.name, nil)
         
         
@@ -64,7 +64,7 @@ class Table_Tests: XCTestCase {
     
     func test_02_tableWith1Column_NoRows() {
         
-        guard let col = ColumnSpecification(name: "aa", initialNameFieldByteCount: nil, valueType: .uint8, initialValueByteCount: nil) else { XCTFail(); return }
+        let col = ColumnSpecification(type: .uint8, name: NameField("aa"), byteCount: nil)
         
         let table = BrbonTable(columnSpecifications: [col])
         
@@ -115,9 +115,10 @@ class Table_Tests: XCTestCase {
     }
     
     func createTableWith3Rows() -> ItemManager? {
-        guard let col1 = ColumnSpecification(name: "aa", initialNameFieldByteCount: nil, valueType: .uint8, initialValueByteCount: nil) else { return nil }
-        guard let col2 = ColumnSpecification(name: "bb", initialNameFieldByteCount: nil, valueType: .int8, initialValueByteCount: nil) else { return nil }
-        guard let col3 = ColumnSpecification(name: "cc", initialNameFieldByteCount: nil, valueType: .string, initialValueByteCount: nil) else { return nil }
+        
+        let col1 = ColumnSpecification(type: .uint8, name: NameField("aa")!, byteCount: 1)
+        let col2 = ColumnSpecification(type: .int8, name: NameField("bb")!, byteCount: 1)
+        let col3 = ColumnSpecification(type: .string, name: NameField("cc")!, byteCount: 16)
         
         let table = BrbonTable(columnSpecifications: [col1, col2, col3])
         
@@ -143,13 +144,13 @@ class Table_Tests: XCTestCase {
         // Item properties
         
         XCTAssertEqual(tm.root.itemType, .table)
-        XCTAssertEqual(tm.root.options, ItemOptions.none)
-        XCTAssertEqual(tm.root.flags, ItemFlags.none)
-        XCTAssertEqual(tm.root.nameFieldByteCount, 0)
+        XCTAssertEqual(tm.root.itemOptions, ItemOptions.none)
+        XCTAssertEqual(tm.root.itemFlags, ItemFlags.none)
+        XCTAssertEqual(tm.root._itemNameFieldByteCount, 0)
         
-        XCTAssertEqual(tm.root.itemByteCount, 104)
+        XCTAssertEqual(tm.root._itemByteCount, 104)
         XCTAssertEqual(tm.root.parentOffset, 0)
-        XCTAssertEqual(tm.root.countValue, 0)
+        XCTAssertEqual(tm.root.count, 0)
         XCTAssertEqual(tm.root.name, nil)
         
         
