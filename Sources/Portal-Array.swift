@@ -10,10 +10,11 @@ import Foundation
 import BRUtils
 
 
-fileprivate let arrayElementTypeOffset = 0
-fileprivate let arrayElementCountOffset = 4
-fileprivate let arrayElementByteCountOffset = 8
-internal let arrayElementBaseOffset = 12
+internal let arrayReservedOffset = 0
+internal let arrayElementTypeOffset = arrayReservedOffset + 4
+internal let arrayElementCountOffset = arrayElementTypeOffset + 4
+internal let arrayElementByteCountOffset = arrayElementCountOffset + 4
+internal let arrayElementBaseOffset = arrayElementByteCountOffset + 4
 
 internal let arrayMinimumItemByteCount = itemMinimumByteCount + arrayElementBaseOffset
 

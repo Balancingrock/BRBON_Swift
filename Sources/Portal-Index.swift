@@ -198,20 +198,11 @@ public extension Portal {
         
         // Check to see if the element byte count of the array must be increased.
         
-        if value.valueByteCount > _arrayElementByteCount {
+        let necessaryElementByteCount: Int = value.itemType.isContainer ? value.itemByteCount(nil) : value.valueByteCount
+        
+        if necessaryElementByteCount > _arrayElementByteCount {
             
-            
-            // The value byte count is bigger than the existing element byte count.
-            // Enlarge the item to accomodate extra bytes.
-            
-            let necessaryElementByteCount: Int
-            if value.itemType.isContainer {
-                necessaryElementByteCount = value.valueByteCount.roundUpToNearestMultipleOf8()
-            } else {
-                necessaryElementByteCount = value.valueByteCount
-            }
-            
-            
+
             // This is the byte count that self has to become in order to accomodate the new value
             
             let necessaryItemByteCount = _itemByteCount - actualValueFieldByteCount + arrayElementBaseOffset + ((_arrayElementCount + 1) * necessaryElementByteCount)
@@ -254,7 +245,7 @@ public extension Portal {
         // Ensure that the new value can be added
         
         if actualValueFieldByteCount - usedValueFieldByteCount < value.valueByteCount {
-            let result = increaseItemByteCount(to: _itemByteCount + value.valueByteCount)
+            let result = increaseItemByteCount(to: _itemByteCount + value.valueByteCount.roundUpToNearestMultipleOf8())
             guard result == .success else { return result }
         }
         
@@ -307,7 +298,7 @@ public extension Portal {
         }
         
         let pOffset = manager.bufferPtr.distance(to: itemPtr)
-        value.storeAsItem(atPtr: _afterLastItemPtr, name: nfd, parentOffset: pOffset, endianness)
+        value.storeAsItem(atPtr: _sequenceAfterLastItemPtr, name: nfd, parentOffset: pOffset, endianness)
         
         _arrayElementCount += 1
         
@@ -398,7 +389,7 @@ public extension Portal {
     private func _sequenceRemove(at index: Int) -> Result {
         
         let itm = _sequencePortalForItem(at: index)
-        let aliPtr = _afterLastItemPtr
+        let aliPtr = _sequenceAfterLastItemPtr
         
         let srcPtr = itm.itemPtr.advanced(by: itm._itemByteCount)
         let dstPtr = itm.itemPtr

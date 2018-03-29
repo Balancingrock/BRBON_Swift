@@ -26,8 +26,9 @@ public extension Portal {
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return }
-            _updateValue(newValue, forName: name)
+            if isDictionary { _ = _dictionaryUpdateValue(newValue ?? Null(), forName: name) }
+            if isSequence { _ = _sequenceUpdateValue(newValue ?? Null(), forName: name) }
+            fatalOrNull("Type (\(itemType)) does not support named subscripts")
         }
     }
     
@@ -39,8 +40,9 @@ public extension Portal {
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return }
-            _updateValue(newValue, forName: name)
+            if isDictionary { _ = _dictionaryUpdateValue(newValue ?? Null(), forName: name) }
+            if isSequence { _ = _sequenceUpdateValue(newValue ?? Null(), forName: name) }
+            fatalOrNull("Type (\(itemType)) does not support named subscripts")
         }
     }
     
@@ -52,8 +54,9 @@ public extension Portal {
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return }
-            _updateValue(newValue, forName: name)
+            if isDictionary { _ = _dictionaryUpdateValue(newValue ?? Null(), forName: name) }
+            if isSequence { _ = _sequenceUpdateValue(newValue ?? Null(), forName: name) }
+            fatalOrNull("Type (\(itemType)) does not support named subscripts")
         }
     }
     
@@ -65,8 +68,9 @@ public extension Portal {
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return }
-            _updateValue(newValue, forName: name)
+            if isDictionary { _ = _dictionaryUpdateValue(newValue ?? Null(), forName: name) }
+            if isSequence { _ = _sequenceUpdateValue(newValue ?? Null(), forName: name) }
+            fatalOrNull("Type (\(itemType)) does not support named subscripts")
         }
     }
     
@@ -78,8 +82,9 @@ public extension Portal {
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return }
-            _updateValue(newValue, forName: name)
+            if isDictionary { _ = _dictionaryUpdateValue(newValue ?? Null(), forName: name) }
+            if isSequence { _ = _sequenceUpdateValue(newValue ?? Null(), forName: name) }
+            fatalOrNull("Type (\(itemType)) does not support named subscripts")
         }
     }
     
@@ -91,8 +96,9 @@ public extension Portal {
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return }
-            _updateValue(newValue, forName: name)
+            if isDictionary { _ = _dictionaryUpdateValue(newValue ?? Null(), forName: name) }
+            if isSequence { _ = _sequenceUpdateValue(newValue ?? Null(), forName: name) }
+            fatalOrNull("Type (\(itemType)) does not support named subscripts")
         }
     }
     
@@ -104,8 +110,9 @@ public extension Portal {
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return }
-            _updateValue(newValue, forName: name)
+            if isDictionary { _ = _dictionaryUpdateValue(newValue ?? Null(), forName: name) }
+            if isSequence { _ = _sequenceUpdateValue(newValue ?? Null(), forName: name) }
+            fatalOrNull("Type (\(itemType)) does not support named subscripts")
         }
     }
     
@@ -117,8 +124,9 @@ public extension Portal {
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return }
-            _updateValue(newValue, forName: name)
+            if isDictionary { _ = _dictionaryUpdateValue(newValue ?? Null(), forName: name) }
+            if isSequence { _ = _sequenceUpdateValue(newValue ?? Null(), forName: name) }
+            fatalOrNull("Type (\(itemType)) does not support named subscripts")
         }
     }
     
@@ -130,8 +138,9 @@ public extension Portal {
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return }
-            _updateValue(newValue, forName: name)
+            if isDictionary { _ = _dictionaryUpdateValue(newValue ?? Null(), forName: name) }
+            if isSequence { _ = _sequenceUpdateValue(newValue ?? Null(), forName: name) }
+            fatalOrNull("Type (\(itemType)) does not support named subscripts")
         }
     }
     
@@ -143,8 +152,9 @@ public extension Portal {
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return }
-            _updateValue(newValue, forName: name)
+            if isDictionary { _ = _dictionaryUpdateValue(newValue ?? Null(), forName: name) }
+            if isSequence { _ = _sequenceUpdateValue(newValue ?? Null(), forName: name) }
+            fatalOrNull("Type (\(itemType)) does not support named subscripts")
         }
     }
     
@@ -156,8 +166,9 @@ public extension Portal {
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return }
-            _updateValue(newValue, forName: name)
+            if isDictionary { _ = _dictionaryUpdateValue(newValue ?? Null(), forName: name) }
+            if isSequence { _ = _sequenceUpdateValue(newValue ?? Null(), forName: name) }
+            fatalOrNull("Type (\(itemType)) does not support named subscripts")
         }
     }
     
@@ -169,8 +180,9 @@ public extension Portal {
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return }
-            _updateValue(newValue, forName: name)
+            if isDictionary { _ = _dictionaryUpdateValue(newValue ?? Null(), forName: name) }
+            if isSequence { _ = _sequenceUpdateValue(newValue ?? Null(), forName: name) }
+            fatalOrNull("Type (\(itemType)) does not support named subscripts")
         }
     }
     
@@ -182,8 +194,9 @@ public extension Portal {
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return }
-            _updateValue(newValue, forName: name)
+            if isDictionary { _ = _dictionaryUpdateValue(newValue ?? Null(), forName: name) }
+            if isSequence { _ = _sequenceUpdateValue(newValue ?? Null(), forName: name) }
+            fatalOrNull("Type (\(itemType)) does not support named subscripts")
         }
     }
 
@@ -202,108 +215,16 @@ public extension Portal {
     public func updateValue(_ value: IsBrbon?, forName name: String) -> Result {
         
         guard isValid else { fatalOrNull("Portal is no longer valid"); return .portalInvalid }
-        guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return .operationNotSupported }
         
-        if value != nil {
-            guard let value = value as? Coder else { return .missingCoder }
-            return _updateValue(value, forName: name)
-        } else {
-            return _updateValue(nil, forName: name)
-        }
-    }
-
-    @discardableResult
-    private func _updateValue(_ value: Coder?, forName name: String) -> Result {
+        guard let value = (value ?? Null()) as? Coder else { return .missingCoder }
         
+        if isDictionary { return _dictionaryUpdateValue(value, forName: name) }
         
-        guard let nfd = NameField(name) else { return .illegalNameField }
-
-        if let value = value {
+        if isSequence { return _sequenceUpdateValue(value, forName: name) }
+            
+        fatalOrNull("Type (\(itemType)) does not support named subscripts")
         
-            if let item = findPortalForItem(with: nfd.crc, utf8ByteCode: nfd.data) {
-            
-                // Replace a value
-                
-                // Ensure enough space is available
-            
-                let neededItemByteCount = value.itemByteCount(nfd)
-                
-                if item._itemByteCount < neededItemByteCount {
-                    let result = item.increaseItemByteCount(to: neededItemByteCount)
-                    guard result == .success else { return result }
-                }
-
-                let pOffset = manager.bufferPtr.distance(to: itemPtr)
-                value.storeAsItem(atPtr: item.itemPtr, name: nfd, parentOffset: pOffset, endianness)
-                
-                return .success
-            
-            } else {
-            
-                // Add new value
-                
-                // Ensure enough space is available
-                
-                let neededItemByteCount = itemMinimumByteCount + _itemNameFieldByteCount + usedValueFieldByteCount + value.itemByteCount(nfd)
-                
-                if _itemByteCount < neededItemByteCount {
-                    let result = increaseItemByteCount(to: neededItemByteCount)
-                    guard result == .success else { return result }
-                }
-                
-                let pOffset = manager.bufferPtr.distance(to: itemPtr)
-                value.storeAsItem(atPtr: _afterLastItemPtr, name: nfd, parentOffset: pOffset, endianness)
-
-                if isDictionary {
-                    _dictionaryItemCount += 1
-                } else {
-                    _sequenceItemCount += 1
-                }
-                
-                return .success
-            }
-            
-        } else {
-            
-            // Set the item to null, or add a new null item
-            
-            if let item = findPortalForItem(with: nfd.crc, utf8ByteCode: nfd.data) {
-                
-                // Replace a value
-                
-                // Make the item a null item by chaning its type, the itemByteCount remains unchanged.
-                
-                item.itemType = .null
-                
-            } else {
-                
-                // Add new value
-                
-                let null = Null()
-                
-                
-                // Ensure enough space is available
-                
-                let neededItemByteCount = itemMinimumByteCount + _itemNameFieldByteCount + usedValueFieldByteCount + null.itemByteCount(nfd)
-                
-                if _itemByteCount < neededItemByteCount {
-                    let result = increaseItemByteCount(to: neededItemByteCount)
-                    guard result == .success else { return result }
-                }
-                
-                let pOffset = manager.bufferPtr.distance(to: itemPtr)
-                null.storeAsItem(atPtr: _afterLastItemPtr, name: nfd, parentOffset: pOffset, endianness)
-
-                if isDictionary {
-                    _dictionaryItemCount += 1
-                } else {
-                    _sequenceItemCount += 1
-                }
-                
-                return .success
-            }
-        }
-        return .success
+        return .operationNotSupported
     }
     
     
@@ -320,42 +241,13 @@ public extension Portal {
     public func removeValue(forName name: String) -> Result {
 
         guard isValid else { fatalOrNull("Portal is no longer valid"); return .portalInvalid }
-        guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return .operationNotSupported }
         
-        var item = findPortalForItem(withName: name)
+        if isDictionary { return _dictionaryRemoveValue(forName: name) }
         
-        if item == nil { return .itemNotFound }
+        if isSequence { return _sequenceRemoveValue(forName: name) }
         
-        while item != nil {
-            
-            let aliPtr = _afterLastItemPtr
-            
-            // Last item does not need a block move
-            if aliPtr == item!.itemPtr.advanced(by: item!._itemByteCount) {
-                
-                // Update the active portals list (remove deleted item)
-                manager.removeActivePortal(item!)
-                
-            } else {
-                
-                // Move the items after the found item over the found item
-                
-                let srcPtr = item!.itemPtr.advanced(by: item!._itemByteCount)
-                let dstPtr = item!.itemPtr
-                let len = srcPtr.distance(to: aliPtr)
-                
-                manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: item!._itemByteCount, updateMovedPortals: true, updateRemovedPortals: true)
-            }
-            
-            if isDictionary {
-                _dictionaryItemCount += 1
-            } else {
-                _sequenceItemCount += 1
-            }
-            
-            item = findPortalForItem(withName: name)
-        }
+        fatalOrNull("Type (\(itemType)) does not support named subscripts")
         
-        return .success
+        return .operationNotSupported
     }
 }

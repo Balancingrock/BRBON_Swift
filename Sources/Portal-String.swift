@@ -10,7 +10,7 @@ import Foundation
 
 
 fileprivate let stringByteCountOffset = 0
-fileprivate let stringUtf8CodeOffset = 4
+fileprivate let stringUtf8CodeOffset = stringByteCountOffset + 4
 
 
 extension Portal {

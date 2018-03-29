@@ -28,7 +28,7 @@ public final class CrcString: Coder, Equatable {
     
     public var itemType: ItemType { return ItemType.crcString }
     
-    internal var valueByteCount: Int { return max(data.count + 6, 8) }
+    internal var valueByteCount: Int { return data.count + 8 }
     
     internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         crc.storeValue(atPtr: atPtr, endianness)

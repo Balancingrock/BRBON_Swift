@@ -11,7 +11,7 @@ import BRUtils
 
 
 fileprivate let binaryByteCountOffset = 0
-fileprivate let binaryDataOffset = 4
+fileprivate let binaryDataOffset = binaryByteCountOffset + 4
 
 
 extension Portal {

@@ -28,7 +28,7 @@ internal func tableWriteSpecification(valueFieldPtr ptr: UnsafeMutableRawPointer
     
     
     // Calculate the name and value offsets
-    var nameOffset = 16 + 16 * arr.count
+    var nameOffset = tableColumnDescriptorBaseOffset + tableColumnDescriptorByteCount * arr.count
     var fieldOffset = 0
     for i in 0 ..< arr.count {
         arr[i].nameOffset = nameOffset
@@ -64,25 +64,25 @@ internal func tableWriteSpecification(valueFieldPtr ptr: UnsafeMutableRawPointer
     // Column names
     for column in arr {
         UInt8(column.name.data.count).storeValue(atPtr: ptr.advanced(by: column.nameOffset), endianness)
-        column.name.data.storeValue(atPtr: ptr.advanced(by: column.nameOffset + 1), endianness)
+        column.name.data.copyBytes(to: ptr.advanced(by: column.nameOffset + 1).assumingMemoryBound(to: UInt8.self), count: column.name.data.count)
     }
 }
 
 
 internal let tableRowCountOffset = 0
-internal let tableColumnCountOffset = 4
-internal let tableRowsOffsetOffset = 8
-internal let tableRowByteCountOffset = 12
-internal let tableColumnDescriptorBaseOffset = 16
+internal let tableColumnCountOffset = tableRowCountOffset + 4
+internal let tableRowsOffsetOffset = tableColumnCountOffset + 4
+internal let tableRowByteCountOffset = tableRowsOffsetOffset + 4
+internal let tableColumnDescriptorBaseOffset = tableRowByteCountOffset + 4
 
 internal let tableColumnNameCrcOffset = 0
-internal let tableColumnNameByteCountOffset = 2
-internal let tableColumnFieldTypeOffset = 3
-internal let tableColumnNameUtf8CodeOffsetOffset = 4
-internal let tableColumnFieldOffsetOffset = 8
-internal let tableColumnFieldByteCountOffset = 12
+internal let tableColumnNameByteCountOffset = tableColumnNameCrcOffset + 2
+internal let tableColumnFieldTypeOffset = tableColumnNameByteCountOffset + 1
+internal let tableColumnNameUtf8CodeOffsetOffset = tableColumnFieldTypeOffset + 1
+internal let tableColumnFieldOffsetOffset = tableColumnNameUtf8CodeOffsetOffset + 4
+internal let tableColumnFieldByteCountOffset = tableColumnFieldOffsetOffset + 4
 
-internal let tableColumnDescriptorByteCount = 16
+internal let tableColumnDescriptorByteCount = tableColumnFieldByteCountOffset + 4
 
 
 extension Portal {
@@ -602,7 +602,7 @@ extension Portal {
         let len = _tableContentByteCount
 
         let bytesNeeded = len + delta
-        if (_itemByteCount - 16) < bytesNeeded {
+        if (_itemByteCount - itemMinimumByteCount) < bytesNeeded {
             let result = ensureValueFieldByteCount(of: bytesNeeded)
             guard result == .success else { return result }
         }
@@ -711,7 +711,7 @@ extension Portal {
     /// Returns the total amount of bytes stored in the table content area. Includes filler data in the value fields. Excludes filler data in the item.
     
     internal var _tableContentByteCount: Int {
-        if _tableColumnCount == 0 { return 8 }
+        if _tableColumnCount == 0 { return tableColumnDescriptorBaseOffset }
         return _tableRowsOffset + (_tableRowCount * _tableRowByteCount)
     }
     
@@ -1098,7 +1098,7 @@ extension Portal {
         let oldRowsOffset = _tableRowsOffset
         let oldRowByteCount = _tableRowByteCount
         
-        var newRowsOffset = 16 + cols.count * 16
+        var newRowsOffset = tableColumnDescriptorBaseOffset + cols.count * tableColumnDescriptorByteCount
         for col in cols { newRowsOffset += col.name.byteCount }
         newRowsOffset = newRowsOffset.roundUpToNearestMultipleOf8()
         let newRowByteCount = oldRowByteCount + colSpec.fieldByteCount

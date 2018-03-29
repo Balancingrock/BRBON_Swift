@@ -10,8 +10,8 @@ import Foundation
 
 
 fileprivate let crcBinaryCrcOffset = 0
-fileprivate let crcBinaryByteCountOffset = 4
-fileprivate let crcBinaryDataOffset = 8
+fileprivate let crcBinaryByteCountOffset = crcBinaryCrcOffset + 4
+fileprivate let crcBinaryDataOffset = crcBinaryByteCountOffset + 4
 
 
 extension Portal {

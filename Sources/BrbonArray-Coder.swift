@@ -12,6 +12,7 @@ import BRUtils
 
 internal class BrbonArray: Coder {
     
+    
     init(content: Array<Coder>, type: ItemType, elementByteCount: Int? = nil) {
         
         assert(type != .null)
@@ -20,12 +21,16 @@ internal class BrbonArray: Coder {
         
         self.elementType = type
         
-        var ebc = max((elementByteCount ?? 0), type.defaultElementByteCount)
+        var ebc = elementByteCount ?? 0
         
-        if type.isContainer {
-            ebc = content.reduce(ebc) { max($0, $1.valueByteCount) }
+        if type.hasFlexibleLength {
+            ebc = content.reduce(ebc) { max($0, $1.valueByteCount.roundUpToNearestMultipleOf8()) }
         }
 
+        if ebc == 0 {
+            ebc = type.defaultElementByteCount
+        }
+        
         self.elementValueByteCount = ebc
     }
     
@@ -43,7 +48,7 @@ internal class BrbonArray: Coder {
     
     /// The number of bytes needed to encode self into an BrbonBytes stream.
     
-    var valueByteCount: Int { return 12 + content.count * elementValueByteCount }
+    var valueByteCount: Int { return arrayElementBaseOffset + content.count * elementValueByteCount }
     
     
     /// Stores the value without any other information in the memory area pointed at.
@@ -55,18 +60,18 @@ internal class BrbonArray: Coder {
     func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         
         // Element type + zero's
-        UInt32(0).storeValue(atPtr: atPtr, endianness)
-        elementType.storeValue(atPtr: atPtr)
-        
+        UInt64(0).storeValue(atPtr: atPtr, endianness)
+        elementType.storeValue(atPtr: atPtr.advanced(by: arrayElementTypeOffset))
+
         // Element count
-        UInt32(content.count).storeValue(atPtr: atPtr.advanced(by: 4), endianness)
+        UInt32(content.count).storeValue(atPtr: atPtr.advanced(by: arrayElementCountOffset), endianness)
         
         // Element byte count
-        UInt32(elementValueByteCount).storeValue(atPtr: atPtr.advanced(by: 8), endianness)
+        UInt32(elementValueByteCount).storeValue(atPtr: atPtr.advanced(by: arrayElementByteCountOffset), endianness)
         
         // Elements
         for i in 0 ..< content.count {
-            content[i].storeValue(atPtr: atPtr.advanced(by: 12 + i * elementValueByteCount), endianness)
+            content[i].storeValue(atPtr: atPtr.advanced(by: arrayElementBaseOffset + i * elementValueByteCount), endianness)
         }
     }
 }

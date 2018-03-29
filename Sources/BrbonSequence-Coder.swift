@@ -43,7 +43,7 @@ internal class BrbonSequence: Coder {
     /// The number of bytes needed to encode self into an BrbonBytes stream
     
     var valueByteCount: Int {
-        var count = 4
+        var count = sequenceItemBaseOffset
         for e in aContent {
             count += e.itemByteCount(nil)
         }
@@ -67,11 +67,15 @@ internal class BrbonSequence: Coder {
     
     func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         
+        // Reserved
+        UInt32(0).storeValue(atPtr: atPtr.advanced(by: sequenceReservedOffset), endianness)
+
         // Count
-        UInt32(aContent.count + dContent.count).storeValue(atPtr: atPtr, endianness)
+        UInt32(aContent.count + dContent.count).storeValue(atPtr: atPtr.advanced(by: sequenceItemCountOffset), endianness)
         
         // The dictionary items
-        var offset = 4
+        var offset = sequenceItemBaseOffset
+        
         for i in dContent {
             let name = NameField(i.key)!
             i.value.storeAsItem(atPtr: atPtr.advanced(by: offset), name: name, parentOffset: parentOffset, endianness)

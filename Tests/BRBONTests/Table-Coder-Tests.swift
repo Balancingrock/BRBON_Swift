@@ -26,24 +26,26 @@ class Table_Coder_Tests: XCTestCase {
 
         let t = BrbonTable(columnSpecifications: [])
         
+        
         // Properties
         
         XCTAssertEqual(t.itemType, ItemType.table)
         XCTAssertEqual(t.valueByteCount, 16)
         
         
-        // Storing
+        // Buffer
         
         let buffer = UnsafeMutableRawBufferPointer.allocate(count: 100)
+        _ = Darwin.memset(buffer.baseAddress, 0, 100)
         defer { buffer.deallocate() }
 
         
         // Store as item
         
-        XCTAssertEqual(t.storeAsItem(atPtr: buffer.baseAddress!, options: ItemOptions.none, flags: ItemFlags.none, nameField: nil, parentOffset: 0, initialValueByteCount: nil, machineEndianness), Result.success)
+        t.storeAsItem(atPtr: buffer.baseAddress!, parentOffset: 0, machineEndianness)
         
         let exp = Data(bytes: [
-            0x46, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
+            0x14, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
@@ -51,46 +53,48 @@ class Table_Coder_Tests: XCTestCase {
         ])
         
         let data = Data(bytesNoCopy: buffer.baseAddress!, count: 32, deallocator: Data.Deallocator.none)
-        data.printBytes()
+
         XCTAssertEqual(exp, data)
     }
     
     func test_2() {
         
-        let col = ColumnSpecification(fieldType: .bool, nameFieldDescriptor: NameFieldDescriptor("aaa")!, initialValueByteCount: 8)
+        let col = ColumnSpecification(type: .bool, name: NameField("aaa")!, byteCount: 8)
         let t = BrbonTable(columnSpecifications: [col])
+        
         
         // Properties
         
         XCTAssertEqual(t.itemType, ItemType.table)
-        XCTAssertEqual(t.valueByteCount, 16 + 16 + 8)
+        XCTAssertEqual(t.valueByteCount, 40)
         
         
         // Storing
         
         let buffer = UnsafeMutableRawBufferPointer.allocate(count: 100)
+        _ = Darwin.memset(buffer.baseAddress, 0, 100)
         defer { buffer.deallocate() }
         
         
         // Store as item
         
-        XCTAssertEqual(t.storeAsItem(atPtr: buffer.baseAddress!, options: ItemOptions.none, flags: ItemFlags.none, nameField: nil, parentOffset: 0, initialValueByteCount: nil, machineEndianness), Result.success)
+        t.storeAsItem(atPtr: buffer.baseAddress!, parentOffset: 0, machineEndianness)
         
         let exp = Data(bytes: [
-            0x46, 0x00, 0x00, 0x00,  0x38, 0x00, 0x00, 0x00,
+            0x14, 0x00, 0x00, 0x00,  0x38, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             
             0x00, 0x00, 0x00, 0x00,  0x01, 0x00, 0x00, 0x00,
             0x28, 0x00, 0x00, 0x00,  0x08, 0x00, 0x00, 0x00,
             
-            0xb9, 0xa6, 0x08, 0x81,  0x20, 0x00, 0x00, 0x00,
+            0xb9, 0xa6, 0x08, 0x02,  0x20, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x08, 0x00, 0x00, 0x00,
             
-            0x03, 0x61, 0x61, 0x61
+            0x03, 0x61, 0x61, 0x61,  0x00, 0x00, 0x00, 0x00
             ])
         
-        let data = Data(bytesNoCopy: buffer.baseAddress!, count: 52, deallocator: Data.Deallocator.none)
-        
+        let data = Data(bytesNoCopy: buffer.baseAddress!, count: 56, deallocator: Data.Deallocator.none)
+
         XCTAssertEqual(exp, data)
     }
 

@@ -166,7 +166,14 @@ public enum ItemType: UInt8 {
     }
     
     
-    public var defaultElementByteCount: Int {
+    internal var hasFlexibleLength: Bool {
+        switch self {
+        case .null, .bool, .int8, .int16, .int32, .uint8, .uint16, .uint32, .float32, .int64, .uint64, .float64: return false
+        case .string, .crcString, .binary, .crcBinary, .array, .dictionary, .sequence, .table: return true
+        }
+    }
+    
+    internal var defaultElementByteCount: Int {
         switch self {
         case .null: return 0
         case .bool, .int8, .uint8: return 1

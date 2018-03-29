@@ -179,7 +179,12 @@ public final class ItemManager {
     internal var buffer: UnsafeMutableRawBufferPointer
     internal var bufferPtr: UnsafeMutableRawPointer
     
-        
+    
+    /// This flag controls the initialisation to zero of a buffer upon allocation. It is used for testing purposes only.
+    
+    internal static var startWithZeroedBuffers: Bool = false
+    
+    
     /// A data object with the entire rootItem in it as a sequence of bytes.
     
     public var data: Data {
@@ -224,6 +229,8 @@ public final class ItemManager {
         
         self.buffer = UnsafeMutableRawBufferPointer.allocate(count: initialBufferByteCount.roundUpToNearestMultipleOf8())
         self.bufferPtr = buffer.baseAddress!
+        
+        if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(self.bufferPtr, 0, buffer.count) }
 
         let value: Coder = value as! Coder
 
@@ -270,6 +277,7 @@ public final class ItemManager {
         self.buffer = UnsafeMutableRawBufferPointer.allocate(count: initialBufferByteCount.roundUpToNearestMultipleOf8())
         self.bufferPtr = buffer.baseAddress!
 
+        if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(self.bufferPtr, 0, buffer.count) }
         
         switch rootItemType {
         case .null:
@@ -355,7 +363,7 @@ public final class ItemManager {
             
             guard let elementType = elementType else { buffer.deallocate() ; return nil }
             if elementType == .array {
-                guard let elementValueByteCount = elementValueByteCount, elementValueByteCount >= (itemMinimumByteCount + 16) else { buffer.deallocate() ;return nil }
+                guard let elementValueByteCount = elementValueByteCount, elementValueByteCount >= (itemMinimumByteCount + arrayElementBaseOffset) else { buffer.deallocate() ;return nil }
             }
             let arr = BrbonArray(content: [], type: elementType, elementByteCount: elementValueByteCount)
             arr.storeAsItem(atPtr: bufferPtr, name: nfd, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
@@ -422,10 +430,13 @@ extension ItemManager {
         let increase = Int(max(bytes, bufferIncrements)).roundUpToNearestMultipleOf8()
         let newBuffer = UnsafeMutableRawBufferPointer.allocate(count: buffer.count + increase)
         
+        if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(newBuffer.baseAddress!, 0, newBuffer.count) }
+
         _ = Darwin.memmove(newBuffer.baseAddress!, buffer.baseAddress!, buffer.count)
         
         activePortals.updatePointers(atAndAbove: bufferPtr, below: bufferPtr.advanced(by: buffer.count), toNewBase: newBuffer.baseAddress!)
 
+        buffer.deallocate()
         
         buffer = newBuffer
         bufferPtr = newBuffer.baseAddress!
@@ -440,10 +451,13 @@ extension ItemManager {
         let increase = max(bytes, bufferIncrements).roundUpToNearestMultipleOf8()
         let newBuffer = UnsafeMutableRawBufferPointer.allocate(count: increase)
         
+        if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(newBuffer.baseAddress!, 0, newBuffer.count) }
+
         _ = Darwin.memmove(newBuffer.baseAddress!, buffer.baseAddress!, buffer.count)
         
         activePortals.updatePointers(atAndAbove: bufferPtr, below: bufferPtr.advanced(by: buffer.count), toNewBase: newBuffer.baseAddress!)
         
+        buffer.deallocate()
         
         buffer = newBuffer
         bufferPtr = newBuffer.baseAddress!

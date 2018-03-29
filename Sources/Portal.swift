@@ -542,7 +542,7 @@ extension Portal {
                 // Increase the size of self, first copy all the items above this item out of reach
                 
                 let srcPtr = itemPtr.advanced(by: _itemByteCount)
-                let pastLastItemPtr = parent._afterLastItemPtr
+                let pastLastItemPtr = parent._dictionaryAfterLastItemPtr
                 if srcPtr != pastLastItemPtr {
                     
                     // Items must be moved
@@ -577,7 +577,7 @@ extension Portal {
                 // Increase the size of self, first copy all the items above this item out of reach
                 
                 let srcPtr = itemPtr.advanced(by: _itemByteCount)
-                let pastLastItemPtr = parent._afterLastItemPtr
+                let pastLastItemPtr = parent._sequenceAfterLastItemPtr
                 if srcPtr != pastLastItemPtr {
                     
                     // Items must be moved
@@ -721,7 +721,7 @@ extension Portal {
     }
     
     /// Returns a pointer to the next byte after the last item in a dictionary or sequence.
-
+/*
     internal var _afterLastItemPtr: UnsafeMutableRawPointer {
         var ptr = itemValueFieldPtr
         var remainder = isDictionary ? _dictionaryItemCount : _sequenceItemCount
@@ -730,7 +730,7 @@ extension Portal {
             remainder -= 1
         }
         return ptr
-    }
+    }*/
     
     
     /// The closure is called for each child item or until the closure returns true.
@@ -749,16 +749,28 @@ extension Portal {
                 index += 1
             }
     
-        } else if isDictionary || isSequence {
+        } else if isDictionary {
             
-            var aPtr = itemValueFieldPtr
-            var remainder = isDictionary ? _dictionaryItemCount : _sequenceItemCount
+            var aPtr = itemValueFieldPtr.advanced(by: dictionaryItemBaseOffset)
+            var remainder = _dictionaryItemCount
             while remainder > 0 {
                 let portal = Portal(itemPtr: aPtr, manager: manager, endianness: endianness)
                 if closure(portal) { return }
                 aPtr = aPtr.advanced(by: portal._itemByteCount)
                 remainder -= 1
             }
+            
+        } else if isSequence {
+            
+            var aPtr = itemValueFieldPtr.advanced(by: sequenceItemBaseOffset)
+            var remainder = _sequenceItemCount
+            while remainder > 0 {
+                let portal = Portal(itemPtr: aPtr, manager: manager, endianness: endianness)
+                if closure(portal) { return }
+                aPtr = aPtr.advanced(by: portal._itemByteCount)
+                remainder -= 1
+            }
+
         }
     }
 }
