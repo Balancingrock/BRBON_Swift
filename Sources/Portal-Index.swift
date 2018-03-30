@@ -110,19 +110,6 @@ public extension Portal {
     }
 
     
-    /// Returns the portal for the item at the specified index.
-    
-    internal func _sequencePortalForItem(at index: Int) -> Portal {
-        
-        var ptr = itemValueFieldPtr
-        var c = 0
-        while c < index {
-            let bc = ptr.advanced(by: itemByteCountOffset).assumingMemoryBound(to: UInt32.self).pointee
-            ptr = ptr.advanced(by: Int(bc))
-            c += 1
-        }
-        return Portal(itemPtr: ptr, manager: manager, endianness: endianness)
-    }
 
     
     /// Increases the byte count of the array element.
@@ -268,42 +255,6 @@ public extension Portal {
     }
     
     
-    /// Adds a new bool value to the end of the sequence.
-    ///
-    /// - Parameters:
-    ///   - value: The value to be added to the sequence.
-    ///   - forName: The name for the new value.
-    ///
-    /// - Returns: 'success' or an error indicator.
-    
-    @discardableResult
-    private func _sequenceAppend(_ value: Coder, forName name: String? = nil) -> Result {
-        
-        
-        // Create the name field descriptor (if used)
-        
-        let nfd: NameField? = {
-            guard let name = name else { return nil }
-            return NameField(name)
-        }()
-
-        
-        // Ensure that there is enough space available
-        
-        let newItemByteCount = value.itemByteCount(nfd)
-        
-        if actualValueFieldByteCount - usedValueFieldByteCount < newItemByteCount {
-            let result = increaseItemByteCount(to: itemMinimumByteCount + usedValueFieldByteCount + newItemByteCount)
-            guard result == .success else { return result }
-        }
-        
-        let pOffset = manager.bufferPtr.distance(to: itemPtr)
-        value.storeAsItem(atPtr: _sequenceAfterLastItemPtr, name: nfd, parentOffset: pOffset, endianness)
-        
-        _arrayElementCount += 1
-        
-        return .success
-    }
 
     
     /// Appends a new value to an array or sequence.
@@ -329,7 +280,7 @@ public extension Portal {
         
         
         if isSequence {
-            return _sequenceAppend(value, forName: name)
+            return _sequenceAppend(value, name: NameField(name))
         }
         
         
@@ -378,34 +329,6 @@ public extension Portal {
         return .success
     }
     
-    
-    /// Removes an item from a sequence.
-    ///
-    /// - Parameter index: The index of the element to remove.
-    ///
-    /// - Returns: success or an error indicator.
-
-    @discardableResult
-    private func _sequenceRemove(at index: Int) -> Result {
-        
-        let itm = _sequencePortalForItem(at: index)
-        let aliPtr = _sequenceAfterLastItemPtr
-        
-        let srcPtr = itm.itemPtr.advanced(by: itm._itemByteCount)
-        let dstPtr = itm.itemPtr
-        let len = srcPtr.distance(to: aliPtr)
-        
-        manager.removeActivePortal(itm)
-        
-        if len > 0 {
-            manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
-        }
-        
-        _sequenceItemCount -= 1
-        
-        return .success
-    }
-
     
     /// Removes an item from an array or sequence.
     ///

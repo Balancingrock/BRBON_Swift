@@ -49,7 +49,7 @@ class ItemManager_Dictionary_Tests: XCTestCase {
         // Add an item to the dictionary
         
         XCTAssertEqual(dm.root.updateValue(Int16(0x3333), forName: "one"), .success)
-        dm.data.printBytes()
+
         exp = Data(bytes: [
             0x12, 0x00, 0x00, 0x00,  0x30, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
@@ -211,7 +211,6 @@ class ItemManager_Dictionary_Tests: XCTestCase {
             0x00, 0x00, 0x00, 0x00,  0x55, 0x55, 0x00, 0x00,
             0xfb, 0x64, 0x03, 0x65,  0x65, 0x65, 0x00, 0x00
             ])
-        dm.data.printBytes()
 
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
             let p = dm.getActivePortal(for: UnsafeMutableRawPointer(mutating: ptr))

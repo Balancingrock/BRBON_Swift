@@ -16,7 +16,5 @@ internal final class Null: Coder {
     
     var valueByteCount: Int { return 0 }
     
-    func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        fatalError("Do not use 'storeValue' or 'updateItemValue' on NULL type, use storeItem instead")
-    }
+    func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) { }
 }

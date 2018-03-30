@@ -110,7 +110,7 @@ extension Portal {
         guard let nfd = NameField(name) else { return .illegalNameField }
         
         guard let item = findPortalForItem(with: nfd.crc, utf8ByteCode: nfd.data) else {
-            return _sequenceAddValue(value, name: nfd)
+            return _sequenceAppend(value, name: nfd)
         }
         
         
@@ -129,7 +129,9 @@ extension Portal {
         return .success
     }
     
-    internal func _sequenceAddValue(_ value: Coder, name: NameField) -> Result {
+    
+    // 
+    internal func _sequenceAppend(_ value: Coder, name: NameField?) -> Result {
         
         let neededItemByteCount = itemMinimumByteCount + _itemNameFieldByteCount + usedValueFieldByteCount + value.itemByteCount(name)
         
@@ -142,6 +144,84 @@ extension Portal {
         value.storeAsItem(atPtr: _sequenceAfterLastItemPtr, name: name, parentOffset: pOffset, endianness)
         
         _sequenceItemCount += 1
+        
+        return .success
+    }
+    
+    /// Adds a new bool value to the end of the sequence.
+    ///
+    /// - Parameters:
+    ///   - value: The value to be added to the sequence.
+    ///   - forName: The name for the new value.
+    ///
+    /// - Returns: 'success' or an error indicator.
+    /*
+    private func _sequenceAppend(_ value: Coder, forName name: String? = nil) -> Result {
+        
+        
+        // Create the name field descriptor (if used)
+        
+        let nfd: NameField? = {
+            guard let name = name else { return nil }
+            return NameField(name)
+        }()
+        
+        
+        // Ensure that there is enough space available
+        
+        let newItemByteCount = value.itemByteCount(nfd)
+        
+        if actualValueFieldByteCount - usedValueFieldByteCount < newItemByteCount {
+            let result = increaseItemByteCount(to: itemMinimumByteCount + usedValueFieldByteCount + newItemByteCount)
+            guard result == .success else { return result }
+        }
+        
+        let pOffset = manager.bufferPtr.distance(to: itemPtr)
+        value.storeAsItem(atPtr: _sequenceAfterLastItemPtr, name: nfd, parentOffset: pOffset, endianness)
+        
+        _sequenceElementCount += 1
+        
+        return .success
+    }*/
+
+    
+    /// Returns the portal for the item at the specified index.
+    
+    internal func _sequencePortalForItem(at index: Int) -> Portal {
+        
+        var ptr = _sequenceItemBasePtr
+        var c = 0
+        while c < index {
+            let bc = ptr.advanced(by: itemByteCountOffset).assumingMemoryBound(to: UInt32.self).pointee
+            ptr = ptr.advanced(by: Int(bc))
+            c += 1
+        }
+        return Portal(itemPtr: ptr, manager: manager, endianness: endianness)
+    }
+
+    
+    /// Removes an item from a sequence.
+    ///
+    /// - Parameter index: The index of the element to remove.
+    ///
+    /// - Returns: success or an error indicator.
+    
+    internal func _sequenceRemove(at index: Int) -> Result {
+        
+        let itm = _sequencePortalForItem(at: index)
+        let aliPtr = _sequenceAfterLastItemPtr
+        
+        let srcPtr = itm.itemPtr.advanced(by: itm._itemByteCount)
+        let dstPtr = itm.itemPtr
+        let len = srcPtr.distance(to: aliPtr)
+        
+        manager.removeActivePortal(itm)
+        
+        if len > 0 {
+            manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
+        }
+        
+        _sequenceItemCount -= 1
         
         return .success
     }

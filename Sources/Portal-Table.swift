@@ -558,9 +558,9 @@ extension Portal {
     /// Returns a pointer to the first byte of the value in the row/column combination.
     
     internal func _tableFieldPtr(row: Int, column: Int) -> UnsafeMutableRawPointer {
-        let rowOffset = row * _tableRowByteCount
+        let rowPtr = _tableGetRowPtr(row: row)
         let columnOffset = _tableGetColumnFieldOffset(for: column)
-        return itemValueFieldPtr.advanced(by: _tableRowsOffset + rowOffset + columnOffset)
+        return rowPtr.advanced(by: columnOffset)
     }
     
     
@@ -844,18 +844,25 @@ extension Portal {
         let necessaryValueFieldByteCount = _tableRowsOffset + ((_tableRowCount + amount) * _tableRowByteCount)
         
         if actualValueFieldByteCount < necessaryValueFieldByteCount {
-            let result = increaseItemByteCount(to: itemMinimumByteCount + necessaryValueFieldByteCount)
+            let result = increaseItemByteCount(to: itemMinimumByteCount + _itemNameFieldByteCount + necessaryValueFieldByteCount)
             guard result == .success else { return result }
         }
         
-        let data = Data(count: amount * _tableRowByteCount)
+
+        // Init the new area to zero.
         
         let ptr = _tableFieldPtr(row: _tableRowCount, column: 0)
         
-        data.storeValue(atPtr: ptr, endianness)
+        _ = Darwin.memset(ptr, 0, amount * _tableRowByteCount)
+        
+        
+        // Increase the row count
         
         _tableRowCount += amount
 
+        
+        // Let the API user fill in the default values
+        
         if let closure = closure {
             for ri in (_tableRowCount - amount) ..< _tableRowCount {
                 for ci in 0 ..< _tableColumnCount {
@@ -1075,14 +1082,14 @@ extension Portal {
         guard _tableColumnIndex(for: colSpec.name) == nil else { return .nameExists }
         
         
-        // Build an array of column descriptors to re-create the table descriptor without the removed column
+        // Build an array of column descriptors to re-create the table descriptor
         
         var cols: Array<ColumnSpecification> = []
         for i in 0 ..< _tableColumnCount {
-            guard let colSpec = ColumnSpecification(fromPtr: itemValueFieldPtr, forColumn: i, endianness) else {
+            guard let spec = ColumnSpecification(fromPtr: itemValueFieldPtr, forColumn: i, endianness) else {
                     return .invalidTableColumnType
             }
-            cols.append(colSpec)
+            cols.append(spec)
         }
         
         
@@ -1177,17 +1184,24 @@ extension Portal {
             guard result == .success else { return result }
         }
         
-        let data = Data(count: amount * _tableRowByteCount)
-        
         let srcPtr = _tableFieldPtr(row: index, column: 0)
         let dstPtr = _tableFieldPtr(row: (index + amount), column: 0)
         let len = (_tableRowCount - index) * _tableRowByteCount
         
         manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: 0, updateMovedPortals: false, updateRemovedPortals: false)
         
-        data.storeValue(atPtr: srcPtr, endianness)
+        
+        // Init the new area to zero.
+        
+        _ = Darwin.memset(srcPtr, 0, amount * _tableRowByteCount)
+        
+        
+        // Increase the row count
         
         _tableRowCount += amount
+        
+        
+        // Let the API user initialize the new fields
         
         if let closure = closure {
             for ri in index ..< (index + amount) {
@@ -1218,8 +1232,6 @@ extension Portal {
         
         
         // Prevent errors
-        
-        guard isTable else { return Result.operationNotSupported }
         
         guard row >= 0 else { return Result.indexBelowLowerBound }
         guard row < _tableRowCount else { return Result.indexAboveHigherBound }
@@ -1271,6 +1283,9 @@ extension Portal {
     @discardableResult
     public func createFieldArray(at row: Int, in column: Int, elementType: ItemType, elementByteCount: Int? = nil, valueByteCount: Int? = nil) -> Result {
         
+        guard isValid else { return Result.portalInvalid }
+        guard itemType! == .table else { return Result.operationNotSupported }
+
         let arr = BrbonArray(content: [], type: elementType, elementByteCount: elementByteCount)
         guard let im = ItemManager(value: arr, name: nil, itemValueByteCount: valueByteCount, endianness: endianness) else { return Result.dataInconsistency }
         
@@ -1292,6 +1307,9 @@ extension Portal {
     @discardableResult
     public func createFieldSequence(at row: Int, in column: Int, valueByteCount: Int? = nil) -> Result {
         
+        guard isValid else { return Result.portalInvalid }
+        guard itemType! == .table else { return Result.operationNotSupported }
+
         let seq = BrbonSequence()!
         guard let im = ItemManager(value: seq, name: nil, itemValueByteCount: valueByteCount, endianness: endianness) else { return Result.dataInconsistency }
         
@@ -1313,6 +1331,9 @@ extension Portal {
     @discardableResult
     public func createFieldDictionary(at row: Int, in column: Int, valueByteCount: Int? = nil) -> Result {
         
+        guard isValid else { return Result.portalInvalid }
+        guard itemType! == .table else { return Result.operationNotSupported }
+
         let dict = BrbonDictionary()!
         guard let im = ItemManager(value: dict, name: nil, itemValueByteCount: valueByteCount, endianness: endianness) else { return Result.dataInconsistency }
         
@@ -1334,6 +1355,9 @@ extension Portal {
     @discardableResult
     public func createFieldTable(at row: Int, in column: Int, columnSpecifications: Array<ColumnSpecification>, valueByteCount: Int? = nil) -> Result {
         
+        guard isValid else { return Result.portalInvalid }
+        guard itemType! == .table else { return Result.operationNotSupported }
+
         let tab = BrbonTable(columnSpecifications: columnSpecifications)
         guard let im = ItemManager(value: tab, name: nil, itemValueByteCount: valueByteCount, endianness: endianness) else { return Result.dataInconsistency }
         

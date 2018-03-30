@@ -38,7 +38,7 @@ class Table_Tests: XCTestCase {
         XCTAssertNotNil(tm.root.manager)
         XCTAssertEqual(tm.root.endianness, machineEndianness)
         XCTAssertTrue(tm.root.isValid)
-        XCTAssertEqual(tm.root.refCount, 0)
+        XCTAssertEqual(tm.root.refCount, 1)
 
         
         // Item properties
@@ -51,7 +51,7 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._itemByteCount, 0x20)
         XCTAssertEqual(tm.root._itemParentOffset, 0)
         XCTAssertEqual(tm.root._tableRowCount, 0)
-        XCTAssertEqual(tm.root.name, nil)
+        XCTAssertEqual(tm.root.itemName, nil)
         
         
         // Table item properties
@@ -64,7 +64,7 @@ class Table_Tests: XCTestCase {
     
     func test_02_tableWith1Column_NoRows() {
         
-        let col = ColumnSpecification(type: .uint8, name: NameField("aa"), byteCount: nil)
+        let col = ColumnSpecification(type: .uint8, name: NameField("aa")!, byteCount: 1)
         
         let table = BrbonTable(columnSpecifications: [col])
         
@@ -79,20 +79,20 @@ class Table_Tests: XCTestCase {
         XCTAssertNotNil(tm.root.manager)
         XCTAssertEqual(tm.root.endianness, machineEndianness)
         XCTAssertTrue(tm.root.isValid)
-        XCTAssertEqual(tm.root.refCount, 0)
+        XCTAssertEqual(tm.root.refCount, 1)
         
         
         // Item properties
         
         XCTAssertEqual(tm.root.itemType, .table)
-        XCTAssertEqual(tm.root.options, ItemOptions.none)
-        XCTAssertEqual(tm.root.flags, ItemFlags.none)
-        XCTAssertEqual(tm.root.nameFieldByteCount, 0)
+        XCTAssertEqual(tm.root.itemOptions, ItemOptions.none)
+        XCTAssertEqual(tm.root.itemFlags, ItemFlags.none)
+        XCTAssertEqual(tm.root._itemNameFieldByteCount, 0)
         
-        XCTAssertEqual(tm.root.itemByteCount, 0x38)
-        XCTAssertEqual(tm.root.parentOffset, 0)
-        XCTAssertEqual(tm.root.countValue, 0)
-        XCTAssertEqual(tm.root.name, nil)
+        XCTAssertEqual(tm.root._itemByteCount, 0x38)
+        XCTAssertEqual(tm.root._itemParentOffset, 0)
+        XCTAssertEqual(tm.root.count, 0)
+        XCTAssertEqual(tm.root.itemName, nil)
         
         
         // Table item properties
@@ -108,13 +108,13 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableGetColumnName(for: 0), "aa")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 0), ItemType.uint8)
         XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 0), 0x78E8)
-        XCTAssertEqual(tm.root._tableGetColumnValueOffset(for: 0), 0)
+        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 0), 0)
         XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 0), 8)
         XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 0), 0x20)
-        XCTAssertEqual(tm.root._tableGetColumnValueFieldByteCount(for: 0), 8)
+        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 0), 8)
     }
     
-    func createTableWith3Rows() -> ItemManager? {
+    func createTableWith3Columns() -> ItemManager? {
         
         let col1 = ColumnSpecification(type: .uint8, name: NameField("aa")!, byteCount: 1)
         let col2 = ColumnSpecification(type: .int8, name: NameField("bb")!, byteCount: 1)
@@ -127,7 +127,7 @@ class Table_Tests: XCTestCase {
     
     func test_03_tableWith3Columns_NoRows() {
         
-        guard let tm = createTableWith3Rows() else { XCTFail(); return }
+        guard let tm = createTableWith3Columns() else { XCTFail(); return }
         
         
         // Basic portal properties
@@ -138,7 +138,7 @@ class Table_Tests: XCTestCase {
         XCTAssertNotNil(tm.root.manager)
         XCTAssertEqual(tm.root.endianness, machineEndianness)
         XCTAssertTrue(tm.root.isValid)
-        XCTAssertEqual(tm.root.refCount, 0)
+        XCTAssertEqual(tm.root.refCount, 1)
         
         
         // Item properties
@@ -149,9 +149,9 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._itemNameFieldByteCount, 0)
         
         XCTAssertEqual(tm.root._itemByteCount, 104)
-        XCTAssertEqual(tm.root.parentOffset, 0)
+        XCTAssertEqual(tm.root._itemParentOffset, 0)
         XCTAssertEqual(tm.root.count, 0)
-        XCTAssertEqual(tm.root.name, nil)
+        XCTAssertEqual(tm.root.itemName, nil)
         
         
         // Table item properties
@@ -159,7 +159,7 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableRowCount, 0)
         XCTAssertEqual(tm.root._tableColumnCount, 3)
         XCTAssertEqual(tm.root._tableRowsOffset, 88)
-        XCTAssertEqual(tm.root._tableRowByteCount, 272)
+        XCTAssertEqual(tm.root._tableRowByteCount, 32)
         
         
         // Column 1 properties
@@ -167,10 +167,10 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableGetColumnName(for: 0), "aa")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 0), ItemType.uint8)
         XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 0), 0x78E8)
-        XCTAssertEqual(tm.root._tableGetColumnValueOffset(for: 0), 0)
+        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 0), 0)
         XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 0), 8)
         XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 0), 0x40)
-        XCTAssertEqual(tm.root._tableGetColumnValueFieldByteCount(for: 0), 8)
+        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 0), 8)
 
         
         // Column 2 properties
@@ -178,10 +178,10 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableGetColumnName(for: 1), "bb")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 1), ItemType.int8)
         XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 1), 0x89A8)
-        XCTAssertEqual(tm.root._tableGetColumnValueOffset(for: 1), 8)
+        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 1), 8)
         XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 1), 8)
         XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 1), 0x48)
-        XCTAssertEqual(tm.root._tableGetColumnValueFieldByteCount(for: 1), 8)
+        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 1), 8)
 
         
         // Column 3 properties
@@ -189,17 +189,17 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableGetColumnName(for: 2), "cc")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 2), ItemType.string)
         XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 2), 0xD968)
-        XCTAssertEqual(tm.root._tableGetColumnValueOffset(for: 2), 16)
+        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 2), 16)
         XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 2), 8)
         XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 2), 0x50)
-        XCTAssertEqual(tm.root._tableGetColumnValueFieldByteCount(for: 2), 256)
+        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 2), 16)
     }
 
     func test_04_addColumn() {
         
-        guard let tm = createTableWith3Rows() else { XCTFail(); return }
+        guard let tm = createTableWith3Columns() else { XCTFail(); return }
         
-        XCTAssertEqual(tm.root.addColumn(withName: "dd", nameFieldByteCount: nil, valueType: ItemType.int64, valueByteCount: nil), Result.success)
+        XCTAssertEqual(tm.root.addColumn(type: .int64, name: NameField("dd")!, byteCount: 8), Result.success)
         
         // Basic portal properties
         
@@ -209,20 +209,20 @@ class Table_Tests: XCTestCase {
         XCTAssertNotNil(tm.root.manager)
         XCTAssertEqual(tm.root.endianness, machineEndianness)
         XCTAssertTrue(tm.root.isValid)
-        XCTAssertEqual(tm.root.refCount, 0)
+        XCTAssertEqual(tm.root.refCount, 1)
         
         
         // Item properties
         
         XCTAssertEqual(tm.root.itemType, .table)
-        XCTAssertEqual(tm.root.options, ItemOptions.none)
-        XCTAssertEqual(tm.root.flags, ItemFlags.none)
-        XCTAssertEqual(tm.root.nameFieldByteCount, 0)
+        XCTAssertEqual(tm.root.itemOptions, ItemOptions.none)
+        XCTAssertEqual(tm.root.itemFlags, ItemFlags.none)
+        XCTAssertEqual(tm.root._itemNameFieldByteCount, 0)
         
-        XCTAssertEqual(tm.root.itemByteCount, 128)
-        XCTAssertEqual(tm.root.parentOffset, 0)
-        XCTAssertEqual(tm.root.countValue, 0)
-        XCTAssertEqual(tm.root.name, nil)
+        XCTAssertEqual(tm.root._itemByteCount, 128)
+        XCTAssertEqual(tm.root._itemParentOffset, 0)
+        XCTAssertEqual(tm.root.count, 0)
+        XCTAssertEqual(tm.root.itemName, nil)
         
         
         // Table item properties
@@ -230,7 +230,7 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableRowCount, 0)
         XCTAssertEqual(tm.root._tableColumnCount, 4)
         XCTAssertEqual(tm.root._tableRowsOffset, 112)
-        XCTAssertEqual(tm.root._tableRowByteCount, 280)
+        XCTAssertEqual(tm.root._tableRowByteCount, 40)
         
         
         // Column 1 properties
@@ -238,10 +238,10 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableGetColumnName(for: 0), "aa")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 0), ItemType.uint8)
         XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 0), 0x78E8)
-        XCTAssertEqual(tm.root._tableGetColumnValueOffset(for: 0), 0)
+        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 0), 0)
         XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 0), 8)
         XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 0), 0x50)
-        XCTAssertEqual(tm.root._tableGetColumnValueFieldByteCount(for: 0), 8)
+        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 0), 8)
         
         
         // Column 2 properties
@@ -249,10 +249,10 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableGetColumnName(for: 1), "bb")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 1), ItemType.int8)
         XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 1), 0x89A8)
-        XCTAssertEqual(tm.root._tableGetColumnValueOffset(for: 1), 8)
+        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 1), 8)
         XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 1), 8)
         XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 1), 0x58)
-        XCTAssertEqual(tm.root._tableGetColumnValueFieldByteCount(for: 1), 8)
+        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 1), 8)
         
         
         // Column 3 properties
@@ -260,10 +260,10 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableGetColumnName(for: 2), "cc")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 2), ItemType.string)
         XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 2), 0xD968)
-        XCTAssertEqual(tm.root._tableGetColumnValueOffset(for: 2), 16)
+        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 2), 16)
         XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 2), 8)
         XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 2), 0x60)
-        XCTAssertEqual(tm.root._tableGetColumnValueFieldByteCount(for: 2), 256)
+        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 2), 16)
 
         
         // Column 4 properties
@@ -271,15 +271,15 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableGetColumnName(for: 3), "dd")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 3), ItemType.int64)
         XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 3), 0x2B2B)
-        XCTAssertEqual(tm.root._tableGetColumnValueOffset(for: 3), 8+8+256)
+        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 3), 8+8+16)
         XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 3), 8)
         XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 3), 0x68)
-        XCTAssertEqual(tm.root._tableGetColumnValueFieldByteCount(for: 3), 8)
+        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 3), 8)
     }
     
     func test_05_removeColumn() {
         
-        guard let tm = createTableWith3Rows() else { XCTFail(); return }
+        guard let tm = createTableWith3Columns() else { XCTFail(); return }
         
         BRBON.allowFatalError = false
         XCTAssertEqual(tm.root.removeColumn("ee"), Result.columnNotFound)
@@ -296,20 +296,20 @@ class Table_Tests: XCTestCase {
         XCTAssertNotNil(tm.root.manager)
         XCTAssertEqual(tm.root.endianness, machineEndianness)
         XCTAssertTrue(tm.root.isValid)
-        XCTAssertEqual(tm.root.refCount, 0)
+        XCTAssertEqual(tm.root.refCount, 1)
         
         
         // Item properties
         
         XCTAssertEqual(tm.root.itemType, .table)
-        XCTAssertEqual(tm.root.options, ItemOptions.none)
-        XCTAssertEqual(tm.root.flags, ItemFlags.none)
-        XCTAssertEqual(tm.root.nameFieldByteCount, 0)
+        XCTAssertEqual(tm.root.itemOptions, ItemOptions.none)
+        XCTAssertEqual(tm.root.itemFlags, ItemFlags.none)
+        XCTAssertEqual(tm.root._itemNameFieldByteCount, 0)
         
-        XCTAssertEqual(tm.root.itemByteCount, 104)
-        XCTAssertEqual(tm.root.parentOffset, 0)
-        XCTAssertEqual(tm.root.countValue, 0)
-        XCTAssertEqual(tm.root.name, nil)
+        XCTAssertEqual(tm.root._itemByteCount, 104)
+        XCTAssertEqual(tm.root._itemParentOffset, 0)
+        XCTAssertEqual(tm.root.count, 0)
+        XCTAssertEqual(tm.root.itemName, nil)
         
         
         // Table item properties
@@ -317,7 +317,7 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableRowCount, 0)
         XCTAssertEqual(tm.root._tableColumnCount, 2)
         XCTAssertEqual(tm.root._tableRowsOffset, 64)
-        XCTAssertEqual(tm.root._tableRowByteCount, 264)
+        XCTAssertEqual(tm.root._tableRowByteCount, 24)
         
         
         // Column 1 properties
@@ -325,10 +325,10 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableGetColumnName(for: 0), "aa")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 0), ItemType.uint8)
         XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 0), 0x78E8)
-        XCTAssertEqual(tm.root._tableGetColumnValueOffset(for: 0), 0)
+        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 0), 0)
         XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 0), 8)
         XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 0), 48)
-        XCTAssertEqual(tm.root._tableGetColumnValueFieldByteCount(for: 0), 8)
+        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 0), 8)
         
         
         // Column 2 properties
@@ -336,15 +336,15 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableGetColumnName(for: 1), "cc")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 1), ItemType.string)
         XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 1), 0xD968)
-        XCTAssertEqual(tm.root._tableGetColumnValueOffset(for: 1), 8)
+        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 1), 8)
         XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 1), 8)
         XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 1), 56)
-        XCTAssertEqual(tm.root._tableGetColumnValueFieldByteCount(for: 1), 256)
+        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 1), 16)
     }
     
     func test_06_add1Row() {
         
-        guard let tm = createTableWith3Rows() else { XCTFail(); return }
+        guard let tm = createTableWith3Columns() else { XCTFail(); return }
 
         XCTAssertEqual(tm.root.addRows(1), Result.success)
         
@@ -357,20 +357,20 @@ class Table_Tests: XCTestCase {
         XCTAssertNotNil(tm.root.manager)
         XCTAssertEqual(tm.root.endianness, machineEndianness)
         XCTAssertTrue(tm.root.isValid)
-        XCTAssertEqual(tm.root.refCount, 0)
+        XCTAssertEqual(tm.root.refCount, 1)
         
         
         // Item properties
         
         XCTAssertEqual(tm.root.itemType, .table)
-        XCTAssertEqual(tm.root.options, ItemOptions.none)
-        XCTAssertEqual(tm.root.flags, ItemFlags.none)
-        XCTAssertEqual(tm.root.nameFieldByteCount, 0)
+        XCTAssertEqual(tm.root.itemOptions, ItemOptions.none)
+        XCTAssertEqual(tm.root.itemFlags, ItemFlags.none)
+        XCTAssertEqual(tm.root._itemNameFieldByteCount, 0)
         
-        XCTAssertEqual(tm.root.itemByteCount, 376)
-        XCTAssertEqual(tm.root.parentOffset, 0)
-        XCTAssertEqual(tm.root.countValue, 0)
-        XCTAssertEqual(tm.root.name, nil)
+        XCTAssertEqual(tm.root._itemByteCount, 136)
+        XCTAssertEqual(tm.root._itemParentOffset, 0)
+        XCTAssertEqual(tm.root.count, 1)
+        XCTAssertEqual(tm.root.itemName, nil)
         
         
         // Table item properties
@@ -378,7 +378,7 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableRowCount, 1)
         XCTAssertEqual(tm.root._tableColumnCount, 3)
         XCTAssertEqual(tm.root._tableRowsOffset, 88)
-        XCTAssertEqual(tm.root._tableRowByteCount, 272)
+        XCTAssertEqual(tm.root._tableRowByteCount, 32)
         
         
         // Column 1 properties
@@ -386,10 +386,10 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableGetColumnName(for: 0), "aa")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 0), ItemType.uint8)
         XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 0), 0x78E8)
-        XCTAssertEqual(tm.root._tableGetColumnValueOffset(for: 0), 0)
+        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 0), 0)
         XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 0), 8)
         XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 0), 0x40)
-        XCTAssertEqual(tm.root._tableGetColumnValueFieldByteCount(for: 0), 8)
+        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 0), 8)
         
         // Column 1 value
         
@@ -401,10 +401,10 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableGetColumnName(for: 1), "bb")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 1), ItemType.int8)
         XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 1), 0x89A8)
-        XCTAssertEqual(tm.root._tableGetColumnValueOffset(for: 1), 8)
+        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 1), 8)
         XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 1), 8)
         XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 1), 0x48)
-        XCTAssertEqual(tm.root._tableGetColumnValueFieldByteCount(for: 1), 8)
+        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 1), 8)
         
         // Column 2 value
         
@@ -416,10 +416,10 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableGetColumnName(for: 2), "cc")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 2), ItemType.string)
         XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 2), 0xD968)
-        XCTAssertEqual(tm.root._tableGetColumnValueOffset(for: 2), 16)
+        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 2), 16)
         XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 2), 8)
         XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 2), 0x50)
-        XCTAssertEqual(tm.root._tableGetColumnValueFieldByteCount(for: 2), 256)
+        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 2), 16)
 
         // Column 3 value
         
@@ -428,7 +428,7 @@ class Table_Tests: XCTestCase {
     
     func test_07_add3Rows() {
         
-        guard let tm = createTableWith3Rows() else { XCTFail(); return }
+        guard let tm = createTableWith3Columns() else { XCTFail(); return }
         
         XCTAssertEqual(tm.root.addRows(3), Result.success)
         
@@ -441,20 +441,20 @@ class Table_Tests: XCTestCase {
         XCTAssertNotNil(tm.root.manager)
         XCTAssertEqual(tm.root.endianness, machineEndianness)
         XCTAssertTrue(tm.root.isValid)
-        XCTAssertEqual(tm.root.refCount, 0)
+        XCTAssertEqual(tm.root.refCount, 1)
         
         
         // Item properties
         
         XCTAssertEqual(tm.root.itemType, .table)
-        XCTAssertEqual(tm.root.options, ItemOptions.none)
-        XCTAssertEqual(tm.root.flags, ItemFlags.none)
-        XCTAssertEqual(tm.root.nameFieldByteCount, 0)
+        XCTAssertEqual(tm.root.itemOptions, ItemOptions.none)
+        XCTAssertEqual(tm.root.itemFlags, ItemFlags.none)
+        XCTAssertEqual(tm.root._itemNameFieldByteCount, 0)
         
-        XCTAssertEqual(tm.root.itemByteCount, 920)
-        XCTAssertEqual(tm.root.parentOffset, 0)
-        XCTAssertEqual(tm.root.countValue, 0)
-        XCTAssertEqual(tm.root.name, nil)
+        XCTAssertEqual(tm.root._itemByteCount, 200)
+        XCTAssertEqual(tm.root._itemParentOffset, 0)
+        XCTAssertEqual(tm.root.count, 3)
+        XCTAssertEqual(tm.root.itemName, nil)
         
         
         // Table item properties
@@ -462,7 +462,7 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableRowCount, 3)
         XCTAssertEqual(tm.root._tableColumnCount, 3)
         XCTAssertEqual(tm.root._tableRowsOffset, 88)
-        XCTAssertEqual(tm.root._tableRowByteCount, 272)
+        XCTAssertEqual(tm.root._tableRowByteCount, 32)
         
         
         // Column 1 properties
@@ -470,10 +470,10 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableGetColumnName(for: 0), "aa")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 0), ItemType.uint8)
         XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 0), 0x78E8)
-        XCTAssertEqual(tm.root._tableGetColumnValueOffset(for: 0), 0)
+        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 0), 0)
         XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 0), 8)
         XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 0), 0x40)
-        XCTAssertEqual(tm.root._tableGetColumnValueFieldByteCount(for: 0), 8)
+        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 0), 8)
         
         // Column 1 value
         
@@ -487,10 +487,10 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableGetColumnName(for: 1), "bb")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 1), ItemType.int8)
         XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 1), 0x89A8)
-        XCTAssertEqual(tm.root._tableGetColumnValueOffset(for: 1), 8)
+        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 1), 8)
         XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 1), 8)
         XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 1), 0x48)
-        XCTAssertEqual(tm.root._tableGetColumnValueFieldByteCount(for: 1), 8)
+        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 1), 8)
         
         // Column 2 value
         
@@ -504,10 +504,10 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableGetColumnName(for: 2), "cc")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 2), ItemType.string)
         XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 2), 0xD968)
-        XCTAssertEqual(tm.root._tableGetColumnValueOffset(for: 2), 16)
+        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 2), 16)
         XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 2), 8)
         XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 2), 0x50)
-        XCTAssertEqual(tm.root._tableGetColumnValueFieldByteCount(for: 2), 256)
+        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 2), 16)
         
         // Column 3 value
         
@@ -518,7 +518,7 @@ class Table_Tests: XCTestCase {
     
     func test_08_fieldAccess() {
         
-        guard let tm = createTableWith3Rows() else { XCTFail(); return }
+        guard let tm = createTableWith3Columns() else { XCTFail(); return }
         
         XCTAssertEqual(tm.root.addRows(3), Result.success)
         
@@ -531,20 +531,20 @@ class Table_Tests: XCTestCase {
         XCTAssertNotNil(tm.root.manager)
         XCTAssertEqual(tm.root.endianness, machineEndianness)
         XCTAssertTrue(tm.root.isValid)
-        XCTAssertEqual(tm.root.refCount, 0)
+        XCTAssertEqual(tm.root.refCount, 1)
         
         
         // Item properties
         
         XCTAssertEqual(tm.root.itemType, .table)
-        XCTAssertEqual(tm.root.options, ItemOptions.none)
-        XCTAssertEqual(tm.root.flags, ItemFlags.none)
-        XCTAssertEqual(tm.root.nameFieldByteCount, 0)
+        XCTAssertEqual(tm.root.itemOptions, ItemOptions.none)
+        XCTAssertEqual(tm.root.itemFlags, ItemFlags.none)
+        XCTAssertEqual(tm.root._itemNameFieldByteCount, 0)
         
-        XCTAssertEqual(tm.root.itemByteCount, 920)
-        XCTAssertEqual(tm.root.parentOffset, 0)
-        XCTAssertEqual(tm.root.countValue, 0)
-        XCTAssertEqual(tm.root.name, nil)
+        XCTAssertEqual(tm.root._itemByteCount, 200)
+        XCTAssertEqual(tm.root._itemParentOffset, 0)
+        XCTAssertEqual(tm.root.count, 3)
+        XCTAssertEqual(tm.root.itemName, nil)
         
         
         // Table item properties
@@ -552,7 +552,7 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableRowCount, 3)
         XCTAssertEqual(tm.root._tableColumnCount, 3)
         XCTAssertEqual(tm.root._tableRowsOffset, 88)
-        XCTAssertEqual(tm.root._tableRowByteCount, 272)
+        XCTAssertEqual(tm.root._tableRowByteCount, 32)
         
         
         // Column 1 properties
@@ -560,10 +560,10 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableGetColumnName(for: 0), "aa")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 0), ItemType.uint8)
         XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 0), 0x78E8)
-        XCTAssertEqual(tm.root._tableGetColumnValueOffset(for: 0), 0)
+        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 0), 0)
         XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 0), 8)
         XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 0), 0x40)
-        XCTAssertEqual(tm.root._tableGetColumnValueFieldByteCount(for: 0), 8)
+        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 0), 8)
         
         // Column 1 value
         
@@ -585,10 +585,10 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableGetColumnName(for: 1), "bb")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 1), ItemType.int8)
         XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 1), 0x89A8)
-        XCTAssertEqual(tm.root._tableGetColumnValueOffset(for: 1), 8)
+        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 1), 8)
         XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 1), 8)
         XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 1), 0x48)
-        XCTAssertEqual(tm.root._tableGetColumnValueFieldByteCount(for: 1), 8)
+        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 1), 8)
         
         // Column 2 value
         
@@ -610,10 +610,10 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableGetColumnName(for: 2), "cc")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 2), ItemType.string)
         XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 2), 0xD968)
-        XCTAssertEqual(tm.root._tableGetColumnValueOffset(for: 2), 16)
+        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 2), 16)
         XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 2), 8)
         XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 2), 0x50)
-        XCTAssertEqual(tm.root._tableGetColumnValueFieldByteCount(for: 2), 256)
+        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 2), 16)
         
         // Column 3 value
         
@@ -632,7 +632,7 @@ class Table_Tests: XCTestCase {
 
     func test_09_removeRows() {
         
-        guard let tm = createTableWith3Rows() else { XCTFail(); return }
+        guard let tm = createTableWith3Columns() else { XCTFail(); return }
         
         XCTAssertEqual(tm.root.addRows(3), Result.success)
         
@@ -656,7 +656,7 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableRowCount, 2)
         XCTAssertEqual(tm.root._tableColumnCount, 3)
         XCTAssertEqual(tm.root._tableRowsOffset, 88)
-        XCTAssertEqual(tm.root._tableRowByteCount, 272)
+        XCTAssertEqual(tm.root._tableRowByteCount, 32)
         
         
         // Column 1 value
@@ -686,7 +686,7 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableRowCount, 1)
         XCTAssertEqual(tm.root._tableColumnCount, 3)
         XCTAssertEqual(tm.root._tableRowsOffset, 88)
-        XCTAssertEqual(tm.root._tableRowByteCount, 272)
+        XCTAssertEqual(tm.root._tableRowByteCount, 32)
         
         
         // Column 1 value
@@ -713,12 +713,12 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableRowCount, 0)
         XCTAssertEqual(tm.root._tableColumnCount, 3)
         XCTAssertEqual(tm.root._tableRowsOffset, 88)
-        XCTAssertEqual(tm.root._tableRowByteCount, 272)
+        XCTAssertEqual(tm.root._tableRowByteCount, 32)
     }
 
     func test_10_removeColumns() {
         
-        guard let tm = createTableWith3Rows() else { XCTFail(); return }
+        guard let tm = createTableWith3Columns() else { XCTFail(); return }
         
         XCTAssertEqual(tm.root.addRows(3), Result.success)
         
@@ -742,7 +742,7 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableRowCount, 3)
         XCTAssertEqual(tm.root._tableColumnCount, 2)
         XCTAssertEqual(tm.root._tableRowsOffset, 64)
-        XCTAssertEqual(tm.root._tableRowByteCount, 264)
+        XCTAssertEqual(tm.root._tableRowByteCount, 24)
         
         
         // Column 1 properties
@@ -750,10 +750,10 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableGetColumnName(for: 0), "aa")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 0), ItemType.uint8)
         XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 0), 0x78E8)
-        XCTAssertEqual(tm.root._tableGetColumnValueOffset(for: 0), 0)
+        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 0), 0)
         XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 0), 8)
         XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 0), 48)
-        XCTAssertEqual(tm.root._tableGetColumnValueFieldByteCount(for: 0), 8)
+        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 0), 8)
         
         // Column 1 values
         
@@ -767,10 +767,10 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableGetColumnName(for: 1), "cc")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 1), ItemType.string)
         XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 1), 0xD968)
-        XCTAssertEqual(tm.root._tableGetColumnValueOffset(for: 1), 8)
+        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 1), 8)
         XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 1), 8)
         XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 1), 56)
-        XCTAssertEqual(tm.root._tableGetColumnValueFieldByteCount(for: 1), 256)
+        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 1), 16)
         
         // Column 2 values
         
@@ -789,7 +789,7 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableRowCount, 3)
         XCTAssertEqual(tm.root._tableColumnCount, 1)
         XCTAssertEqual(tm.root._tableRowsOffset, 40)
-        XCTAssertEqual(tm.root._tableRowByteCount, 256)
+        XCTAssertEqual(tm.root._tableRowByteCount, 16)
         
         
         // Column properties
@@ -797,10 +797,10 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableGetColumnName(for: 0), "cc")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 0), ItemType.string)
         XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 0), 0xD968)
-        XCTAssertEqual(tm.root._tableGetColumnValueOffset(for: 0), 0)
+        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 0), 0)
         XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 0), 8)
         XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 0), 32)
-        XCTAssertEqual(tm.root._tableGetColumnValueFieldByteCount(for: 0), 256)
+        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 0), 16)
         
         // Column values
         
@@ -824,7 +824,7 @@ class Table_Tests: XCTestCase {
 
     func test_11_insertRow() {
         
-        guard let tm = createTableWith3Rows() else { XCTFail(); return }
+        guard let tm = createTableWith3Columns() else { XCTFail(); return }
         
         XCTAssertEqual(tm.root.addRows(3), Result.success)
         
@@ -848,7 +848,7 @@ class Table_Tests: XCTestCase {
         XCTAssertEqual(tm.root._tableRowCount, 4)
         XCTAssertEqual(tm.root._tableColumnCount, 3)
         XCTAssertEqual(tm.root._tableRowsOffset, 88)
-        XCTAssertEqual(tm.root._tableRowByteCount, 272)
+        XCTAssertEqual(tm.root._tableRowByteCount, 32)
         
         
         // Column 1 value
@@ -888,8 +888,8 @@ class Table_Tests: XCTestCase {
             }
         }
         
-        guard let col1 = ColumnSpecification(name: "aa", initialNameFieldByteCount: nil, valueType: .array, initialValueByteCount: 32) else { XCTFail(); return }
-        guard let col2 = ColumnSpecification(name: "bb", initialNameFieldByteCount: nil, valueType: .int8, initialValueByteCount: nil) else { XCTFail(); return }
+        let col1 = ColumnSpecification(type: .array, name: NameField("aa")!, byteCount: 32)
+        let col2 = ColumnSpecification(type: .int8, name: NameField("bb")!, byteCount: 1)
 
         guard let im = ItemManager(rootItemType: .table) else { XCTFail(); return }
         
@@ -899,20 +899,20 @@ class Table_Tests: XCTestCase {
         
         XCTAssertEqual(im.root[1, "aa"].append(Int16(66)), .success)
         
-        XCTAssertEqual(im.root[1, "aa"].countValue, 1)
+        XCTAssertEqual(im.root[1, "aa"].count, 1)
         
         XCTAssertEqual(im.root[1, "aa"][0].int16, 66)
         
         
         // Grow the second array so it has to increase the byte count
         
-        for _ in 1 ... 15 {
+        for _ in 1 ... 7 {
             XCTAssertEqual(im.root[1, "aa"].append(Int16(0x77)), .success) // filling the available space
         }
 
         XCTAssertEqual(im.root[1, "aa"].append(Int16(0x77)), .success) // increases byte count
 
-        XCTAssertEqual(im.root[1, "aa"].countValue, 17)
+        XCTAssertEqual(im.root[1, "aa"].count, 9)
         
         XCTAssertEqual(im.root[1, "aa"][0].int16, 66)
 

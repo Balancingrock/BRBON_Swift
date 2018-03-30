@@ -23,13 +23,14 @@ class ItemManager_Table_tests: XCTestCase {
 
     func test_1() {
 
+        ItemManager.startWithZeroedBuffers = true
         
         // Create a table
         
         guard let tm = ItemManager(rootItemType: .table) else { XCTFail(); return }
         
         var exp = Data(bytes: [
-            0x46, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
+            0x14, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00
@@ -43,10 +44,10 @@ class ItemManager_Table_tests: XCTestCase {
         
         // Add a column
         
-        XCTAssertEqual(tm.root.addColumn(fieldType: .bool, nameField: NameField("aa")!, fieldByteCount: 1), .success)
+        XCTAssertEqual(tm.root.addColumn(type: .bool, name: NameField("aa")!, byteCount: 1), .success)
         
         exp = Data(bytes: [
-            0x46, 0x00, 0x00, 0x00,  0x38, 0x00, 0x00, 0x00,
+            0x14, 0x00, 0x00, 0x00,  0x38, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             
             0x00, 0x00, 0x00, 0x00, // RowCount
@@ -56,7 +57,7 @@ class ItemManager_Table_tests: XCTestCase {
             
             0xe8, 0x78,             // CRC
             0x08,                   // NameFieldByteCount
-            0x81,                   // ColumnType
+            0x02,                   // ColumnType
             0x20, 0x00, 0x00, 0x00, // ColumnNameUtf8Offset
             0x00, 0x00, 0x00, 0x00, // ColumnValueOffset
             0x08, 0x00, 0x00, 0x00, // ColumnValueByteCount
@@ -72,10 +73,10 @@ class ItemManager_Table_tests: XCTestCase {
         
         // Add a second column
         
-        XCTAssertEqual(tm.root.addColumn(fieldType: .int64, nameField: NameField("bb")!, fieldByteCount: 8), .success)
+        XCTAssertEqual(tm.root.addColumn(type: .int64, name: NameField("bb")!, byteCount: 8), .success)
 
         exp = Data(bytes: [
-            0x46, 0x00, 0x00, 0x00,  0x50, 0x00, 0x00, 0x00,
+            0x14, 0x00, 0x00, 0x00,  0x50, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             
             0x00, 0x00, 0x00, 0x00, // RowCount
@@ -85,14 +86,14 @@ class ItemManager_Table_tests: XCTestCase {
             
             0xe8, 0x78,             // CRC
             0x08,                   // NameFieldByteCount
-            0x81,                   // ColumnType
+            0x02,                   // ColumnType
             0x30, 0x00, 0x00, 0x00, // ColumnNameUtf8Offset
             0x00, 0x00, 0x00, 0x00, // ColumnValueOffset
             0x08, 0x00, 0x00, 0x00, // ColumnValueByteCount
             
             0xa8, 0x89,             // CRC
             0x08,                   // NameFieldByteCount
-            0x01,                   // ColumnType
+            0x06,                   // ColumnType
             0x38, 0x00, 0x00, 0x00, // ColumnNameUtf8Offset
             0x08, 0x00, 0x00, 0x00, // ColumnValueOffset
             0x08, 0x00, 0x00, 0x00, // ColumnValueByteCount
@@ -100,7 +101,7 @@ class ItemManager_Table_tests: XCTestCase {
             0x02, 0x61, 0x61, 0x00, 0x00,  0x00, 0x00, 0x00, // UTF8 Area
             0x02, 0x62, 0x62, 0x00, 0x00,  0x00, 0x00, 0x00  // UTF8 Area
             ])
-        
+
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
             let p = tm.getActivePortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == tm.root)
@@ -109,10 +110,10 @@ class ItemManager_Table_tests: XCTestCase {
         
         // Add a third column
         
-        XCTAssertEqual(tm.root.addColumn(fieldType: .uint16, nameField: NameFieldDescriptor("cc")!, fieldByteCount: 8), .success)
+        XCTAssertEqual(tm.root.addColumn(type: .uint16, name: NameField("cc")!, byteCount: 8), .success)
         
         exp = Data(bytes: [
-            0x46, 0x00, 0x00, 0x00,  0x68, 0x00, 0x00, 0x00,
+            0x14, 0x00, 0x00, 0x00,  0x68, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             
             0x00, 0x00, 0x00, 0x00, // RowCount
@@ -122,21 +123,21 @@ class ItemManager_Table_tests: XCTestCase {
             
             0xe8, 0x78,             // CRC
             0x08,                   // NameFieldByteCount
-            0x81,                   // ColumnType
+            0x02,                   // ColumnType
             0x40, 0x00, 0x00, 0x00, // ColumnNameUtf8Offset
             0x00, 0x00, 0x00, 0x00, // ColumnValueOffset
             0x08, 0x00, 0x00, 0x00, // ColumnValueByteCount
             
             0xa8, 0x89,             // CRC
             0x08,                   // NameFieldByteCount
-            0x01,                   // ColumnType
+            0x06,                   // ColumnType
             0x48, 0x00, 0x00, 0x00, // ColumnNameUtf8Offset
             0x08, 0x00, 0x00, 0x00, // ColumnValueOffset
             0x08, 0x00, 0x00, 0x00, // ColumnValueByteCount
             
             0x68, 0xd9,             // CRC
             0x08,                   // NameFieldByteCount
-            0x86,                   // ColumnType
+            0x08,                   // ColumnType
             0x50, 0x00, 0x00, 0x00, // ColumnNameUtf8Offset
             0x10, 0x00, 0x00, 0x00, // ColumnValueOffset
             0x08, 0x00, 0x00, 0x00, // ColumnValueByteCount
@@ -157,7 +158,7 @@ class ItemManager_Table_tests: XCTestCase {
         XCTAssertEqual(tm.root.addRows(1), .success)
         
         exp = Data(bytes: [
-            0x46, 0x00, 0x00, 0x00,  0x80, 0x00, 0x00, 0x00,
+            0x14, 0x00, 0x00, 0x00,  0x80, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             
             0x01, 0x00, 0x00, 0x00, // RowCount
@@ -167,21 +168,21 @@ class ItemManager_Table_tests: XCTestCase {
             
             0xe8, 0x78,             // CRC
             0x08,                   // NameFieldByteCount
-            0x81,                   // ColumnType (bool)
+            0x02,                   // ColumnType (bool)
             0x40, 0x00, 0x00, 0x00, // ColumnNameUtf8Offset
             0x00, 0x00, 0x00, 0x00, // ColumnValueOffset
             0x08, 0x00, 0x00, 0x00, // ColumnValueByteCount
             
             0xa8, 0x89,             // CRC
             0x08,                   // NameFieldByteCount
-            0x01,                   // ColumnType (int64)
+            0x06,                   // ColumnType (int64)
             0x48, 0x00, 0x00, 0x00, // ColumnNameUtf8Offset
             0x08, 0x00, 0x00, 0x00, // ColumnValueOffset
             0x08, 0x00, 0x00, 0x00, // ColumnValueByteCount
             
             0x68, 0xd9,             // CRC
             0x08,                   // NameFieldByteCount
-            0x86,                   // ColumnType (uint16)
+            0x08,                   // ColumnType (uint16)
             0x50, 0x00, 0x00, 0x00, // ColumnNameUtf8Offset
             0x10, 0x00, 0x00, 0x00, // ColumnValueOffset
             0x08, 0x00, 0x00, 0x00, // ColumnValueByteCount
@@ -194,7 +195,8 @@ class ItemManager_Table_tests: XCTestCase {
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00
             ])
-                
+        tm.data.printBytes()
+
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
             let p = tm.getActivePortal(for: UnsafeMutableRawPointer(mutating: ptr))
             XCTAssertTrue(p == tm.root)
@@ -208,7 +210,7 @@ class ItemManager_Table_tests: XCTestCase {
         tm.root[0, "cc"] = UInt16(0x6666)
         
         exp = Data(bytes: [
-            0x46, 0x00, 0x00, 0x00,  0x80, 0x00, 0x00, 0x00,
+            0x14, 0x00, 0x00, 0x00,  0x80, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             
             0x01, 0x00, 0x00, 0x00, // RowCount
@@ -218,21 +220,21 @@ class ItemManager_Table_tests: XCTestCase {
             
             0xe8, 0x78,             // CRC
             0x08,                   // NameFieldByteCount
-            0x81,                   // ColumnType (bool)
+            0x02,                   // ColumnType (bool)
             0x40, 0x00, 0x00, 0x00, // ColumnNameUtf8Offset
             0x00, 0x00, 0x00, 0x00, // ColumnValueOffset
             0x08, 0x00, 0x00, 0x00, // ColumnValueByteCount
             
             0xa8, 0x89,             // CRC
             0x08,                   // NameFieldByteCount
-            0x01,                   // ColumnType (int64)
+            0x06,                   // ColumnType (int64)
             0x48, 0x00, 0x00, 0x00, // ColumnNameUtf8Offset
             0x08, 0x00, 0x00, 0x00, // ColumnValueOffset
             0x08, 0x00, 0x00, 0x00, // ColumnValueByteCount
             
             0x68, 0xd9,             // CRC
             0x08,                   // NameFieldByteCount
-            0x86,                   // ColumnType (uint16)
+            0x08,                   // ColumnType (uint16)
             0x50, 0x00, 0x00, 0x00, // ColumnNameUtf8Offset
             0x10, 0x00, 0x00, 0x00, // ColumnValueOffset
             0x08, 0x00, 0x00, 0x00, // ColumnValueByteCount

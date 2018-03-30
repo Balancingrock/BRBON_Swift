@@ -468,7 +468,7 @@ extension Portal {
         
         // The byte count should be increased
         
-        let necessaryItemByteCount = itemMinimumByteCount + _itemNameFieldByteCount + bytes
+        let necessaryItemByteCount = itemMinimumByteCount + _itemNameFieldByteCount + bytes.roundUpToNearestMultipleOf8()
         
         return increaseItemByteCount(to: necessaryItemByteCount)
     }
@@ -602,7 +602,7 @@ extension Portal {
                 // The column index could be nil if the column contains a container and the container must grow in size.
                 // So determine the column index by searching for it.
                 
-                let rowColOffset = parent.itemValueFieldPtr.distance(to: itemPtr)
+                let rowColOffset = parent.itemValueFieldPtr.distance(to: itemPtr) - parent._tableRowsOffset
                 let colOffset = rowColOffset % parent._tableRowByteCount
                 
                 var columnIndex: Int?
@@ -1001,7 +1001,9 @@ extension Portal {
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
             if index == nil { return }
-            changeSelfToNull()
+            removeChildItems()
+            itemType = .null
+            _itemSmallValue = UInt32(0)
         }
     }
     
@@ -1211,7 +1213,8 @@ extension Portal {
                 if !isNull {
                     if newValue.itemType != valueType {
                         fatalOnTypeChange()
-                        changeSelfToNull()
+                        removeChildItems()
+                        _itemSmallValue = UInt32(0)
                     }
                 }
                 
@@ -1221,7 +1224,9 @@ extension Portal {
                 
             } else {
                 
-                changeSelfToNull()
+                removeChildItems()
+                itemType = .null
+                _itemSmallValue = UInt32(0)
             }
         }
         
@@ -1270,22 +1275,23 @@ extension Portal {
                 if !isNull {
                     if newValue.itemType != valueType {
                         fatalOnTypeChange()
-                        changeSelfToNull()
+                        removeChildItems()
+                        _itemSmallValue = UInt32(0)
                     }
                 }
                 
                 itemType = .string
                 
-                guard ensureValueFieldByteCount(of: newValue.valueByteCount) == .success else {
-                    fatalOrNull("Could not allocate additional memory")
-                    return
-                }
+                let result = ensureValueFieldByteCount(of: newValue.valueByteCount)
+                guard result == .success else { fatalError(result.description) }
                 
                 newValue.storeValue(atPtr: itemValueFieldPtr, endianness)
                 
             } else {
                 
-                changeSelfToNull()
+                removeChildItems()
+                itemType = .null
+                _itemSmallValue = UInt32(0)
             }
         }
         
@@ -1296,9 +1302,9 @@ extension Portal {
     ///
     /// If self is a container, all portals for the contained items and elements are removed from the active portal list.
     
-    internal func changeSelfToNull(_ removeSelf: Bool = false) {
+    private func removeChildItems(_ removeSelf: Bool = false) {
         if isArray || isDictionary || isSequence {
-            forEachAbortOnTrue({ $0.changeSelfToNull(true); return false })
+            forEachAbortOnTrue({ $0.removeChildItems(true); return false })
         }
         if removeSelf {
             manager.removeActivePortal(self)

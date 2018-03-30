@@ -139,6 +139,14 @@ extension Portal {
     }
     
     
+    /// The small value field accessor
+    
+    internal var _itemSmallValue: UInt32 {
+        get { return UInt32(fromPtr: itemSmallValuePtr, endianness) }
+        set { UInt32(newValue).storeValue(atPtr: itemSmallValuePtr, endianness) }
+    }
+    
+    
     /// The byte count of the name field in the item this portal refers to.
     
     internal var _itemNameFieldByteCount: Int {

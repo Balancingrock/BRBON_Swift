@@ -60,7 +60,7 @@ public struct ColumnSpecification {
     internal init?(fromPtr: UnsafeMutableRawPointer, forColumn column: Int, _ endianness: Endianness) {
         
         // Start of the column descriptor
-        let ptr = fromPtr.advanced(by: tableColumnDescriptorBaseOffset)
+        let ptr = fromPtr.advanced(by: tableColumnDescriptorBaseOffset + column * tableColumnDescriptorByteCount)
         
         // Get value type
         guard let type = ItemType(atPtr: ptr.advanced(by: tableColumnFieldTypeOffset)) else { return nil }
