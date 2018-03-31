@@ -37,7 +37,12 @@ Note: Planned releases are for information only and subject to change without no
 
 - Bugfixes and API upgrades.
 
-#### 0.4.1 (Current)
+#### 0.4.2 (Current)
+
+- Added headers
+- Fixed access levels
+
+#### 0.4.1
 
 - Added UUID type
 

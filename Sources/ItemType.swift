@@ -3,14 +3,14 @@
 //  File:       ItemType.swift
 //  Project:    BRBON
 //
-//  Version:    0.3.0
+//  Version:    0.4.2
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
 //  Blog:       http://swiftrien.blogspot.com
 //  Git:        https://github.com/Balancingrock/BRBON
 //
-//  Copyright:  (c) 2017 Marinus van der Lugt, All rights reserved.
+//  Copyright:  (c) 2018 Marinus van der Lugt, All rights reserved.
 //
 //  License:    Use or redistribute this code any way you like with the following two provision:
 //
@@ -45,7 +45,7 @@
 //
 // History
 //
-// 0.3.0  - Changed raw values
+// 0.4.2  - Changed raw values and redone access levels
 // 0.1.0  - Initial version
 // =====================================================================================================================
 
@@ -191,14 +191,14 @@ public enum ItemType: UInt8 {
         }
     }
     
-    public var isContainer: Bool {
+    internal var isContainer: Bool {
         switch self {
         case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32, .int64, .uint64, .float64, .string, .crcString, .binary, .crcBinary, .uuid: return false
         case .array, .dictionary, .sequence, .table: return true
         }
     }
     
-    public init?(atPtr: UnsafeMutableRawPointer) {
+    internal init?(atPtr: UnsafeMutableRawPointer) {
         self.init(rawValue: UInt8(fromPtr: atPtr, machineEndianness))
     }
 }

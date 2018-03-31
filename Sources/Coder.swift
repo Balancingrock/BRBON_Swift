@@ -1,16 +1,15 @@
 // =====================================================================================================================
 //
-//  File:       BrbonCoder.swift
+//  File:       Coder.swift
 //  Project:    BRBON
 //
-//  Version:    0.1.0
+//  Version:    0.4.2
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
-//  Blog:       http://swiftrien.blogspot.com
 //  Git:        https://github.com/Balancingrock/BRBON
 //
-//  Copyright:  (c) 2017 Marinus van der Lugt, All rights reserved.
+//  Copyright:  (c) 2018 Marinus van der Lugt, All rights reserved.
 //
 //  License:    Use or redistribute this code any way you like with the following two provision:
 //
@@ -46,6 +45,7 @@
 // History
 //
 // 0.1.0  - Initial version
+// 0.4.2  - Updates due to new structure & API organization
 // =====================================================================================================================
  
 import Foundation
@@ -108,11 +108,11 @@ internal protocol Coder: IsBrbon {
 
 extension Coder {
     
-    func itemByteCount(_ nfd: NameField?) -> Int {
+    internal func itemByteCount(_ nfd: NameField?) -> Int {
         return itemMinimumByteCount + (nfd?.byteCount ?? 0) + (itemType.usesSmallValue ? 0 : valueByteCount).roundUpToNearestMultipleOf8()
     }
     
-    func storeAsItem(
+    internal func storeAsItem(
         atPtr: UnsafeMutableRawPointer,
         options: ItemOptions = ItemOptions.none,
         flags: ItemFlags = ItemFlags.none,
@@ -174,7 +174,7 @@ extension Coder {
         }
     }
     
-    init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+    internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         fatalError("This type cannot be recreated from a byte stream")
     }
 }
