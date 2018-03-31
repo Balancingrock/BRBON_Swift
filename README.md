@@ -1,7 +1,9 @@
 # BRBON
 An Binary Object Notation by Balancing Rock.
 
-Note: HEAD is currently not stable, there are frequent updates.
+Current status: The BRBON specification is considered stable, no changes are planned or expected. Extensions are planned but will be compatible to the current definitions.
+
+The API passes all tests. But is still missing a lot of conveniance operators and even some core operations. However it is usable and future development is expected to be largely backwards compatible.
 
 ## Description
 BRBON is a binary storage format specification. It started out as a binary version for JSON but the requirement for speed has rendered some JSON aspects obsolete. Still, the JSON origins can be recognised in the object oriented approach.
@@ -31,10 +33,23 @@ Two alternatives for BRBON have been considered: BSON and BinSON. However both w
 
 Note: Planned releases are for information only and subject to change without notice.
 
-#### 0.2.0 (Planned)
+#### 0.5.0 (Planned)
 
-- Complete reworking of the API and some changes in the data structure.
+- Bugfixes and API upgrades.
 
-#### 0.1.0 (Current)
+#### 0.4.0 (Current)
+
+- The BRBON specification has been changed to allow fatser API implementations.
+- The API has been completely re-implemented.
+
+#### 0.3.0
+
+- Complete reworking of the API and some changes in the data structure. Only partly complete.
+
+#### 0.2.0
+
+- Bugfixes and some changes.
+
+#### 0.1.0
 
 - Initial release.

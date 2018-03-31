@@ -306,7 +306,7 @@ class ItemManager_Array_Tests: XCTestCase {
         
         // Add two elements
         
-        XCTAssertEqual(am.root.createNewElements(Int64(0x5555555555555555), amount: 2), .success)
+        XCTAssertEqual(am.root.createNewElements(amount: 2, value: Int64(0x5555555555555555)), .success)
         
         let portal1 = am.root[0].portal
         let portal2 = am.root[1].portal

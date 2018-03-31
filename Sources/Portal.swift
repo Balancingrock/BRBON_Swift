@@ -720,18 +720,6 @@ extension Portal {
         return itemPtr.advanced(by: _itemByteCount)
     }
     
-    /// Returns a pointer to the next byte after the last item in a dictionary or sequence.
-/*
-    internal var _afterLastItemPtr: UnsafeMutableRawPointer {
-        var ptr = itemValueFieldPtr
-        var remainder = isDictionary ? _dictionaryItemCount : _sequenceItemCount
-        while remainder > 0 {
-            ptr = ptr.advanced(by: Int(UInt32(fromPtr: ptr.advanced(by: itemByteCountOffset), endianness)))
-            remainder -= 1
-        }
-        return ptr
-    }*/
-    
     
     /// The closure is called for each child item or until the closure returns true.
     ///
