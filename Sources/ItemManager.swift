@@ -340,6 +340,11 @@ public final class ItemManager {
             Float64(0).storeAsItem(atPtr: bufferPtr, name: nfd, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
             
             
+        case .uuid:
+            
+            UUID().storeAsItem(atPtr: bufferPtr, name: nfd, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
+            
+            
         case .string:
             
             "".storeAsItem(atPtr: bufferPtr, name: nfd, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)

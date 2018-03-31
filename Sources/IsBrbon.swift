@@ -63,3 +63,7 @@ extension String: IsBrbon {
 extension Data: IsBrbon {
     public var itemType: ItemType { return ItemType.binary }
 }
+
+extension UUID: IsBrbon {
+    public var itemType: ItemType { return ItemType.uuid }
+}

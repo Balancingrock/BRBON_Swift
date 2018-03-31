@@ -37,7 +37,11 @@ Note: Planned releases are for information only and subject to change without no
 
 - Bugfixes and API upgrades.
 
-#### 0.4.0 (Current)
+#### 0.4.1 (Current)
+
+- Added UUID type
+
+#### 0.4.0
 
 - The BRBON specification has been changed to allow fatser API implementations.
 - The API has been completely re-implemented.

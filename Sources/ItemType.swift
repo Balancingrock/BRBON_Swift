@@ -158,17 +158,22 @@ public enum ItemType: UInt8 {
     case table          = 0x14
     
     
+    /// A UUID
+    
+    case uuid           = 0x15
+    
+    
     internal var usesSmallValue: Bool {
         switch self {
         case .null, .bool, .int8, .int16, .int32, .uint8, .uint16, .uint32, .float32: return true
-        case .int64, .uint64, .float64, .string, .crcString, .binary, .crcBinary, .array, .dictionary, .sequence, .table: return false
+        case .int64, .uint64, .float64, .string, .crcString, .binary, .crcBinary, .array, .dictionary, .sequence, .table, .uuid: return false
         }
     }
     
     
     internal var hasFlexibleLength: Bool {
         switch self {
-        case .null, .bool, .int8, .int16, .int32, .uint8, .uint16, .uint32, .float32, .int64, .uint64, .float64: return false
+        case .null, .bool, .int8, .int16, .int32, .uint8, .uint16, .uint32, .float32, .int64, .uint64, .float64, .uuid: return false
         case .string, .crcString, .binary, .crcBinary, .array, .dictionary, .sequence, .table: return true
         }
     }
@@ -180,6 +185,7 @@ public enum ItemType: UInt8 {
         case .int16, .uint16: return 2
         case .int32, .uint32, .float32: return 4
         case .int64, .uint64, .float64: return 8
+        case .uuid: return 16
         case .string, .crcString, .binary, .crcBinary: return 256
         case .array, .dictionary, .sequence, .table: return 1024
         }
@@ -187,7 +193,7 @@ public enum ItemType: UInt8 {
     
     public var isContainer: Bool {
         switch self {
-        case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32, .int64, .uint64, .float64, .string, .crcString, .binary, .crcBinary: return false
+        case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32, .int64, .uint64, .float64, .string, .crcString, .binary, .crcBinary, .uuid: return false
         case .array, .dictionary, .sequence, .table: return true
         }
     }

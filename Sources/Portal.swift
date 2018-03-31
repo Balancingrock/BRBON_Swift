@@ -145,7 +145,7 @@ public final class Portal {
     public var count: Int {
         guard isValid else { return 0 }
         switch itemType! {
-        case .null, .bool, .int8, .int16, .int32, .int64, .uint8, .uint16, .uint32, .uint64, .float32, .float64, .string, .crcString, .binary, .crcBinary: return 0
+        case .null, .bool, .int8, .int16, .int32, .int64, .uint8, .uint16, .uint32, .uint64, .float32, .float64, .string, .crcString, .binary, .crcBinary, .uuid: return 0
         case .dictionary: return _dictionaryItemCount
         case .sequence: return _sequenceItemCount
         case .array: return _arrayElementCount
@@ -231,6 +231,11 @@ extension Portal: Equatable {
 
                 return lhs.uint64 == rhs.uint64
 
+                
+            case .uuid:
+                
+                return lhs.uuid == rhs.uuid
+                
                 
             case .string:
 
@@ -340,6 +345,12 @@ extension Portal: Equatable {
                             if lhs._tableFieldPtr(row: ri, column: ci).assumingMemoryBound(to: UInt64.self).pointee
                                 != rhs._tableFieldPtr(row: ri, column: ci).assumingMemoryBound(to: UInt64.self).pointee { return false }
 
+                        case .uuid:
+                            if lhs._tableFieldPtr(row: ri, column: ci).assumingMemoryBound(to: UInt64.self).pointee
+                                != rhs._tableFieldPtr(row: ri, column: ci).assumingMemoryBound(to: UInt64.self).pointee { return false }
+                            if lhs._tableFieldPtr(row: ri, column: ci).advanced(by: 8).assumingMemoryBound(to: UInt64.self).pointee
+                                != rhs._tableFieldPtr(row: ri, column: ci).advanced(by: 8).assumingMemoryBound(to: UInt64.self).pointee { return false }
+
                         case .string:
                             let lstr = String(fromPtr: lhs._tableFieldPtr(row: ri, column: ci), lhs.endianness)
                             let rstr = String(fromPtr: rhs._tableFieldPtr(row: ri, column: ci), rhs.endianness)
@@ -391,6 +402,7 @@ extension Portal: Equatable {
             case .uint64: return lhs.uint64 == rhs.uint64
             case .float32: return lhs.float32 == rhs.float32
             case .float64: return lhs.float64 == rhs.float64
+            case .uuid: return lhs.uuid == rhs.uuid
             case .string: return lhs.string == rhs.string
             case .crcString: return lhs.crcString == rhs.crcString
             case .binary: return lhs.binary == rhs.binary
@@ -440,6 +452,7 @@ extension Portal {
         switch itemType! {
         case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32: return 0
         case .int64, .uint64, .float64: return 8
+        case .uuid: return 16
         case .string: return _stringValueFieldUsedByteCount
         case .crcString: return _crcStringValueFieldUsedByteCount
         case .binary: return _binaryValueFieldUsedByteCount
@@ -899,6 +912,16 @@ extension Portal {
     }
     
     
+    /// Returns true if the value accessable through this portal is an UUID.
+    
+    public var isUuid: Bool {
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        if let column = column { return _tableGetColumnType(for: column) == ItemType.uuid }
+        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uuid.rawValue }
+        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uuid.rawValue
+    }
+    
+    
     /// Returns true if the value accessable through this portal is a String.
 
     public var isString: Bool {
@@ -1126,6 +1149,19 @@ extension Portal {
         }
         set { assistValueFieldAssignment(newValue) }
     }
+    
+    
+    /// Access the value through the portal as an UUID
+    
+    public var uuid: UUID? {
+        get {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard isUuid else { fatalOrNull("Attempt to access \(itemType) as a String"); return nil }
+            return UUID(fromPtr: valueFieldPtr, endianness)
+        }
+        set { assistValueFieldAssignment(newValue) }
+    }
+    
     
     
     /// Access the value through the portal as a String
