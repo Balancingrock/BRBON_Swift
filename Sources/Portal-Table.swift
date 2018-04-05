@@ -44,6 +44,11 @@
 //
 // History
 //
+// 0.4.3 - Changed assignField from internal to public
+//         Added rowCount and rowByteCount
+//         Updated for changes in ItemManager operation signatures
+//         Added resetTable
+//         Added protection against invalid portals in public functions
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -449,6 +454,15 @@ extension Portal {
     }
 
     
+    /// The number of rows in the table
+    
+    public var rowCount: Int? {
+        guard isValid else { return nil }
+        guard isTable else { return nil }
+        return _tableRowCount
+    }
+    
+    
     /// The number of columns in the table.
     
     internal var _tableColumnCount: Int {
@@ -470,6 +484,15 @@ extension Portal {
     internal var _tableRowByteCount: Int {
         get { return Int(UInt32(fromPtr: _tableRowByteCountPtr, endianness)) }
         set { UInt32(newValue).storeValue(atPtr: _tableRowByteCountPtr, endianness) }
+    }
+    
+    
+    /// The byte count for a single row
+    
+    public var rowByteCount: Int? {
+        guard isValid else { return nil }
+        guard isTable else { return nil }
+        return _tableRowByteCount
     }
     
     
@@ -845,6 +868,19 @@ extension Portal {
         }
     }
     
+    
+    /// Reset the table to an empty state.
+    ///
+    /// - Parameter clear: If set to true, the cleared memory area is filled with zero's. If false the area will stay as is but the row count is reset to zero.
+    
+    public func tableReset(clear: Bool = false) {
+        guard isValid, isTable else { return }
+        if clear {
+            _ = Darwin.memset(_tableGetRowPtr(row: 0), 0, _tableRowCount * _tableRowByteCount)
+        }
+        _tableRowCount = 0
+    }
+    
 
     /// Returns a dictionary with the columns at the given row.
     ///
@@ -854,7 +890,7 @@ extension Portal {
     
     public func getRow(_ index: Int) -> Dictionary<String, Portal> {
         
-        guard isTable else { return [:] }
+        guard isValid, isTable else { return [:] }
 
         var dict: Dictionary<String, Portal> = [:]
         
@@ -871,13 +907,16 @@ extension Portal {
     ///
     /// The fields of the new rows will be set to zero, after which the defaultValues closure is called.
     ///
-    /// - Parameter amount: The number of rows that must be added.
+    /// - Parameters:
+    ///   - amount: The number of rows that must be added.
+    ///   - values: A closure that provides the values for the new fields. Field will be set to zero's before the closure is activated.
     ///
     /// - Returns: 'success' or an error indicator.
     
     @discardableResult
-    public func addRows(_ amount: Int, defaultValues closure: SetTableFieldDefaultValue? = nil) -> Result {
+    public func addRows(_ amount: Int, values closure: SetTableFieldDefaultValue? = nil) -> Result {
        
+        guard isValid else { return .portalInvalid }
         guard isTable else { return .operationNotSupported }
         
         let necessaryValueFieldByteCount = _tableRowsOffset + ((_tableRowCount + amount) * _tableRowByteCount)
@@ -924,6 +963,7 @@ extension Portal {
     @discardableResult
     public func removeRow(_ index: Int) -> Result {
         
+        guard isValid else { return .portalInvalid }
         guard isTable else { return .operationNotSupported }
         
         guard index >= 0 else { return .indexBelowLowerBound }
@@ -953,6 +993,7 @@ extension Portal {
     @discardableResult
     public func removeColumn(_ name: String) -> Result {
         
+        guard isValid else { return .portalInvalid }
         guard isTable else { return .operationNotSupported }
         
         
@@ -1072,6 +1113,9 @@ extension Portal {
     @discardableResult
     public func addColumn(type: ItemType, name nfd: NameField, byteCount: Int, default closure: SetTableFieldDefaultValue? = nil) -> Result {
         
+        guard isValid else { return .portalInvalid }
+        guard isTable else { return .operationNotSupported }
+
         
         // Create a new column specification
         
@@ -1094,6 +1138,10 @@ extension Portal {
     
     @discardableResult
     public func addColumns(_ specs: Array<ColumnSpecification>, defaultValues closure: SetTableFieldDefaultValue? = nil) -> Result {
+        
+        guard isValid else { return .portalInvalid }
+        guard isTable else { return .operationNotSupported }
+
         for spec in specs {
             let result = addColumn(spec, defaultValues: closure)
             guard result == .success else { return result }
@@ -1115,6 +1163,9 @@ extension Portal {
     @discardableResult
     public func addColumn(_ colSpec: ColumnSpecification, defaultValues closure: SetTableFieldDefaultValue? = nil) -> Result {
         
+        guard isValid else { return .portalInvalid }
+        guard isTable else { return .operationNotSupported }
+
         
         // The name may not exist already
         
@@ -1209,6 +1260,7 @@ extension Portal {
     
     public func insertRows(at index: Int, amount: Int = 1, defaultValues closure: SetTableFieldDefaultValue? = nil) -> Result {
         
+        guard isValid else { return .portalInvalid }
         guard isTable else { return .operationNotSupported }
         
         guard index >= 0 else { return .indexBelowLowerBound }
@@ -1267,8 +1319,11 @@ extension Portal {
     /// - Returns: Either .success or an error id.
     
     @discardableResult
-    internal func assignField(at row: Int, in column: Int, fromManager source: ItemManager) -> Result {
+    public func assignField(at row: Int, in column: Int, fromManager source: ItemManager) -> Result {
         
+        guard isValid else { return .portalInvalid }
+        guard isTable else { return .operationNotSupported }
+
         
         // Prevent errors
         
@@ -1323,10 +1378,10 @@ extension Portal {
     public func createFieldArray(at row: Int, in column: Int, elementType: ItemType, elementByteCount: Int? = nil, valueByteCount: Int? = nil) -> Result {
         
         guard isValid else { return Result.portalInvalid }
-        guard itemType! == .table else { return Result.operationNotSupported }
+        guard isTable else { return Result.operationNotSupported }
 
         let arr = BrbonArray(content: [], type: elementType, elementByteCount: elementByteCount)
-        guard let im = ItemManager(value: arr, name: nil, itemValueByteCount: valueByteCount, endianness: endianness) else { return Result.dataInconsistency }
+        let im = ItemManager(value: arr, name: nil, itemValueByteCount: valueByteCount, endianness: endianness)
         
         return assignField(at: row, in: column, fromManager: im)
     }
@@ -1347,10 +1402,10 @@ extension Portal {
     public func createFieldSequence(at row: Int, in column: Int, valueByteCount: Int? = nil) -> Result {
         
         guard isValid else { return Result.portalInvalid }
-        guard itemType! == .table else { return Result.operationNotSupported }
+        guard isTable else { return Result.operationNotSupported }
 
         let seq = BrbonSequence()!
-        guard let im = ItemManager(value: seq, name: nil, itemValueByteCount: valueByteCount, endianness: endianness) else { return Result.dataInconsistency }
+        let im = ItemManager(value: seq, name: nil, itemValueByteCount: valueByteCount, endianness: endianness)
         
         return assignField(at: row, in: column, fromManager: im)
     }
@@ -1371,10 +1426,10 @@ extension Portal {
     public func createFieldDictionary(at row: Int, in column: Int, valueByteCount: Int? = nil) -> Result {
         
         guard isValid else { return Result.portalInvalid }
-        guard itemType! == .table else { return Result.operationNotSupported }
+        guard isTable else { return Result.operationNotSupported }
 
         let dict = BrbonDictionary()!
-        guard let im = ItemManager(value: dict, name: nil, itemValueByteCount: valueByteCount, endianness: endianness) else { return Result.dataInconsistency }
+        let im = ItemManager(value: dict, name: nil, itemValueByteCount: valueByteCount, endianness: endianness)
         
         return assignField(at: row, in: column, fromManager: im)
     }
@@ -1395,10 +1450,10 @@ extension Portal {
     public func createFieldTable(at row: Int, in column: Int, columnSpecifications: Array<ColumnSpecification>, valueByteCount: Int? = nil) -> Result {
         
         guard isValid else { return Result.portalInvalid }
-        guard itemType! == .table else { return Result.operationNotSupported }
+        guard isTable else { return Result.operationNotSupported }
 
         let tab = BrbonTable(columnSpecifications: columnSpecifications)
-        guard let im = ItemManager(value: tab, name: nil, itemValueByteCount: valueByteCount, endianness: endianness) else { return Result.dataInconsistency }
+        let im = ItemManager(value: tab, name: nil, itemValueByteCount: valueByteCount, endianness: endianness)
         
         return assignField(at: row, in: column, fromManager: im)
     }

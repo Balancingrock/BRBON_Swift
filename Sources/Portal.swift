@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.4.3 - Changed access levels for index and column
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 //
@@ -109,12 +110,12 @@ public final class Portal {
     
     /// If the portal refers to an element of an array, or a row in a table, then this is the index of that element/row.
 
-    internal let index: Int?
+    public let index: Int?
     
     
     /// If the portal refers to a field of a table, this is the index of the column.
     
-    internal let column: Int?
+    public let column: Int?
 
     
     /// The endianness of the data and its surrounding structure.
@@ -1299,10 +1300,10 @@ extension Portal {
 
     /// General purpose assignment assistance for setters.
     
-    private func assistValueFieldAssignment(_ newValue: Coder!) {
+    private func assistValueFieldAssignment(_ newValue: Coder?) {
         
         guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-
+        
         if let index = index {
             
             if let column = column {
@@ -1359,7 +1360,6 @@ extension Portal {
                 _itemSmallValue = UInt32(0)
             }
         }
-        
     }
 
     
