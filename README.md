@@ -33,11 +33,15 @@ Two alternatives for BRBON have been considered: BSON and BinSON. However both w
 
 Note: Planned releases are for information only and subject to change without notice.
 
-#### 0.5.0 (Planned)
+#### 0.6.0 (Planned)
 
 - Bugfixes and API upgrades.
 
-#### 0.4.2 (Current)
+#### 0.5.0 (Current)
+
+- Migration to Swift 4
+
+#### 0.4.2
 
 - Added headers
 - Fixed access levels
