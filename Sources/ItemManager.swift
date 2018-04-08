@@ -3,7 +3,7 @@
 //  File:       ItemManager
 //  Project:    BRBON
 //
-//  Version:    0.4.3
+//  Version:    0.5.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,8 @@
 //
 // History
 //
+// 0.5.0 - Migration to Swift 4
+//         Changed ActivePortal from struct to class to avoid concurrent memory access problem.
 // 0.4.3 - Added init:from:withMinimumBufferByteCount
 //       - Added protection against initial buffer counts that may be too low for the assigned value or type
 //       - Changed name parameter in init from string to NameField
@@ -57,7 +59,7 @@ import BRUtils
 
 /// This struct is used to keep track of the number of portals that have been returned to the API user.
 
-fileprivate struct ActivePortals {
+fileprivate class ActivePortals {
     
     
     /// The dictionary that associates an item pointer with a valueItem entry
@@ -67,7 +69,7 @@ fileprivate struct ActivePortals {
     
     /// Return the portal for the given parameters. A new one is created if it was not found in the dictionary.
     
-    mutating func getPortal(for ptr: UnsafeMutableRawPointer, index: Int? = nil, column: Int? = nil, mgr: ItemManager) -> Portal {
+    func getPortal(for ptr: UnsafeMutableRawPointer, index: Int? = nil, column: Int? = nil, mgr: ItemManager) -> Portal {
         let newPortal = Portal(itemPtr: ptr, index: index, column: column, manager: mgr, endianness: mgr.endianness)
         let portalKey = newPortal.key
         if let portal = dict[portalKey], portal.isValid {
@@ -81,7 +83,7 @@ fileprivate struct ActivePortals {
     }
     
 
-    mutating func remove(_ portal: Portal) {
+    func remove(_ portal: Portal) {
         
         // Remove any portal that may be contained inside an item or element within this portal
         
@@ -123,7 +125,7 @@ fileprivate struct ActivePortals {
     
     /// Remove a series of portals from the list.
     
-    mutating func removePortals(atAndAbove: UnsafeMutableRawPointer, below: UnsafeMutableRawPointer) {
+    func removePortals(atAndAbove: UnsafeMutableRawPointer, below: UnsafeMutableRawPointer) {
         
         for (key, portal) in dict {
             
@@ -159,7 +161,7 @@ fileprivate struct ActivePortals {
     
     /// Update the active portals
     
-    mutating func updatePointers(atAndAbove: UnsafeMutableRawPointer, below: UnsafeMutableRawPointer, toNewBase: UnsafeMutableRawPointer) {
+    func updatePointers(atAndAbove: UnsafeMutableRawPointer, below: UnsafeMutableRawPointer, toNewBase: UnsafeMutableRawPointer) {
         let delta = atAndAbove.distance(to: toNewBase)
         for (_, portal) in dict {
             if portal.itemPtr >= atAndAbove && portal.itemPtr < below {
@@ -174,7 +176,7 @@ fileprivate struct ActivePortals {
     
     /// Decrement the reference counter of a portal and remove the entry of the refcount reaches zero.
     
-    mutating func decrementRefcountAndRemoveOnZero(for portal: Portal) {
+    func decrementRefcountAndRemoveOnZero(for portal: Portal) {
         if let p = dict[portal.key] {
             p.refCount -= 1
             if p.refCount == 0 {
@@ -284,7 +286,7 @@ public final class ItemManager {
         self.bufferIncrements = other.bufferIncrements
         self.endianness = other.endianness
         
-        self.buffer = UnsafeMutableRawBufferPointer.allocate(count: newCount.roundUpToNearestMultipleOf8())
+        self.buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: newCount.roundUpToNearestMultipleOf8(), alignment: 8)
         self.bufferPtr = buffer.baseAddress!
 
 
@@ -325,7 +327,7 @@ public final class ItemManager {
         // Guarantee that the value can be stored in the buffer
         let ibc = max(value.itemByteCount(name), initialBufferByteCount)
         
-        self.buffer = UnsafeMutableRawBufferPointer.allocate(count: ibc.roundUpToNearestMultipleOf8())
+        self.buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: ibc.roundUpToNearestMultipleOf8(), alignment: 8)
         self.bufferPtr = buffer.baseAddress!
         
         if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(self.bufferPtr, 0, buffer.count) }
@@ -362,7 +364,7 @@ public final class ItemManager {
         
         let ibc = max((itemMinimumByteCount + (name?.byteCount ?? 0) + rootItemType.defaultElementByteCount), initialBufferByteCount)
         
-        self.buffer = UnsafeMutableRawBufferPointer.allocate(count: ibc.roundUpToNearestMultipleOf8())
+        self.buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: ibc.roundUpToNearestMultipleOf8(), alignment: 8)
         self.bufferPtr = buffer.baseAddress!
 
         if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(self.bufferPtr, 0, buffer.count) }
@@ -1116,7 +1118,7 @@ extension ItemManager {
         guard bufferIncrements > 0 else { return false }
         
         let increase = Int(max(bytes, bufferIncrements)).roundUpToNearestMultipleOf8()
-        let newBuffer = UnsafeMutableRawBufferPointer.allocate(count: buffer.count + increase)
+        let newBuffer = UnsafeMutableRawBufferPointer.allocate(byteCount: buffer.count + increase, alignment: 8)
         
         if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(newBuffer.baseAddress!, 0, newBuffer.count) }
 
@@ -1137,7 +1139,7 @@ extension ItemManager {
         guard bufferIncrements > 0 else { return false }
         
         let increase = max(bytes, bufferIncrements).roundUpToNearestMultipleOf8()
-        let newBuffer = UnsafeMutableRawBufferPointer.allocate(count: increase)
+        let newBuffer = UnsafeMutableRawBufferPointer.allocate(byteCount: increase, alignment: 8)
         
         if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(newBuffer.baseAddress!, 0, newBuffer.count) }
 

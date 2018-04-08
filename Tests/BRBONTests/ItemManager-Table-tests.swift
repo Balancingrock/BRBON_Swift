@@ -27,7 +27,7 @@ class ItemManager_Table_tests: XCTestCase {
         
         // Create a table
         
-        guard let tm = ItemManager(rootItemType: .table) else { XCTFail(); return }
+        let tm = ItemManager(rootItemType: .table)
         
         var exp = Data(bytes: [
             0x14, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,

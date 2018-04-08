@@ -3,7 +3,7 @@
 //  File:       Portal.swift
 //  Project:    BRBON
 //
-//  Version:    0.4.2
+//  Version:    0.5.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.5.0 - Migration to Swift 4
 // 0.4.3 - Changed access levels for index and column
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
@@ -1066,7 +1067,7 @@ extension Portal {
     public var bool: Bool? {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isBool else { fatalOrNull("Attempt to access \(itemType) as a bool"); return nil }
+            guard isBool else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a bool"); return nil }
             return Bool(fromPtr: valueFieldPtr, endianness)
         }
         set { assistSmallValueAssignment(newValue) }
@@ -1078,7 +1079,7 @@ extension Portal {
     public var uint8: UInt8? {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isUInt8 else { fatalOrNull("Attempt to access \(itemType) as a UInt8"); return nil }
+            guard isUInt8 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a UInt8"); return nil }
             return UInt8(fromPtr: valueFieldPtr, endianness)
         }
         set { assistSmallValueAssignment(newValue) }
@@ -1090,7 +1091,7 @@ extension Portal {
     public var uint16: UInt16? {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isUInt16 else { fatalOrNull("Attempt to access \(itemType) as a UInt16"); return nil }
+            guard isUInt16 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a UInt16"); return nil }
             return UInt16(fromPtr: valueFieldPtr, endianness)
         }
         set { assistSmallValueAssignment(newValue) }
@@ -1102,7 +1103,7 @@ extension Portal {
     public var uint32: UInt32? {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isUInt32 else { fatalOrNull("Attempt to access \(itemType) as a UInt32"); return nil }
+            guard isUInt32 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a UInt32"); return nil }
             return UInt32(fromPtr: valueFieldPtr, endianness)
         }
         set { assistSmallValueAssignment(newValue) }
@@ -1114,7 +1115,7 @@ extension Portal {
     public var uint64: UInt64? {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isUInt64 else { fatalOrNull("Attempt to access \(itemType) as a UInt64"); return nil }
+            guard isUInt64 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a UInt64"); return nil }
             return UInt64(fromPtr: valueFieldPtr, endianness)
         }
         set { assistValueFieldAssignment(newValue) }
@@ -1126,7 +1127,7 @@ extension Portal {
     public var int8: Int8? {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isInt8 else { fatalOrNull("Attempt to access \(itemType) as a Int8"); return nil }
+            guard isInt8 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Int8"); return nil }
             return Int8(fromPtr: valueFieldPtr, endianness)
         }
         set { assistSmallValueAssignment(newValue) }
@@ -1138,7 +1139,7 @@ extension Portal {
     public var int16: Int16? {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isInt16 else { fatalOrNull("Attempt to access \(itemType) as a Int16"); return nil }
+            guard isInt16 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Int16"); return nil }
             return Int16(fromPtr: valueFieldPtr, endianness)
         }
         set { assistSmallValueAssignment(newValue) }
@@ -1150,7 +1151,7 @@ extension Portal {
     public var int32: Int32? {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isInt32 else { fatalOrNull("Attempt to access \(itemType) as a Int32"); return nil }
+            guard isInt32 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Int32"); return nil }
             return Int32(fromPtr: valueFieldPtr, endianness)
         }
         set { assistSmallValueAssignment(newValue) }
@@ -1162,7 +1163,7 @@ extension Portal {
     public var int64: Int64? {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isInt64 else { fatalOrNull("Attempt to access \(itemType) as a Int64"); return nil }
+            guard isInt64 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Int64"); return nil }
             return Int64(fromPtr: valueFieldPtr, endianness)
         }
         set { assistValueFieldAssignment(newValue) }
@@ -1174,7 +1175,7 @@ extension Portal {
     public var float32: Float32? {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isFloat32 else { fatalOrNull("Attempt to access \(itemType) as a Float32"); return nil }
+            guard isFloat32 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Float32"); return nil }
             return Float32(fromPtr: valueFieldPtr, endianness)
         }
         set { assistSmallValueAssignment(newValue) }
@@ -1186,7 +1187,7 @@ extension Portal {
     public var float64: Float64? {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isFloat64 else { fatalOrNull("Attempt to access \(itemType) as a Float64"); return nil }
+            guard isFloat64 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Float64"); return nil }
             return Float64(fromPtr: valueFieldPtr, endianness)
         }
         set { assistValueFieldAssignment(newValue) }
@@ -1198,7 +1199,7 @@ extension Portal {
     public var uuid: UUID? {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isUuid else { fatalOrNull("Attempt to access \(itemType) as a String"); return nil }
+            guard isUuid else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a String"); return nil }
             return UUID(fromPtr: valueFieldPtr, endianness)
         }
         set { assistValueFieldAssignment(newValue) }
@@ -1211,7 +1212,7 @@ extension Portal {
     public var string: String? {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isString else { fatalOrNull("Attempt to access \(itemType) as a String"); return nil }
+            guard isString else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a String"); return nil }
             return String(fromPtr: valueFieldPtr, endianness)
         }
         set { assistValueFieldAssignment(newValue) }
@@ -1224,7 +1225,7 @@ extension Portal {
     public var crcString: CrcString? {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isCrcString else { fatalOrNull("Attempt to access \(itemType) as a CrcString"); return nil }
+            guard isCrcString else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a CrcString"); return nil }
             return CrcString(fromPtr: valueFieldPtr, endianness)
         }
         set { assistValueFieldAssignment(newValue) }
@@ -1236,7 +1237,7 @@ extension Portal {
     public var binary: Data? {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isBinary else { fatalOrNull("Attempt to access \(itemType) as a Binary"); return nil }
+            guard isBinary else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Binary"); return nil }
             return Data(fromPtr: valueFieldPtr, endianness)
         }
         set { assistValueFieldAssignment(newValue) }
@@ -1248,7 +1249,7 @@ extension Portal {
     public var crcBinary: CrcBinary? {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isCrcBinary else { fatalOrNull("Attempt to access \(itemType) as a CrcBinary"); return nil }
+            guard isCrcBinary else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a CrcBinary"); return nil }
             return CrcBinary(fromPtr: valueFieldPtr, endianness)
         }
         set { assistValueFieldAssignment(newValue) }
@@ -1323,7 +1324,7 @@ extension Portal {
             } else {
                 
                 guard let newValue = newValue, newValue.itemType == valueType else {
-                    fatalOrNull("Element type change not allowed (is: \(itemType))")
+                    fatalOrNull("Element type change not allowed (is: \(String(describing: itemType)))")
                     return
                 }
                 

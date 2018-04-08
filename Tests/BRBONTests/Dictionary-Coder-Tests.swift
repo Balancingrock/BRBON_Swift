@@ -39,7 +39,7 @@ class Dictionary_Coder_Tests: XCTestCase {
         
         // Create a buffer for storage tests
         
-        var buffer = UnsafeMutableRawBufferPointer.allocate(count: 1024)
+        var buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: 1024, alignment: 8)
         _ = Darwin.memset(buffer.baseAddress, 0, 1024)
         defer { buffer.deallocate() }
         
@@ -74,7 +74,7 @@ class Dictionary_Coder_Tests: XCTestCase {
         
         // Create a buffer for storage tests
         
-        var buffer = UnsafeMutableRawBufferPointer.allocate(count: 1024)
+        var buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: 1024, alignment: 8)
         _ = Darwin.memset(buffer.baseAddress, 0, 1024)
         defer { buffer.deallocate() }
         
@@ -126,7 +126,7 @@ class Dictionary_Coder_Tests: XCTestCase {
         
         // Create a buffer for storage tests
         
-        var buffer = UnsafeMutableRawBufferPointer.allocate(count: 1024)
+        var buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: 1024, alignment: 8)
         _ = Darwin.memset(buffer.baseAddress, 0, 1024)
         defer { buffer.deallocate() }
         

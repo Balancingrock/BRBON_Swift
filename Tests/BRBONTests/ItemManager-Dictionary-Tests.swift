@@ -27,7 +27,7 @@ class ItemManager_Dictionary_Tests: XCTestCase {
 
         let dict = BrbonDictionary(content: [:])!
         
-        guard let dm = ItemManager(value: dict) else { XCTFail(); return }
+        let dm = ItemManager(value: dict)
         
         XCTAssertTrue(dm.root.isDictionary)
         XCTAssertEqual(dm.root.count, 0)
@@ -98,7 +98,7 @@ class ItemManager_Dictionary_Tests: XCTestCase {
         
         let dict = BrbonDictionary(content: [:])!
         
-        guard let dm = ItemManager(value: dict) else { XCTFail(); return }
+        let dm = ItemManager(value: dict)
         
         XCTAssertTrue(dm.root.isDictionary)
         XCTAssertEqual(dm.root.count, 0)

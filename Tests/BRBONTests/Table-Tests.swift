@@ -27,7 +27,7 @@ class Table_Tests: XCTestCase {
         
         // Create empty table
         
-        guard let tm = ItemManager(rootItemType: .table) else { XCTFail(); return }
+        let tm = ItemManager(rootItemType: .table)
         
         
         // Basic portal properties
@@ -68,7 +68,7 @@ class Table_Tests: XCTestCase {
         
         let table = BrbonTable(columnSpecifications: [col])
         
-        guard let tm = ItemManager(value: table) else { XCTFail(); return }
+        let tm = ItemManager(value: table) 
         
         
         // Basic portal properties
@@ -891,11 +891,11 @@ class Table_Tests: XCTestCase {
         let col1 = ColumnSpecification(type: .array, name: NameField("aa")!, byteCount: 32)
         let col2 = ColumnSpecification(type: .int8, name: NameField("bb")!, byteCount: 1)
 
-        guard let im = ItemManager(rootItemType: .table) else { XCTFail(); return }
+        let im = ItemManager(rootItemType: .table)
         
         XCTAssertEqual(im.root.addColumns([col1, col2]), .success)
         
-        XCTAssertEqual(im.root.addRows(2, defaultValues: fieldInitialiser), .success)
+        XCTAssertEqual(im.root.addRows(2, values: fieldInitialiser), .success)
         
         XCTAssertEqual(im.root[1, "aa"].append(Int16(66)), .success)
         

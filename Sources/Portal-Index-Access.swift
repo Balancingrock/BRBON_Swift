@@ -3,7 +3,7 @@
 //  File:       Portal-Index-Access.swift
 //  Project:    BRBON
 //
-//  Version:    0.4.2
+//  Version:    0.5.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.5.0 - Migration to Swift 4
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -98,7 +99,7 @@ public extension Portal {
             
             // For other type, return the NULL item
             
-            return fatalOrNull("Integer index subscript not supported on \(itemType)")
+            return fatalOrNull("Integer index subscript not supported on \(String(describing: itemType))")
         }
     }
 
@@ -202,7 +203,7 @@ public extension Portal {
         // Operation is only allowed on array items
         
         guard isArray else {
-            fatalOrNull("_createNewElements not supported for \(itemType)")
+            fatalOrNull("_createNewElements not supported for \(String(describing: itemType))")
             return .operationNotSupported
         }
         
@@ -299,7 +300,7 @@ public extension Portal {
         
         // Not supported for other item types.
         
-        fatalOrNull("Append operation not valid on \(itemType)")
+        fatalOrNull("Append operation not valid on \(String(describing: itemType))")
         
         return .operationNotSupported
     }

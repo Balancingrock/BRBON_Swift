@@ -3,7 +3,7 @@
 //  File:       Extensions.swift
 //  Project:    BRBON
 //
-//  Version:    0.4.2
+//  Version:    0.5.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,8 +44,9 @@
 //
 // History
 //
-// 0.1.0  - Initial version
+// 0.5.0  - Migration to Swift 4
 // 0.4.2  - Cleanup
+// 0.1.0  - Initial version
 // =====================================================================================================================
 
 import Foundation
@@ -72,8 +73,8 @@ extension String {
         var charactersWereRemoved = false
         
         // Quick limit to 'byte' characters
-        if (str.characters.count > maxBytes) {
-            str = str.substring(to: str.index(str.startIndex, offsetBy: maxBytes))
+        if (str.utf8.count > maxBytes) {
+            str = String(str[..<str.index(str.startIndex, offsetBy: maxBytes)])
             utf8Code = str.data(using: .utf8)!
         }
         

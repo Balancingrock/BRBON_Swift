@@ -39,7 +39,7 @@ class Sequence_Coder_Tests: XCTestCase {
         
         // Create a buffer for storage tests
         
-        var buffer = UnsafeMutableRawBufferPointer.allocate(count: 1024)
+        var buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: 1024, alignment: 8)
         _ = Darwin.memset(buffer.baseAddress, 0, 1024)
         defer { buffer.deallocate() }
         
@@ -74,7 +74,7 @@ class Sequence_Coder_Tests: XCTestCase {
         
         // Create a buffer for storage tests
         
-        var buffer = UnsafeMutableRawBufferPointer.allocate(count: 1024)
+        var buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: 1024, alignment: 8)
         _ = Darwin.memset(buffer.baseAddress, 0, 1024)
         defer { buffer.deallocate() }
         
@@ -128,8 +128,8 @@ class Sequence_Coder_Tests: XCTestCase {
         
         // Storing
         
-        let buffer = UnsafeMutableRawBufferPointer.allocate(count: 100)
-        _ = Darwin.memset(buffer.baseAddress, 0, 100)
+        let buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: 128, alignment: 8)
+        _ = Darwin.memset(buffer.baseAddress, 0, 128)
         defer { buffer.deallocate() }
         
         a.storeAsItem(atPtr: buffer.baseAddress!, name: name, parentOffset: 0x12345678, machineEndianness)

@@ -3,7 +3,7 @@
 //  File:       Portal-Name-Access.swift
 //  Project:    BRBON
 //
-//  Version:    0.4.2
+//  Version:    0.5.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.5.0 - Migration to Swift 4
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -55,7 +56,7 @@ public extension Portal {
     public subscript(name: String) -> Portal {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return Portal.nullPortal }
-            guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return Portal.nullPortal }
+            guard isDictionary || isSequence else { fatalOrNull("Type (\(String(describing: itemType))) does not support named subscripts"); return Portal.nullPortal }
             return findPortalForItem(withName: name) ?? Portal.nullPortal
         }
     }
@@ -63,182 +64,182 @@ public extension Portal {
     public subscript(name: String) -> Bool? {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return nil }
+            guard isDictionary || isSequence else { fatalOrNull("Type (\(String(describing: itemType))) does not support named subscripts"); return nil }
             return findPortalForItem(withName: name)?.bool
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
             if isDictionary { _ = _dictionaryUpdateValue(newValue ?? Null(), forName: name) }
             if isSequence { _ = _sequenceUpdateValue(newValue ?? Null(), forName: name) }
-            fatalOrNull("Type (\(itemType)) does not support named subscripts")
+            fatalOrNull("Type (\(String(describing: itemType))) does not support named subscripts")
         }
     }
     
     public subscript(name: String) -> Int8? {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return nil }
+            guard isDictionary || isSequence else { fatalOrNull("Type (\(String(describing: itemType))) does not support named subscripts"); return nil }
             return findPortalForItem(withName: name)?.int8
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
             if isDictionary { _ = _dictionaryUpdateValue(newValue ?? Null(), forName: name) }
             if isSequence { _ = _sequenceUpdateValue(newValue ?? Null(), forName: name) }
-            fatalOrNull("Type (\(itemType)) does not support named subscripts")
+            fatalOrNull("Type (\(String(describing: itemType))) does not support named subscripts")
         }
     }
     
     public subscript(name: String) -> Int16? {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return nil }
+            guard isDictionary || isSequence else { fatalOrNull("Type (\(String(describing: itemType))) does not support named subscripts"); return nil }
             return findPortalForItem(withName: name)?.int16
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
             if isDictionary { _ = _dictionaryUpdateValue(newValue ?? Null(), forName: name) }
             if isSequence { _ = _sequenceUpdateValue(newValue ?? Null(), forName: name) }
-            fatalOrNull("Type (\(itemType)) does not support named subscripts")
+            fatalOrNull("Type (\(String(describing: itemType))) does not support named subscripts")
         }
     }
     
     public subscript(name: String) -> Int32? {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return nil }
+            guard isDictionary || isSequence else { fatalOrNull("Type (\(String(describing: itemType))) does not support named subscripts"); return nil }
             return findPortalForItem(withName: name)?.int32
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
             if isDictionary { _ = _dictionaryUpdateValue(newValue ?? Null(), forName: name) }
             if isSequence { _ = _sequenceUpdateValue(newValue ?? Null(), forName: name) }
-            fatalOrNull("Type (\(itemType)) does not support named subscripts")
+            fatalOrNull("Type (\(String(describing: itemType))) does not support named subscripts")
         }
     }
     
     public subscript(name: String) -> Int64? {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return nil }
+            guard isDictionary || isSequence else { fatalOrNull("Type (\(String(describing: itemType))) does not support named subscripts"); return nil }
             return findPortalForItem(withName: name)?.int64
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
             if isDictionary { _ = _dictionaryUpdateValue(newValue ?? Null(), forName: name) }
             if isSequence { _ = _sequenceUpdateValue(newValue ?? Null(), forName: name) }
-            fatalOrNull("Type (\(itemType)) does not support named subscripts")
+            fatalOrNull("Type (\(String(describing: itemType))) does not support named subscripts")
         }
     }
     
     public subscript(name: String) -> UInt8? {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return nil }
+            guard isDictionary || isSequence else { fatalOrNull("Type (\(String(describing: itemType))) does not support named subscripts"); return nil }
             return findPortalForItem(withName: name)?.uint8
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
             if isDictionary { _ = _dictionaryUpdateValue(newValue ?? Null(), forName: name) }
             if isSequence { _ = _sequenceUpdateValue(newValue ?? Null(), forName: name) }
-            fatalOrNull("Type (\(itemType)) does not support named subscripts")
+            fatalOrNull("Type (\(String(describing: itemType))) does not support named subscripts")
         }
     }
     
     public subscript(name: String) -> UInt16? {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return nil }
+            guard isDictionary || isSequence else { fatalOrNull("Type (\(String(describing: itemType))) does not support named subscripts"); return nil }
             return findPortalForItem(withName: name)?.uint16
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
             if isDictionary { _ = _dictionaryUpdateValue(newValue ?? Null(), forName: name) }
             if isSequence { _ = _sequenceUpdateValue(newValue ?? Null(), forName: name) }
-            fatalOrNull("Type (\(itemType)) does not support named subscripts")
+            fatalOrNull("Type (\(String(describing: itemType))) does not support named subscripts")
         }
     }
     
     public subscript(name: String) -> UInt32? {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return nil }
+            guard isDictionary || isSequence else { fatalOrNull("Type (\(String(describing: itemType))) does not support named subscripts"); return nil }
             return findPortalForItem(withName: name)?.uint32
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
             if isDictionary { _ = _dictionaryUpdateValue(newValue ?? Null(), forName: name) }
             if isSequence { _ = _sequenceUpdateValue(newValue ?? Null(), forName: name) }
-            fatalOrNull("Type (\(itemType)) does not support named subscripts")
+            fatalOrNull("Type (\(String(describing: itemType))) does not support named subscripts")
         }
     }
     
     public subscript(name: String) -> UInt64? {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return nil }
+            guard isDictionary || isSequence else { fatalOrNull("Type (\(String(describing: itemType))) does not support named subscripts"); return nil }
             return findPortalForItem(withName: name)?.uint64
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
             if isDictionary { _ = _dictionaryUpdateValue(newValue ?? Null(), forName: name) }
             if isSequence { _ = _sequenceUpdateValue(newValue ?? Null(), forName: name) }
-            fatalOrNull("Type (\(itemType)) does not support named subscripts")
+            fatalOrNull("Type (\(String(describing: itemType))) does not support named subscripts")
         }
     }
     
     public subscript(name: String) -> Float32? {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return nil }
+            guard isDictionary || isSequence else { fatalOrNull("Type (\(String(describing: itemType))) does not support named subscripts"); return nil }
             return findPortalForItem(withName: name)?.float32
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
             if isDictionary { _ = _dictionaryUpdateValue(newValue ?? Null(), forName: name) }
             if isSequence { _ = _sequenceUpdateValue(newValue ?? Null(), forName: name) }
-            fatalOrNull("Type (\(itemType)) does not support named subscripts")
+            fatalOrNull("Type (\(String(describing: itemType))) does not support named subscripts")
         }
     }
     
     public subscript(name: String) -> Float64? {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return nil }
+            guard isDictionary || isSequence else { fatalOrNull("Type (\(String(describing: itemType))) does not support named subscripts"); return nil }
             return findPortalForItem(withName: name)?.float64
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
             if isDictionary { _ = _dictionaryUpdateValue(newValue ?? Null(), forName: name) }
             if isSequence { _ = _sequenceUpdateValue(newValue ?? Null(), forName: name) }
-            fatalOrNull("Type (\(itemType)) does not support named subscripts")
+            fatalOrNull("Type (\(String(describing: itemType))) does not support named subscripts")
         }
     }
     
     public subscript(name: String) -> String? {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return nil }
+            guard isDictionary || isSequence else { fatalOrNull("Type (\(String(describing: itemType))) does not support named subscripts"); return nil }
             return findPortalForItem(withName: name)?.string
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
             if isDictionary { _ = _dictionaryUpdateValue(newValue ?? Null(), forName: name) }
             if isSequence { _ = _sequenceUpdateValue(newValue ?? Null(), forName: name) }
-            fatalOrNull("Type (\(itemType)) does not support named subscripts")
+            fatalOrNull("Type (\(String(describing: itemType))) does not support named subscripts")
         }
     }
     
     public subscript(name: String) -> Data? {
         get {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isDictionary || isSequence else { fatalOrNull("Type (\(itemType)) does not support named subscripts"); return nil }
+            guard isDictionary || isSequence else { fatalOrNull("Type (\(String(describing: itemType))) does not support named subscripts"); return nil }
             return findPortalForItem(withName: name)?.binary
         }
         set {
             guard isValid else { fatalOrNull("Portal is no longer valid"); return }
             if isDictionary { _ = _dictionaryUpdateValue(newValue ?? Null(), forName: name) }
             if isSequence { _ = _sequenceUpdateValue(newValue ?? Null(), forName: name) }
-            fatalOrNull("Type (\(itemType)) does not support named subscripts")
+            fatalOrNull("Type (\(String(describing: itemType))) does not support named subscripts")
         }
     }
 
@@ -264,7 +265,7 @@ public extension Portal {
         
         if isSequence { return _sequenceUpdateValue(value, forName: name) }
             
-        fatalOrNull("Type (\(itemType)) does not support named subscripts")
+        fatalOrNull("Type (\(String(describing: itemType))) does not support named subscripts")
         
         return .operationNotSupported
     }
@@ -288,7 +289,7 @@ public extension Portal {
         
         if isSequence { return _sequenceRemoveValue(forName: name) }
         
-        fatalOrNull("Type (\(itemType)) does not support named subscripts")
+        fatalOrNull("Type (\(String(describing: itemType))) does not support named subscripts")
         
         return .operationNotSupported
     }

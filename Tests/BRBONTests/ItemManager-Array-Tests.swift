@@ -20,18 +20,12 @@ class ItemManager_Array_Tests: XCTestCase {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
         super.tearDown()
     }
-
-    func testFailedInit() {
-
-        XCTAssertNil(ItemManager(rootItemType: .array))
-        
-    }
     
     func testInit() {
         
         ItemManager.startWithZeroedBuffers = true
 
-        guard let am = ItemManager(rootItemType: .array, elementType: .bool) else { XCTFail(); return }
+        let am = ItemManager(rootItemType: .array, elementType: .bool)
         
         var exp = Data(bytes: [
             0x11, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
@@ -46,7 +40,7 @@ class ItemManager_Array_Tests: XCTestCase {
         XCTAssertEqual(data, exp)
 
         
-        guard let am1 = ItemManager(rootItemType: .array, elementType: .bool, rootValueByteCount: 20) else { XCTFail(); return }
+        let am1 = ItemManager(rootItemType: .array, elementType: .bool, rootValueByteCount: 20)
         
         exp = Data(bytes: [
             0x11, 0x00, 0x00, 0x00,  0x28, 0x00, 0x00, 0x00,
@@ -62,7 +56,7 @@ class ItemManager_Array_Tests: XCTestCase {
         XCTAssertEqual(data, exp)
         
         
-        guard let am2 = ItemManager(rootItemType: .array, elementType: .int8) else { XCTFail(); return }
+        let am2 = ItemManager(rootItemType: .array, elementType: .int8)
         
         exp = Data(bytes: [
             0x11, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
@@ -83,7 +77,7 @@ class ItemManager_Array_Tests: XCTestCase {
 
         // Create array manager
         
-        guard let am = ItemManager(rootItemType: .array, elementType: .int32) else { XCTFail(); return }
+        let am = ItemManager(rootItemType: .array, elementType: .int32)
         
         var exp = Data(bytes: [
             0x11, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
@@ -157,7 +151,7 @@ class ItemManager_Array_Tests: XCTestCase {
         
         // Create array manager with four elements
         
-        guard let am = ItemManager(rootItemType: .array, elementType: .int64) else { XCTFail(); return }
+        let am = ItemManager(rootItemType: .array, elementType: .int64)
 
         XCTAssertEqual(am.root.append(Int64(0x1111111111111111)), .success)
         XCTAssertEqual(am.root.append(Int64(0x2222222222222222)), .success)
@@ -245,7 +239,7 @@ class ItemManager_Array_Tests: XCTestCase {
         
         // Create array manager with four elements
         
-        guard let am = ItemManager(rootItemType: .array, elementType: .int64) else { XCTFail(); return }
+        let am = ItemManager(rootItemType: .array, elementType: .int64)
         
         XCTAssertEqual(am.root.append(Int64(0x1111111111111111)), .success)
         XCTAssertEqual(am.root.append(Int64(0x2222222222222222)), .success)
@@ -301,7 +295,7 @@ class ItemManager_Array_Tests: XCTestCase {
         
         // Create empty array manager
         
-        guard let am = ItemManager(rootItemType: .array, elementType: .int64) else { XCTFail(); return }
+        let am = ItemManager(rootItemType: .array, elementType: .int64)
         
         
         // Add two elements
@@ -322,7 +316,7 @@ class ItemManager_Array_Tests: XCTestCase {
         
         // Create empty array manager
         
-        guard let am = ItemManager(rootItemType: .array, elementType: .string, initialBufferByteCount: 1024) else { XCTFail(); return }
+        let am = ItemManager(rootItemType: .array, elementType: .string, initialBufferByteCount: 1024)
 
         
         var exp = Data(bytes: [
@@ -534,7 +528,7 @@ class ItemManager_Array_Tests: XCTestCase {
         
         // Create empty array manager
         
-        guard let am = ItemManager(rootItemType: .array, elementType: .string, elementValueByteCount: 8) else { XCTFail(); return }
+        let am = ItemManager(rootItemType: .array, elementType: .string, elementValueByteCount: 8)
         
         
         let exp = Data(bytes: [
@@ -574,15 +568,11 @@ class ItemManager_Array_Tests: XCTestCase {
     func testArrayInArray() {
         
         ItemManager.startWithZeroedBuffers = true
-
-        // Fail to create an array manager
-        
-        XCTAssertNil(ItemManager(rootItemType: .array, elementType: .array, elementValueByteCount: 31))
         
         
         // Create empty array manager
         
-        guard let am = ItemManager(rootItemType: .array, elementType: .array, elementValueByteCount: 32) else { XCTFail(); return }
+        let am = ItemManager(rootItemType: .array, elementType: .array, elementValueByteCount: 32)
 
         
         var exp = Data(bytes: [

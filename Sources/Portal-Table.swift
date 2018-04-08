@@ -3,7 +3,7 @@
 //  File:       Portal-Table.swift
 //  Project:    BRBON
 //
-//  Version:    0.4.2
+//  Version:    0.5.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,8 @@
 //
 // History
 //
+// 0.5.0 - Fixed some bugs for the field assignments
+//         Migrates to Swift 4
 // 0.4.3 - Changed assignField from internal to public
 //         Added rowCount and rowByteCount
 //         Updated for changes in ItemManager operation signatures
@@ -1322,7 +1324,7 @@ extension Portal {
     public func assignField(at row: Int, in column: Int, fromManager source: ItemManager) -> Result {
         
         guard isValid else { return .portalInvalid }
-        guard isTable else { return .operationNotSupported }
+        guard itemType == .table else { return .operationNotSupported }
 
         
         // Prevent errors
@@ -1378,7 +1380,7 @@ extension Portal {
     public func createFieldArray(at row: Int, in column: Int, elementType: ItemType, elementByteCount: Int? = nil, valueByteCount: Int? = nil) -> Result {
         
         guard isValid else { return Result.portalInvalid }
-        guard isTable else { return Result.operationNotSupported }
+        guard itemType == .table else { return Result.operationNotSupported }
 
         let arr = BrbonArray(content: [], type: elementType, elementByteCount: elementByteCount)
         let im = ItemManager(value: arr, name: nil, itemValueByteCount: valueByteCount, endianness: endianness)
@@ -1402,7 +1404,7 @@ extension Portal {
     public func createFieldSequence(at row: Int, in column: Int, valueByteCount: Int? = nil) -> Result {
         
         guard isValid else { return Result.portalInvalid }
-        guard isTable else { return Result.operationNotSupported }
+        guard itemType == .table else { return Result.operationNotSupported }
 
         let seq = BrbonSequence()!
         let im = ItemManager(value: seq, name: nil, itemValueByteCount: valueByteCount, endianness: endianness)
@@ -1426,7 +1428,7 @@ extension Portal {
     public func createFieldDictionary(at row: Int, in column: Int, valueByteCount: Int? = nil) -> Result {
         
         guard isValid else { return Result.portalInvalid }
-        guard isTable else { return Result.operationNotSupported }
+        guard itemType == .table else { return Result.operationNotSupported }
 
         let dict = BrbonDictionary()!
         let im = ItemManager(value: dict, name: nil, itemValueByteCount: valueByteCount, endianness: endianness)
@@ -1450,7 +1452,7 @@ extension Portal {
     public func createFieldTable(at row: Int, in column: Int, columnSpecifications: Array<ColumnSpecification>, valueByteCount: Int? = nil) -> Result {
         
         guard isValid else { return Result.portalInvalid }
-        guard isTable else { return Result.operationNotSupported }
+        guard itemType == .table else { return Result.operationNotSupported }
 
         let tab = BrbonTable(columnSpecifications: columnSpecifications)
         let im = ItemManager(value: tab, name: nil, itemValueByteCount: valueByteCount, endianness: endianness)

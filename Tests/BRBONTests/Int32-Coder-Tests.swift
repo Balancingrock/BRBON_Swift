@@ -38,8 +38,8 @@ class Int32_BrbonCoder_Tests: XCTestCase {
         
         // Buffer
         
-        let buffer = UnsafeMutableRawBufferPointer.allocate(count: 100)
-        _ = Darwin.memset(buffer.baseAddress, 0, 100)
+        let buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: 128, alignment: 8)
+        _ = Darwin.memset(buffer.baseAddress, 0, 128)
         defer { buffer.deallocate() }
         
         

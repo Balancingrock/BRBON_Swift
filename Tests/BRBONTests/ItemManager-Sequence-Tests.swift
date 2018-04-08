@@ -26,7 +26,7 @@ class ItemManager_Sequence_Tests: XCTestCase {
 
         let bs = BrbonSequence()!
         
-        guard let sm = ItemManager(value: bs) else { XCTFail() ; return }
+        let sm = ItemManager(value: bs)
         
         var exp = Data(bytes: [
             0x13, 0x00, 0x00, 0x00,  0x18, 0x00, 0x00, 0x00,

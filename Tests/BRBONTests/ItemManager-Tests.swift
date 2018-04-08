@@ -28,7 +28,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, no value length
         
-        guard let mgr = ItemManager(rootItemType: .null) else { XCTFail() ; return }
+        let mgr = ItemManager(rootItemType: .null)
         
         var exp = Data(bytes: [
             0x01, 0x00, 0x00, 0x00,  0x10, 0x00, 0x00, 0x00,
@@ -42,7 +42,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr2 = ItemManager(rootItemType: .null, rootValueByteCount: 10) else { XCTFail() ; return }
+        let mgr2 = ItemManager(rootItemType: .null, rootValueByteCount: 10)
         
         exp = Data(bytes: [
             0x01, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
@@ -59,7 +59,8 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr3 = ItemManager(rootItemType: .null, name: "aaa", rootValueByteCount: 10) else { XCTFail() ; return }
+        guard let nfd = NameField("aaa") else { XCTFail(); return }
+        let mgr3 = ItemManager(rootItemType: .null, name: nfd, rootValueByteCount: 10)
         
         exp = Data(bytes: [
             0x01, 0x00, 0x00, 0x08,  0x28, 0x00, 0x00, 0x00,
@@ -81,7 +82,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, no value length
         
-        guard let mgr = ItemManager(rootItemType: .bool) else { XCTFail() ; return }
+        let mgr = ItemManager(rootItemType: .bool)
         
         var exp = Data(bytes: [
             0x02, 0x00, 0x00, 0x00,  0x10, 0x00, 0x00, 0x00,
@@ -95,7 +96,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr2 = ItemManager(rootItemType: .bool, rootValueByteCount: 10) else { XCTFail() ; return }
+        let mgr2 = ItemManager(rootItemType: .bool, rootValueByteCount: 10)
         
         exp = Data(bytes: [
             0x02, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
@@ -112,7 +113,8 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr3 = ItemManager(rootItemType: .bool, name: "aaa", rootValueByteCount: 10) else { XCTFail() ; return }
+        guard let nfd = NameField("aaa") else { XCTFail(); return }
+        let mgr3 = ItemManager(rootItemType: .bool, name: nfd, rootValueByteCount: 10)
         
         exp = Data(bytes: [
             0x02, 0x00, 0x00, 0x08,  0x28, 0x00, 0x00, 0x00,
@@ -131,7 +133,7 @@ class ItemManager_Tests: XCTestCase {
         // No name, no value length
         
         let b = true
-        guard let mgr4 = ItemManager(value: b) else { XCTFail() ; return }
+        let mgr4 = ItemManager(value: b)
         
         exp = Data(bytes: [
             0x02, 0x00, 0x00, 0x00,  0x10, 0x00, 0x00, 0x00,
@@ -145,7 +147,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr5 = ItemManager(value: b, itemValueByteCount: 10) else { XCTFail() ; return }
+        let mgr5 = ItemManager(value: b, itemValueByteCount: 10)
         
         exp = Data(bytes: [
             0x02, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
@@ -162,7 +164,7 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr6 = ItemManager(value: b, name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        let mgr6 = ItemManager(value: b, name: nfd, itemValueByteCount: 10)
         
         exp = Data(bytes: [
             0x02, 0x00, 0x00, 0x08,  0x28, 0x00, 0x00, 0x00,
@@ -183,7 +185,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, no value length
         
-        guard let mgr = ItemManager(rootItemType: .int8) else { XCTFail() ; return }
+        let mgr = ItemManager(rootItemType: .int8)
         
         var exp = Data(bytes: [
             0x03, 0x00, 0x00, 0x00,  0x10, 0x00, 0x00, 0x00,
@@ -197,7 +199,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr2 = ItemManager(rootItemType: .int8, rootValueByteCount: 10) else { XCTFail() ; return }
+        let mgr2 = ItemManager(rootItemType: .int8, rootValueByteCount: 10)
         
         exp = Data(bytes: [
             0x03, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
@@ -214,7 +216,8 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr3 = ItemManager(rootItemType: .int8, name: "aaa", rootValueByteCount: 10) else { XCTFail() ; return }
+        guard let nfd = NameField("aaa") else { XCTFail(); return }
+        let mgr3 = ItemManager(rootItemType: .int8, name: nfd, rootValueByteCount: 10)
         
         exp = Data(bytes: [
             0x03, 0x00, 0x00, 0x08,  0x28, 0x00, 0x00, 0x00,
@@ -232,7 +235,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, no value length
         
-        guard let mgr4 = ItemManager(value: Int8(0x66)) else { XCTFail() ; return }
+        let mgr4 = ItemManager(value: Int8(0x66))
         
         exp = Data(bytes: [
             0x03, 0x00, 0x00, 0x00,  0x10, 0x00, 0x00, 0x00,
@@ -246,7 +249,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr5 = ItemManager(value: Int8(0x05), itemValueByteCount: 10) else { XCTFail() ; return }
+        let mgr5 = ItemManager(value: Int8(0x05), itemValueByteCount: 10)
         
         exp = Data(bytes: [
             0x03, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
@@ -263,7 +266,7 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr6 = ItemManager(value: Int8(0x33), name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        let mgr6 = ItemManager(value: Int8(0x33), name: nfd, itemValueByteCount: 10)
         
         exp = Data(bytes: [
             0x03, 0x00, 0x00, 0x08,  0x28, 0x00, 0x00, 0x00,
@@ -284,7 +287,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, no value length
         
-        guard let mgr = ItemManager(rootItemType: .int16) else { XCTFail() ; return }
+        let mgr = ItemManager(rootItemType: .int16)
         
         var exp = Data(bytes: [
             0x04, 0x00, 0x00, 0x00,  0x10, 0x00, 0x00, 0x00,
@@ -298,7 +301,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr2 = ItemManager(rootItemType: .int16, rootValueByteCount: 10) else { XCTFail() ; return }
+        let mgr2 = ItemManager(rootItemType: .int16, rootValueByteCount: 10)
         
         exp = Data(bytes: [
             0x04, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
@@ -315,7 +318,8 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr3 = ItemManager(rootItemType: .int16, name: "aaa", rootValueByteCount: 10) else { XCTFail() ; return }
+        guard let nfd = NameField("aaa") else { XCTFail(); return }
+        let mgr3 = ItemManager(rootItemType: .int16, name: nfd, rootValueByteCount: 10)
         
         exp = Data(bytes: [
             0x04, 0x00, 0x00, 0x08,  0x28, 0x00, 0x00, 0x00,
@@ -333,7 +337,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, no value length
         
-        guard let mgr4 = ItemManager(value: Int16(0x6666)) else { XCTFail() ; return }
+        let mgr4 = ItemManager(value: Int16(0x6666))
         
         exp = Data(bytes: [
             0x04, 0x00, 0x00, 0x00,  0x10, 0x00, 0x00, 0x00,
@@ -347,7 +351,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr5 = ItemManager(value: Int16(0x0550), itemValueByteCount: 10) else { XCTFail() ; return }
+        let mgr5 = ItemManager(value: Int16(0x0550), itemValueByteCount: 10)
         
         exp = Data(bytes: [
             0x04, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
@@ -364,7 +368,7 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr6 = ItemManager(value: Int16(0x3344), name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        let mgr6 = ItemManager(value: Int16(0x3344), name: nfd, itemValueByteCount: 10)
         
         exp = Data(bytes: [
             0x04, 0x00, 0x00, 0x08,  0x28, 0x00, 0x00, 0x00,
@@ -385,7 +389,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, no value length
         
-        guard let mgr = ItemManager(rootItemType: .int32) else { XCTFail() ; return }
+        let mgr = ItemManager(rootItemType: .int32)
         
         var exp = Data(bytes: [
             0x05, 0x00, 0x00, 0x00,  0x10, 0x00, 0x00, 0x00,
@@ -399,7 +403,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr2 = ItemManager(rootItemType: .int32, rootValueByteCount: 10) else { XCTFail() ; return }
+        let mgr2 = ItemManager(rootItemType: .int32, rootValueByteCount: 10)
         
         exp = Data(bytes: [
             0x05, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
@@ -416,7 +420,8 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr3 = ItemManager(rootItemType: .int32, name: "aaa", rootValueByteCount: 10) else { XCTFail() ; return }
+        guard let nfd = NameField("aaa") else { XCTFail(); return }
+        let mgr3 = ItemManager(rootItemType: .int32, name: nfd, rootValueByteCount: 10)
         
         exp = Data(bytes: [
             0x05, 0x00, 0x00, 0x08,  0x28, 0x00, 0x00, 0x00,
@@ -434,7 +439,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, no value length
         
-        guard let mgr4 = ItemManager(value: Int32(0x66666666)) else { XCTFail() ; return }
+        let mgr4 = ItemManager(value: Int32(0x66666666))
         
         exp = Data(bytes: [
             0x05, 0x00, 0x00, 0x00,  0x10, 0x00, 0x00, 0x00,
@@ -448,7 +453,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr5 = ItemManager(value: Int32(0x05501122), itemValueByteCount: 10) else { XCTFail() ; return }
+        let mgr5 = ItemManager(value: Int32(0x05501122), itemValueByteCount: 10)
         
         exp = Data(bytes: [
             0x05, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
@@ -465,7 +470,7 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr6 = ItemManager(value: Int32(0x55663344), name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        let mgr6 = ItemManager(value: Int32(0x55663344), name: nfd, itemValueByteCount: 10)
         
         exp = Data(bytes: [
             0x05, 0x00, 0x00, 0x08,  0x28, 0x00, 0x00, 0x00,
@@ -486,7 +491,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, no value length
         
-        guard let mgr = ItemManager(rootItemType: .int64) else { XCTFail() ; return }
+        let mgr = ItemManager(rootItemType: .int64)
         
         var exp = Data(bytes: [
             0x06, 0x00, 0x00, 0x00,  0x18, 0x00, 0x00, 0x00,
@@ -502,7 +507,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr2 = ItemManager(rootItemType: .int64, rootValueByteCount: 10) else { XCTFail() ; return }
+        let mgr2 = ItemManager(rootItemType: .int64, rootValueByteCount: 10)
         
         exp = Data(bytes: [
             0x06, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
@@ -519,7 +524,8 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr3 = ItemManager(rootItemType: .int64, name: "aaa", rootValueByteCount: 10) else { XCTFail() ; return }
+        guard let nfd = NameField("aaa") else { XCTFail(); return }
+        let mgr3 = ItemManager(rootItemType: .int64, name: nfd, rootValueByteCount: 10)
         
         exp = Data(bytes: [
             0x06, 0x00, 0x00, 0x08,  0x28, 0x00, 0x00, 0x00,
@@ -537,7 +543,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, no value length
         
-        guard let mgr4 = ItemManager(value: Int64(0x6666666699999999)) else { XCTFail() ; return }
+        let mgr4 = ItemManager(value: Int64(0x6666666699999999))
         
         exp = Data(bytes: [
             0x06, 0x00, 0x00, 0x00,  0x18, 0x00, 0x00, 0x00,
@@ -553,7 +559,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr5 = ItemManager(value: Int64(0x0550112277777777), itemValueByteCount: 10) else { XCTFail() ; return }
+        let mgr5 = ItemManager(value: Int64(0x0550112277777777), itemValueByteCount: 10)
         
         exp = Data(bytes: [
             0x06, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
@@ -570,7 +576,7 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr6 = ItemManager(value: Int64(0x5566334411111111), name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        let mgr6 = ItemManager(value: Int64(0x5566334411111111), name: nfd, itemValueByteCount: 10)
         
         exp = Data(bytes: [
             0x06, 0x00, 0x00, 0x08,  0x28, 0x00, 0x00, 0x00,
@@ -591,7 +597,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, no value length
         
-        guard let mgr = ItemManager(rootItemType: .uint8) else { XCTFail() ; return }
+        let mgr = ItemManager(rootItemType: .uint8)
         
         var exp = Data(bytes: [
             0x07, 0x00, 0x00, 0x00,  0x10, 0x00, 0x00, 0x00,
@@ -605,7 +611,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr2 = ItemManager(rootItemType: .uint8, rootValueByteCount: 10) else { XCTFail() ; return }
+        let mgr2 = ItemManager(rootItemType: .uint8, rootValueByteCount: 10)
         
         exp = Data(bytes: [
             0x07, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
@@ -621,7 +627,8 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr3 = ItemManager(rootItemType: .uint8, name: "aaa", rootValueByteCount: 10) else { XCTFail() ; return }
+        guard let nfd = NameField("aaa") else { XCTFail(); return }
+        let mgr3 = ItemManager(rootItemType: .uint8, name: nfd, rootValueByteCount: 10)
         
         exp = Data(bytes: [
             0x07, 0x00, 0x00, 0x08,  0x28, 0x00, 0x00, 0x00,
@@ -638,7 +645,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, no value length
         
-        guard let mgr4 = ItemManager(value: UInt8(0x66)) else { XCTFail() ; return }
+        let mgr4 = ItemManager(value: UInt8(0x66))
         
         exp = Data(bytes: [
             0x07, 0x00, 0x00, 0x00,  0x10, 0x00, 0x00, 0x00,
@@ -652,7 +659,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr5 = ItemManager(value: UInt8(0x05), itemValueByteCount: 10) else { XCTFail() ; return }
+        let mgr5 = ItemManager(value: UInt8(0x05), itemValueByteCount: 10)
         
         exp = Data(bytes: [
             0x07, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
@@ -668,7 +675,7 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr6 = ItemManager(value: UInt8(0x33), name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        let mgr6 = ItemManager(value: UInt8(0x33), name: nfd, itemValueByteCount: 10)
         
         exp = Data(bytes: [
             0x07, 0x00, 0x00, 0x08,  0x28, 0x00, 0x00, 0x00,
@@ -688,7 +695,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, no value length
         
-        guard let mgr = ItemManager(rootItemType: .uint16) else { XCTFail() ; return }
+        let mgr = ItemManager(rootItemType: .uint16)
         
         var exp = Data(bytes: [
             0x08, 0x00, 0x00, 0x00,  0x10, 0x00, 0x00, 0x00,
@@ -702,7 +709,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr2 = ItemManager(rootItemType: .uint16, rootValueByteCount: 10) else { XCTFail() ; return }
+        let mgr2 = ItemManager(rootItemType: .uint16, rootValueByteCount: 10)
         
         exp = Data(bytes: [
             0x08, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
@@ -718,7 +725,8 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr3 = ItemManager(rootItemType: .uint16, name: "aaa", rootValueByteCount: 10) else { XCTFail() ; return }
+        guard let nfd = NameField("aaa") else { XCTFail(); return }
+        let mgr3 = ItemManager(rootItemType: .uint16, name: nfd, rootValueByteCount: 10)
         
         exp = Data(bytes: [
             0x08, 0x00, 0x00, 0x08,  0x28, 0x00, 0x00, 0x00,
@@ -735,7 +743,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, no value length
         
-        guard let mgr4 = ItemManager(value: UInt16(0x6666)) else { XCTFail() ; return }
+        let mgr4 = ItemManager(value: UInt16(0x6666))
         
         exp = Data(bytes: [
             0x08, 0x00, 0x00, 0x00,  0x10, 0x00, 0x00, 0x00,
@@ -749,7 +757,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr5 = ItemManager(value: UInt16(0x0550), itemValueByteCount: 10) else { XCTFail() ; return }
+        let mgr5 = ItemManager(value: UInt16(0x0550), itemValueByteCount: 10)
         
         exp = Data(bytes: [
             0x08, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
@@ -765,7 +773,7 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr6 = ItemManager(value: UInt16(0x3344), name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        let mgr6 = ItemManager(value: UInt16(0x3344), name: nfd, itemValueByteCount: 10)
         
         exp = Data(bytes: [
             0x08, 0x00, 0x00, 0x08,  0x28, 0x00, 0x00, 0x00,
@@ -785,7 +793,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, no value length
         
-        guard let mgr = ItemManager(rootItemType: .uint32) else { XCTFail() ; return }
+        let mgr = ItemManager(rootItemType: .uint32)
         
         var exp = Data(bytes: [
             0x09, 0x00, 0x00, 0x00,  0x10, 0x00, 0x00, 0x00,
@@ -799,7 +807,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr2 = ItemManager(rootItemType: .uint32, rootValueByteCount: 10) else { XCTFail() ; return }
+        let mgr2 = ItemManager(rootItemType: .uint32, rootValueByteCount: 10)
         
         exp = Data(bytes: [
             0x09, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
@@ -815,7 +823,8 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr3 = ItemManager(rootItemType: .uint32, name: "aaa", rootValueByteCount: 10) else { XCTFail() ; return }
+        guard let nfd = NameField("aaa") else { XCTFail(); return }
+        let mgr3 = ItemManager(rootItemType: .uint32, name: nfd, rootValueByteCount: 10)
         
         exp = Data(bytes: [
             0x09, 0x00, 0x00, 0x08,  0x28, 0x00, 0x00, 0x00,
@@ -832,7 +841,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, no value length
         
-        guard let mgr4 = ItemManager(value: UInt32(0x66666666)) else { XCTFail() ; return }
+        let mgr4 = ItemManager(value: UInt32(0x66666666))
         
         exp = Data(bytes: [
             0x09, 0x00, 0x00, 0x00,  0x10, 0x00, 0x00, 0x00,
@@ -846,7 +855,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr5 = ItemManager(value: UInt32(0x05501122), itemValueByteCount: 10) else { XCTFail() ; return }
+        let mgr5 = ItemManager(value: UInt32(0x05501122), itemValueByteCount: 10)
         
         exp = Data(bytes: [
             0x09, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
@@ -862,7 +871,7 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr6 = ItemManager(value: UInt32(0x55663344), name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        let mgr6 = ItemManager(value: UInt32(0x55663344), name: nfd, itemValueByteCount: 10)
         
         exp = Data(bytes: [
             0x09, 0x00, 0x00, 0x08,  0x28, 0x00, 0x00, 0x00,
@@ -882,7 +891,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, no value length
         
-        guard let mgr = ItemManager(rootItemType: .uint64) else { XCTFail() ; return }
+        let mgr = ItemManager(rootItemType: .uint64)
         
         var exp = Data(bytes: [
             0x0A, 0x00, 0x00, 0x00,  0x18, 0x00, 0x00, 0x00,
@@ -897,7 +906,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr2 = ItemManager(rootItemType: .uint64, rootValueByteCount: 10) else { XCTFail() ; return }
+        let mgr2 = ItemManager(rootItemType: .uint64, rootValueByteCount: 10)
         
         exp = Data(bytes: [
             0x0A, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
@@ -913,7 +922,8 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr3 = ItemManager(rootItemType: .uint64, name: "aaa", rootValueByteCount: 10) else { XCTFail() ; return }
+        guard let nfd = NameField("aaa") else { XCTFail(); return }
+        let mgr3 = ItemManager(rootItemType: .uint64, name: nfd, rootValueByteCount: 10)
         
         exp = Data(bytes: [
             0x0A, 0x00, 0x00, 0x08,  0x28, 0x00, 0x00, 0x00,
@@ -930,7 +940,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, no value length
         
-        guard let mgr4 = ItemManager(value: UInt64(0x6666666699999999)) else { XCTFail() ; return }
+        let mgr4 = ItemManager(value: UInt64(0x6666666699999999))
         
         exp = Data(bytes: [
             0x0A, 0x00, 0x00, 0x00,  0x18, 0x00, 0x00, 0x00,
@@ -945,7 +955,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr5 = ItemManager(value: UInt64(0x0550112277777777), itemValueByteCount: 10) else { XCTFail() ; return }
+        let mgr5 = ItemManager(value: UInt64(0x0550112277777777), itemValueByteCount: 10)
         
         exp = Data(bytes: [
             0x0A, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
@@ -961,7 +971,7 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr6 = ItemManager(value: UInt64(0x5566334411111111), name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        let mgr6 = ItemManager(value: UInt64(0x5566334411111111), name: nfd, itemValueByteCount: 10)
         
         exp = Data(bytes: [
             0x0A, 0x00, 0x00, 0x08,  0x28, 0x00, 0x00, 0x00,
@@ -981,7 +991,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, no value length
         
-        guard let mgr = ItemManager(rootItemType: .float32) else { XCTFail() ; return }
+        let mgr = ItemManager(rootItemType: .float32)
         
         var exp = Data(bytes: [
             0x0B, 0x00, 0x00, 0x00,  0x10, 0x00, 0x00, 0x00,
@@ -995,7 +1005,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr2 = ItemManager(rootItemType: .float32, rootValueByteCount: 10) else { XCTFail() ; return }
+        let mgr2 = ItemManager(rootItemType: .float32, rootValueByteCount: 10)
         
         exp = Data(bytes: [
             0x0B, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
@@ -1011,7 +1021,8 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr3 = ItemManager(rootItemType: .float32, name: "aaa", rootValueByteCount: 10) else { XCTFail() ; return }
+        guard let nfd = NameField("aaa") else { XCTFail(); return }
+        let mgr3 = ItemManager(rootItemType: .float32, name: nfd, rootValueByteCount: 10)
         
         exp = Data(bytes: [
             0x0B, 0x00, 0x00, 0x08,  0x28, 0x00, 0x00, 0x00,
@@ -1028,7 +1039,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, no value length
         
-        guard let mgr4 = ItemManager(value: Float32(1.23e4)) else { XCTFail() ; return }
+        let mgr4 = ItemManager(value: Float32(1.23e4))
         
         exp = Data(bytes: [
             0x0B, 0x00, 0x00, 0x00,  0x10, 0x00, 0x00, 0x00,
@@ -1042,7 +1053,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr5 = ItemManager(value: Float32(1.23e4), itemValueByteCount: 10) else { XCTFail() ; return }
+        let mgr5 = ItemManager(value: Float32(1.23e4), itemValueByteCount: 10)
         
         exp = Data(bytes: [
             0x0B, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
@@ -1058,7 +1069,7 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr6 = ItemManager(value: Float32(1.23e4), name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        let mgr6 = ItemManager(value: Float32(1.23e4), name: nfd, itemValueByteCount: 10)
         
         exp = Data(bytes: [
             0x0B, 0x00, 0x00, 0x08,  0x28, 0x00, 0x00, 0x00,
@@ -1078,7 +1089,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, no value length
         
-        guard let mgr = ItemManager(rootItemType: .float64) else { XCTFail() ; return }
+        let mgr = ItemManager(rootItemType: .float64)
         
         var exp = Data(bytes: [
             0x0C, 0x00, 0x00, 0x00,  0x18, 0x00, 0x00, 0x00,
@@ -1093,7 +1104,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr2 = ItemManager(rootItemType: .float64, rootValueByteCount: 10) else { XCTFail() ; return }
+        let mgr2 = ItemManager(rootItemType: .float64, rootValueByteCount: 10)
         
         exp = Data(bytes: [
             0x0C, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
@@ -1109,7 +1120,8 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr3 = ItemManager(rootItemType: .float64, name: "aaa", rootValueByteCount: 10) else { XCTFail() ; return }
+        guard let nfd = NameField("aaa") else { XCTFail(); return }
+        let mgr3 = ItemManager(rootItemType: .float64, name: nfd, rootValueByteCount: 10)
         
         exp = Data(bytes: [
             0x0C, 0x00, 0x00, 0x08,  0x28, 0x00, 0x00, 0x00,
@@ -1126,7 +1138,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, no value length
         
-        guard let mgr4 = ItemManager(value: Float64(1.234e56)) else { XCTFail() ; return }
+        let mgr4 = ItemManager(value: Float64(1.234e56))
         
         exp = Data(bytes: [
             0x0C, 0x00, 0x00, 0x00,  0x18, 0x00, 0x00, 0x00,
@@ -1141,7 +1153,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr5 = ItemManager(value: Float64(1.234e56), itemValueByteCount: 10) else { XCTFail() ; return }
+        let mgr5 = ItemManager(value: Float64(1.234e56), itemValueByteCount: 10)
         
         exp = Data(bytes: [
             0x0C, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
@@ -1157,7 +1169,7 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr6 = ItemManager(value: Float64(1.234e56), name: "aaa", itemValueByteCount: 10) else { XCTFail() ; return }
+        let mgr6 = ItemManager(value: Float64(1.234e56), name: nfd, itemValueByteCount: 10)
         
         exp = Data(bytes: [
             0x0C, 0x00, 0x00, 0x08,  0x28, 0x00, 0x00, 0x00,
@@ -1177,7 +1189,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, no value length
         
-        guard let mgr4 = ItemManager(value: UUID(uuidString: "01234567-1234-1234-1234-123456789011")!) else { XCTFail() ; return }
+        let mgr4 = ItemManager(value: UUID(uuidString: "01234567-1234-1234-1234-123456789011")!)
         
         var exp = Data(bytes: [
             0x15, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
@@ -1194,7 +1206,7 @@ class ItemManager_Tests: XCTestCase {
         
         // No name, value length given
         
-        guard let mgr5 = ItemManager(value: UUID(uuidString: "01234567-1234-1234-1234-123456789011")!, itemValueByteCount: 21) else { XCTFail() ; return }
+        let mgr5 = ItemManager(value: UUID(uuidString: "01234567-1234-1234-1234-123456789011")!, itemValueByteCount: 21)
         
         exp = Data(bytes: [
             0x15, 0x00, 0x00, 0x00,  0x28, 0x00, 0x00, 0x00,
@@ -1213,7 +1225,8 @@ class ItemManager_Tests: XCTestCase {
         
         // With name and value length
         
-        guard let mgr6 = ItemManager(value: UUID(uuidString: "01234567-1234-1234-1234-123456789011")!, name: "aaa", itemValueByteCount: 21) else { XCTFail() ; return }
+        guard let nfd = NameField("aaa") else { XCTFail(); return }
+        let mgr6 = ItemManager(value: UUID(uuidString: "01234567-1234-1234-1234-123456789011")!, name: nfd, itemValueByteCount: 21)
         
         exp = Data(bytes: [
             0x15, 0x00, 0x00, 0x08,  0x30, 0x00, 0x00, 0x00,

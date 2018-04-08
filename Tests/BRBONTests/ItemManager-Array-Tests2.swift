@@ -27,7 +27,7 @@ class ItemManager_Array_Tests2: XCTestCase {
         
         // Create empty array manager
         
-        guard let am = ItemManager(rootItemType: .array, elementType: .array, elementValueByteCount: 32) else { XCTFail(); return }
+        let am = ItemManager(rootItemType: .array, elementType: .array, elementValueByteCount: 32)
         
         
         // Append three array's the middle one with strings

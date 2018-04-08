@@ -3,7 +3,7 @@
 //  File:       Portal-Item-Access.swift
 //  Project:    BRBON
 //
-//  Version:    0.4.2
+//  Version:    0.5.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.5.0 - Migration to Swift 4
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -232,7 +233,7 @@ extension Portal {
     
     internal var _itemNameUtf8Code: Data {
         get { return Data(bytes: _itemNameUtf8CodePtr, count: _itemNameUtf8CodeByteCount) }
-        set { newValue.withUnsafeBytes({ _itemNameUtf8CodePtr.copyBytes(from: $0, count: newValue.count)}) }
+        set { newValue.withUnsafeBytes({ _itemNameUtf8CodePtr.copyMemory(from: $0, byteCount: newValue.count)}) }
     }
     
     
