@@ -3,7 +3,7 @@
 //  File:       ItemManager
 //  Project:    BRBON
 //
-//  Version:    0.5.0
+//  Version:    0.7.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.0 - Added .rgba and .font
 // 0.5.0 - Migration to Swift 4
 //         Changed ActivePortal from struct to class to avoid concurrent memory access problem.
 // 0.4.3 - Added init:from:withMinimumBufferByteCount
@@ -54,7 +55,10 @@
 // =====================================================================================================================
 
 import Foundation
+import Cocoa
+
 import BRUtils
+
 
 
 /// This struct is used to keep track of the number of portals that have been returned to the API user.
@@ -263,7 +267,7 @@ public final class ItemManager {
             
             switch other.root.itemType! {
                 
-            case .null, .bool, .int8, .int16, .int32, .int64, .uint8, .uint16, .uint32, .uint64, .float32, .float64, .string, .crcString, .binary, .crcBinary, .uuid, .dictionary, .sequence:
+            case .null, .bool, .int8, .int16, .int32, .int64, .uint8, .uint16, .uint32, .uint64, .float32, .float64, .string, .crcString, .binary, .crcBinary, .uuid, .dictionary, .sequence, .rgba, .font:
                 
                 newCount = max(asked, other.count)
 
@@ -435,6 +439,16 @@ public final class ItemManager {
             UUID().storeAsItem(atPtr: bufferPtr, name: name, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
             
             
+        case .rgba:
+            
+            Rgba(NSColor.black).storeAsItem(atPtr: bufferPtr, name: name, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
+            
+            
+        case .font:
+            
+            Font(NSFont.systemFont(ofSize: 11.0)).storeAsItem(atPtr: bufferPtr, name: name, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
+            
+            
         case .string:
             
             "".storeAsItem(atPtr: bufferPtr, name: name, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
@@ -484,7 +498,7 @@ public final class ItemManager {
     ///   - minimalBufferIncrement: The number of bytes the buffer will minimally grow when necessary. Note that for this to happen the type of the root item must be changed to something different. This value is 0 by default. Note that the minimalBufferIncrements property can be changed afterwards.
     ///   - endianness: The kind of endian representation to be used.
     ///
-    /// - Retruns: A new item manager.
+    /// - Returns: A new item manager.
     
     public static func createNullManager(
         name: NameField? = nil,
@@ -508,7 +522,7 @@ public final class ItemManager {
     ///   - minimalBufferIncrement: The number of bytes the buffer will minimally grow when necessary. Note that for this to happen the type of the root item must be changed to something different. This value is 0 by default. Note that the minimalBufferIncrements property can be changed afterwards.
     ///   - endianness: The kind of endian representation to be used.
     ///
-    /// - Retruns: A new item manager.
+    /// - Returns: A new item manager.
     
     public static func createBoolManager(
         _ value: Bool,
@@ -535,7 +549,7 @@ public final class ItemManager {
     ///   - minimalBufferIncrement: The number of bytes the buffer will minimally grow when necessary. Note that for this to happen the type of the root item must be changed to something different. This value is 0 by default. Note that the minimalBufferIncrements property can be changed afterwards.
     ///   - endianness: The kind of endian representation to be used.
     ///
-    /// - Retruns: A new item manager.
+    /// - Returns: A new item manager.
     
     public static func createInt8Manager(
         _ value: Int8,
@@ -562,7 +576,7 @@ public final class ItemManager {
     ///   - minimalBufferIncrement: The number of bytes the buffer will minimally grow when necessary. Note that for this to happen the type of the root item must be changed to something different. This value is 0 by default. Note that the minimalBufferIncrements property can be changed afterwards.
     ///   - endianness: The kind of endian representation to be used.
     ///
-    /// - Retruns: A new item manager.
+    /// - Returns: A new item manager.
     
     public static func createInt16Manager(
         _ value: Int16,
@@ -589,7 +603,7 @@ public final class ItemManager {
     ///   - minimalBufferIncrement: The number of bytes the buffer will minimally grow when necessary. Note that for this to happen the type of the root item must be changed to something different. This value is 0 by default. Note that the minimalBufferIncrements property can be changed afterwards.
     ///   - endianness: The kind of endian representation to be used.
     ///
-    /// - Retruns: A new item manager.
+    /// - Returns: A new item manager.
     
     public static func createInt32Manager(
         _ value: Int32,
@@ -616,7 +630,7 @@ public final class ItemManager {
     ///   - minimalBufferIncrement: The number of bytes the buffer will minimally grow when necessary. Note that for this to happen the type of the root item must be changed to something different. This value is 0 by default. Note that the minimalBufferIncrements property can be changed afterwards.
     ///   - endianness: The kind of endian representation to be used.
     ///
-    /// - Retruns: A new item manager.
+    /// - Returns: A new item manager.
     
     public static func createInt64Manager(
         _ value: Int64,
@@ -643,7 +657,7 @@ public final class ItemManager {
     ///   - minimalBufferIncrement: The number of bytes the buffer will minimally grow when necessary. Note that for this to happen the type of the root item must be changed to something different. This value is 0 by default. Note that the minimalBufferIncrements property can be changed afterwards.
     ///   - endianness: The kind of endian representation to be used.
     ///
-    /// - Retruns: A new item manager.
+    /// - Returns: A new item manager.
     
     public static func createUInt8Manager(
         _ value: UInt8,
@@ -670,7 +684,7 @@ public final class ItemManager {
     ///   - minimalBufferIncrement: The number of bytes the buffer will minimally grow when necessary. Note that for this to happen the type of the root item must be changed to something different. This value is 0 by default. Note that the minimalBufferIncrements property can be changed afterwards.
     ///   - endianness: The kind of endian representation to be used.
     ///
-    /// - Retruns: A new item manager.
+    /// - Returns: A new item manager.
     
     public static func createUInt16Manager(
         _ value: UInt16,
@@ -697,7 +711,7 @@ public final class ItemManager {
     ///   - minimalBufferIncrement: The number of bytes the buffer will minimally grow when necessary. Note that for this to happen the type of the root item must be changed to something different. This value is 0 by default. Note that the minimalBufferIncrements property can be changed afterwards.
     ///   - endianness: The kind of endian representation to be used.
     ///
-    /// - Retruns: A new item manager.
+    /// - Returns: A new item manager.
     
     public static func createUInt32Manager(
         _ value: UInt32,
@@ -724,7 +738,7 @@ public final class ItemManager {
     ///   - minimalBufferIncrement: The number of bytes the buffer will minimally grow when necessary. Note that for this to happen the type of the root item must be changed to something different. This value is 0 by default. Note that the minimalBufferIncrements property can be changed afterwards.
     ///   - endianness: The kind of endian representation to be used.
     ///
-    /// - Retruns: A new item manager.
+    /// - Returns: A new item manager.
     
     public static func createUInt64Manager(
         _ value: UInt64,
@@ -751,7 +765,7 @@ public final class ItemManager {
     ///   - minimalBufferIncrement: The number of bytes the buffer will minimally grow when necessary. Note that for this to happen the type of the root item must be changed to something different. This value is 0 by default. Note that the minimalBufferIncrements property can be changed afterwards.
     ///   - endianness: The kind of endian representation to be used.
     ///
-    /// - Retruns: A new item manager.
+    /// - Returns: A new item manager.
     
     public static func createFloat32Manager(
         _ value: Float32,
@@ -778,7 +792,7 @@ public final class ItemManager {
     ///   - minimalBufferIncrement: The number of bytes the buffer will minimally grow when necessary. Note that for this to happen the type of the root item must be changed to something different. This value is 0 by default. Note that the minimalBufferIncrements property can be changed afterwards.
     ///   - endianness: The kind of endian representation to be used.
     ///
-    /// - Retruns: A new item manager.
+    /// - Returns: A new item manager.
     
     public static func createFloat64Manager(
         _ value: Float64,
@@ -805,7 +819,7 @@ public final class ItemManager {
     ///   - minimalBufferIncrement: The number of bytes the buffer will minimally grow when necessary. Note that for this to happen the type of the root item must be changed to something different. This value is 0 by default. Note that the minimalBufferIncrements property can be changed afterwards.
     ///   - endianness: The kind of endian representation to be used.
     ///
-    /// - Retruns: A new item manager.
+    /// - Returns: A new item manager.
     
     public static func createUuidManager(
         _ value: UUID,
@@ -823,6 +837,60 @@ public final class ItemManager {
     }
 
     
+    /// Create an item manager that contains an ItemType 'rgba'.
+    ///
+    /// - Parameters:
+    ///   - value: The initial value for the type.
+    ///   - name: The name to be used for the root item.
+    ///   - valueFieldByteCount: The size of the value field.
+    ///   - minimalBufferIncrement: The number of bytes the buffer will minimally grow when necessary. Note that for this to happen the type of the root item must be changed to something different. This value is 1 by default. Note that the minimalBufferIncrements property can be changed afterwards.
+    ///   - endianness: The kind of endian representation to be used.
+    ///
+    /// - Returns: A new item manager.
+
+    public static func createRgbaManager(
+        _ value: Rgba,
+        name: NameField? = nil,
+        valueFieldByteCount: Int = 0,
+        minimalBufferIncrement: Int = 0,
+        endianness: Endianness = machineEndianness
+        ) -> ItemManager {
+        
+        let im = ItemManager(rootItemType: .rgba, name: name, elementType: nil, rootValueByteCount: valueFieldByteCount, elementValueByteCount: nil, initialBufferByteCount: 0, minimalBufferIncrements: minimalBufferIncrement, endianness: endianness)
+
+        im.root.rgba = value
+        
+        return im
+    }
+    
+    
+    /// Create an item manager that contains an ItemType 'font'.
+    ///
+    /// - Parameters:
+    ///   - value: The initial value for the type.
+    ///   - name: The name to be used for the root item.
+    ///   - valueFieldByteCount: The size of the value field.
+    ///   - minimalBufferIncrement: The number of bytes the buffer will minimally grow when necessary. Note that for this to happen the type of the root item must be changed to something different. This value is 1 by default. Note that the minimalBufferIncrements property can be changed afterwards.
+    ///   - endianness: The kind of endian representation to be used.
+    ///
+    /// - Returns: A new item manager.
+    
+    public static func createFontManager(
+        _ value: Font,
+        name: NameField? = nil,
+        valueFieldByteCount: Int = 0,
+        minimalBufferIncrement: Int = 0,
+        endianness: Endianness = machineEndianness
+        ) -> ItemManager {
+        
+        let im = ItemManager(rootItemType: .font, name: name, elementType: nil, rootValueByteCount: valueFieldByteCount, elementValueByteCount: nil, initialBufferByteCount: 0, minimalBufferIncrements: minimalBufferIncrement, endianness: endianness)
+        
+        im.root.font = value
+        
+        return im
+    }
+    
+
     /// Create an item manager that contains an ItemType 'string'.
     ///
     /// - Parameters:
@@ -832,7 +900,7 @@ public final class ItemManager {
     ///   - minimalBufferIncrement: The number of bytes the buffer will minimally grow when necessary. Note that for this to happen the type of the root item must be changed to something different. This value is 1 by default. Note that the minimalBufferIncrements property can be changed afterwards.
     ///   - endianness: The kind of endian representation to be used.
     ///
-    /// - Retruns: A new item manager.
+    /// - Returns: A new item manager.
     
     public static func createStringManager(
         _ value: String,
@@ -859,7 +927,7 @@ public final class ItemManager {
     ///   - minimalBufferIncrement: The number of bytes the buffer will minimally grow when necessary. Note that for this to happen the type of the root item must be changed to something different. This value is 1 by default. Note that the minimalBufferIncrements property can be changed afterwards.
     ///   - endianness: The kind of endian representation to be used.
     ///
-    /// - Retruns: A new item manager.
+    /// - Returns: A new item manager.
     
     public static func createCrcStringManager(
         _ value: CrcString,
@@ -886,7 +954,7 @@ public final class ItemManager {
     ///   - minimalBufferIncrement: The number of bytes the buffer will minimally grow when necessary. Note that for this to happen the type of the root item must be changed to something different. This value is 1 by default. Note that the minimalBufferIncrements property can be changed afterwards.
     ///   - endianness: The kind of endian representation to be used.
     ///
-    /// - Retruns: A new item manager.
+    /// - Returns: A new item manager.
     
     public static func createBinaryManager(
         _ value: Data,
@@ -913,7 +981,7 @@ public final class ItemManager {
     ///   - minimalBufferIncrement: The number of bytes the buffer will minimally grow when necessary. Note that for this to happen the type of the root item must be changed to something different. This value is 1 by default. Note that the minimalBufferIncrements property can be changed afterwards.
     ///   - endianness: The kind of endian representation to be used.
     ///
-    /// - Retruns: A new item manager.
+    /// - Returns: A new item manager.
     
     public static func createCrcBinaryManager(
         _ value: CrcBinary,
@@ -940,7 +1008,7 @@ public final class ItemManager {
     ///   - minimalBufferIncrement: The number of bytes the buffer will minimally grow when necessary. Note that for this to happen the type of the root item must be changed to something different. This value is 1 by default. Note that the minimalBufferIncrements property can be changed afterwards.
     ///   - endianness: The kind of endian representation to be used.
     ///
-    /// - Retruns: A new item manager.
+    /// - Returns: A new item manager.
     
     public static func createArrayManager(
         _ value: BrbonArray,
@@ -966,7 +1034,7 @@ public final class ItemManager {
     ///   - minimalBufferIncrement: The number of bytes the buffer will minimally grow when necessary. Note that for this to happen the type of the root item must be changed to something different. This value is 1 by default. Note that the minimalBufferIncrements property can be changed afterwards.
     ///   - endianness: The kind of endian representation to be used.
     ///
-    /// - Retruns: A new item manager.
+    /// - Returns: A new item manager.
     
     public static func createArrayManager(
         elementType: ItemType,
@@ -994,7 +1062,7 @@ public final class ItemManager {
     ///   - minimalBufferIncrement: The number of bytes the buffer will minimally grow when necessary. This value is 1 by default. Note that the minimalBufferIncrements property can be changed afterwards.
     ///   - endianness: The kind of endian representation to be used.
     ///
-    /// - Retruns: A new item manager.
+    /// - Returns: A new item manager.
     
     public static func createDictionaryManager(
         name: NameField? = nil,
@@ -1017,7 +1085,7 @@ public final class ItemManager {
     ///   - minimalBufferIncrement: The number of bytes the buffer will minimally grow when necessary. This value is 1 by default. Note that the minimalBufferIncrements property can be changed afterwards.
     ///   - endianness: The kind of endian representation to be used.
     ///
-    /// - Retruns: A new item manager.
+    /// - Returns: A new item manager.
     
     public static func createSequenceManager(
         name: NameField? = nil,
@@ -1041,7 +1109,7 @@ public final class ItemManager {
     ///   - minimalBufferIncrement: The number of rows the buffer will minimally grow when necessary. Note that this is only valid for the columns specificied in this call. This value is 1 by default. Note that the minimalBufferIncrements property can be changed afterwards.
     ///   - endianness: The kind of endian representation to be used.
     ///
-    /// - Retruns: A new item manager.
+    /// - Returns: A new item manager.
     
     public static func createTableManager(
         columns: Array<ColumnSpecification>,

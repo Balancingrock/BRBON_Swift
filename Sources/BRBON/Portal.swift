@@ -3,7 +3,7 @@
 //  File:       Portal.swift
 //  Project:    BRBON
 //
-//  Version:    0.5.0
+//  Version:    0.7.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.0 - Added type .rgba and .font
 // 0.5.0 - Migration to Swift 4
 // 0.4.3 - Changed access levels for index and column
 // 0.4.2 - Added header & general review of access levels
@@ -190,7 +191,7 @@ public final class Portal {
     public var count: Int {
         guard isValid else { return 0 }
         switch itemType! {
-        case .null, .bool, .int8, .int16, .int32, .int64, .uint8, .uint16, .uint32, .uint64, .float32, .float64, .string, .crcString, .binary, .crcBinary, .uuid: return 0
+        case .null, .bool, .int8, .int16, .int32, .int64, .uint8, .uint16, .uint32, .uint64, .float32, .float64, .string, .crcString, .binary, .crcBinary, .uuid, .rgba, .font: return 0
         case .dictionary: return _dictionaryItemCount
         case .sequence: return _sequenceItemCount
         case .array: return _arrayElementCount
@@ -301,6 +302,17 @@ extension Portal: Equatable {
                 
                 return lhs.crcBinary == rhs.crcBinary
                 
+                
+            case .rgba:
+                
+                return lhs.rgba == rhs.rgba
+                
+                
+            case .font:
+                
+                return lhs.font == rhs.font
+                
+                
             case .array:
                 
                 // Test element type
@@ -396,6 +408,12 @@ extension Portal: Equatable {
                             if lhs._tableFieldPtr(row: ri, column: ci).advanced(by: 8).assumingMemoryBound(to: UInt64.self).pointee
                                 != rhs._tableFieldPtr(row: ri, column: ci).advanced(by: 8).assumingMemoryBound(to: UInt64.self).pointee { return false }
 
+                        case .rgba:
+                            if lhs.rgba != rhs.rgba { return false }
+                            
+                        case .font:
+                            if lhs.font != rhs.font { return false }
+                            
                         case .string:
                             let lstr = String(fromPtr: lhs._tableFieldPtr(row: ri, column: ci), lhs.endianness)
                             let rstr = String(fromPtr: rhs._tableFieldPtr(row: ri, column: ci), rhs.endianness)
@@ -448,6 +466,8 @@ extension Portal: Equatable {
             case .float32: return lhs.float32 == rhs.float32
             case .float64: return lhs.float64 == rhs.float64
             case .uuid: return lhs.uuid == rhs.uuid
+            case .rgba: return lhs.rgba == rhs.rgba
+            case .font: return lhs.font == rhs.font
             case .string: return lhs.string == rhs.string
             case .crcString: return lhs.crcString == rhs.crcString
             case .binary: return lhs.binary == rhs.binary
@@ -496,6 +516,8 @@ extension Portal {
         case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32: return 0
         case .int64, .uint64, .float64: return 8
         case .uuid: return 16
+        case .rgba: return 16
+        case .font: return _fontValueFieldUsedByteCount
         case .string: return _stringValueFieldUsedByteCount
         case .crcString: return _crcStringValueFieldUsedByteCount
         case .binary: return _binaryValueFieldUsedByteCount
@@ -965,6 +987,26 @@ extension Portal {
     }
     
     
+    /// Returns true if the value accessable through this portal is a RGBA.
+    
+    public var isRgba: Bool {
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        if let column = column { return _tableGetColumnType(for: column) == ItemType.rgba }
+        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.rgba.rawValue }
+        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.rgba.rawValue
+    }
+
+    
+    /// Returns true if the value accessable through this portal is a Font.
+    
+    public var isFont: Bool {
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        if let column = column { return _tableGetColumnType(for: column) == ItemType.font }
+        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.font.rawValue }
+        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.font.rawValue
+    }
+
+    
     /// Returns true if the value accessable through this portal is a String.
 
     public var isString: Bool {
@@ -1206,6 +1248,29 @@ extension Portal {
     }
     
     
+    /// Access the value through the portal as a BrbonColor
+    
+    public var rgba: Rgba? {
+        get {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard isUuid else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a String"); return nil }
+            return Rgba(fromPtr: valueFieldPtr, endianness)
+        }
+        set { assistValueFieldAssignment(newValue) }
+    }
+
+    
+    /// Access the value through the portal as a BrbonFont
+    
+    public var font: Font? {
+        get {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard isUuid else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a String"); return nil }
+            return Font(fromPtr: valueFieldPtr, endianness)
+        }
+        set { assistValueFieldAssignment(newValue) }
+    }
+
     
     /// Access the value through the portal as a String
 

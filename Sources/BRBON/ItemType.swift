@@ -3,7 +3,7 @@
 //  File:       ItemType.swift
 //  Project:    BRBON
 //
-//  Version:    0.4.2
+//  Version:    0.7.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -45,6 +45,7 @@
 //
 // History
 //
+// 0.7.0  - Added RGBA and Font
 // 0.4.2  - Changed raw values and redone access levels
 // 0.1.0  - Initial version
 // =====================================================================================================================
@@ -163,18 +164,28 @@ public enum ItemType: UInt8 {
     case uuid           = 0x15
     
     
+    /// A RGBA
+    
+    case rgba           = 0x16
+    
+    
+    /// A Font
+    
+    case font           = 0x17
+    
+    
     internal var usesSmallValue: Bool {
         switch self {
         case .null, .bool, .int8, .int16, .int32, .uint8, .uint16, .uint32, .float32: return true
-        case .int64, .uint64, .float64, .string, .crcString, .binary, .crcBinary, .array, .dictionary, .sequence, .table, .uuid: return false
+        case .int64, .uint64, .float64, .string, .crcString, .binary, .crcBinary, .array, .dictionary, .sequence, .table, .uuid, .rgba, .font : return false
         }
     }
     
     
     internal var hasFlexibleLength: Bool {
         switch self {
-        case .null, .bool, .int8, .int16, .int32, .uint8, .uint16, .uint32, .float32, .int64, .uint64, .float64, .uuid: return false
-        case .string, .crcString, .binary, .crcBinary, .array, .dictionary, .sequence, .table: return true
+        case .null, .bool, .int8, .int16, .int32, .uint8, .uint16, .uint32, .float32, .int64, .uint64, .float64, .uuid, .rgba: return false
+        case .string, .crcString, .binary, .crcBinary, .array, .dictionary, .sequence, .table, .font: return true
         }
     }
     
@@ -185,7 +196,8 @@ public enum ItemType: UInt8 {
         case .int16, .uint16: return 2
         case .int32, .uint32, .float32: return 4
         case .int64, .uint64, .float64: return 8
-        case .uuid: return 16
+        case .uuid, .rgba: return 16
+        case .font: return 128
         case .string, .crcString, .binary, .crcBinary: return 256
         case .array, .dictionary, .sequence, .table: return 1024
         }
@@ -193,7 +205,7 @@ public enum ItemType: UInt8 {
     
     internal var isContainer: Bool {
         switch self {
-        case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32, .int64, .uint64, .float64, .string, .crcString, .binary, .crcBinary, .uuid: return false
+        case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32, .int64, .uint64, .float64, .string, .crcString, .binary, .crcBinary, .uuid, .rgba, .font: return false
         case .array, .dictionary, .sequence, .table: return true
         }
     }
