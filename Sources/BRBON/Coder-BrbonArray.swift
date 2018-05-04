@@ -1,9 +1,9 @@
 // =====================================================================================================================
 //
-//  File:       BrbonDictionary-Coder.swift
+//  File:       Coder-BrbonArray.swift
 //  Project:    BRBON
 //
-//  Version:    0.4.2
+//  Version:    0.7.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.0 - File renamed from BrbonArray-Coder to Coder-BrbonArray
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -51,50 +52,61 @@ import Foundation
 import BRUtils
 
 
-/// Defines the BRBON Dictionary class and conforms it to the Coder protocol.
+/// Defines the BRBON Array class and conforms it to the Coder protocol.
 
-public final class BrbonDictionary: Coder {
-
+public final class BrbonArray: Coder {
+    
     
     /// The BRBON Item type of the item this value will be stored into.
     
-    public var itemType: ItemType { return ItemType.dictionary }
+    public var itemType: ItemType { return ItemType.array }
 
     
-    /// Create a new BrbonDictionary.
+    /// Create a new BrbonArray
     
-    public init?(content: Dictionary<String, IsBrbon>? = nil) {
-        if let content = content {
-            for i in content {
-                guard NameField(i.key) != nil else { return nil }
-            }
-            self.content = content as! Dictionary<String, Coder>
-        } else {
-            self.content = [:]
+    public init(content: Array<IsBrbon>, type: ItemType, elementByteCount: Int? = nil) {
+        
+        assert(type != .null)
+        
+        self.content = (content as? Array<Coder>)!
+        
+        self.elementType = type
+        
+        var ebc = elementByteCount ?? 0
+        
+        if type.hasFlexibleLength {
+            ebc = self.content.reduce(ebc) { max($0, $1.valueByteCount.roundUpToNearestMultipleOf8()) }
         }
-    }
 
-    
-    /// The content of this dictionary
-    
-    internal let content: Dictionary<String, Coder>
-    
-    
-    /// The number of bytes needed to encode self into an BrbonBytes stream
-    
-    internal var valueByteCount: Int {
-        return content.reduce(dictionaryItemBaseOffset) { $0 + $1.value.itemByteCount(NameField($1.key)!) }
+        if ebc == 0 {
+            ebc = type.defaultElementByteCount
+        }
+        
+        self.elementValueByteCount = ebc
     }
     
     
-    /// The parent offset for the items contained in the dictionary. I.e. the offset of the .dictionary item type itself. This must be set before 'storeValue' is called if the dictionary is not the top level (root) item in the buffer.
+    // The content
     
-    internal var parentOffset: Int = 0
+    internal let content: Array<Coder>
+    
+    
+    // The element type
+    
+    internal let elementType: ItemType
+    
+    
+    // The byte count for each element
+    
+    internal let elementValueByteCount: Int
+    
+    
+    /// The number of bytes needed to encode self into an BrbonBytes stream.
+    
+    internal var valueByteCount: Int { return arrayElementBaseOffset + content.count * elementValueByteCount }
     
     
     /// Stores the value without any other information in the memory area pointed at.
-    ///
-    /// - Note: Before calling, first set the parentOffset!
     ///
     /// - Parameters:
     ///   - atPtr: The pointer at which the first byte will be stored. On return the pointer will be incremented for the number of bytes stored.
@@ -102,18 +114,20 @@ public final class BrbonDictionary: Coder {
     
     internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         
-        // Reserved
-        UInt32(0).storeValue(atPtr: atPtr.advanced(by: dictionaryReservedOffset), endianness)
+        // Element type + zero's
+        UInt64(0).storeValue(atPtr: atPtr, endianness)
+        elementType.storeValue(atPtr: atPtr.advanced(by: arrayElementTypeOffset))
+
+        // Element count
+        UInt32(content.count).storeValue(atPtr: atPtr.advanced(by: arrayElementCountOffset), endianness)
         
-        // Count
-        UInt32(content.count).storeValue(atPtr: atPtr.advanced(by: dictionaryItemCountOffset), endianness)
+        // Element byte count
+        UInt32(elementValueByteCount).storeValue(atPtr: atPtr.advanced(by: arrayElementByteCountOffset), endianness)
         
-        // The items
-        var offset = dictionaryItemBaseOffset
-        for i in content {
-            let name = NameField(i.key)!
-            i.value.storeAsItem(atPtr: atPtr.advanced(by: offset), name: name, parentOffset: parentOffset, endianness)
-            offset += i.value.itemByteCount(name)
+        // Elements
+        for i in 0 ..< content.count {
+            content[i].storeValue(atPtr: atPtr.advanced(by: arrayElementBaseOffset + i * elementValueByteCount), endianness)
         }
     }
 }
+

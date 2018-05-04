@@ -1,9 +1,9 @@
 // =====================================================================================================================
 //
-//  File:       Int64-Coder.swift
+//  File:       Coder-String.swift
 //  Project:    BRBON
 //
-//  Version:    0.4.2
+//  Version:    0.7.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.0 - File renamed from String-Coder to Coder-String
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -53,23 +54,17 @@ import BRUtils
 
 /// Adds the Coder protocol
 
-extension Int64: Coder {
+extension String: Coder {
     
-    internal var valueByteCount: Int { return 8 }
+    internal var valueByteCount: Int { return 4 + (self.data(using: .utf8)?.count ?? 0) }
     
     internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        if endianness == machineEndianness {
-            atPtr.storeBytes(of: self, as: Int64.self)
-        } else {
-            atPtr.storeBytes(of: self.byteSwapped, as: Int64.self)
-        }
+        let data = self.data(using: .utf8) ?? Data()
+        data.storeValue(atPtr: atPtr, endianness)
     }
     
-    internal init(fromPtr: UnsafeMutableRawPointer, count: Int = 0, _ endianness: Endianness) {
-        if endianness == machineEndianness {
-            self.init(fromPtr.assumingMemoryBound(to: Int64.self).pointee)
-        } else {
-            self.init(fromPtr.assumingMemoryBound(to: Int64.self).pointee.byteSwapped)
-        }
+    internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+        let data = Data(fromPtr: fromPtr, endianness)
+        self.init(data: data, encoding: .utf8)!
     }
 }

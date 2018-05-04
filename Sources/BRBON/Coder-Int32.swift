@@ -1,9 +1,9 @@
 // =====================================================================================================================
 //
-//  File:       UUID-Coder.swift
+//  File:       Coder-Int32.swift
 //  Project:    BRBON
 //
-//  Version:    0.4.2
+//  Version:    0.7.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.0 - File renamed from Int32-Coder to Coder-Int32
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -53,18 +54,23 @@ import BRUtils
 
 /// Adds the Coder protocol
 
-extension UUID: Coder {
+extension Int32: Coder {
     
-    internal var valueByteCount: Int { return 16 }
-    
-    internal var elementByteCount: Int { return valueByteCount }
+    internal var valueByteCount: Int { return 4 }
     
     internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        atPtr.storeBytes(of: self.uuid, as: uuid_t.self)
+        if endianness == machineEndianness {
+            atPtr.storeBytes(of: self, as: Int32.self)
+        } else {
+            atPtr.storeBytes(of: self.byteSwapped, as: Int32.self)
+        }
     }
     
     internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        let ptr = fromPtr.bindMemory(to: uuid_t.self, capacity: 1)
-        self.init(uuid: ptr.pointee)
+        if endianness == machineEndianness {
+            self.init(fromPtr.assumingMemoryBound(to: Int32.self).pointee)
+        } else {
+            self.init(fromPtr.assumingMemoryBound(to: Int32.self).pointee.byteSwapped)
+        }
     }
 }

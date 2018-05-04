@@ -1,9 +1,9 @@
 // =====================================================================================================================
 //
-//  File:       UInt64-Coder.swift
+//  File:       Coder-Int8.swift
 //  Project:    BRBON
 //
-//  Version:    0.4.2
+//  Version:    0.7.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.0 - File renamed from Int8-Coder to Coder-Int8
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -53,23 +54,15 @@ import BRUtils
 
 /// Adds the Coder protocol
 
-extension UInt64: Coder {
+extension Int8: Coder {
     
-    internal var valueByteCount: Int { return 8 }
+    internal var valueByteCount: Int { return 1 }
     
     internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        if endianness == machineEndianness {
-            atPtr.storeBytes(of: self, as: UInt64.self)
-        } else {
-            atPtr.storeBytes(of: self.byteSwapped, as: UInt64.self)
-        }
+        atPtr.storeBytes(of: self, as: Int8.self)
     }
     
     internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        if endianness == machineEndianness {
-            self.init(fromPtr.assumingMemoryBound(to: UInt64.self).pointee)
-        } else {
-            self.init(fromPtr.assumingMemoryBound(to: UInt64.self).pointee.byteSwapped)
-        }
+        self.init(fromPtr.assumingMemoryBound(to: Int8.self).pointee)
     }
 }

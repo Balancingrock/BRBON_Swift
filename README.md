@@ -33,11 +33,16 @@ Two alternatives for BRBON have been considered: BSON and BinSON. However both w
 
 Note: Planned releases are for information only and subject to change without notice.
 
-#### 0.7.0 (Planned)
+#### 0.8.0 (Planned)
 
 - Bugfixes and API upgrades.
 
-#### 0.6.0 (Current)
+#### 0.7.0 (Current)
+
+- Added new type RGBA and Font
+- Renamed a number of coder files
+
+#### 0.6.0
 
 - Migrated to SPM 4
 

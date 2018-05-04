@@ -1,9 +1,9 @@
 // =====================================================================================================================
 //
-//  File:       Float64-Coder.swift
+//  File:       Coder-Float32.swift
 //  Project:    BRBON
 //
-//  Version:    0.4.2
+//  Version:    0.7.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.0 - File renamed from Float32-Coder to Coder-Float32
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -53,23 +54,23 @@ import BRUtils
 
 /// Adds the Coder protocol
 
-extension Float64: Coder {
+extension Float32: Coder {
     
-    internal var valueByteCount: Int { return 8 }
+    internal var valueByteCount: Int { return 4 }
     
     internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         if endianness == machineEndianness {
-            atPtr.storeBytes(of: self.bitPattern, as: UInt64.self)
+            atPtr.storeBytes(of: self.bitPattern, as: UInt32.self)
         } else {
-            atPtr.storeBytes(of: self.bitPattern.byteSwapped, as: UInt64.self)
+            atPtr.storeBytes(of: self.bitPattern.byteSwapped, as: UInt32.self)
         }
     }
     
-    internal init(fromPtr: UnsafeMutableRawPointer, count: Int = 0, _ endianness: Endianness) {
+    internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         if endianness == machineEndianness {
-            self.init(bitPattern: fromPtr.assumingMemoryBound(to: UInt64.self).pointee)
+            self.init(bitPattern: fromPtr.assumingMemoryBound(to: UInt32.self).pointee)
         } else {
-            self.init(bitPattern: fromPtr.assumingMemoryBound(to: UInt64.self).pointee.byteSwapped)
+            self.init(bitPattern: fromPtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped)
         }
     }
 }

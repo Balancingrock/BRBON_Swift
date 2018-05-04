@@ -1,9 +1,9 @@
 // =====================================================================================================================
 //
-//  File:       Bool-Coder.swift
+//  File:       Coder-Int16.swift
 //  Project:    BRBON
 //
-//  Version:    0.4.2
+//  Version:    0.7.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.0 - File renamed from Int16-Coder to Coder-Int16
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -51,21 +52,25 @@ import Foundation
 import BRUtils
 
 
-/// Adds the Coder protocol to Bool
+/// Adds the Coder protocol
 
-extension Bool: Coder {
+extension Int16: Coder {
     
-    internal var valueByteCount: Int { return 1 }
+    internal var valueByteCount: Int { return 2 }
     
     internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        if self {
-            atPtr.storeBytes(of: 1, as: UInt8.self)
+        if endianness == machineEndianness {
+            atPtr.storeBytes(of: self, as: Int16.self)
         } else {
-            atPtr.storeBytes(of: 0, as: UInt8.self)
+            atPtr.storeBytes(of: self.byteSwapped, as: Int16.self)
         }
     }
     
     internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        self.init(!(0 == fromPtr.assumingMemoryBound(to: UInt8.self).pointee))
+        if endianness == machineEndianness {
+            self.init(fromPtr.assumingMemoryBound(to: Int16.self).pointee)
+        } else {
+            self.init(fromPtr.assumingMemoryBound(to: Int16.self).pointee.byteSwapped)
+        }
     }
 }

@@ -1,9 +1,9 @@
 // =====================================================================================================================
 //
-//  File:       Data-Coder.swift
+//  File:       Coder-UInt8.swift
 //  Project:    BRBON
 //
-//  Version:    0.4.2
+//  Version:    0.7.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.0 - File renamed from UInt8-Coder to Coder-UInt8
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -53,17 +54,17 @@ import BRUtils
 
 /// Adds the Coder protocol
 
-extension Data: Coder {
+extension UInt8: Coder {
     
-    var valueByteCount: Int { return 4 + self.count }
+    internal var valueByteCount: Int { return 1 }
     
-    func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        UInt32(self.count).storeValue(atPtr: atPtr, endianness)
-        self.copyBytes(to: atPtr.advanced(by: 4).assumingMemoryBound(to: UInt8.self), count: self.count)
-    }    
+    internal var elementByteCount: Int { return valueByteCount }
     
-    init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        let byteCount = Int(UInt32(fromPtr: fromPtr, endianness))
-        self.init(Data(bytes: fromPtr.advanced(by: 4), count: byteCount))
+    internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+        atPtr.storeBytes(of: self, as: UInt8.self)
+    }
+    
+    internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+        self.init(fromPtr.assumingMemoryBound(to: UInt8.self).pointee)
     }
 }

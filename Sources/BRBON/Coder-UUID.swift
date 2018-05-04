@@ -1,9 +1,9 @@
 // =====================================================================================================================
 //
-//  File:       UInt16-Coder.swift
+//  File:       Coder-UUID.swift
 //  Project:    BRBON
 //
-//  Version:    0.4.2
+//  Version:    0.7.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.0 - File renamed from UUID-Coder to Coder-UUID
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -53,23 +54,18 @@ import BRUtils
 
 /// Adds the Coder protocol
 
-extension UInt16: Coder {
+extension UUID: Coder {
     
-    internal var valueByteCount: Int { return 2 }
+    internal var valueByteCount: Int { return 16 }
+    
+    internal var elementByteCount: Int { return valueByteCount }
     
     internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        if endianness == machineEndianness {
-            atPtr.storeBytes(of: self, as: UInt16.self)
-        } else {
-            atPtr.storeBytes(of: self.byteSwapped, as: UInt16.self)
-        }
+        atPtr.storeBytes(of: self.uuid, as: uuid_t.self)
     }
     
     internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        if endianness == machineEndianness {
-            self.init(fromPtr.assumingMemoryBound(to: UInt16.self).pointee)
-        } else {
-            self.init(fromPtr.assumingMemoryBound(to: UInt16.self).pointee.byteSwapped)
-        }
+        let ptr = fromPtr.bindMemory(to: uuid_t.self, capacity: 1)
+        self.init(uuid: ptr.pointee)
     }
 }

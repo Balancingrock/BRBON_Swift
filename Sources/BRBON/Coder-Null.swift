@@ -1,9 +1,9 @@
 // =====================================================================================================================
 //
-//  File:       String-Coder.swift
+//  File:       Coder-Null.swift
 //  Project:    BRBON
 //
-//  Version:    0.4.2
+//  Version:    0.7.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.0 - File renamed from Null-Coder to Coder-Null
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -51,19 +52,13 @@ import Foundation
 import BRUtils
 
 
-/// Adds the Coder protocol
+/// Defines the BRBON Null class and adds the Coder protocol
 
-extension String: Coder {
+internal final class Null: Coder {
     
-    internal var valueByteCount: Int { return 4 + (self.data(using: .utf8)?.count ?? 0) }
+    var itemType: ItemType { return ItemType.null }
     
-    internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        let data = self.data(using: .utf8) ?? Data()
-        data.storeValue(atPtr: atPtr, endianness)
-    }
+    var valueByteCount: Int { return 0 }
     
-    internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        let data = Data(fromPtr: fromPtr, endianness)
-        self.init(data: data, encoding: .utf8)!
-    }
+    func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) { }
 }

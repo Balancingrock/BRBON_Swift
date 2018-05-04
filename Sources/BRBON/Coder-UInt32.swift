@@ -1,9 +1,9 @@
 // =====================================================================================================================
 //
-//  File:       Int16-Coder.swift
+//  File:       Coder-UInt32.swift
 //  Project:    BRBON
 //
-//  Version:    0.4.2
+//  Version:    0.7.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.0 - File renamed from Int32-Coder to Coder-Int32
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -53,23 +54,23 @@ import BRUtils
 
 /// Adds the Coder protocol
 
-extension Int16: Coder {
+extension UInt32: Coder {
     
-    internal var valueByteCount: Int { return 2 }
+    internal var valueByteCount: Int { return 4 }
     
     internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         if endianness == machineEndianness {
-            atPtr.storeBytes(of: self, as: Int16.self)
+            atPtr.storeBytes(of: self, as: UInt32.self)
         } else {
-            atPtr.storeBytes(of: self.byteSwapped, as: Int16.self)
+            atPtr.storeBytes(of: self.byteSwapped, as: UInt32.self)
         }
     }
     
     internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         if endianness == machineEndianness {
-            self.init(fromPtr.assumingMemoryBound(to: Int16.self).pointee)
+            self.init(fromPtr.assumingMemoryBound(to: UInt32.self).pointee)
         } else {
-            self.init(fromPtr.assumingMemoryBound(to: Int16.self).pointee.byteSwapped)
+            self.init(fromPtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped)
         }
     }
 }

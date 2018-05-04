@@ -986,17 +986,7 @@ extension Portal {
         return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uuid.rawValue
     }
     
-    
-    /// Returns true if the value accessable through this portal is a RGBA.
-    
-    public var isRgba: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
-        if let column = column { return _tableGetColumnType(for: column) == ItemType.rgba }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.rgba.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.rgba.rawValue
-    }
-
-    
+        
     /// Returns true if the value accessable through this portal is a Font.
     
     public var isFont: Bool {
@@ -1248,16 +1238,6 @@ extension Portal {
     }
     
     
-    /// Access the value through the portal as a BrbonColor
-    
-    public var rgba: Rgba? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isUuid else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a String"); return nil }
-            return Rgba(fromPtr: valueFieldPtr, endianness)
-        }
-        set { assistValueFieldAssignment(newValue) }
-    }
 
     
     /// Access the value through the portal as a BrbonFont
@@ -1366,7 +1346,7 @@ extension Portal {
 
     /// General purpose assignment assistance for setters.
     
-    private func assistValueFieldAssignment(_ newValue: Coder?) {
+    internal func assistValueFieldAssignment(_ newValue: Coder?) {
         
         guard isValid else { fatalOrNull("Portal is no longer valid"); return }
         

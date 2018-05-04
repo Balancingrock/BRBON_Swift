@@ -48,6 +48,7 @@
 // =====================================================================================================================
 
 import Foundation
+import Cocoa
 
 
 fileprivate let rgbaRedOffset = 0
@@ -83,5 +84,136 @@ extension Portal {
     internal var _rgbaAlpha: Float32 {
         get { return Float32(fromPtr: _rbgaAlphaPtr, endianness) }
         set { Float32(newValue).storeValue(atPtr: _rbgaAlphaPtr, endianness) }
+    }
+}
+
+public extension Portal {
+    
+    
+    /// - Returns: True if the value accessable through this portal is a RGBA.
+    
+    public var isRgba: Bool {
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        if let column = column { return _tableGetColumnType(for: column) == ItemType.rgba }
+        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.rgba.rawValue }
+        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.rgba.rawValue
+    }
+    
+
+    /// - Returns: The value of the red component in the RGBA accessable through this portal
+    
+    public var redComponent: CGFloat? {
+        get {
+            guard isValid else { return nil }
+            guard isRgba else { return nil }
+            return CGFloat(_rgbaRed)
+        }
+        set {
+            guard isValid else { return }
+            guard isRgba else { return }
+            if let newValue = newValue {
+                _rgbaRed = Float32(newValue)
+            } else {
+                _rgbaRed = 0.0
+            }
+        }
+    }
+    
+    
+    /// - Returns: The value of the green component in the RGBA accessable through this portal
+
+    public var greenComponent: CGFloat? {
+        get {
+            guard isValid else { return nil }
+            guard isRgba else { return nil }
+            return CGFloat(_rgbaGreen)
+        }
+        set {
+            guard isValid else { return }
+            guard isRgba else { return }
+            if let newValue = newValue {
+                _rgbaGreen = Float32(newValue)
+            } else {
+                _rgbaGreen = 0.0
+            }
+        }
+    }
+    
+
+    /// - Returns: The value of the blue component in the RGBA accessable through this portal
+
+    public var blueComponent: CGFloat? {
+        get {
+            guard isValid else { return nil }
+            guard isRgba else { return nil }
+            return CGFloat(_rgbaBlue)
+        }
+        set {
+            guard isValid else { return }
+            guard isRgba else { return }
+            if let newValue = newValue {
+                _rgbaBlue = Float32(newValue)
+            } else {
+                _rgbaBlue = 0.0
+            }
+        }
+    }
+
+
+    /// - Returns: The value of the alpha component in the RGBA accessable through this portal
+
+    public var alphaComponent: CGFloat? {
+        get {
+            guard isValid else { return nil }
+            guard isRgba else { return nil }
+            return CGFloat(_rgbaAlpha)
+        }
+        set {
+            guard isValid else { return }
+            guard isRgba else { return }
+            if let newValue = newValue {
+                _rgbaAlpha = Float32(newValue)
+            } else {
+                _rgbaAlpha = 0.0
+            }
+        }
+    }
+    
+
+    /// Access the value through the portal as a RBGA
+    
+    public var rgba: Rgba? {
+        get {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard isRgba else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a String"); return nil }
+            return Rgba(fromPtr: valueFieldPtr, endianness)
+        }
+        set { assistValueFieldAssignment(newValue) }
+    }
+
+    
+    /// Access the value through this portal as a NSColor
+    
+    public var nsColor: NSColor? {
+        get {
+            guard isValid else { return nil }
+            guard isRgba else { return nil }
+            return NSColor(red: CGFloat(_rgbaRed), green: CGFloat(_rgbaGreen), blue: CGFloat(_rgbaBlue), alpha: CGFloat(_rgbaAlpha))
+        }
+        set {
+            guard isValid else { return }
+            guard isRgba else { return }
+            if let newValue = newValue {
+                _rgbaRed = Float32(newValue.redComponent)
+                _rgbaGreen = Float32(newValue.greenComponent)
+                _rgbaBlue = Float32(newValue.blueComponent)
+                _rgbaAlpha = Float32(newValue.alphaComponent)
+            } else {
+                _rgbaRed = 0.0
+                _rgbaGreen = 0.0
+                _rgbaBlue = 0.0
+                _rgbaAlpha = 0.0
+            }
+        }
     }
 }

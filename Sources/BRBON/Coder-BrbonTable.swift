@@ -1,9 +1,9 @@
 // =====================================================================================================================
 //
-//  File:       BrbonTable-Coder.swift
+//  File:       Coder-BrbonTable.swift
 //  Project:    BRBON
 //
-//  Version:    0.4.2
+//  Version:    0.7.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.0 - File renamed from BrbonTable-Coder to Coder-BrbonTable
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 

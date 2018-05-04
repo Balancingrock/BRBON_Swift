@@ -1,9 +1,9 @@
 // =====================================================================================================================
 //
-//  File:       Int8-Coder.swift
+//  File:       Coder-CrcString.swift
 //  Project:    BRBON
 //
-//  Version:    0.4.2
+//  Version:    0.7.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.0 - File renamed from CrcString-Coder to Coder-CrcString
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -51,17 +52,44 @@ import Foundation
 import BRUtils
 
 
-/// Adds the Coder protocol
+extension String {
+    public var crcString: CrcString { return CrcString(self) }
+}
 
-extension Int8: Coder {
+
+/// Defines the BRBON CrcString class and conforms it to the Coder protocol.
+
+public final class CrcString: Coder, Equatable {
     
-    internal var valueByteCount: Int { return 1 }
-    
-    internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        atPtr.storeBytes(of: self, as: Int8.self)
+    public static func ==(lhs: CrcString, rhs: CrcString) -> Bool {
+        if lhs.crc != rhs.crc { return false }
+        return lhs.data == rhs.data
     }
     
+    public let string: String
+    public let data: Data
+    public let crc: UInt32
+    
+    public var itemType: ItemType { return ItemType.crcString }
+    
+    internal var valueByteCount: Int { return data.count + 8 }
+    
+    internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+        crc.storeValue(atPtr: atPtr, endianness)
+        data.storeValue(atPtr: atPtr.advanced(by: 4), endianness)
+    }
+    
+    public init(_ value: String) {
+        string = value
+        data = value.data(using: .utf8) ?? Data()
+        crc = data.crc32()
+    }
+    
+    public var isValid: Bool { return data.crc32() == crc }
+
     internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        self.init(fromPtr.assumingMemoryBound(to: Int8.self).pointee)
+        crc = UInt32(fromPtr: fromPtr, endianness)
+        data = Data(fromPtr: fromPtr.advanced(by: 4), endianness)
+        string = String(data: data, encoding: .utf8) ?? ""
     }
 }
