@@ -1,6 +1,6 @@
 // =====================================================================================================================
 //
-//  File:       Coder-UInt32.swift
+//  File:       Int16.swift
 //  Project:    BRBON
 //
 //  Version:    0.7.0
@@ -44,7 +44,7 @@
 //
 // History
 //
-// 0.7.0 - File renamed from Int32-Coder to Coder-Int32
+// 0.7.0 - Code reorganization
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -52,25 +52,75 @@ import Foundation
 import BRUtils
 
 
-/// Adds the Coder protocol
+// Extensions that allow a portal to test and access an Int16
 
-extension UInt32: Coder {
+public extension Portal {
     
-    internal var valueByteCount: Int { return 4 }
+    
+    /// Assess if the portal is valid and refers to an Int16.
+    ///
+    /// - Returns: True if the value accessable through this portal is an Int16. False if the portal is invalid or the value is not an Int16.
+    
+    public var isInt16: Bool {
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        if let column = column { return _tableGetColumnType(for: column) == ItemType.int16 }
+        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int16.rawValue }
+        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int16.rawValue
+    }
+
+    
+    /// Access the value through the portal as an Int16.
+    ///
+    /// - Note: Assigning a nil has no effect.
+    ///
+    /// - Returns: The value of the Int16 if this portal is valid and refers to an Int16.
+    
+    public var int16: Int16? {
+        get {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard isInt16 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Int16"); return nil }
+            return Int16(fromPtr: valueFieldPtr, endianness)
+        }
+        set {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
+            guard isInt16 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Int16"); return }
+            
+            if index == nil {
+                newValue?.storeValue(atPtr: itemSmallValuePtr, endianness)
+            } else {
+                newValue?.storeValue(atPtr: valueFieldPtr, endianness)
+            }
+        }
+    }
+}
+
+
+/// Adds the IsBrbon protocol to an Int16
+
+extension Int16: IsBrbon {
+    public var itemType: ItemType { return ItemType.int16 }
+}
+
+
+/// Adds the Coder protocol to an Int16
+
+extension Int16: Coder {
+    
+    internal var valueByteCount: Int { return 2 }
     
     internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         if endianness == machineEndianness {
-            atPtr.storeBytes(of: self, as: UInt32.self)
+            atPtr.storeBytes(of: self, as: Int16.self)
         } else {
-            atPtr.storeBytes(of: self.byteSwapped, as: UInt32.self)
+            atPtr.storeBytes(of: self.byteSwapped, as: Int16.self)
         }
     }
     
     internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         if endianness == machineEndianness {
-            self.init(fromPtr.assumingMemoryBound(to: UInt32.self).pointee)
+            self.init(fromPtr.assumingMemoryBound(to: Int16.self).pointee)
         } else {
-            self.init(fromPtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped)
+            self.init(fromPtr.assumingMemoryBound(to: Int16.self).pointee.byteSwapped)
         }
     }
 }

@@ -360,60 +360,85 @@ extension Portal {
 
     
     public subscript(row: Int, column: NameField) -> String? {
-        get { return self[row, column].string }
-        set { self[row, column].string = newValue }
+        get {
+            if isString { return self[row, column].string }
+            return self[row, column].crcString
+        }
+        set {
+            if isString {
+                self[row, column].string = newValue
+            } else {
+                self[row, column].crcString = newValue
+            }
+        }
     }
     public subscript(row: Int, column: String) -> String? {
-        get { return self[row, column].string }
-        set { self[row, column].string = newValue }
+        get {
+            if isString { return self[row, column].string }
+            return self[row, column].crcString
+        }
+        set {
+            if isString {
+                self[row, column].string = newValue
+            } else {
+                self[row, column].crcString = newValue
+            }
+        }
     }
     public subscript(row: Int, column: Int) -> String? {
-        get { return self[row, column].string }
-        set { self[row, column].string = newValue }
-    }
-
-    
-    public subscript(row: Int, column: NameField) -> CrcString? {
-        get { return self[row, column].crcString }
-        set { self[row, column].crcString = newValue }
-    }
-    public subscript(row: Int, column: String) -> CrcString? {
-        get { return self[row, column].crcString }
-        set { self[row, column].crcString = newValue }
-    }
-    public subscript(row: Int, column: Int) -> CrcString? {
-        get { return self[row, column].crcString }
-        set { self[row, column].crcString = newValue }
+        get {
+            if isString { return self[row, column].string }
+            return self[row, column].crcString
+        }
+        set {
+            if isString {
+                self[row, column].string = newValue
+            } else {
+                self[row, column].crcString = newValue
+            }
+        }
     }
 
     
     public subscript(row: Int, column: NameField) -> Data? {
-        get { return self[row, column].binary }
-        set { self[row, column].binary = newValue }
+        get {
+            if isBinary { return self[row, column].binary }
+            return self[row, column].crcBinary
+        }
+        set {
+            if isBinary {
+                self[row, column].binary = newValue
+            } else {
+                self[row, column].crcBinary = newValue
+            }
+        }
     }
     public subscript(row: Int, column: String) -> Data? {
-        get { return self[row, column].binary }
-        set { self[row, column].binary = newValue }
+        get {
+            if isBinary { return self[row, column].binary }
+            return self[row, column].crcBinary
+        }
+        set {
+            if isBinary {
+                self[row, column].binary = newValue
+            } else {
+                self[row, column].crcBinary = newValue
+            }
+        }
     }
     public subscript(row: Int, column: Int) -> Data? {
-        get { return self[row, column].binary }
-        set { self[row, column].binary = newValue }
+        get {
+            if isBinary { return self[row, column].binary }
+            return self[row, column].crcBinary
+        }
+        set {
+            if isBinary {
+                self[row, column].binary = newValue
+            } else {
+                self[row, column].crcBinary = newValue
+            }
+        }
     }
-
-    
-    public subscript(row: Int, column: NameField) -> CrcBinary? {
-        get { return self[row, column].crcBinary }
-        set { self[row, column].crcBinary = newValue }
-    }
-    public subscript(row: Int, column: String) -> CrcBinary? {
-        get { return self[row, column].crcBinary }
-        set { self[row, column].crcBinary = newValue }
-    }
-    public subscript(row: Int, column: Int) -> CrcBinary? {
-        get { return self[row, column].crcBinary }
-        set { self[row, column].crcBinary = newValue }
-    }
-
 
     
     /// A pointer to the row count
@@ -667,7 +692,7 @@ extension Portal {
 
         let bytesNeeded = len + delta
         if (_itemByteCount - itemMinimumByteCount) < bytesNeeded {
-            let result = ensureValueFieldByteCount(of: bytesNeeded)
+            let result = itemEnsureValueFieldByteCount(of: bytesNeeded)
             guard result == .success else { return result }
         }
         
@@ -1207,7 +1232,7 @@ extension Portal {
         
         let necessaryTableValueByteCount = rows * newRowByteCount + newRowsOffset
         
-        let result = ensureValueFieldByteCount(of: necessaryTableValueByteCount)
+        let result = itemEnsureValueFieldByteCount(of: necessaryTableValueByteCount)
         guard result == .success else { return result }
         
         

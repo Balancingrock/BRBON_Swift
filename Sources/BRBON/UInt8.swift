@@ -1,6 +1,6 @@
 // =====================================================================================================================
 //
-//  File:       Coder-Int32.swift
+//  File:       UInt8.swift
 //  Project:    BRBON
 //
 //  Version:    0.7.0
@@ -44,7 +44,7 @@
 //
 // History
 //
-// 0.7.0 - File renamed from Int32-Coder to Coder-Int32
+// 0.7.0 - Code reorganization
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -52,25 +52,69 @@ import Foundation
 import BRUtils
 
 
-/// Adds the Coder protocol
+// Extensions that allow a portal to test and access an UInt8
 
-extension Int32: Coder {
+public extension Portal {
     
-    internal var valueByteCount: Int { return 4 }
+    
+    /// Assess if the portal is valid and refers to an UInt8.
+    ///
+    /// - Returns: True if the value accessable through this portal is an UInt8. False if the portal is invalid or the value is not an UInt8.
+    
+    public var isUInt8: Bool {
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        if let column = column { return _tableGetColumnType(for: column) == ItemType.uint8 }
+        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint8.rawValue }
+        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint8.rawValue
+    }
+
+    
+    /// Access the value through the portal as an UInt8.
+    ///
+    /// - Note: Assigning a nil has no effect.
+    ///
+    /// - Returns: The value of the UInt8 if this portal is valid and refers to an UInt8.
+    
+    public var uint8: UInt8? {
+        get {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard isUInt8 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a UInt8"); return nil }
+            return UInt8(fromPtr: valueFieldPtr, endianness)
+        }
+        set {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
+            guard isUInt8 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a UInt8"); return }
+            
+            if index == nil {
+                newValue?.storeValue(atPtr: itemSmallValuePtr, endianness)
+            } else {
+                newValue?.storeValue(atPtr: valueFieldPtr, endianness)
+            }
+        }
+    }
+}
+
+
+/// Adds the IsBrbon protocol to an UInt8
+
+extension UInt8: IsBrbon {
+    public var itemType: ItemType { return ItemType.uint8 }
+}
+
+
+/// Adds the Coder protocol to an UInt8
+
+extension UInt8: Coder {
+    
+    internal var valueByteCount: Int { return 1 }
+    
+    internal var elementByteCount: Int { return valueByteCount }
     
     internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        if endianness == machineEndianness {
-            atPtr.storeBytes(of: self, as: Int32.self)
-        } else {
-            atPtr.storeBytes(of: self.byteSwapped, as: Int32.self)
-        }
+        atPtr.storeBytes(of: self, as: UInt8.self)
     }
     
     internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        if endianness == machineEndianness {
-            self.init(fromPtr.assumingMemoryBound(to: Int32.self).pointee)
-        } else {
-            self.init(fromPtr.assumingMemoryBound(to: Int32.self).pointee.byteSwapped)
-        }
+        self.init(fromPtr.assumingMemoryBound(to: UInt8.self).pointee)
     }
 }

@@ -82,7 +82,7 @@ internal protocol Coder: IsBrbon {
     ///
     /// - Note: Objects that cannot be created from a byte stream will raise a fatal error
     
-    init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness)
+    //init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness)
 
     
     /// Stores the value as a BRBON item.
@@ -174,7 +174,7 @@ extension Coder {
         }
     }
     
-    internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        fatalError("This type cannot be recreated from a byte stream")
-    }
+//    internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+//        fatalError("This type cannot be recreated from a byte stream")
+//    }
 }

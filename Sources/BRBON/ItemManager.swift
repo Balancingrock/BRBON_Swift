@@ -441,7 +441,7 @@ public final class ItemManager {
             
         case .rgba:
             
-            Rgba(NSColor.black).storeAsItem(atPtr: bufferPtr, name: name, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
+            RGBA(NSColor.black).storeAsItem(atPtr: bufferPtr, name: name, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
             
             
         case .font:
@@ -456,7 +456,7 @@ public final class ItemManager {
             
         case .crcString:
             
-            "".crcString.storeAsItem(atPtr: bufferPtr, name: name, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
+            CrcString("").storeAsItem(atPtr: bufferPtr, name: name, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
             
 
         case .binary:
@@ -465,7 +465,7 @@ public final class ItemManager {
             
             
         case .crcBinary:
-            Data().crcBinary.storeAsItem(atPtr: bufferPtr, name: name, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
+            CrcBinary(Data()).storeAsItem(atPtr: bufferPtr, name: name, parentOffset: 0, initialValueByteCount: rootValueByteCount, endianness)
             
 
         case .array:
@@ -849,7 +849,7 @@ public final class ItemManager {
     /// - Returns: A new item manager.
 
     public static func createRgbaManager(
-        _ value: Rgba,
+        _ value: NSColor,
         name: NameField? = nil,
         valueFieldByteCount: Int = 0,
         minimalBufferIncrement: Int = 0,
@@ -876,7 +876,7 @@ public final class ItemManager {
     /// - Returns: A new item manager.
     
     public static func createFontManager(
-        _ value: Font,
+        _ value: NSFont,
         name: NameField? = nil,
         valueFieldByteCount: Int = 0,
         minimalBufferIncrement: Int = 0,
@@ -930,7 +930,7 @@ public final class ItemManager {
     /// - Returns: A new item manager.
     
     public static func createCrcStringManager(
-        _ value: CrcString,
+        _ value: String,
         name: NameField? = nil,
         valueFieldByteCount: Int = 0,
         minimalBufferIncrement: Int = 1,
@@ -984,7 +984,7 @@ public final class ItemManager {
     /// - Returns: A new item manager.
     
     public static func createCrcBinaryManager(
-        _ value: CrcBinary,
+        _ value: Data,
         name: NameField? = nil,
         valueFieldByteCount: Int = 0,
         minimalBufferIncrement: Int = 1,

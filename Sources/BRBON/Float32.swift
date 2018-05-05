@@ -1,6 +1,6 @@
 // =====================================================================================================================
 //
-//  File:       Coder-Int16.swift
+//  File:       Float32.swift
 //  Project:    BRBON
 //
 //  Version:    0.7.0
@@ -44,7 +44,7 @@
 //
 // History
 //
-// 0.7.0 - File renamed from Int16-Coder to Coder-Int16
+// 0.7.0 - Code reorganization
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -52,25 +52,72 @@ import Foundation
 import BRUtils
 
 
-/// Adds the Coder protocol
+// Extensions that allow a portal to test and access a Float32
 
-extension Int16: Coder {
+public extension Portal {
     
-    internal var valueByteCount: Int { return 2 }
+    
+    /// Returns true if the value accessable through this portal is a Float32.
+    
+    public var isFloat32: Bool {
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        if let column = column { return _tableGetColumnType(for: column) == ItemType.float32 }
+        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.float32.rawValue }
+        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.float32.rawValue
+    }
+
+    
+    /// Access the value through the portal as a Float32
+    ///
+    /// - Note: Assigning a nil has no effect.
+    
+    public var float32: Float32? {
+        get {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard isFloat32 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Float32"); return nil }
+            return Float32(fromPtr: valueFieldPtr, endianness)
+        }
+        set {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
+            guard isFloat32 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Float32"); return }
+            
+            if index == nil {
+                newValue?.storeValue(atPtr: itemSmallValuePtr, endianness)
+            } else {
+                newValue?.storeValue(atPtr: valueFieldPtr, endianness)
+            }
+        }
+    }
+}
+
+
+/// Adds the IsBrbon protocol to a Float32
+
+extension Float32: IsBrbon {
+    public var itemType: ItemType { return ItemType.float32 }
+}
+
+
+/// Adds the Coder protocol to a Float32
+
+extension Float32: Coder {
+    
+    internal var valueByteCount: Int { return 4 }
     
     internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         if endianness == machineEndianness {
-            atPtr.storeBytes(of: self, as: Int16.self)
+            atPtr.storeBytes(of: self.bitPattern, as: UInt32.self)
         } else {
-            atPtr.storeBytes(of: self.byteSwapped, as: Int16.self)
+            atPtr.storeBytes(of: self.bitPattern.byteSwapped, as: UInt32.self)
         }
     }
     
     internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         if endianness == machineEndianness {
-            self.init(fromPtr.assumingMemoryBound(to: Int16.self).pointee)
+            self.init(bitPattern: fromPtr.assumingMemoryBound(to: UInt32.self).pointee)
         } else {
-            self.init(fromPtr.assumingMemoryBound(to: Int16.self).pointee.byteSwapped)
+            self.init(bitPattern: fromPtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped)
         }
     }
 }
+

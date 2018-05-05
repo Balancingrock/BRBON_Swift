@@ -1,6 +1,6 @@
 // =====================================================================================================================
 //
-//  File:       Coder-UInt64.swift
+//  File:       UInt16.swift
 //  Project:    BRBON
 //
 //  Version:    0.7.0
@@ -44,7 +44,7 @@
 //
 // History
 //
-// 0.7.0 - File renamed from Int64-Coder to Coder-Int64
+// 0.7.0 - Code reorganization
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -52,25 +52,75 @@ import Foundation
 import BRUtils
 
 
-/// Adds the Coder protocol
+// Extensions that allow a portal to test and access an UInt16
 
-extension UInt64: Coder {
+public extension Portal {
     
-    internal var valueByteCount: Int { return 8 }
+    
+    /// Assess if the portal is valid and refers to an UInt16.
+    ///
+    /// - Returns: True if the value accessable through this portal is an UInt16. False if the portal is invalid or the value is not an UInt16.
+    
+    public var isUInt16: Bool {
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        if let column = column { return _tableGetColumnType(for: column) == ItemType.uint16 }
+        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint16.rawValue }
+        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint16.rawValue
+    }
+
+    
+    /// Access the value through the portal as an UInt16.
+    ///
+    /// - Note: Assigning a nil has no effect.
+    ///
+    /// - Returns: The value of the UInt16 if this portal is valid and refers to an UInt16.
+    
+    public var uint16: UInt16? {
+        get {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard isUInt16 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a UInt16"); return nil }
+            return UInt16(fromPtr: valueFieldPtr, endianness)
+        }
+        set {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
+            guard isUInt16 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a UInt16"); return }
+                        
+            if index == nil {
+                newValue?.storeValue(atPtr: itemSmallValuePtr, endianness)
+            } else {
+                newValue?.storeValue(atPtr: valueFieldPtr, endianness)
+            }
+        }
+    }
+}
+
+
+/// Adds the IsBrbon protocol to an UInt16
+
+extension UInt16: IsBrbon {
+    public var itemType: ItemType { return ItemType.uint16 }
+}
+
+
+/// Adds the Coder protocol to an UInt16
+
+extension UInt16: Coder {
+    
+    internal var valueByteCount: Int { return 2 }
     
     internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         if endianness == machineEndianness {
-            atPtr.storeBytes(of: self, as: UInt64.self)
+            atPtr.storeBytes(of: self, as: UInt16.self)
         } else {
-            atPtr.storeBytes(of: self.byteSwapped, as: UInt64.self)
+            atPtr.storeBytes(of: self.byteSwapped, as: UInt16.self)
         }
     }
     
     internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         if endianness == machineEndianness {
-            self.init(fromPtr.assumingMemoryBound(to: UInt64.self).pointee)
+            self.init(fromPtr.assumingMemoryBound(to: UInt16.self).pointee)
         } else {
-            self.init(fromPtr.assumingMemoryBound(to: UInt64.self).pointee.byteSwapped)
+            self.init(fromPtr.assumingMemoryBound(to: UInt16.self).pointee.byteSwapped)
         }
     }
 }

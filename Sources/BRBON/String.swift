@@ -52,6 +52,78 @@ import Foundation
 import BRUtils
 
 
+// Offset definitions
+
+fileprivate let stringByteCountOffset = 0
+fileprivate let stringUtf8CodeOffset = stringByteCountOffset + 4
+
+
+// Internal portal helpers for String items
+
+internal extension Portal {
+    
+    internal var _stringItemCountPtr: UnsafeMutableRawPointer { return valueFieldPtr.advanced(by: stringByteCountOffset) }
+    internal var _stringUtf8CodePtr: UnsafeMutableRawPointer { return valueFieldPtr.advanced(by: stringUtf8CodeOffset) }
+    
+    
+    internal var _stringByteCount: Int {
+        get { return Int(UInt32(fromPtr: _stringItemCountPtr, endianness)) }
+        set { UInt32(newValue).storeValue(atPtr: _stringItemCountPtr, endianness) }
+    }
+    
+    internal var _stringUtf8Code: Data {
+        get {
+            return Data(bytes: _stringUtf8CodePtr.assumingMemoryBound(to: UInt8.self), count: _stringByteCount)
+        }
+        set {
+            _stringByteCount = newValue.count
+            newValue.copyBytes(to: _stringUtf8CodePtr.assumingMemoryBound(to: UInt8.self), count: newValue.count)
+        }
+    }
+    
+    internal var _stringValueFieldUsedByteCount: Int { return 4 + _stringByteCount }
+}
+
+
+// Public portal access
+
+extension Portal {
+    
+    
+    /// - Returns: True if the value accessable through this portal is a String.
+    
+    public var isString: Bool {
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        if let column = column { return _tableGetColumnType(for: column) == ItemType.string }
+        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.string.rawValue }
+        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.string.rawValue
+    }
+    
+    
+    /// Access the value through the portal as a String
+    ///
+    /// - Note: Assigning a null has no effect.
+    
+    public var string: String? {
+        get {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard isString else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a String"); return nil }
+            return String(data: _stringUtf8Code, encoding: .utf8)
+        }
+        set {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
+            guard isString else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a String"); return }
+            guard let newValue = newValue else { return }
+            
+            guard let utf8 = newValue.data(using: .utf8) else { return }
+            let result = newEnsureValueFieldByteCount(of: 4 + utf8.count)
+            guard result == .success else { return }
+            _stringUtf8Code = utf8
+        }
+    }
+}
+
+
 /// Adds the Coder protocol
 
 extension String: Coder {

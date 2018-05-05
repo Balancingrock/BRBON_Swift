@@ -159,25 +159,33 @@ public extension Portal {
     }
     
     public subscript(index: Int) -> String? {
-        get { return self[index].string }
-        set { self[index].string = newValue }
+        get {
+            if isString { return self[index].string }
+            return self[index].crcString
+        }
+        set {
+            if isString {
+                self[index].string = newValue
+            } else {
+                self[index].crcString = newValue
+            }
+        }
     }
     
-    public subscript(index: Int) -> CrcString? {
-        get { return self[index].crcString }
-        set { self[index].crcString = newValue }
-    }
-
     public subscript(index: Int) -> Data? {
-        get { return self[index].binary }
-        set { self[index].binary = newValue }
+        get {
+            if isBinary { return self[index].binary }
+            return self[index].crcBinary
+        }
+        set {
+            if isBinary {
+                self[index].binary = newValue
+            } else {
+                self[index].crcBinary = newValue
+            }
+        }
     }
     
-    public subscript(index: Int) -> CrcBinary? {
-        get { return self[index].crcBinary }
-        set { self[index].crcBinary = newValue }
-    }
-
     
     /// Appends one or more new elements to the end of an array.
     ///
@@ -230,7 +238,7 @@ public extension Portal {
         
         let newCount = _arrayElementCount + amount
         let neccesaryValueByteCount = 8 + _arrayElementByteCount * newCount
-        let result = ensureValueFieldByteCount(of: neccesaryValueByteCount)
+        let result = itemEnsureValueFieldByteCount(of: neccesaryValueByteCount)
         guard result == .success else { return result }
         
         

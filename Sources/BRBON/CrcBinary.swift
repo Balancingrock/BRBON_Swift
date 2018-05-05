@@ -1,9 +1,9 @@
 // =====================================================================================================================
 //
-//  File:       CrcBinary-Coder.swift
+//  File:       Coder-CrcBinary.swift
 //  Project:    BRBON
 //
-//  Version:    0.4.2
+//  Version:    0.7.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.0 - Renamed file from CrcBinary to Coder-CrcBinary
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -51,14 +52,81 @@ import Foundation
 import BRUtils
 
 
-extension Data {
-    public var crcBinary: CrcBinary { return CrcBinary(data: self) }
+fileprivate let crcBinaryCrcOffset = 0
+fileprivate let crcBinaryByteCountOffset = crcBinaryCrcOffset + 4
+fileprivate let crcBinaryDataOffset = crcBinaryByteCountOffset + 4
+
+
+extension Portal {
+    
+    internal var _crcBinaryCrcPtr: UnsafeMutableRawPointer { return valueFieldPtr.advanced(by: crcBinaryCrcOffset) }
+    internal var _crcBinaryByteCountPtr: UnsafeMutableRawPointer { return valueFieldPtr.advanced(by: crcBinaryByteCountOffset) }
+    internal var _crcBinaryDataPtr: UnsafeMutableRawPointer { return valueFieldPtr.advanced(by: crcBinaryDataOffset) }
+    
+    
+    internal var _crcBinaryCrc: UInt32 {
+        get { return UInt32(fromPtr: _crcBinaryCrcPtr, endianness) }
+        set { newValue.storeValue(atPtr: _crcBinaryCrcPtr, endianness) }
+    }
+    
+    internal var _crcBinaryByteCount: Int {
+        get { return Int(UInt32(fromPtr: _crcBinaryByteCountPtr, endianness)) }
+        set { UInt32(newValue).storeValue(atPtr: _crcBinaryByteCountPtr, endianness) }
+    }
+    
+    internal var _crcBinaryData: Data {
+        get { return Data(bytes: _crcBinaryDataPtr.assumingMemoryBound(to: UInt8.self), count: _crcBinaryByteCount) }
+        set {
+            _crcBinaryCrc = newValue.crc32()
+            _crcBinaryByteCount = newValue.count
+            newValue.copyBytes(to: _crcBinaryDataPtr.assumingMemoryBound(to: UInt8.self), count: _crcBinaryByteCount)
+        }
+    }
+    
+    internal var _crcBinaryValueFieldUsedByteCount: Int {
+        return crcBinaryDataOffset + _crcBinaryByteCount
+    }
 }
 
 
+public extension Portal {
+    
+    
+    /// Returns true if the value accessable through this portal is a CrcBinary.
+    
+    public var isCrcBinary: Bool {
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        if let column = column { return _tableGetColumnType(for: column) == ItemType.crcBinary }
+        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.crcBinary.rawValue }
+        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.crcBinary.rawValue
+    }
+    
+    
+    /// Access the value through the portal as a CrcBinary.
+    ///
+    /// - Note: Assigning a nil has no effect.
+    
+    public var crcBinary: Data? {
+        get {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard isCrcBinary else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a CrcBinary"); return nil }
+            return _crcBinaryData
+        }
+        set {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
+            guard isCrcBinary else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a CrcBinary"); return }
+            guard let newValue = newValue else { return }
+            let newValueFieldByteCount = newValue.valueByteCount
+            let result = newEnsureValueFieldByteCount(of: newValueFieldByteCount)
+            guard result == .success else { return }
+            _crcBinaryData = newValue
+        }
+    }
+}
+
 /// Defines the BRBON CrcBinary class and conforms it to the Coder protocol.
 
-public final class CrcBinary: Coder, Equatable {
+internal final class CrcBinary: Coder, Equatable {
     
     public static func ==(lhs: CrcBinary, rhs: CrcBinary) -> Bool {
         if lhs.crc != rhs.crc { return false }
@@ -70,7 +138,7 @@ public final class CrcBinary: Coder, Equatable {
     
     /// Creates a new CrcBinary
     
-    public init(data: Data) {
+    public init(_ data: Data) {
         self.data = data
         self.crc = data.crc32()
     }

@@ -1,6 +1,6 @@
 // =====================================================================================================================
 //
-//  File:       Coder-Bool.swift
+//  File:       Bool.swift
 //  Project:    BRBON
 //
 //  Version:    0.7.0
@@ -44,7 +44,7 @@
 //
 // History
 //
-// 0.7.0 - File renamed from Bool-Coder to Coder-Bool
+// 0.7.0 - Code reorganization
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -52,7 +52,57 @@ import Foundation
 import BRUtils
 
 
-/// Adds the Coder protocol to Bool
+// Extensions that allow a portal to test and access a Bool
+
+public extension Portal {
+    
+    
+    /// Assess if the portal is valid and refers to a Bool.
+    ///
+    /// - Returns: True if the value accessable through this portal is a Bool. False if the portal is invalid or the value is not a Bool.
+    
+    public var isBool: Bool {
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        if let column = column { return _tableGetColumnType(for: column) == ItemType.bool }
+        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.bool.rawValue }
+        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.bool.rawValue
+    }
+
+    
+    /// Access the value through the portal as a Bool.
+    ///
+    /// - Note: Assigning a nil has no effect.
+    ///
+    /// - Returns: The value of the bool if this portal is valid and refers to a Bool.
+    
+    public var bool: Bool? {
+        get {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard isBool else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a bool"); return nil }
+            return Bool(fromPtr: valueFieldPtr, endianness)
+        }
+        set {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
+            guard isBool else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a bool"); return }
+            
+            if index == nil {
+                newValue?.storeValue(atPtr: itemSmallValuePtr, endianness)
+            } else {
+                newValue?.storeValue(atPtr: valueFieldPtr, endianness)
+            }
+        }
+    }
+}
+
+
+/// Adds the IsBrbon protocol to a Bool
+
+extension Bool: IsBrbon {
+    public var itemType: ItemType { return ItemType.bool }
+}
+
+
+/// Adds the Coder protocol to a Bool
 
 extension Bool: Coder {
     

@@ -151,6 +151,36 @@ extension Portal {
         return .success
     }
     
+    internal func _arrayEnsureValueFieldByteCount(of bytes: Int) -> Result {
+        
+        
+        // Check to see if the element byte count of the array must be increased.
+        
+        let necessaryElementByteCount: Int = _arrayElementType!.isContainer ? itemMinimumByteCount + bytes : bytes
+        
+        if necessaryElementByteCount > _arrayElementByteCount {
+            
+            
+            // This is the byte count that self has to become in order to accomodate the new value
+            
+            let necessaryItemByteCount = _itemByteCount - actualValueFieldByteCount + arrayElementBaseOffset + ((_arrayElementCount + 1) * necessaryElementByteCount)
+            
+            
+            if necessaryItemByteCount > _itemByteCount {
+                // It is necessary to increase the bytecount for the array item itself
+                let result = increaseItemByteCount(to: necessaryItemByteCount.roundUpToNearestMultipleOf8())
+                guard result == .success else { return result }
+            }
+            
+            
+            // Increase the byte count of the elements by shifting them up inside the enlarged array.
+            
+            _arrayIncreaseElementByteCount(to: necessaryElementByteCount)
+        }
+        
+        return .success
+    }
+
     
     /// Increases the byte count of the array element.
     
@@ -285,7 +315,7 @@ extension Portal {
         
         let newCount = _arrayElementCount + 1
         let neccesaryValueByteCount = 8 + _arrayElementByteCount * newCount
-        result = ensureValueFieldByteCount(of: neccesaryValueByteCount)
+        result = itemEnsureValueFieldByteCount(of: neccesaryValueByteCount)
         guard result == .success else { return result }
         
         

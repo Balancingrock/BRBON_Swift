@@ -1,6 +1,6 @@
 // =====================================================================================================================
 //
-//  File:       Coder-Int64.swift
+//  File:       UInt64.swift
 //  Project:    BRBON
 //
 //  Version:    0.7.0
@@ -44,7 +44,7 @@
 //
 // History
 //
-// 0.7.0 - File renamed from Int64-Coder to Coder-Int64
+// 0.7.0 - Code reorganization
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -52,25 +52,67 @@ import Foundation
 import BRUtils
 
 
-/// Adds the Coder protocol
+// Extensions that allow a portal to test and access an UInt64
 
-extension Int64: Coder {
+public extension Portal {
+        
+    
+    /// Returns true if the value accessable through this portal is an UInt64.
+    
+    public var isUInt64: Bool {
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        if let column = column { return _tableGetColumnType(for: column) == ItemType.uint64 }
+        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint64.rawValue }
+        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint64.rawValue
+    }
+    
+    
+    /// Access the value through the portal as an UInt64.
+    ///
+    /// - Note: Assignment of nil has no effect.
+    
+    public var uint64: UInt64? {
+        get {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard isUInt64 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a UInt64"); return nil }
+            return UInt64(fromPtr: valueFieldPtr, endianness)
+        }
+        set {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
+            guard isUInt64 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a UInt64"); return }
+
+            newValue?.storeValue(atPtr: valueFieldPtr, endianness)
+        }
+    }
+}
+
+
+/// Adds the IsBrbon protocol to an UInt64
+
+extension UInt64: IsBrbon {
+    public var itemType: ItemType { return ItemType.uint64 }
+}
+
+
+/// Adds the Coder protocol to an UInt64
+
+extension UInt64: Coder {
     
     internal var valueByteCount: Int { return 8 }
     
     internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         if endianness == machineEndianness {
-            atPtr.storeBytes(of: self, as: Int64.self)
+            atPtr.storeBytes(of: self, as: UInt64.self)
         } else {
-            atPtr.storeBytes(of: self.byteSwapped, as: Int64.self)
+            atPtr.storeBytes(of: self.byteSwapped, as: UInt64.self)
         }
     }
     
-    internal init(fromPtr: UnsafeMutableRawPointer, count: Int = 0, _ endianness: Endianness) {
+    internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         if endianness == machineEndianness {
-            self.init(fromPtr.assumingMemoryBound(to: Int64.self).pointee)
+            self.init(fromPtr.assumingMemoryBound(to: UInt64.self).pointee)
         } else {
-            self.init(fromPtr.assumingMemoryBound(to: Int64.self).pointee.byteSwapped)
+            self.init(fromPtr.assumingMemoryBound(to: UInt64.self).pointee.byteSwapped)
         }
     }
 }

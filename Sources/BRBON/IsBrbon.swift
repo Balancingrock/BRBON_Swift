@@ -58,58 +58,11 @@ public protocol IsBrbon {
     var itemType: ItemType { get }
 }
 
-extension Bool: IsBrbon {
-    public var itemType: ItemType { return ItemType.bool }
-}
 
-extension UInt8: IsBrbon {
-    public var itemType: ItemType { return ItemType.uint8 }
-}
 
-extension UInt16: IsBrbon {
-    public var itemType: ItemType { return ItemType.uint16 }
-}
-
-extension UInt32: IsBrbon {
-    public var itemType: ItemType { return ItemType.uint32 }
-}
-
-extension UInt64: IsBrbon {
-    public var itemType: ItemType { return ItemType.uint64 }
-}
-
-extension Int8: IsBrbon {
-    public var itemType: ItemType { return ItemType.int8 }
-}
-
-extension Int16: IsBrbon {
-    public var itemType: ItemType { return ItemType.int16 }
-}
-
-extension Int32: IsBrbon {
-    public var itemType: ItemType { return ItemType.int32 }
-}
-
-extension Int64: IsBrbon {
-    public var itemType: ItemType { return ItemType.int64 }
-}
-
-extension Float32: IsBrbon {
-    public var itemType: ItemType { return ItemType.float32 }
-}
-
-extension Float64: IsBrbon {
-    public var itemType: ItemType { return ItemType.float64 }
-}
 
 extension String: IsBrbon {
     public var itemType: ItemType { return ItemType.string }
 }
 
-extension Data: IsBrbon {
-    public var itemType: ItemType { return ItemType.binary }
-}
 
-extension UUID: IsBrbon {
-    public var itemType: ItemType { return ItemType.uuid }
-}

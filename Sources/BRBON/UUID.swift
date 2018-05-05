@@ -1,6 +1,6 @@
 // =====================================================================================================================
 //
-//  File:       Coder-UInt8.swift
+//  File:       UUID.swift
 //  Project:    BRBON
 //
 //  Version:    0.7.0
@@ -44,7 +44,7 @@
 //
 // History
 //
-// 0.7.0 - File renamed from UInt8-Coder to Coder-UInt8
+// 0.7.0 - Code reorganization
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -52,19 +52,66 @@ import Foundation
 import BRUtils
 
 
-/// Adds the Coder protocol
+// Extensions that allow a portal to test and access an UUID
 
-extension UInt8: Coder {
+public extension Portal {
     
-    internal var valueByteCount: Int { return 1 }
+    
+    /// Assess if the portal is valid and refers to an UUID.
+    ///
+    /// - Returns: True if the value accessable through this portal is an UUID. False if the portal is invalid or the value is not an UUID.
+
+    public var isUuid: Bool {
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        if let column = column { return _tableGetColumnType(for: column) == ItemType.uuid }
+        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uuid.rawValue }
+        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uuid.rawValue
+    }
+
+    
+    /// Access the value through the portal as an UUID.
+    ///
+    /// - Note: Assigning a nil has no effect.
+    ///
+    /// - Returns: The value of the UUID if this portal is valid and refers to an UUID.
+
+    public var uuid: UUID? {
+        get {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard isUuid else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a UUID"); return nil }
+            return UUID(fromPtr: valueFieldPtr, endianness)
+        }
+        set {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
+            guard isUuid else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a UUID"); return }
+
+            newValue?.storeValue(atPtr: valueFieldPtr, endianness)
+        }
+    }
+}
+
+
+/// Adds the IsBrbon protocol to an UUID
+
+extension UUID: IsBrbon {
+    public var itemType: ItemType { return ItemType.uuid }
+}
+
+
+/// Adds the Coder protocol to an UUID
+
+extension UUID: Coder {
+    
+    internal var valueByteCount: Int { return 16 }
     
     internal var elementByteCount: Int { return valueByteCount }
     
     internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        atPtr.storeBytes(of: self, as: UInt8.self)
+        atPtr.storeBytes(of: self.uuid, as: uuid_t.self)
     }
     
     internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        self.init(fromPtr.assumingMemoryBound(to: UInt8.self).pointee)
+        let ptr = fromPtr.bindMemory(to: uuid_t.self, capacity: 1)
+        self.init(uuid: ptr.pointee)
     }
 }

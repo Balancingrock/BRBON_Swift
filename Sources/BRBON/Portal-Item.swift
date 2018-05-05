@@ -1,9 +1,9 @@
 // =====================================================================================================================
 //
-//  File:       Portal-Item-Access.swift
+//  File:       Portal-Item.swift
 //  Project:    BRBON
 //
-//  Version:    0.5.0
+//  Version:    0.7.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.0 - Moved some code around, file renamed.
 // 0.5.0 - Migration to Swift 4
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
@@ -75,25 +76,15 @@ internal let itemMinimumByteCount = 16
 extension Portal {
     
     internal var itemTypePtr: UnsafeMutableRawPointer { return itemPtr.advanced(by: itemTypeOffset) }
-    
     internal var itemOptionsPtr: UnsafeMutableRawPointer { return itemPtr.advanced(by: itemOptionsOffset) }
-    
     internal var itemFlagsPtr: UnsafeMutableRawPointer { return itemPtr.advanced(by: itemFlagsOffset) }
-    
     internal var itemNameFieldByteCountPtr: UnsafeMutableRawPointer { return itemPtr.advanced(by: itemNameFieldByteCountOffset) }
-
     internal var itemByteCountPtr: UnsafeMutableRawPointer { return itemPtr.advanced(by: itemByteCountOffset) }
-    
     internal var itemParentOffsetPtr: UnsafeMutableRawPointer { return itemPtr.advanced(by: itemParentOffsetOffset) }
-    
     internal var itemSmallValuePtr: UnsafeMutableRawPointer { return itemPtr.advanced(by: itemSmallValueOffset) }
-    
     internal var _itemNameFieldPtr: UnsafeMutableRawPointer { return itemPtr.advanced(by: itemNameFieldOffset) }
-    
     internal var _itemNameCrcPtr: UnsafeMutableRawPointer { return itemPtr.advanced(by: itemNameCrcOffset) }
-
     internal var _itemNameUtf8ByteCountPtr: UnsafeMutableRawPointer { return itemPtr.advanced(by: itemNameUtf8ByteCountOffset) }
-    
     internal var _itemNameUtf8CodePtr: UnsafeMutableRawPointer { return itemPtr.advanced(by: itemNameUtf8CodeOffset) }
     
     
@@ -114,37 +105,6 @@ extension Portal {
     }
 
     
-    /// The type of item this portal refers to.
-    ///
-    /// - Note: The type of the value and the type of the item may differ when the item is a container type.
-    
-    public internal(set) var itemType: ItemType? {
-        get {
-            guard isValid else { return nil }
-            return ItemType.readValue(atPtr: itemTypePtr)
-        }
-        set { newValue?.storeValue(atPtr: itemTypePtr) }
-    }
-    
-    
-    /// The type of value this portal refers to.
-    ///
-    /// - Note: The type of the value and the type of the item may differ when the item is a container type.
-    
-    public var valueType: ItemType? {
-        get {
-            guard isValid else { return nil }
-            if let column = column {
-                return _tableGetColumnType(for: column)
-            } else if index != nil {
-                return _arrayElementType
-            } else {
-                return itemType
-            }
-        }
-    }
-    
-    
     /// The options for the item this portal refers to.
     ///
     /// - Note: Assumes the portal is valid, if unsure, use 'options' instead.
@@ -155,14 +115,6 @@ extension Portal {
     }
     
 
-    /// The options for the item this portal refers to.
-
-    public var itemOptions: ItemOptions? {
-        get { guard isValid else { return nil }; return _itemsOptions }
-        set { guard isValid else { return }; _itemsOptions = newValue }
-    }
-    
-    
     /// The flags for the item this portal refers to.
     ///
     /// - Note: Assumes the portal is valid, if unsure, use 'flags' instead.
@@ -172,14 +124,6 @@ extension Portal {
         set { newValue?.storeValue(atPtr: itemFlagsPtr) }
     }
 
-    
-    /// The flags for the item this portal refers to.
-    
-    public var itemFlags: ItemFlags? {
-        get { guard isValid else { return nil }; return _itemFlags }
-        set { guard isValid else { return }; _itemFlags = newValue }
-    }
-    
     
     /// The small value field accessor
     
@@ -237,6 +181,79 @@ extension Portal {
     }
     
     
+    /// Ensures that the item can accomodate a value of the given length.
+    ///
+    /// - Parameter for: The number of bytes needed.
+    ///
+    /// - Returns: True if the item or element has sufficient bytes available.
+    
+    internal func itemEnsureValueFieldByteCount(of bytes: Int) -> Result {
+        
+        
+        // If the current value field byte count is sufficient, return immediately
+        
+        if actualValueFieldByteCount >= bytes { return .success }
+        
+        
+        // The byte count should be increased
+        
+        let necessaryItemByteCount = itemMinimumByteCount + _itemNameFieldByteCount + bytes.roundUpToNearestMultipleOf8()
+        
+        return increaseItemByteCount(to: necessaryItemByteCount)
+    }
+}
+
+
+public extension Portal {
+    
+    
+    /// The type of item this portal refers to.
+    ///
+    /// - Note: The type of the value and the type of the item may differ when the item is a container type.
+    
+    public internal(set) var itemType: ItemType? {
+        get {
+            guard isValid else { return nil }
+            return ItemType.readValue(atPtr: itemTypePtr)
+        }
+        set { newValue?.storeValue(atPtr: itemTypePtr) }
+    }
+    
+    
+    /// The type of value this portal refers to.
+    ///
+    /// - Note: The type of the value and the type of the item may differ when the item is a container type.
+    
+    public var valueType: ItemType? {
+        get {
+            guard isValid else { return nil }
+            if let column = column {
+                return _tableGetColumnType(for: column)
+            } else if index != nil {
+                return _arrayElementType
+            } else {
+                return itemType
+            }
+        }
+    }
+    
+    
+    /// The options for the item this portal refers to.
+    
+    public var itemOptions: ItemOptions? {
+        get { guard isValid else { return nil }; return _itemsOptions }
+        set { guard isValid else { return }; _itemsOptions = newValue }
+    }
+    
+    
+    /// The flags for the item this portal refers to.
+    
+    public var itemFlags: ItemFlags? {
+        get { guard isValid else { return nil }; return _itemFlags }
+        set { guard isValid else { return }; _itemFlags = newValue }
+    }
+    
+    
     /// A string with the name for the item this portal refers to.
     ///
     /// Nil if the item does not have a name. Empty if the conversion of UTF8 code to a string failed.
@@ -249,3 +266,5 @@ extension Portal {
         }
     }
 }
+
+

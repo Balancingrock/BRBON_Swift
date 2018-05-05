@@ -1,6 +1,6 @@
 // =====================================================================================================================
 //
-//  File:       Coder-Float64.swift
+//  File:       Int32.swift
 //  Project:    BRBON
 //
 //  Version:    0.7.0
@@ -44,7 +44,7 @@
 //
 // History
 //
-// 0.7.0 - File renamed from Float64-Coder to Coder-Float64
+// 0.7.0 - Code reorganization
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -52,26 +52,75 @@ import Foundation
 import BRUtils
 
 
-/// Adds the Coder protocol
+// Extensions that allow a portal to test and access an Int32
 
-extension Float64: Coder {
+public extension Portal {
     
-    internal var valueByteCount: Int { return 8 }
     
-    internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        if endianness == machineEndianness {
-            atPtr.storeBytes(of: self.bitPattern, as: UInt64.self)
-        } else {
-            atPtr.storeBytes(of: self.bitPattern.byteSwapped, as: UInt64.self)
-        }
+    /// Assess if the portal is valid and refers to an Int32.
+    ///
+    /// - Returns: True if the value accessable through this portal is an Int32. False if the portal is invalid or the value is not an Int32.
+    
+    public var isInt32: Bool {
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        if let column = column { return _tableGetColumnType(for: column) == ItemType.int32 }
+        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int32.rawValue }
+        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int32.rawValue
     }
+
     
-    internal init(fromPtr: UnsafeMutableRawPointer, count: Int = 0, _ endianness: Endianness) {
-        if endianness == machineEndianness {
-            self.init(bitPattern: fromPtr.assumingMemoryBound(to: UInt64.self).pointee)
-        } else {
-            self.init(bitPattern: fromPtr.assumingMemoryBound(to: UInt64.self).pointee.byteSwapped)
+    /// Access the value through the portal as an Int32.
+    ///
+    /// - Note: Assigning a nil has no effect.
+    ///
+    /// - Returns: The value of the Int32 if this portal is valid and refers to an Int32.
+    
+    public var int32: Int32? {
+        get {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard isInt32 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Int32"); return nil }
+            return Int32(fromPtr: valueFieldPtr, endianness)
+        }
+        set {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
+            guard isInt32 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Int32"); return }
+            
+            if index == nil {
+                newValue?.storeValue(atPtr: itemSmallValuePtr, endianness)
+            } else {
+                newValue?.storeValue(atPtr: valueFieldPtr, endianness)
+            }
         }
     }
 }
 
+
+/// Adds the IsBrbon protocol to an Int32
+
+extension Int32: IsBrbon {
+    public var itemType: ItemType { return ItemType.int32 }
+}
+
+
+/// Adds the Coder protocol to an Int32
+
+extension Int32: Coder {
+    
+    internal var valueByteCount: Int { return 4 }
+    
+    internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+        if endianness == machineEndianness {
+            atPtr.storeBytes(of: self, as: Int32.self)
+        } else {
+            atPtr.storeBytes(of: self.byteSwapped, as: Int32.self)
+        }
+    }
+    
+    internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+        if endianness == machineEndianness {
+            self.init(fromPtr.assumingMemoryBound(to: Int32.self).pointee)
+        } else {
+            self.init(fromPtr.assumingMemoryBound(to: Int32.self).pointee.byteSwapped)
+        }
+    }
+}

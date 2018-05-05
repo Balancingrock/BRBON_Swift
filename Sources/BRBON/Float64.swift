@@ -1,6 +1,6 @@
 // =====================================================================================================================
 //
-//  File:       Coder-UInt16.swift
+//  File:       Float64.swift
 //  Project:    BRBON
 //
 //  Version:    0.7.0
@@ -44,7 +44,7 @@
 //
 // History
 //
-// 0.7.0 - File renamed from Int16-Coder to Coder-Int16
+// 0.7.0 - Code reorganization
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -52,25 +52,65 @@ import Foundation
 import BRUtils
 
 
-/// Adds the Coder protocol
+// Extensions that allow a portal to test and access a Float64
 
-extension UInt16: Coder {
+extension Portal {
     
-    internal var valueByteCount: Int { return 2 }
     
-    internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        if endianness == machineEndianness {
-            atPtr.storeBytes(of: self, as: UInt16.self)
-        } else {
-            atPtr.storeBytes(of: self.byteSwapped, as: UInt16.self)
-        }
+    /// Returns true if the value accessable through this portal is a Float64.
+    
+    public var isFloat64: Bool {
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        if let column = column { return _tableGetColumnType(for: column) == ItemType.float64 }
+        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.float64.rawValue }
+        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.float64.rawValue
     }
     
-    internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        if endianness == machineEndianness {
-            self.init(fromPtr.assumingMemoryBound(to: UInt16.self).pointee)
-        } else {
-            self.init(fromPtr.assumingMemoryBound(to: UInt16.self).pointee.byteSwapped)
+
+    /// Access the value through the portal as a Float64
+    
+    public var float64: Float64? {
+        get {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard isFloat64 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Float64"); return nil }
+            return Float64(fromPtr: valueFieldPtr, endianness)
+        }
+        set {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
+            guard isFloat64 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Float64"); return }
+            newValue?.storeValue(atPtr: valueFieldPtr, endianness)
         }
     }
 }
+
+
+/// Adds the Coder protocol to a Float64
+
+extension Float64: IsBrbon {
+    public var itemType: ItemType { return ItemType.float64 }
+}
+
+
+/// Adds the Coder protocol to a Float64
+
+extension Float64: Coder {
+    
+    internal var valueByteCount: Int { return 8 }
+    
+    internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+        if endianness == machineEndianness {
+            atPtr.storeBytes(of: self.bitPattern, as: UInt64.self)
+        } else {
+            atPtr.storeBytes(of: self.bitPattern.byteSwapped, as: UInt64.self)
+        }
+    }
+    
+    internal init(fromPtr: UnsafeMutableRawPointer, count: Int = 0, _ endianness: Endianness) {
+        if endianness == machineEndianness {
+            self.init(bitPattern: fromPtr.assumingMemoryBound(to: UInt64.self).pointee)
+        } else {
+            self.init(bitPattern: fromPtr.assumingMemoryBound(to: UInt64.self).pointee.byteSwapped)
+        }
+    }
+}
+

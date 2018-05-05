@@ -1,9 +1,9 @@
 // =====================================================================================================================
 //
-//  File:       Portal-CrcString.swift
+//  File:       Null.swift
 //  Project:    BRBON
 //
-//  Version:    0.4.2
+//  Version:    0.7.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,33 +44,51 @@
 //
 // History
 //
+// 0.7.0 - Code reorganization
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
 import Foundation
+import BRUtils
 
 
-fileprivate let crcStringCrcOffset = 0
-fileprivate let crcStringByteCountOffset = crcStringCrcOffset + 4
-fileprivate let crcStringUtf8CodeOffset = crcStringByteCountOffset + 4
+// Extensions that allow a portal to test and access a Null
 
-
-extension Portal {
+public extension Portal {
     
-
-    internal var _crcStringCrcPtr: UnsafeMutableRawPointer { return itemValueFieldPtr.advanced(by: crcStringCrcOffset) }
     
-    internal var _crcStringByteCountPtr: UnsafeMutableRawPointer { return itemValueFieldPtr.advanced(by: crcStringByteCountOffset) }
-    
-    internal var _crcStringUtf8CodePtr: UnsafeMutableRawPointer { return itemValueFieldPtr.advanced(by: crcStringUtf8CodeOffset) }
+    /// Assess if the portal is valid and refers to a Null.
+    ///
+    /// - Returns: True if the value accessable through this portal is a Null. False if the portal is invalid or the value is not a Null.
 
-
-    internal var _crcStringByteCount: Int {
-        get { return Int(UInt32(fromPtr: _crcStringByteCountPtr, endianness)) }
-        set { UInt32(newValue).storeValue(atPtr: _crcStringByteCountPtr, endianness) }
+    public var isNull: Bool {
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        if let column = column { return _tableGetColumnType(for: column) == ItemType.null }
+        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.null.rawValue }
+        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.null.rawValue
     }
+
     
-    internal var _crcStringValueFieldUsedByteCount: Int {
-        return crcStringUtf8CodeOffset + _crcStringByteCount
+    /// Access the value through the portal as a Null. This operation is for orthogonality only, it is in effect the same operation as the isNull member.
+    ///
+    /// - Note: Assigning has no effect.
+    ///
+    /// - Returns: True if the value accessable through this portal is a Null. False if the portal is invalid or the value is not a Null.
+
+    public var null: Bool? {
+        get { return isNull }
+        set {}
     }
+}
+
+
+/// Defines the BRBON Null class and adds the Coder protocol
+
+internal final class Null: Coder {
+    
+    var itemType: ItemType { return ItemType.null }
+    
+    var valueByteCount: Int { return 0 }
+    
+    func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) { }
 }

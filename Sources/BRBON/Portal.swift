@@ -45,6 +45,7 @@
 // History
 //
 // 0.7.0 - Added type .rgba and .font
+//         Type change is no longer possible
 // 0.5.0 - Migration to Swift 4
 // 0.4.3 - Changed access levels for index and column
 // 0.4.2 - Added header & general review of access levels
@@ -70,18 +71,6 @@ public var allowFatalError = true
 internal func fatalOrNull(_ message: String = "") -> Portal {
     if allowFatalError { fatalError(message) }
     return Portal.nullPortal
-}
-
-
-/// Allows the value accessors to raise a fatal error when a type change is implied.
-
-public var allowFatalOnTypeChange = true
-
-
-/// Raises a fatal error when the value-access set operator receives a different type than stored in the item.
-
-internal func fatalOnTypeChange() {
-    if allowFatalOnTypeChange { fatalError("Type change not allowed") }
 }
 
 
@@ -515,8 +504,7 @@ extension Portal {
         switch itemType! {
         case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32: return 0
         case .int64, .uint64, .float64: return 8
-        case .uuid: return 16
-        case .rgba: return 16
+        case .uuid, .rgba: return 16
         case .font: return _fontValueFieldUsedByteCount
         case .string: return _stringValueFieldUsedByteCount
         case .crcString: return _crcStringValueFieldUsedByteCount
@@ -530,27 +518,15 @@ extension Portal {
     }
 
     
-    /// Ensures that the item can accomodate a value of the given length.
-    ///
-    /// - Parameter for: The number of bytes needed.
-    ///
-    /// - Returns: True if the item or element has sufficient bytes available.
-    
-    internal func ensureValueFieldByteCount(of bytes: Int) -> Result {
-        
-        
-        // If the current value field byte count is sufficient, return immediately
-        
-        if actualValueFieldByteCount >= bytes { return .success }
-        
-        
-        // The byte count should be increased
-        
-        let necessaryItemByteCount = itemMinimumByteCount + _itemNameFieldByteCount + bytes.roundUpToNearestMultipleOf8()
-        
-        return increaseItemByteCount(to: necessaryItemByteCount)
+    internal func newEnsureValueFieldByteCount(of bytes: Int) -> Result {
+        if index == nil { return itemEnsureValueFieldByteCount(of: bytes) }
+        if let column = column {
+            return _tableEnsureColumnValueByteCount(of: bytes, in: column)
+        } else {
+            return _arrayEnsureValueFieldByteCount(of: bytes)
+        }
     }
-    
+
     
     /// Increases the byte count of the item.
     ///
@@ -857,186 +833,6 @@ extension Portal {
     }
     
     
-    /// Returns true if the value accessable through this portal is a Null.
-    
-    public var isNull: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
-        if let column = column { return _tableGetColumnType(for: column) == ItemType.null }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.null.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.null.rawValue
-    }
-    
-
-    /// Returns true if the value accessable through this portal is a Bool.
-
-    public var isBool: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
-        if let column = column { return _tableGetColumnType(for: column) == ItemType.bool }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.bool.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.bool.rawValue
-    }
-    
-    
-    /// Returns true if the value accessable through this portal is an UInt8.
-
-    public var isUInt8: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
-        if let column = column { return _tableGetColumnType(for: column) == ItemType.uint8 }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint8.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint8.rawValue
-    }
-    
-    
-    /// Returns true if the value accessable through this portal is an UInt16.
-
-    public var isUInt16: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
-        if let column = column { return _tableGetColumnType(for: column) == ItemType.uint16 }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint16.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint16.rawValue
-    }
-    
-    
-    /// Returns true if the value accessable through this portal is an UInt32.
-
-    public var isUInt32: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
-        if let column = column { return _tableGetColumnType(for: column) == ItemType.uint32 }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint32.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint32.rawValue
-    }
-    
-    
-    /// Returns true if the value accessable through this portal is an UInt64.
-
-    public var isUInt64: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
-        if let column = column { return _tableGetColumnType(for: column) == ItemType.uint64 }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint64.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint64.rawValue
-    }
-    
-    
-    /// Returns true if the value accessable through this portal is an Int8.
-
-    public var isInt8: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
-        if let column = column { return _tableGetColumnType(for: column) == ItemType.int8 }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int8.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int8.rawValue
-    }
-    
-    
-    /// Returns true if the value accessable through this portal is an Int16.
-
-    public var isInt16: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
-        if let column = column { return _tableGetColumnType(for: column) == ItemType.int16 }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int16.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int16.rawValue
-    }
-    
-    
-    /// Returns true if the value accessable through this portal is an Int32.
-
-    public var isInt32: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
-        if let column = column { return _tableGetColumnType(for: column) == ItemType.int32 }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int32.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int32.rawValue
-    }
-    
-    
-    /// Returns true if the value accessable through this portal is an Int64.
-
-    public var isInt64: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
-        if let column = column { return _tableGetColumnType(for: column) == ItemType.int64 }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int64.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int64.rawValue
-    }
-    
-    
-    /// Returns true if the value accessable through this portal is a Float32.
-
-    public var isFloat32: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
-        if let column = column { return _tableGetColumnType(for: column) == ItemType.float32 }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.float32.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.float32.rawValue
-    }
-    
-    
-    /// Returns true if the value accessable through this portal is a Float64.
-
-    public var isFloat64: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
-        if let column = column { return _tableGetColumnType(for: column) == ItemType.float64 }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.float64.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.float64.rawValue
-    }
-    
-    
-    /// Returns true if the value accessable through this portal is an UUID.
-    
-    public var isUuid: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
-        if let column = column { return _tableGetColumnType(for: column) == ItemType.uuid }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uuid.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uuid.rawValue
-    }
-    
-        
-    /// Returns true if the value accessable through this portal is a Font.
-    
-    public var isFont: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
-        if let column = column { return _tableGetColumnType(for: column) == ItemType.font }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.font.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.font.rawValue
-    }
-
-    
-    /// Returns true if the value accessable through this portal is a String.
-
-    public var isString: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
-        if let column = column { return _tableGetColumnType(for: column) == ItemType.string }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.string.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.string.rawValue
-    }
-    
-    
-    /// Returns true if the value accessable through this portal is a CrcString.
-
-    public var isCrcString: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
-        if let column = column { return _tableGetColumnType(for: column) == ItemType.crcString }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.crcString.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.crcString.rawValue
-    }
-
-    
-    /// Returns true if the value accessable through this portal is a Binary.
-
-    public var isBinary: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
-        if let column = column { return _tableGetColumnType(for: column) == ItemType.binary }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.binary.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.binary.rawValue
-    }
-
-    
-    /// Returns true if the value accessable through this portal is a CrcBinary.
-    
-    public var isCrcBinary: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
-        if let column = column { return _tableGetColumnType(for: column) == ItemType.crcBinary }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.crcBinary.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.crcBinary.rawValue
-    }
-
-    
     /// Returns true if the value accessable through this portal is an Array.
 
     public var isArray: Bool {
@@ -1077,237 +873,19 @@ extension Portal {
     }
     
     
-    /// Returns true if the value accessable through the portal is a null
-    
-    public var null: Bool? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            return isNull ? true : nil
-        }
-        set {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            if index == nil { return }
-            removeChildItems()
-            itemType = .null
-            _itemSmallValue = UInt32(0)
-        }
-    }
-    
-    
-    /// Access the value through the portal as a Bool
-    
-    public var bool: Bool? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isBool else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a bool"); return nil }
-            return Bool(fromPtr: valueFieldPtr, endianness)
-        }
-        set { assistSmallValueAssignment(newValue) }
-    }
-    
-    
-    /// Access the value through the portal as an UInt8
 
-    public var uint8: UInt8? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isUInt8 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a UInt8"); return nil }
-            return UInt8(fromPtr: valueFieldPtr, endianness)
-        }
-        set { assistSmallValueAssignment(newValue) }
-    }
-    
-    
-    /// Access the value through the portal as an UInt16
-
-    public var uint16: UInt16? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isUInt16 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a UInt16"); return nil }
-            return UInt16(fromPtr: valueFieldPtr, endianness)
-        }
-        set { assistSmallValueAssignment(newValue) }
-    }
-    
-    
-    /// Access the value through the portal as an UInt32
-
-    public var uint32: UInt32? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isUInt32 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a UInt32"); return nil }
-            return UInt32(fromPtr: valueFieldPtr, endianness)
-        }
-        set { assistSmallValueAssignment(newValue) }
-    }
-    
-    
-    /// Access the value through the portal as an UInt64
-
-    public var uint64: UInt64? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isUInt64 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a UInt64"); return nil }
-            return UInt64(fromPtr: valueFieldPtr, endianness)
-        }
-        set { assistValueFieldAssignment(newValue) }
-    }
-    
-    
-    /// Access the value through the portal as an Int8
-
-    public var int8: Int8? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isInt8 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Int8"); return nil }
-            return Int8(fromPtr: valueFieldPtr, endianness)
-        }
-        set { assistSmallValueAssignment(newValue) }
-    }
-    
-    
-    /// Access the value through the portal as an Int16
-
-    public var int16: Int16? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isInt16 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Int16"); return nil }
-            return Int16(fromPtr: valueFieldPtr, endianness)
-        }
-        set { assistSmallValueAssignment(newValue) }
-    }
-    
-    
-    /// Access the value through the portal as an Int32
-
-    public var int32: Int32? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isInt32 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Int32"); return nil }
-            return Int32(fromPtr: valueFieldPtr, endianness)
-        }
-        set { assistSmallValueAssignment(newValue) }
-    }
-    
-    
-    /// Access the value through the portal as an Int64
-
-    public var int64: Int64? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isInt64 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Int64"); return nil }
-            return Int64(fromPtr: valueFieldPtr, endianness)
-        }
-        set { assistValueFieldAssignment(newValue) }
-    }
-    
-    
-    /// Access the value through the portal as a Float32
-
-    public var float32: Float32? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isFloat32 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Float32"); return nil }
-            return Float32(fromPtr: valueFieldPtr, endianness)
-        }
-        set { assistSmallValueAssignment(newValue) }
-    }
-    
-    
-    /// Access the value through the portal as a Float64
-
-    public var float64: Float64? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isFloat64 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Float64"); return nil }
-            return Float64(fromPtr: valueFieldPtr, endianness)
-        }
-        set { assistValueFieldAssignment(newValue) }
-    }
-    
-    
-    /// Access the value through the portal as an UUID
-    
-    public var uuid: UUID? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isUuid else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a String"); return nil }
-            return UUID(fromPtr: valueFieldPtr, endianness)
-        }
-        set { assistValueFieldAssignment(newValue) }
-    }
-    
+        
     
 
-    
-    /// Access the value through the portal as a BrbonFont
-    
-    public var font: Font? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isUuid else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a String"); return nil }
-            return Font(fromPtr: valueFieldPtr, endianness)
-        }
-        set { assistValueFieldAssignment(newValue) }
-    }
-
-    
-    /// Access the value through the portal as a String
-
-    public var string: String? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isString else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a String"); return nil }
-            return String(fromPtr: valueFieldPtr, endianness)
-        }
-        set { assistValueFieldAssignment(newValue) }
-    }
-    
-    
-    
-    /// Access the value through the portal as a BrbonString
-
-    public var crcString: CrcString? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isCrcString else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a CrcString"); return nil }
-            return CrcString(fromPtr: valueFieldPtr, endianness)
-        }
-        set { assistValueFieldAssignment(newValue) }
-    }
-
-    
-    /// Access the value through the portal as a Binary
-
-    public var binary: Data? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isBinary else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Binary"); return nil }
-            return Data(fromPtr: valueFieldPtr, endianness)
-        }
-        set { assistValueFieldAssignment(newValue) }
-    }
-    
-
-    /// Access the value through the portal as a CrcBinary
-
-    public var crcBinary: CrcBinary? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isCrcBinary else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a CrcBinary"); return nil }
-            return CrcBinary(fromPtr: valueFieldPtr, endianness)
-        }
-        set { assistValueFieldAssignment(newValue) }
-    }
-    
     
     /// General purpose assignment assistance for small-value setters.
     ///
     /// Despite its name, the assignment may well be to a table element or column field. But there will be no calls made to ensure the size of the value field.
-    
+    /*
     private func assistSmallValueAssignment(_ newValue: Coder!) {
         
         guard isValid else { fatalOrNull("Portal is no longer valid"); return }
+        guard newValue.itemType == itemType else { fatalOrNull("Type change not allowed (from \(itemType!) to \(newValue.itemType))"); return }
         
         if index != nil {
             
@@ -1322,28 +900,17 @@ extension Portal {
             
             if let newValue = newValue {
                 
-                if !isNull {
-                    if newValue.itemType != valueType {
-                        fatalOnTypeChange()
-                        removeChildItems()
-                        _itemSmallValue = UInt32(0)
-                    }
-                }
-                
-                itemType = .string
-                
                 newValue.storeValue(atPtr: itemValueFieldPtr, endianness)
                 
             } else {
                 
                 removeChildItems()
-                itemType = .null
                 _itemSmallValue = UInt32(0)
             }
         }
-        
     }
 
+    
     /// General purpose assignment assistance for setters.
     
     internal func assistValueFieldAssignment(_ newValue: Coder?) {
@@ -1384,17 +951,8 @@ extension Portal {
             
             if let newValue = newValue {
                 
-                if !isNull {
-                    if newValue.itemType != valueType {
-                        fatalOnTypeChange()
-                        removeChildItems()
-                        _itemSmallValue = UInt32(0)
-                    }
-                }
+                let result = itemEnsureValueFieldByteCount(of: newValue.valueByteCount)
                 
-                itemType = .string
-                
-                let result = ensureValueFieldByteCount(of: newValue.valueByteCount)
                 guard result == .success else { fatalError(result.description) }
                 
                 newValue.storeValue(atPtr: itemValueFieldPtr, endianness)
@@ -1402,11 +960,9 @@ extension Portal {
             } else {
                 
                 removeChildItems()
-                itemType = .null
-                _itemSmallValue = UInt32(0)
             }
         }
-    }
+    }*/
 
     
     /// Changes the type of self to a null.

@@ -1,6 +1,6 @@
 // =====================================================================================================================
 //
-//  File:       Coder-Int8.swift
+//  File:       Int8.swift
 //  Project:    BRBON
 //
 //  Version:    0.7.0
@@ -44,7 +44,7 @@
 //
 // History
 //
-// 0.7.0 - File renamed from Int8-Coder to Coder-Int8
+// 0.7.0 - Code reorganization
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -52,7 +52,57 @@ import Foundation
 import BRUtils
 
 
-/// Adds the Coder protocol
+// Extensions that allow a portal to test and access an Int8
+
+public extension Portal {
+    
+    
+    /// Assess if the portal is valid and refers to an Int8.
+    ///
+    /// - Returns: True if the value accessable through this portal is an Int8. False if the portal is invalid or the value is not an Int8.
+
+    public var isInt8: Bool {
+        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        if let column = column { return _tableGetColumnType(for: column) == ItemType.int8 }
+        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int8.rawValue }
+        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int8.rawValue
+    }
+    
+
+    /// Access the value through the portal as an Int8.
+    ///
+    /// - Note: Assigning a nil has no effect.
+    ///
+    /// - Returns: The value of the Int8 if this portal is valid and refers to an Int8.
+
+    public var int8: Int8? {
+        get {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
+            guard isInt8 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Int8"); return nil }
+            return Int8(fromPtr: valueFieldPtr, endianness)
+        }
+        set {
+            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
+            guard isInt8 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Int8"); return }
+            
+            if index == nil {
+                newValue?.storeValue(atPtr: itemSmallValuePtr, endianness)
+            } else {
+                newValue?.storeValue(atPtr: valueFieldPtr, endianness)
+            }
+        }
+    }
+}
+
+
+/// Adds the IsBrbon protocol to an Int8
+
+extension Int8: IsBrbon {
+    public var itemType: ItemType { return ItemType.int8 }
+}
+
+
+/// Adds the Coder protocol to an Int8
 
 extension Int8: Coder {
     
