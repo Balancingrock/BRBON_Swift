@@ -58,7 +58,7 @@ fileprivate let rgbaRedOffset = 0
 fileprivate let rgbaGreenOffset = rgbaRedOffset + 4
 fileprivate let rgbaBlueOffset = rgbaGreenOffset + 4
 fileprivate let rgbaAlphaOffset = rgbaBlueOffset + 4
-
+fileprivate let rgbaValueByteCount = rgbaAlphaOffset + 4
 
 // Internal portal helpers
 
@@ -109,89 +109,6 @@ public extension Portal {
         return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.rgba.rawValue
     }
     
-    /// Access the red component of the value through the portal if the portal refers to a RGBA.
-    ///
-    /// - Note: Assigning a nil has no effect.
-    ///
-    /// - Returns: The value of the red component in the RGBA if this portal is valid and refers to an RGBA
-    
-    public var redComponent: CGFloat? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isRgba else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a RGBA"); return nil }
-            return CGFloat(_rgbaRed)
-        }
-        set {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard isRgba else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a RGBA"); return }
-            guard let newValue = newValue else { return }
-            _rgbaRed = Float32(newValue)
-        }
-    }
-    
-    
-    /// Access the green component of the value through the portal if the portal refers to a RGBA.
-    ///
-    /// - Note: Assigning a nil has no effect.
-    ///
-    /// - Returns: The value of the green component in the RGBA if this portal is valid and refers to an RGBA
-
-    public var greenComponent: CGFloat? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isRgba else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a RGBA"); return nil }
-            return CGFloat(_rgbaGreen)
-        }
-        set {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard isRgba else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a RGBA"); return }
-            guard let newValue = newValue else { return }
-            _rgbaGreen = Float32(newValue)
-        }
-    }
-    
-    
-    /// Access the blue component of the value through the portal if the portal refers to a RGBA.
-    ///
-    /// - Note: Assigning a nil has no effect.
-    ///
-    /// - Returns: The value of the blue component in the RGBA if this portal is valid and refers to an RGBA
-
-    public var blueComponent: CGFloat? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isRgba else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a RGBA"); return nil }
-            return CGFloat(_rgbaBlue)
-        }
-        set {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard isRgba else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a RGBA"); return }
-            guard let newValue = newValue else { return }
-            _rgbaBlue = Float32(newValue)
-        }
-    }
-    
-    
-    /// Access the alpha component of the value through the portal if the portal refers to a RGBA.
-    ///
-    /// - Note: Assigning a nil has no effect.
-    ///
-    /// - Returns: The value of the alpha component in the RGBA if this portal is valid and refers to an RGBA
-
-    public var alphaComponent: CGFloat? {
-        get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isRgba else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a RGBA"); return nil }
-            return CGFloat(_rgbaAlpha)
-        }
-        set {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard isRgba else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a RGBA"); return }
-            guard let newValue = newValue else { return }
-            _rgbaAlpha = Float32(newValue)
-        }
-    }
-    
     
     /// Access the value through this portal as a NSColor
     
@@ -213,32 +130,43 @@ public extension Portal {
             _rgbaAlpha = Float32(newValue.alphaComponent)
         }
     }
+    
+    
+    /// Add an RGBA to an Array.
+    ///
+    /// - Returns: .success or one of .portalInvalid, .operationNotSupported, .typeConflict
+    
+    @discardableResult
+    public func append(_ value: NSColor) -> Result {
+        let rgba = RGBA(value)
+        return appendClosure(for: rgba.itemType, with: rgba.valueByteCount) { rgba.storeValue(atPtr: _arrayElementPtr(for: _arrayElementCount), endianness) }
+    }
 }
 
 
 /// The RGBA class and the Coder protocol
 
-internal final class RGBA: Coder {
+internal struct RGBA: Coder {
     
     
     /// The BRBON Item type of the item this value will be stored into.
     
-    public var itemType: ItemType { return ItemType.rgba }
+    var itemType: ItemType { return ItemType.rgba }
     
     
     /// Create a new item
     
-    public init(_ color: NSColor) { self.color = color }
+    init(_ color: NSColor) { self.color = color }
     
     
     // The content
     
-    public let color: NSColor
+    let color: NSColor
     
     
     /// The number of bytes needed to encode self into an BrbonBytes stream.
     
-    internal var valueByteCount: Int { return 16 }
+    var valueByteCount: Int { return 16 }
     
     
     /// Stores the value without any other information in the memory area pointed at.
@@ -247,7 +175,7 @@ internal final class RGBA: Coder {
     ///   - atPtr: The pointer at which the first byte will be stored. On return the pointer will be incremented for the number of bytes stored.
     ///   - endianness: Specifies the endianness of the bytes.
     
-    internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+    func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         
         if endianness == machineEndianness {
             atPtr.storeBytes(of: Float32(color.redComponent).bitPattern, as: UInt32.self)
@@ -261,26 +189,30 @@ internal final class RGBA: Coder {
             atPtr.advanced(by: 12).storeBytes(of: Float32(color.alphaComponent).bitPattern.byteSwapped, as: UInt32.self)
         }
     }
-    
-/*    internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        
-        let red: CGFloat
-        let green: CGFloat
-        let blue: CGFloat
-        let alpha: CGFloat
-        
-        if endianness == machineEndianness {
-            red = CGFloat(Float32.init(bitPattern: fromPtr.assumingMemoryBound(to: UInt32.self).pointee))
-            green = CGFloat(Float32.init(bitPattern: fromPtr.advanced(by: 4).assumingMemoryBound(to: UInt32.self).pointee))
-            blue = CGFloat(Float32.init(bitPattern: fromPtr.advanced(by: 8).assumingMemoryBound(to: UInt32.self).pointee))
-            alpha = CGFloat(Float32.init(bitPattern: fromPtr.advanced(by: 12).assumingMemoryBound(to: UInt32.self).pointee))
-        } else {
-            red = CGFloat(Float32.init(bitPattern: fromPtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped))
-            green = CGFloat(Float32.init(bitPattern: fromPtr.advanced(by: 4).assumingMemoryBound(to: UInt32.self).pointee.byteSwapped))
-            blue = CGFloat(Float32.init(bitPattern: fromPtr.advanced(by: 8).assumingMemoryBound(to: UInt32.self).pointee.byteSwapped))
-            alpha = CGFloat(Float32.init(bitPattern: fromPtr.advanced(by: 12).assumingMemoryBound(to: UInt32.self).pointee.byteSwapped))
-        }
-        
-        self.color = NSColor(red: red, green: green, blue: blue, alpha: alpha)
-    }*/
 }
+
+
+/// Build an item with a RGBA in it.
+///
+/// - Parameters:
+///   - withName: The namefield for the item. Optional.
+///   - value: The value to store in the smallValueField.
+///   - atPtr: The pointer at which to build the item structure.
+///   - endianness: The endianness to be used while creating the item.
+///
+/// - Returns: An ephemeral portal. Do not retain this portal.
+
+internal func buildUInt64Item(withName name: NameField?, value: NSColor? = nil, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
+    let p = buildItem(ofType: .rgba, withName: name, atPtr: ptr, endianness)
+    p._itemByteCount += rgbaValueByteCount
+    if let value = value {
+        RGBA(value).storeValue(atPtr: p.itemValueFieldPtr, endianness)
+    } else {
+        p._rgbaRed = 0.0
+        p._rgbaGreen = 0.0
+        p._rgbaBlue = 0.0
+        p._rgbaAlpha = 0.0
+    }
+}
+
+

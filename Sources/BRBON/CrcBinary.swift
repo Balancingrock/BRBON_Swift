@@ -122,6 +122,9 @@ public extension Portal {
             _crcBinaryData = newValue
         }
     }
+
+
+    /// Add a Data to an Array of CrcBinary is done in binary.swift
 }
 
 /// Defines the BRBON CrcBinary class and conforms it to the Coder protocol.

@@ -52,6 +52,9 @@ import Foundation
 import BRUtils
 
 
+fileprivate let uuidValueByteCount = 16
+
+
 // Extensions that allow a portal to test and access an UUID
 
 public extension Portal {
@@ -88,13 +91,16 @@ public extension Portal {
             newValue?.storeValue(atPtr: valueFieldPtr, endianness)
         }
     }
-}
 
 
-/// Adds the IsBrbon protocol to an UUID
-
-extension UUID: IsBrbon {
-    public var itemType: ItemType { return ItemType.uuid }
+    /// Add an UUID to an Array.
+    ///
+    /// - Returns: .success or one of .portalInvalid, .operationNotSupported, .typeConflict
+    
+    @discardableResult
+    public func append(_ value: UUID) -> Result {
+        return appendClosure(for: value.itemType, with: value.valueByteCount) { value.storeValue(atPtr: _arrayElementPtr(for: _arrayElementCount), endianness) }
+    }
 }
 
 
@@ -102,10 +108,10 @@ extension UUID: IsBrbon {
 
 extension UUID: Coder {
     
-    internal var valueByteCount: Int { return 16 }
-    
-    internal var elementByteCount: Int { return valueByteCount }
-    
+    internal var itemType: ItemType { return ItemType.uuid }
+
+    internal var valueByteCount: Int { return uuidValueByteCount }
+        
     internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         atPtr.storeBytes(of: self.uuid, as: uuid_t.self)
     }
@@ -115,3 +121,23 @@ extension UUID: Coder {
         self.init(uuid: ptr.pointee)
     }
 }
+
+
+/// Build an item with a UUID in it.
+///
+/// - Parameters:
+///   - withName: The namefield for the item. Optional.
+///   - value: The value to store in the smallValueField.
+///   - atPtr: The pointer at which to build the item structure.
+///   - endianness: The endianness to be used while creating the item.
+///
+/// - Returns: An ephemeral portal. Do not retain this portal.
+
+internal func buildUUIDItem(withName name: NameField?, value: UUID? = nil, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
+    let p = buildItem(ofType: .uuid, withName: name, atPtr: ptr, endianness)
+    p._itemByteCount += uuidValueByteCount
+    if let value = value {
+        p.itemValueFieldPtr.storeBytes(of: value.uuid, as: uuid_t.self)
+    }
+}
+

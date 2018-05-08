@@ -63,8 +63,18 @@ public struct NameField: Equatable, Hashable {
     }
 
     
+    /// UTF* code of the name
+    
     internal let data: Data
+    
+    
+    /// The CRC(16) of the name data
+    
     internal let crc: UInt16
+    
+    
+    /// The byteCount of the name field (including filler)
+    
     internal let byteCount: Int
     
     public internal(set) var hashValue: Int

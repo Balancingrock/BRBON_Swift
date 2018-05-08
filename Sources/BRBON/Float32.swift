@@ -88,13 +88,16 @@ public extension Portal {
             }
         }
     }
-}
-
-
-/// Adds the IsBrbon protocol to a Float32
-
-extension Float32: IsBrbon {
-    public var itemType: ItemType { return ItemType.float32 }
+    
+    
+    /// Add an Float32 to an Array.
+    ///
+    /// - Returns: .success or one of .portalInvalid, .operationNotSupported, .typeConflict
+    
+    @discardableResult
+    public func append(_ value: Float32) -> Result {
+        return appendClosure(for: value.itemType, with: value.valueByteCount) { value.storeValue(atPtr: _arrayElementPtr(for: _arrayElementCount), endianness) }
+    }
 }
 
 
@@ -102,6 +105,8 @@ extension Float32: IsBrbon {
 
 extension Float32: Coder {
     
+    internal var itemType: ItemType { return ItemType.float32 }
+
     internal var valueByteCount: Int { return 4 }
     
     internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
@@ -121,3 +126,22 @@ extension Float32: Coder {
     }
 }
 
+
+/// Build an item with a Float32 in it.
+///
+/// - Parameters:
+///   - withName: The namefield for the item. Optional.
+///   - value: The value to store in the smallValueField.
+///   - atPtr: The pointer at which to build the item structure.
+///   - endianness: The endianness to be used while creating the item.
+///
+/// - Returns: An ephemeral portal. Do not retain this portal.
+
+internal func buildFloat32Item(withName name: NameField?, value: Float32 = 0.0, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
+    let p = buildItem(ofType: .float32, withName: name, atPtr: ptr, endianness)
+    if endianness == machineEndianness {
+        p.itemSmallValuePtr.storeBytes(of: value.bitPattern, as: UInt32.self)
+    } else {
+        p.itemSmallValuePtr.storeBytes(of: value.bitPattern.byteSwapped, as: UInt32.self)
+    }
+}

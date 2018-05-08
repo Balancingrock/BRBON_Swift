@@ -948,7 +948,7 @@ extension Portal {
         
         let necessaryValueFieldByteCount = _tableRowsOffset + ((_tableRowCount + amount) * _tableRowByteCount)
         
-        if actualValueFieldByteCount < necessaryValueFieldByteCount {
+        if availableValueFieldByteCount < necessaryValueFieldByteCount {
             let result = increaseItemByteCount(to: itemMinimumByteCount + _itemNameFieldByteCount + necessaryValueFieldByteCount)
             guard result == .success else { return result }
         }
@@ -1297,7 +1297,7 @@ extension Portal {
         
         let necessaryValueFieldByteCount = _tableRowsOffset + ((_tableRowCount + amount) * _tableRowByteCount)
         
-        if actualValueFieldByteCount < necessaryValueFieldByteCount {
+        if availableValueFieldByteCount < necessaryValueFieldByteCount {
             let result = increaseItemByteCount(to: itemMinimumByteCount + necessaryValueFieldByteCount)
             guard result == .success else { return result }
         }
@@ -1402,13 +1402,12 @@ extension Portal {
     /// - Returns: Either .success or an error indicator.
     
     @discardableResult
-    public func createFieldArray(at row: Int, in column: Int, elementType: ItemType, elementByteCount: Int? = nil, valueByteCount: Int? = nil) -> Result {
+    public func createFieldArray(at row: Int, in column: Int, elementType: ItemType, elementByteCount: Int? = nil, elementCount: Int) -> Result {
         
         guard isValid else { return Result.portalInvalid }
         guard itemType == .table else { return Result.operationNotSupported }
-
-        let arr = BrbonArray(content: [], type: elementType, elementByteCount: elementByteCount)
-        let im = ItemManager(value: arr, name: nil, itemValueByteCount: valueByteCount, endianness: endianness)
+        
+        let im = ItemManager.createArrayManager(elementType: elementType, elementByteCount: elementByteCount, elementCount: elementCount, endianness: endianness)
         
         return assignField(at: row, in: column, fromManager: im)
     }
@@ -1454,9 +1453,8 @@ extension Portal {
         
         guard isValid else { return Result.portalInvalid }
         guard itemType == .table else { return Result.operationNotSupported }
-
-        let dict = BrbonDictionary()!
-        let im = ItemManager(value: dict, name: nil, itemValueByteCount: valueByteCount, endianness: endianness)
+        
+        let im = ItemManager.createDictionaryManager(valueFieldByteCount: valueByteCount ?? 0, endianness: endianness)
         
         return assignField(at: row, in: column, fromManager: im)
     }
@@ -1474,14 +1472,82 @@ extension Portal {
     /// - Returns: Either .success or an error indicator.
 
     @discardableResult
-    public func createFieldTable(at row: Int, in column: Int, columnSpecifications: Array<ColumnSpecification>, valueByteCount: Int? = nil) -> Result {
+    public func createFieldTable(at row: Int, in column: Int, columnSpecifications: inout Array<ColumnSpecification>, valueByteCount: Int? = nil) -> Result {
         
         guard isValid else { return Result.portalInvalid }
         guard itemType == .table else { return Result.operationNotSupported }
 
-        let tab = BrbonTable(columnSpecifications: columnSpecifications)
-        let im = ItemManager(value: tab, name: nil, itemValueByteCount: valueByteCount, endianness: endianness)
+        let minValueByteCount: Int = {
+            
+            // Start with the first 4 table parameters, each 4 bytes long
+            
+            var total = tableColumnDescriptorBaseOffset
+            
+            
+            // Exit if there are no columns
+            
+            if columnSpecifications.count == 0 { return total }
+            
+            
+            // Add the column descriptor, 16 bytes for each column
+            
+            total += columnSpecifications.count * 16
+            
+            
+            // Add the name field byte counts
+            
+            columnSpecifications.forEach() {
+                total += $0.name.byteCount
+            }
+            
+            
+            // There are no rows yet.
+            
+            return total
+        }()
+
+        let im = ItemManager(rootItemType: .table, name: nil, rootValueByteCount: max(valueByteCount ?? 0, minValueByteCount), endianness: endianness)
         
+        createTableItem(at: <#T##UnsafeMutableRawPointer#>, with: &<#T##Array<ColumnSpecification>#>, endianness: <#T##Endianness#>)
         return assignField(at: row, in: column, fromManager: im)
     }
+}
+
+
+internal func createTableItem(at ptr: UnsafeMutableRawPointer, with columns: inout Array<ColumnSpecification>, endianness: Endianness) {
+    
+     let valueByteCount: Int = {
+        
+        // Start with the first 4 table parameters, each 4 bytes long
+        
+        var total = tableColumnDescriptorBaseOffset
+        
+        
+        // Exit if there are no columns
+        
+        if columns.count == 0 { return total }
+        
+        
+        // Add the column descriptor, 16 bytes for each column
+        
+        total += columns.count * 16
+        
+        
+        // Add the name field byte counts
+        
+        columns.forEach() {
+            total += $0.name.byteCount
+        }
+        
+        
+        // There are no rows yet.
+        
+        return total
+    }()
+
+    let p = createItem(of: .table, at: ptr, with: endianness)
+    p._itemByteCount += valueByteCount
+    
+    UInt32(0).storeValue(atPtr: p.valueFieldPtr, endianness)
+    tableWriteSpecification(valueFieldPtr: p.valueFieldPtr, &columns, endianness)
 }

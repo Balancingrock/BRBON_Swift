@@ -192,7 +192,7 @@ extension Portal {
         
         // If the current value field byte count is sufficient, return immediately
         
-        if actualValueFieldByteCount >= bytes { return .success }
+        if availableValueFieldByteCount >= bytes { return .success }
         
         
         // The byte count should be increased
@@ -266,5 +266,42 @@ public extension Portal {
         }
     }
 }
+
+
+/// Build an item structure.
+///
+/// - Note: The parentOffset, smallValueField and valueField are not be initialised. The itemByteCount is set to the minimum item byte count regardless of type.
+///
+/// - Parameters:
+///   - ofType: The type to put in the itemType field.
+///   - withName: The namefield for the item. Optional.
+///   - atPtr: The pointer at which to build the item structure.
+///   - endianness: The endianness to be used while creating the item.
+///
+/// - Returns: An ephemeral portal. Do not retain this portal, use it only to complete the rest of the structure.
+
+internal func buildItem(ofType type: ItemType, withName name: NameField? = nil, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
+    
+    let portal = Portal.init(itemPtr: ptr, endianness: endianness)
+    
+    portal.itemType = type
+    portal.itemFlags = ItemFlags.none
+    portal.itemOptions = ItemOptions.none
+    portal._itemNameFieldByteCount = name?.byteCount ?? 0
+    portal._itemByteCount = itemMinimumByteCount + (name?.byteCount ?? 0)
+    portal._itemParentOffset = 0
+    portal._itemSmallValue = 0
+    
+    name?.storeValue(atPtr: ptr.advanced(by: itemValueFieldOffset), endianness)
+    
+    return portal
+}
+
+
+
+
+
+
+
 
 

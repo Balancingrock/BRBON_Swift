@@ -305,7 +305,7 @@ extension Portal {
         
         let newItemByteCount = value.itemByteCount(nfd)
         
-        if actualValueFieldByteCount - usedValueFieldByteCount < newItemByteCount {
+        if availableValueFieldByteCount - usedValueFieldByteCount < newItemByteCount {
             let result = increaseItemByteCount(to: itemMinimumByteCount + usedValueFieldByteCount + newItemByteCount)
             guard result == .success else { return result }
         }

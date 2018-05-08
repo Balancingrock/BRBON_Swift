@@ -62,13 +62,13 @@ fileprivate let stringUtf8CodeOffset = stringByteCountOffset + 4
 
 internal extension Portal {
     
-    internal var _stringItemCountPtr: UnsafeMutableRawPointer { return valueFieldPtr.advanced(by: stringByteCountOffset) }
+    internal var _stringByteCountPtr: UnsafeMutableRawPointer { return valueFieldPtr.advanced(by: stringByteCountOffset) }
     internal var _stringUtf8CodePtr: UnsafeMutableRawPointer { return valueFieldPtr.advanced(by: stringUtf8CodeOffset) }
     
     
     internal var _stringByteCount: Int {
-        get { return Int(UInt32(fromPtr: _stringItemCountPtr, endianness)) }
-        set { UInt32(newValue).storeValue(atPtr: _stringItemCountPtr, endianness) }
+        get { return Int(UInt32(fromPtr: _stringByteCountPtr, endianness)) }
+        set { UInt32(newValue).storeValue(atPtr: _stringByteCountPtr, endianness) }
     }
     
     internal var _stringUtf8Code: Data {
@@ -121,13 +121,32 @@ extension Portal {
             _stringUtf8Code = utf8
         }
     }
+
+
+    /// Add a String to an Array. The Arry should consist of String or CrcString.
+    ///
+    /// - Returns: .success or one of .portalInvalid, .operationNotSupported, .typeConflict
+    
+    @discardableResult
+    public func append(_ value: String) -> Result {
+        if _arrayElementType == .string {
+            return appendClosure(for: value.itemType, with: value.valueByteCount) { value.storeValue(atPtr: _arrayElementPtr(for: _arrayElementCount), endianness) }
+        } else if _arrayElementType == .crcString {
+            let crcString = CrcString(value)
+            return appendClosure(for: crcString.itemType, with: crcString.valueByteCount) { crcString.storeValue(atPtr: _arrayElementPtr(for: _arrayElementCount), endianness) }
+        } else {
+            return .typeConflict
+        }
+    }
 }
 
 
-/// Adds the Coder protocol
+/// Adds the Coder protocol to a String
 
 extension String: Coder {
     
+    internal var itemType: ItemType { return ItemType.string }
+
     internal var valueByteCount: Int { return 4 + (self.data(using: .utf8)?.count ?? 0) }
     
     internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
@@ -139,4 +158,27 @@ extension String: Coder {
         let data = Data(fromPtr: fromPtr, endianness)
         self.init(data: data, encoding: .utf8)!
     }
+}
+
+
+/// Build an item with a String in it.
+///
+/// - Parameters:
+///   - withName: The namefield for the item. Optional.
+///   - value: The value to store in the smallValueField.
+///   - atPtr: The pointer at which to build the item structure.
+///   - endianness: The endianness to be used while creating the item.
+///
+/// - Returns: An ephemeral portal. Do not retain this portal.
+
+internal func buildStringItem(withName name: NameField?, value: String? = nil, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
+    let p = buildItem(ofType: .string, withName: name, atPtr: ptr, endianness)
+    let utf8Code = value?.data(using: .utf8)
+    p._itemByteCount += stringUtf8CodeOffset + (utf8Code?.count ?? 0)
+    if endianness == machineEndianness {
+        p._stringByteCountPtr.storeBytes(of: UInt32(utf8Code?.count ?? 0), as: UInt32.self)
+    } else {
+        p._stringByteCountPtr.storeBytes(of: UInt32(utf8Code?.count ?? 0).byteSwapped, as: UInt32.self)
+    }
+    utf8Code?.copyBytes(to: p._stringUtf8CodePtr.assumingMemoryBound(to: UInt8.self), count: (utf8Code?.count ?? 0))
 }

@@ -92,20 +92,24 @@ public extension Portal {
             }
         }
     }
-}
 
-
-/// Adds the IsBrbon protocol to an Int16
-
-extension Int16: IsBrbon {
-    public var itemType: ItemType { return ItemType.int16 }
+    /// Add an Int16 to an Array.
+    ///
+    /// - Returns: .success or one of .portalInvalid, .operationNotSupported, .typeConflict
+    
+    @discardableResult
+    public func append(_ value: Int16) -> Result {
+        return appendClosure(for: value.itemType, with: value.valueByteCount) { value.storeValue(atPtr: _arrayElementPtr(for: _arrayElementCount), endianness) }
+    }
 }
 
 
 /// Adds the Coder protocol to an Int16
 
 extension Int16: Coder {
-    
+
+    internal var itemType: ItemType { return ItemType.int16 }
+
     internal var valueByteCount: Int { return 2 }
     
     internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
@@ -124,3 +128,26 @@ extension Int16: Coder {
         }
     }
 }
+
+
+/// Build an item with a Int16 in it.
+///
+/// - Parameters:
+///   - withName: The namefield for the item. Optional.
+///   - value: The value to store in the smallValueField.
+///   - atPtr: The pointer at which to build the item structure.
+///   - endianness: The endianness to be used while creating the item.
+///
+/// - Returns: An ephemeral portal. Do not retain this portal.
+
+internal func buildInt16Item(withName name: NameField?, value: Int16 = 0, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
+    let p = buildItem(ofType: .int16, withName: name, atPtr: ptr, endianness)
+    if endianness == machineEndianness {
+        p.itemSmallValuePtr.storeBytes(of: value, as: Int16.self)
+    } else {
+        p.itemSmallValuePtr.storeBytes(of: value.byteSwapped, as: Int16.self)
+    }
+}
+
+
+

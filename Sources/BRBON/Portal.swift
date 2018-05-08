@@ -160,18 +160,18 @@ public final class Portal {
     // The null portal is used to avoid an excess of unwrapping for the API user. API calls that must return a portal can return the null portal instead of returing nil.
     
     public static var nullPortal: Portal = {
-        return Portal()
+        return Portal(itemPtr: UnsafeMutableRawPointer(bitPattern: 1)!, endianness: machineEndianness)
     }()
     
     
-    /// Initializer for the nullPortal only.
+    /// Initializer for the nullPortal and ephemeral portals.
     
-    private init() {
+    internal init(itemPtr: UnsafeMutableRawPointer, endianness: Endianness) {
         isValid = false
         index = nil
         column = nil
-        endianness = machineEndianness
-        itemPtr = UnsafeMutableRawPointer(bitPattern: 1)!
+        self.endianness = endianness
+        self.itemPtr = itemPtr
     }
     
     
@@ -493,7 +493,7 @@ extension Portal {
     
     /// Returns the number of bytes that are currently available for the value this portal offers access to.
     
-    internal var actualValueFieldByteCount: Int {
+    internal var availableValueFieldByteCount: Int {
         return _itemByteCount - itemMinimumByteCount - _itemNameFieldByteCount
     }
     
@@ -584,7 +584,7 @@ extension Portal {
                 
                 // Check if the byte count of the parent must be grown
                 
-                let necessaryParentItemByteCount = itemMinimumByteCount + parent._itemNameFieldByteCount + parent.actualValueFieldByteCount - _itemByteCount + newByteCount
+                let necessaryParentItemByteCount = itemMinimumByteCount + parent._itemNameFieldByteCount + parent.availableValueFieldByteCount - _itemByteCount + newByteCount
                 
                 if parent._itemByteCount < necessaryParentItemByteCount {
 
@@ -619,7 +619,7 @@ extension Portal {
 
                 // Check if the byte count of the parent must be grown
                 
-                let necessaryParentItemByteCount = itemMinimumByteCount + parent._itemNameFieldByteCount + parent.actualValueFieldByteCount - _itemByteCount + newByteCount
+                let necessaryParentItemByteCount = itemMinimumByteCount + parent._itemNameFieldByteCount + parent.availableValueFieldByteCount - _itemByteCount + newByteCount
                 
                 if parent._itemByteCount < necessaryParentItemByteCount {
                     

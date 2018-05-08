@@ -52,6 +52,9 @@ import Foundation
 import BRUtils
 
 
+fileprivate float64ValueByteCount = 8
+
+
 // Extensions that allow a portal to test and access a Float64
 
 extension Portal {
@@ -81,21 +84,26 @@ extension Portal {
             newValue?.storeValue(atPtr: valueFieldPtr, endianness)
         }
     }
-}
-
-
-/// Adds the Coder protocol to a Float64
-
-extension Float64: IsBrbon {
-    public var itemType: ItemType { return ItemType.float64 }
+    
+    
+    /// Add a Float64 to an Array.
+    ///
+    /// - Returns: .success or one of .portalInvalid, .operationNotSupported, .typeConflict
+    
+    @discardableResult
+    public func append(_ value: Float64) -> Result {
+        return appendClosure(for: value.itemType, with: value.valueByteCount) { value.storeValue(atPtr: _arrayElementPtr(for: _arrayElementCount), endianness) }
+    }
 }
 
 
 /// Adds the Coder protocol to a Float64
 
 extension Float64: Coder {
-    
-    internal var valueByteCount: Int { return 8 }
+
+    internal var itemType: ItemType { return ItemType.float64 }
+
+    internal var valueByteCount: Int { return float64ValueByteCount }
     
     internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         if endianness == machineEndianness {
@@ -111,6 +119,27 @@ extension Float64: Coder {
         } else {
             self.init(bitPattern: fromPtr.assumingMemoryBound(to: UInt64.self).pointee.byteSwapped)
         }
+    }
+}
+
+
+/// Build an item with a Float64 in it.
+///
+/// - Parameters:
+///   - withName: The namefield for the item. Optional.
+///   - value: The value to store in the smallValueField.
+///   - atPtr: The pointer at which to build the item structure.
+///   - endianness: The endianness to be used while creating the item.
+///
+/// - Returns: An ephemeral portal. Do not retain this portal.
+
+internal func buildFloat64Item(withName name: NameField?, value: Float64 = 0.0, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
+    let p = buildItem(ofType: .float64, withName: name, atPtr: ptr, endianness)
+    p._itemByteCount += float64ValueByteCount
+    if endianness == machineEndianness {
+        p.itemSmallValuePtr.storeBytes(of: value.bitPattern, as: UInt64.self)
+    } else {
+        p.itemSmallValuePtr.storeBytes(of: value.bitPattern.byteSwapped, as: UInt64.self)
     }
 }
 

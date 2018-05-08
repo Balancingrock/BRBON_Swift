@@ -52,6 +52,9 @@ import Foundation
 import BRUtils
 
 
+fileprivate let int64ValueByteCount = 8
+
+
 // Extensions that allow a portal to test and access an UInt64
 
 public extension Portal {
@@ -85,21 +88,26 @@ public extension Portal {
             newValue?.storeValue(atPtr: valueFieldPtr, endianness)
         }
     }
-}
-
-
-/// Adds the IsBrbon protocol to an Int64
-
-extension Int64: IsBrbon {
-    public var itemType: ItemType { return ItemType.int64 }
+    
+    
+    /// Add an Int64 to an Array.
+    ///
+    /// - Returns: .success or one of .portalInvalid, .operationNotSupported, .typeConflict
+    
+    @discardableResult
+    public func append(_ value: Int64) -> Result {
+        return appendClosure(for: value.itemType, with: value.valueByteCount) { value.storeValue(atPtr: _arrayElementPtr(for: _arrayElementCount), endianness) }
+    }
 }
 
 
 /// Adds the Coder protocol to an Int64
 
 extension Int64: Coder {
-    
-    internal var valueByteCount: Int { return 8 }
+
+    internal var itemType: ItemType { return ItemType.int64 }
+
+    internal var valueByteCount: Int { return int64ValueByteCount }
     
     internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         if endianness == machineEndianness {
@@ -117,3 +125,26 @@ extension Int64: Coder {
         }
     }
 }
+
+
+/// Build an item with a Int64 in it.
+///
+/// - Parameters:
+///   - withName: The namefield for the item. Optional.
+///   - value: The value to store in the smallValueField.
+///   - atPtr: The pointer at which to build the item structure.
+///   - endianness: The endianness to be used while creating the item.
+///
+/// - Returns: An ephemeral portal. Do not retain this portal.
+
+internal func buildInt64Item(withName name: NameField?, value: Int64 = 0, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
+    let p = buildItem(ofType: .int64, withName: name, atPtr: ptr, endianness)
+    p._itemByteCount += int64ValueByteCount
+    if endianness == machineEndianness {
+        p.itemValueFieldPtr.storeBytes(of: value, as: Int64.self)
+    } else {
+        p.itemValueFieldPtr.storeBytes(of: value.byteSwapped, as: Int64.self)
+    }
+}
+
+

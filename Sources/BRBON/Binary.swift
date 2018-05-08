@@ -121,13 +121,23 @@ public extension Portal {
             _binaryData = newValue
         }
     }
-}
 
 
-// Adds the IsBrbon protocol to Data
-
-extension Data: IsBrbon {
-    public var itemType: ItemType { return ItemType.binary }
+    /// Add a Data to an Array of Binary or CrcBinary.
+    ///
+    /// - Returns: .success or one of .portalInvalid, .operationNotSupported, .typeConflict
+    
+    @discardableResult
+    public func append(_ value: Data) -> Result {
+        if _arrayElementType == .binary {
+            return appendClosure(for: value.itemType, with: value.valueByteCount) { value.storeValue(atPtr: _arrayElementPtr(for: _arrayElementCount), endianness) }
+        } else if _arrayElementType == .crcBinary {
+            let crcBinary = CrcBinary(value)
+            return appendClosure(for: crcBinary.itemType, with: crcBinary.valueByteCount) { crcBinary.storeValue(atPtr: _arrayElementPtr(for: _arrayElementCount), endianness) }
+        } else {
+            return .typeConflict
+        }
+    }
 }
 
 
@@ -135,15 +145,39 @@ extension Data: IsBrbon {
 
 extension Data: Coder {
     
-    var valueByteCount: Int { return 4 + self.count }
+    internal var itemType: ItemType { return ItemType.binary }
+
+    internal var valueByteCount: Int { return 4 + self.count }
     
-    func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+    internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         UInt32(self.count).storeValue(atPtr: atPtr, endianness)
         self.copyBytes(to: atPtr.advanced(by: 4).assumingMemoryBound(to: UInt8.self), count: self.count)
     }    
     
-    init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+    internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         let byteCount = Int(UInt32(fromPtr: fromPtr, endianness))
         self.init(Data(bytes: fromPtr.advanced(by: 4), count: byteCount))
     }
+}
+
+
+/// Build an item with a Binary in it.
+///
+/// - Parameters:
+///   - withName: The namefield for the item. Optional.
+///   - value: The value to store in the smallValueField.
+///   - atPtr: The pointer at which to build the item structure.
+///   - endianness: The endianness to be used while creating the item.
+///
+/// - Returns: An ephemeral portal. Do not retain this portal.
+
+internal func buildBinaryItem(withName name: NameField?, value: Data? = nil, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
+    let p = buildItem(ofType: .binary, withName: name, atPtr: ptr, endianness)
+    p._itemByteCount += binaryDataOffset + (value?.count ?? 0)
+    if endianness == machineEndianness {
+        p._binaryByteCountPtr.storeBytes(of: UInt32(value?.count ?? 0), as: UInt32.self)
+    } else {
+        p._binaryByteCountPtr.storeBytes(of: UInt32(value?.count ?? 0).byteSwapped, as: UInt32.self)
+    }
+    value?.copyBytes(to: p._binaryDataPtr.assumingMemoryBound(to: UInt8.self), count: (value?.count ?? 0))
 }

@@ -293,10 +293,10 @@ public extension Portal {
         
         // Implement for array's
         
-        if isArray {
-            guard _arrayElementType == value.itemType else { return .typeConflict }
-            return _arrayAppend(value)
-        }
+        //if isArray {
+            //guard _arrayElementType == value.itemType else { return .typeConflict }
+            //return _arrayAppend(value)
+        //}
         
         
         // Implement for sequence's

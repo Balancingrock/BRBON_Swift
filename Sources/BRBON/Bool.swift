@@ -92,13 +92,16 @@ public extension Portal {
             }
         }
     }
-}
-
-
-/// Adds the IsBrbon protocol to a Bool
-
-extension Bool: IsBrbon {
-    public var itemType: ItemType { return ItemType.bool }
+    
+    
+    /// Add a Bool to an Array.
+    ///
+    /// - Returns: .success or one of .portalInvalid, .operationNotSupported, .typeConflict
+    
+    @discardableResult
+    public func append(_ value: Bool) -> Result {
+        return appendClosure(for: value.itemType, with: value.valueByteCount) { value.storeValue(atPtr: _arrayElementPtr(for: _arrayElementCount), endianness) }
+    }
 }
 
 
@@ -106,6 +109,8 @@ extension Bool: IsBrbon {
 
 extension Bool: Coder {
     
+    internal var itemType: ItemType { return ItemType.bool }
+
     internal var valueByteCount: Int { return 1 }
     
     internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
@@ -120,3 +125,21 @@ extension Bool: Coder {
         self.init(!(0 == fromPtr.assumingMemoryBound(to: UInt8.self).pointee))
     }
 }
+
+
+/// Build an item with a Bool in it.
+///
+/// - Parameters:
+///   - withName: The namefield for the item. Optional.
+///   - value: The value to store in the smallValueField.
+///   - atPtr: The pointer at which to build the item structure.
+///   - endianness: The endianness to be used while creating the item.
+///
+/// - Returns: An ephemeral portal. Do not retain this portal.
+
+internal func buildBoolItem(withName name: NameField?, value: Bool = false, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
+    let p = buildItem(ofType: .bool, withName: name, atPtr: ptr, endianness)
+    p.itemSmallValuePtr.storeBytes(of: (value ? 1 : 0), as: UInt8.self)
+}
+
+

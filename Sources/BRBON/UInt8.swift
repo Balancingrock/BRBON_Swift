@@ -92,13 +92,16 @@ public extension Portal {
             }
         }
     }
-}
+    
+    
+    /// Add an UInt8 to an Array.
+    ///
+    /// - Returns: .success or one of .portalInvalid, .operationNotSupported, .typeConflict
 
-
-/// Adds the IsBrbon protocol to an UInt8
-
-extension UInt8: IsBrbon {
-    public var itemType: ItemType { return ItemType.uint8 }
+    @discardableResult
+    public func append(_ value: UInt8) -> Result {
+        return appendClosure(for: value.itemType, with: value.valueByteCount) { value.storeValue(atPtr: _arrayElementPtr(for: _arrayElementCount), endianness) }
+    }
 }
 
 
@@ -106,9 +109,9 @@ extension UInt8: IsBrbon {
 
 extension UInt8: Coder {
     
+    internal var itemType: ItemType { return ItemType.uint8 }
+
     internal var valueByteCount: Int { return 1 }
-    
-    internal var elementByteCount: Int { return valueByteCount }
     
     internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         atPtr.storeBytes(of: self, as: UInt8.self)
@@ -118,3 +121,20 @@ extension UInt8: Coder {
         self.init(fromPtr.assumingMemoryBound(to: UInt8.self).pointee)
     }
 }
+
+
+/// Build an item with a UInt8 in it.
+///
+/// - Parameters:
+///   - withName: The namefield for the item. Optional.
+///   - value: The value to store in the smallValueField.
+///   - atPtr: The pointer at which to build the item structure.
+///   - endianness: The endianness to be used while creating the item.
+///
+/// - Returns: An ephemeral portal. Do not retain this portal.
+
+internal func buildUInt8Item(withName name: NameField?, value: UInt8 = 0, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
+    let p = buildItem(ofType: .uint8, withName: name, atPtr: ptr, endianness)
+    p.itemSmallValuePtr.storeBytes(of: value, as: UInt8.self)
+}
+

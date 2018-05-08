@@ -141,6 +141,9 @@ extension Portal {
             _stringUtf8Code = utf8
         }
     }
+
+    
+    /// Add a String to an Array of CrcString is done in String.swift
 }
 
 

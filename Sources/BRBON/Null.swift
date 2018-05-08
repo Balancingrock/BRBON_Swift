@@ -79,6 +79,9 @@ public extension Portal {
         get { return isNull }
         set {}
     }
+    
+    
+    // Note: A Null cannot be appended to an Array.
 }
 
 
@@ -91,4 +94,18 @@ internal final class Null: Coder {
     var valueByteCount: Int { return 0 }
     
     func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) { }
+}
+
+
+/// Build an item with a null in it.
+///
+/// - Parameters:
+///   - withName: The namefield for the item. Optional.
+///   - atPtr: The pointer at which to build the item structure.
+///   - endianness: The endianness to be used while creating the item.
+///
+/// - Returns: An ephemeral portal. Do not retain this portal.
+
+internal func buildNullItem(withName name: NameField?, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
+    return buildItem(ofType: .null, withName: name, atPtr: ptr, endianness)
 }

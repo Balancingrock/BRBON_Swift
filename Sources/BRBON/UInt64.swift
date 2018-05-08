@@ -52,6 +52,9 @@ import Foundation
 import BRUtils
 
 
+fileprivate let uint64ValueByteCount = 8
+
+
 // Extensions that allow a portal to test and access an UInt64
 
 public extension Portal {
@@ -84,21 +87,26 @@ public extension Portal {
             newValue?.storeValue(atPtr: valueFieldPtr, endianness)
         }
     }
-}
-
-
-/// Adds the IsBrbon protocol to an UInt64
-
-extension UInt64: IsBrbon {
-    public var itemType: ItemType { return ItemType.uint64 }
+    
+    
+    /// Add an UInt64 to an Array.
+    ///
+    /// - Returns: .success or one of .portalInvalid, .operationNotSupported, .typeConflict
+    
+    @discardableResult
+    public func append(_ value: UInt64) -> Result {
+        return appendClosure(for: value.itemType, with: value.valueByteCount) { value.storeValue(atPtr: _arrayElementPtr(for: _arrayElementCount), endianness) }
+    }
 }
 
 
 /// Adds the Coder protocol to an UInt64
 
 extension UInt64: Coder {
-    
-    internal var valueByteCount: Int { return 8 }
+
+    internal var itemType: ItemType { return ItemType.uint64 }
+
+    internal var valueByteCount: Int { return uint64ValueByteCount }
     
     internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         if endianness == machineEndianness {
@@ -116,3 +124,28 @@ extension UInt64: Coder {
         }
     }
 }
+
+
+/// Build an item with a UInt64 in it.
+///
+/// - Parameters:
+///   - withName: The namefield for the item. Optional.
+///   - value: The value to store in the smallValueField.
+///   - atPtr: The pointer at which to build the item structure.
+///   - endianness: The endianness to be used while creating the item.
+///
+/// - Returns: An ephemeral portal. Do not retain this portal.
+
+internal func buildUInt64Item(withName name: NameField?, value: UInt64 = 0, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
+    let p = buildItem(ofType: .uint64, withName: name, atPtr: ptr, endianness)
+    p._itemByteCount += uint64ValueByteCount
+    if endianness == machineEndianness {
+        p.itemValueFieldPtr.storeBytes(of: value, as: UInt64.self)
+    } else {
+        p.itemValueFieldPtr.storeBytes(of: value.byteSwapped, as: UInt64.self)
+    }
+}
+
+
+
+

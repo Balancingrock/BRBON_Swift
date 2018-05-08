@@ -54,7 +54,7 @@ import BRUtils
 
 /// This protocol is used to encode/decode types to/from a byte stream.
 
-internal protocol Coder: IsBrbon {
+internal protocol Coder {
 
     
     /// The number of bytes needed to encode the raw value of self into bytes.
@@ -78,13 +78,6 @@ internal protocol Coder: IsBrbon {
     func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness)
     
 
-    /// Initializes a new type from a byte stream
-    ///
-    /// - Note: Objects that cannot be created from a byte stream will raise a fatal error
-    
-    //init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness)
-
-    
     /// Stores the value as a BRBON item.
     ///
     /// - Parameters:
@@ -173,8 +166,4 @@ extension Coder {
             storeValue(atPtr: atPtr.advanced(by: itemValueFieldOffset + nameFieldByteCount), endianness)
         }
     }
-    
-//    internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-//        fatalError("This type cannot be recreated from a byte stream")
-//    }
 }
