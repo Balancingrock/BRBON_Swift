@@ -62,7 +62,7 @@ public extension Portal {
     /// - Returns: True if the value accessable through this portal is a Bool. False if the portal is invalid or the value is not a Bool.
     
     public var isBool: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.bool }
         if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.bool.rawValue }
         return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.bool.rawValue
@@ -77,19 +77,12 @@ public extension Portal {
     
     public var bool: Bool? {
         get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isBool else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a bool"); return nil }
+            guard isBool else { return nil }
             return Bool(fromPtr: valueFieldPtr, endianness)
         }
         set {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard isBool else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a bool"); return }
-            
-            if index == nil {
-                newValue?.storeValue(atPtr: itemSmallValuePtr, endianness)
-            } else {
-                newValue?.storeValue(atPtr: valueFieldPtr, endianness)
-            }
+            guard isBool else { return }
+            newValue?.copyBytes(to: valueFieldPtr, endianness)
         }
     }
     
@@ -100,46 +93,35 @@ public extension Portal {
     
     @discardableResult
     public func append(_ value: Bool) -> Result {
-        return appendClosure(for: value.itemType, with: value.valueByteCount) { value.storeValue(atPtr: _arrayElementPtr(for: _arrayElementCount), endianness) }
+        return appendClosure(for: value.itemType, with: value.valueByteCount) { value.copyBytes(to: _arrayElementPtr(for: _arrayElementCount), endianness) }
     }
 }
 
 
 /// Adds the Coder protocol to a Bool
 
-extension Bool: Coder {
+extension Bool: Coder {    
     
-    internal var itemType: ItemType { return ItemType.bool }
+    public var itemType: ItemType { return ItemType.bool }
 
-    internal var valueByteCount: Int { return 1 }
+    public var valueByteCount: Int { return 1 }
     
-    internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+    public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         if self {
-            atPtr.storeBytes(of: 1, as: UInt8.self)
+            ptr.storeBytes(of: 1, as: UInt8.self)
         } else {
-            atPtr.storeBytes(of: 0, as: UInt8.self)
+            ptr.storeBytes(of: 0, as: UInt8.self)
         }
     }
+}
+
+
+/// Decodes a bool
+
+extension Bool {
     
     internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         self.init(!(0 == fromPtr.assumingMemoryBound(to: UInt8.self).pointee))
     }
 }
-
-
-/// Build an item with a Bool in it.
-///
-/// - Parameters:
-///   - withName: The namefield for the item. Optional.
-///   - value: The value to store in the smallValueField.
-///   - atPtr: The pointer at which to build the item structure.
-///   - endianness: The endianness to be used while creating the item.
-///
-/// - Returns: An ephemeral portal. Do not retain this portal.
-
-internal func buildBoolItem(withName name: NameField?, value: Bool = false, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
-    let p = buildItem(ofType: .bool, withName: name, atPtr: ptr, endianness)
-    p.itemSmallValuePtr.storeBytes(of: (value ? 1 : 0), as: UInt8.self)
-}
-
 

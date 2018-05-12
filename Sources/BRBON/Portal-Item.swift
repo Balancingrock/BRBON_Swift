@@ -111,7 +111,7 @@ extension Portal {
     
     internal var _itemsOptions: ItemOptions? {
         get { return ItemOptions.readValue(atPtr: itemOptionsPtr) }
-        set { newValue?.storeValue(atPtr: itemOptionsPtr) }
+        set { newValue?.copyBytes(to: itemOptionsPtr) }
     }
     
 
@@ -121,7 +121,7 @@ extension Portal {
     
     internal var _itemFlags: ItemFlags? {
         get { return ItemFlags.readValue(atPtr: itemFlagsPtr) }
-        set { newValue?.storeValue(atPtr: itemFlagsPtr) }
+        set { newValue?.copyBytes(to: itemFlagsPtr) }
     }
 
     
@@ -129,7 +129,7 @@ extension Portal {
     
     internal var _itemSmallValue: UInt32 {
         get { return UInt32(fromPtr: itemSmallValuePtr, endianness) }
-        set { UInt32(newValue).storeValue(atPtr: itemSmallValuePtr, endianness) }
+        set { UInt32(newValue).copyBytes(to: itemSmallValuePtr, endianness) }
     }
     
     
@@ -137,7 +137,7 @@ extension Portal {
     
     internal var _itemNameFieldByteCount: Int {
         get { return Int(UInt8(fromPtr: itemNameFieldByteCountPtr, endianness)) }
-        set { UInt8(newValue).storeValue(atPtr: itemNameFieldByteCountPtr, endianness) }
+        set { UInt8(newValue).copyBytes(to: itemNameFieldByteCountPtr, endianness) }
     }
     
     
@@ -145,7 +145,7 @@ extension Portal {
     
     internal var _itemByteCount: Int {
         get { return Int(UInt32(fromPtr: itemByteCountPtr, endianness)) }
-        set { UInt32(newValue).storeValue(atPtr: itemByteCountPtr, endianness) }
+        set { UInt32(newValue).copyBytes(to: itemByteCountPtr, endianness) }
     }
 
     
@@ -153,7 +153,7 @@ extension Portal {
     
     internal var _itemParentOffset: Int {
         get { return Int(UInt32(fromPtr: itemParentOffsetPtr, endianness)) }
-        set { UInt32(newValue).storeValue(atPtr: itemParentOffsetPtr, endianness) }
+        set { UInt32(newValue).copyBytes(to: itemParentOffsetPtr, endianness) }
     }
     
     
@@ -161,7 +161,7 @@ extension Portal {
     
     internal var _itemNameCrc: UInt16 {
         get { return UInt16(fromPtr: _itemNameCrcPtr, endianness) }
-        set { newValue.storeValue(atPtr: _itemNameCrcPtr, endianness) }
+        set { newValue.copyBytes(to: _itemNameCrcPtr, endianness) }
     }
     
     
@@ -169,7 +169,7 @@ extension Portal {
     
     internal var _itemNameUtf8CodeByteCount: Int {
         get { return Int(UInt8(fromPtr: _itemNameUtf8ByteCountPtr, endianness)) }
-        set { UInt8(newValue).storeValue(atPtr: _itemNameUtf8ByteCountPtr, endianness) }
+        set { UInt8(newValue).copyBytes(to: _itemNameUtf8ByteCountPtr, endianness) }
     }
     
     
@@ -186,7 +186,7 @@ extension Portal {
     /// - Parameter for: The number of bytes needed.
     ///
     /// - Returns: True if the item or element has sufficient bytes available.
-    
+    /*
     internal func itemEnsureValueFieldByteCount(of bytes: Int) -> Result {
         
         
@@ -200,7 +200,7 @@ extension Portal {
         let necessaryItemByteCount = itemMinimumByteCount + _itemNameFieldByteCount + bytes.roundUpToNearestMultipleOf8()
         
         return increaseItemByteCount(to: necessaryItemByteCount)
-    }
+    }*/
 }
 
 
@@ -216,7 +216,7 @@ public extension Portal {
             guard isValid else { return nil }
             return ItemType.readValue(atPtr: itemTypePtr)
         }
-        set { newValue?.storeValue(atPtr: itemTypePtr) }
+        set { newValue?.copyBytes(to: itemTypePtr) }
     }
     
     
@@ -292,12 +292,37 @@ internal func buildItem(ofType type: ItemType, withName name: NameField? = nil, 
     portal._itemParentOffset = 0
     portal._itemSmallValue = 0
     
-    name?.storeValue(atPtr: ptr.advanced(by: itemValueFieldOffset), endianness)
+    name?.copyBytes(to: ptr.advanced(by: itemValueFieldOffset), endianness)
     
     return portal
 }
 
 
+/// Build an item structure and set the initial value.
+///
+/// - Note: The parentOffset is not initialized. The itemByteCount is set to the smallest value possible.
+///
+/// - Parameters:
+///   - withValue: The value to put in the item.
+///   - withName: The namefield for the item. Optional.
+///   - atPtr: The pointer at which to build the item structure.
+///   - endianness: The endianness to be used while creating the item.
+///
+/// - Returns: An ephemeral portal. Do not retain this portal, use it only to complete the rest of the structure.
+
+internal func buildItem(withValue value: Coder, withName name: NameField? = nil, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
+
+    let p = buildItem(ofType: value.itemType, withName: name, atPtr: ptr, endianness)
+
+    if value.itemType.usesSmallValue {
+        value.copyBytes(to: p.itemSmallValuePtr, endianness)
+    } else {
+        value.copyBytes(to: p.itemValueFieldPtr, endianness)
+        p._itemByteCount += value.valueByteCount.roundUpToNearestMultipleOf8()
+    }
+    
+    return p
+}
 
 
 

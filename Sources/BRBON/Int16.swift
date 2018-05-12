@@ -62,7 +62,7 @@ public extension Portal {
     /// - Returns: True if the value accessable through this portal is an Int16. False if the portal is invalid or the value is not an Int16.
     
     public var isInt16: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.int16 }
         if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int16.rawValue }
         return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int16.rawValue
@@ -77,29 +77,23 @@ public extension Portal {
     
     public var int16: Int16? {
         get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isInt16 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Int16"); return nil }
+            guard isInt16 else { return nil }
             return Int16(fromPtr: valueFieldPtr, endianness)
         }
         set {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard isInt16 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Int16"); return }
-            
-            if index == nil {
-                newValue?.storeValue(atPtr: itemSmallValuePtr, endianness)
-            } else {
-                newValue?.storeValue(atPtr: valueFieldPtr, endianness)
-            }
+            guard isInt16 else { return }
+            newValue?.copyBytes(to: valueFieldPtr, endianness)
         }
     }
 
+    
     /// Add an Int16 to an Array.
     ///
     /// - Returns: .success or one of .portalInvalid, .operationNotSupported, .typeConflict
     
     @discardableResult
     public func append(_ value: Int16) -> Result {
-        return appendClosure(for: value.itemType, with: value.valueByteCount) { value.storeValue(atPtr: _arrayElementPtr(for: _arrayElementCount), endianness) }
+        return appendClosure(for: value.itemType, with: value.valueByteCount) { value.copyBytes(to: _arrayElementPtr(for: _arrayElementCount), endianness) }
     }
 }
 
@@ -108,18 +102,23 @@ public extension Portal {
 
 extension Int16: Coder {
 
-    internal var itemType: ItemType { return ItemType.int16 }
+    public var itemType: ItemType { return ItemType.int16 }
 
-    internal var valueByteCount: Int { return 2 }
+    public var valueByteCount: Int { return 2 }
     
-    internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+    public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         if endianness == machineEndianness {
-            atPtr.storeBytes(of: self, as: Int16.self)
+            ptr.storeBytes(of: self, as: Int16.self)
         } else {
-            atPtr.storeBytes(of: self.byteSwapped, as: Int16.self)
+            ptr.storeBytes(of: self.byteSwapped, as: Int16.self)
         }
     }
-    
+}
+
+
+// Add the decoder
+
+extension Int16 {
     internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         if endianness == machineEndianness {
             self.init(fromPtr.assumingMemoryBound(to: Int16.self).pointee)
@@ -130,24 +129,6 @@ extension Int16: Coder {
 }
 
 
-/// Build an item with a Int16 in it.
-///
-/// - Parameters:
-///   - withName: The namefield for the item. Optional.
-///   - value: The value to store in the smallValueField.
-///   - atPtr: The pointer at which to build the item structure.
-///   - endianness: The endianness to be used while creating the item.
-///
-/// - Returns: An ephemeral portal. Do not retain this portal.
-
-internal func buildInt16Item(withName name: NameField?, value: Int16 = 0, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
-    let p = buildItem(ofType: .int16, withName: name, atPtr: ptr, endianness)
-    if endianness == machineEndianness {
-        p.itemSmallValuePtr.storeBytes(of: value, as: Int16.self)
-    } else {
-        p.itemSmallValuePtr.storeBytes(of: value.byteSwapped, as: Int16.self)
-    }
-}
 
 
 

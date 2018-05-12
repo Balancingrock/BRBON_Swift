@@ -189,17 +189,24 @@ public enum ItemType: UInt8 {
         }
     }
     
-    internal var defaultElementByteCount: Int {
+    internal var minimumElementByteCount: Int {
         switch self {
         case .null: return 0
         case .bool, .int8, .uint8: return 1
         case .int16, .uint16: return 2
         case .int32, .uint32, .float32: return 4
         case .int64, .uint64, .float64: return 8
-        case .uuid, .rgba: return 16
-        case .font: return 128
-        case .string, .crcString, .binary, .crcBinary: return 256
-        case .array, .dictionary, .sequence, .table: return 1024
+        case .uuid: return uuidValueByteCount
+        case .rgba: return rgbaValueByteCount
+        case .font: return fontFamilyNameUtf8CodeOffset
+        case .string: return stringUtf8CodeOffset
+        case .binary: return binaryDataOffset
+        case .crcString: return crcStringUtf8CodeOffset
+        case .crcBinary: return crcBinaryDataOffset
+        case .array: return arrayElementBaseOffset
+        case .dictionary: return dictionaryItemBaseOffset
+        case .sequence: return sequenceItemBaseOffset
+        case .table: return tableColumnDescriptorBaseOffset
         }
     }
     
@@ -220,8 +227,8 @@ public enum ItemType: UInt8 {
 
 extension ItemType {
     
-    internal func storeValue(atPtr: UnsafeMutableRawPointer) {
-        self.rawValue.storeValue(atPtr: atPtr, machineEndianness)
+    internal func copyBytes(to ptr: UnsafeMutableRawPointer) {
+        self.rawValue.copyBytes(to: ptr, machineEndianness)
     }
     
     internal static func readValue(atPtr: UnsafeMutableRawPointer) -> ItemType? {

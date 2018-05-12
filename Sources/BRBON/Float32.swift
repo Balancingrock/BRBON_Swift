@@ -60,7 +60,7 @@ public extension Portal {
     /// Returns true if the value accessable through this portal is a Float32.
     
     public var isFloat32: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.float32 }
         if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.float32.rawValue }
         return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.float32.rawValue
@@ -73,19 +73,12 @@ public extension Portal {
     
     public var float32: Float32? {
         get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isFloat32 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Float32"); return nil }
+            guard isFloat32 else { return nil }
             return Float32(fromPtr: valueFieldPtr, endianness)
         }
         set {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard isFloat32 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Float32"); return }
-            
-            if index == nil {
-                newValue?.storeValue(atPtr: itemSmallValuePtr, endianness)
-            } else {
-                newValue?.storeValue(atPtr: valueFieldPtr, endianness)
-            }
+            guard isFloat32 else { return }
+            newValue?.copyBytes(to: valueFieldPtr, endianness)
         }
     }
     
@@ -96,52 +89,37 @@ public extension Portal {
     
     @discardableResult
     public func append(_ value: Float32) -> Result {
-        return appendClosure(for: value.itemType, with: value.valueByteCount) { value.storeValue(atPtr: _arrayElementPtr(for: _arrayElementCount), endianness) }
+        return appendClosure(for: value.itemType, with: value.valueByteCount) { value.copyBytes(to: _arrayElementPtr(for: _arrayElementCount), endianness) }
     }
 }
 
 
-/// Adds the Coder protocol to a Float32
+/// Adds the Coder protocol
 
 extension Float32: Coder {
     
-    internal var itemType: ItemType { return ItemType.float32 }
+    public var itemType: ItemType { return ItemType.float32 }
 
-    internal var valueByteCount: Int { return 4 }
+    public var valueByteCount: Int { return 4 }
     
-    internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+    public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         if endianness == machineEndianness {
-            atPtr.storeBytes(of: self.bitPattern, as: UInt32.self)
+            ptr.storeBytes(of: self.bitPattern, as: UInt32.self)
         } else {
-            atPtr.storeBytes(of: self.bitPattern.byteSwapped, as: UInt32.self)
+            ptr.storeBytes(of: self.bitPattern.byteSwapped, as: UInt32.self)
         }
     }
-    
+}
+
+
+/// Add decoding
+
+extension Float32 {
     internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         if endianness == machineEndianness {
             self.init(bitPattern: fromPtr.assumingMemoryBound(to: UInt32.self).pointee)
         } else {
             self.init(bitPattern: fromPtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped)
         }
-    }
-}
-
-
-/// Build an item with a Float32 in it.
-///
-/// - Parameters:
-///   - withName: The namefield for the item. Optional.
-///   - value: The value to store in the smallValueField.
-///   - atPtr: The pointer at which to build the item structure.
-///   - endianness: The endianness to be used while creating the item.
-///
-/// - Returns: An ephemeral portal. Do not retain this portal.
-
-internal func buildFloat32Item(withName name: NameField?, value: Float32 = 0.0, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
-    let p = buildItem(ofType: .float32, withName: name, atPtr: ptr, endianness)
-    if endianness == machineEndianness {
-        p.itemSmallValuePtr.storeBytes(of: value.bitPattern, as: UInt32.self)
-    } else {
-        p.itemSmallValuePtr.storeBytes(of: value.bitPattern.byteSwapped, as: UInt32.self)
     }
 }

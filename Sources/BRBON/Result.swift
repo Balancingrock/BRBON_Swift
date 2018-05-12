@@ -78,6 +78,7 @@ public enum Result: Int {
     case columnNotFound = 23
     case nameExists = 24
     case illegalAmount = 25
+    case missingName = 26
     
     public var description: String {
         switch self {
@@ -105,6 +106,7 @@ public enum Result: Int {
         case .columnNotFound: return "Column Not Found"
         case .nameExists: return "Name exists"
         case .illegalAmount: return "Illegal amount"
+        case .missingName: return "Missing name"
         }
     }
 }

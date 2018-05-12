@@ -129,14 +129,14 @@ public struct NameField: Equatable, Hashable {
     }
     
     
-    internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        crc.storeValue(atPtr: atPtr, endianness)
-        UInt8(data.count).storeValue(atPtr: atPtr.advanced(by: 2), endianness)
-        let dataPtr = atPtr.advanced(by: 3).assumingMemoryBound(to: UInt8.self)
+    internal func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+        crc.copyBytes(to: ptr, endianness)
+        UInt8(data.count).copyBytes(to: ptr.advanced(by: 2), endianness)
+        let dataPtr = ptr.advanced(by: 3).assumingMemoryBound(to: UInt8.self)
         data.copyBytes(to: dataPtr, count: data.count)
         let remainder = byteCount - 3 - data.count
         if remainder > 0 {
-            let remainderPtr = atPtr.advanced(by: Int(byteCount) - remainder).assumingMemoryBound(to: UInt8.self)
+            let remainderPtr = ptr.advanced(by: Int(byteCount) - remainder).assumingMemoryBound(to: UInt8.self)
             Data(count: remainder).copyBytes(to: remainderPtr, count: remainder)
         }
     }

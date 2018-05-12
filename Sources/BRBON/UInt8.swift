@@ -62,7 +62,7 @@ public extension Portal {
     /// - Returns: True if the value accessable through this portal is an UInt8. False if the portal is invalid or the value is not an UInt8.
     
     public var isUInt8: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.uint8 }
         if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint8.rawValue }
         return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint8.rawValue
@@ -77,19 +77,14 @@ public extension Portal {
     
     public var uint8: UInt8? {
         get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isUInt8 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a UInt8"); return nil }
+            guard isValid else { return nil }
+            guard isUInt8 else { return nil }
             return UInt8(fromPtr: valueFieldPtr, endianness)
         }
         set {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard isUInt8 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a UInt8"); return }
-            
-            if index == nil {
-                newValue?.storeValue(atPtr: itemSmallValuePtr, endianness)
-            } else {
-                newValue?.storeValue(atPtr: valueFieldPtr, endianness)
-            }
+            guard isValid else { return }
+            guard isUInt8 else { return }
+            newValue?.copyBytes(to: valueFieldPtr, endianness)
         }
     }
     
@@ -100,7 +95,7 @@ public extension Portal {
 
     @discardableResult
     public func append(_ value: UInt8) -> Result {
-        return appendClosure(for: value.itemType, with: value.valueByteCount) { value.storeValue(atPtr: _arrayElementPtr(for: _arrayElementCount), endianness) }
+        return appendClosure(for: value.itemType, with: value.valueByteCount) { value.copyBytes(to: _arrayElementPtr(for: _arrayElementCount), endianness) }
     }
 }
 
@@ -109,32 +104,23 @@ public extension Portal {
 
 extension UInt8: Coder {
     
-    internal var itemType: ItemType { return ItemType.uint8 }
+    public var itemType: ItemType { return ItemType.uint8 }
 
-    internal var valueByteCount: Int { return 1 }
+    public var valueByteCount: Int { return 1 }
     
-    internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        atPtr.storeBytes(of: self, as: UInt8.self)
+    public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+        ptr.storeBytes(of: self, as: UInt8.self)
     }
+}
+
+
+// Adds a decoder
+
+extension UInt8 {
     
     internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         self.init(fromPtr.assumingMemoryBound(to: UInt8.self).pointee)
     }
 }
 
-
-/// Build an item with a UInt8 in it.
-///
-/// - Parameters:
-///   - withName: The namefield for the item. Optional.
-///   - value: The value to store in the smallValueField.
-///   - atPtr: The pointer at which to build the item structure.
-///   - endianness: The endianness to be used while creating the item.
-///
-/// - Returns: An ephemeral portal. Do not retain this portal.
-
-internal func buildUInt8Item(withName name: NameField?, value: UInt8 = 0, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
-    let p = buildItem(ofType: .uint8, withName: name, atPtr: ptr, endianness)
-    p.itemSmallValuePtr.storeBytes(of: value, as: UInt8.self)
-}
 

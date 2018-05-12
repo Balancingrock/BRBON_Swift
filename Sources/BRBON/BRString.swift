@@ -1,6 +1,6 @@
 // =====================================================================================================================
 //
-//  File:       Coder-String.swift
+//  File:       BRString.swift
 //  Project:    BRBON
 //
 //  Version:    0.7.0
@@ -44,7 +44,7 @@
 //
 // History
 //
-// 0.7.0 - File renamed from String-Coder to Coder-String
+// 0.7.0 - Reorganization & Simplification.
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -55,10 +55,10 @@ import BRUtils
 // Offset definitions
 
 fileprivate let stringByteCountOffset = 0
-fileprivate let stringUtf8CodeOffset = stringByteCountOffset + 4
+internal let stringUtf8CodeOffset = stringByteCountOffset + 4
 
 
-// Internal portal helpers for String items
+// Internal portal helpers for BRString items
 
 internal extension Portal {
     
@@ -68,7 +68,7 @@ internal extension Portal {
     
     internal var _stringByteCount: Int {
         get { return Int(UInt32(fromPtr: _stringByteCountPtr, endianness)) }
-        set { UInt32(newValue).storeValue(atPtr: _stringByteCountPtr, endianness) }
+        set { UInt32(newValue).copyBytes(to: _stringByteCountPtr, endianness) }
     }
     
     internal var _stringUtf8Code: Data {
@@ -76,12 +76,14 @@ internal extension Portal {
             return Data(bytes: _stringUtf8CodePtr.assumingMemoryBound(to: UInt8.self), count: _stringByteCount)
         }
         set {
+            let result = ensureValueFieldByteCount(of: stringUtf8CodeOffset + newValue.count)
+            guard result == .success else { return }
             _stringByteCount = newValue.count
             newValue.copyBytes(to: _stringUtf8CodePtr.assumingMemoryBound(to: UInt8.self), count: newValue.count)
         }
     }
     
-    internal var _stringValueFieldUsedByteCount: Int { return 4 + _stringByteCount }
+    internal var _stringValueFieldUsedByteCount: Int { return stringUtf8CodeOffset + _stringByteCount }
 }
 
 
@@ -90,50 +92,65 @@ internal extension Portal {
 extension Portal {
     
     
-    /// - Returns: True if the value accessable through this portal is a String.
+    /// - Returns: True if the value accessable through this portal is a string.
     
     public var isString: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.string }
         if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.string.rawValue }
         return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.string.rawValue
     }
     
     
-    /// Access the value through the portal as a String
+    /// Access the value through the portal as a BRString
     ///
-    /// - Note: Assigning a null has no effect.
+    /// - Note: Assigning a nil has no effect. If an error occurs when assigning, the setter will fail silently.
+
+    public var brString: BRString? {
+        get {
+            guard isString else { return nil }
+            return BRString.init(fromPtr: valueFieldPtr, endianness)
+        }
+        set {
+            guard isString else { return }
+            guard let newValue = newValue else { return }
+            _stringUtf8Code = newValue.utf8Code
+        }
+    }
+    
+    
+    /// Convenience accessor using String type. Note that a nil is returned if the portal is invalid, the portal does not refer to a String or a CrcString, or if the UTF8 data cannot be converted into a string, or if the CrcString CRC is wrong.
+    ///
+    /// - Note: Assigning a nil has no effect.
     
     public var string: String? {
         get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isString else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a String"); return nil }
-            return String(data: _stringUtf8Code, encoding: .utf8)
+            if isString { return brString?.string }
+            if isCrcString { return brCrcString?.string }
+            return nil
         }
         set {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard isString else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a String"); return }
-            guard let newValue = newValue else { return }
-            
-            guard let utf8 = newValue.data(using: .utf8) else { return }
-            let result = newEnsureValueFieldByteCount(of: 4 + utf8.count)
-            guard result == .success else { return }
-            _stringUtf8Code = utf8
+            if isString { brString = BRString(newValue) }
+            if isCrcString { brCrcString = BRCrcString(newValue) }
         }
     }
+    
 
-
-    /// Add a String to an Array. The Arry should consist of String or CrcString.
+    /// Add a String to an Array of either String or CrcString.
     ///
     /// - Returns: .success or one of .portalInvalid, .operationNotSupported, .typeConflict
     
     @discardableResult
-    public func append(_ value: String) -> Result {
+    public func append(_ value: BRString) -> Result {
         if _arrayElementType == .string {
-            return appendClosure(for: value.itemType, with: value.valueByteCount) { value.storeValue(atPtr: _arrayElementPtr(for: _arrayElementCount), endianness) }
+            return appendClosure(for: value.itemType, with: value.valueByteCount) {
+                value.copyBytes(to: _arrayElementPtr(for: _arrayElementCount), endianness)
+            }
         } else if _arrayElementType == .crcString {
-            let crcString = CrcString(value)
-            return appendClosure(for: crcString.itemType, with: crcString.valueByteCount) { crcString.storeValue(atPtr: _arrayElementPtr(for: _arrayElementCount), endianness) }
+            let crcString = BRCrcString(value)
+            return appendClosure(for: crcString.itemType, with: crcString.valueByteCount) {
+                crcString.copyBytes(to: _arrayElementPtr(for: _arrayElementCount), endianness)
+            }
         } else {
             return .typeConflict
         }
@@ -141,44 +158,52 @@ extension Portal {
 }
 
 
-/// Adds the Coder protocol to a String
+/// The BRString structure
 
-extension String: Coder {
+public struct BRString {
     
-    internal var itemType: ItemType { return ItemType.string }
-
-    internal var valueByteCount: Int { return 4 + (self.data(using: .utf8)?.count ?? 0) }
+    public let utf8Code: Data
     
-    internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        let data = self.data(using: .utf8) ?? Data()
-        data.storeValue(atPtr: atPtr, endianness)
-    }
+    public var string: String? { return String(data: utf8Code, encoding: .utf8) }
     
-    internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        let data = Data(fromPtr: fromPtr, endianness)
-        self.init(data: data, encoding: .utf8)!
+    public init?(_ str: String?) {
+        guard let code = str?.data(using: .utf8) else { return nil }
+        utf8Code = code
     }
 }
 
 
-/// Build an item with a String in it.
-///
-/// - Parameters:
-///   - withName: The namefield for the item. Optional.
-///   - value: The value to store in the smallValueField.
-///   - atPtr: The pointer at which to build the item structure.
-///   - endianness: The endianness to be used while creating the item.
-///
-/// - Returns: An ephemeral portal. Do not retain this portal.
+/// Add the equatable protocol
 
-internal func buildStringItem(withName name: NameField?, value: String? = nil, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
-    let p = buildItem(ofType: .string, withName: name, atPtr: ptr, endianness)
-    let utf8Code = value?.data(using: .utf8)
-    p._itemByteCount += stringUtf8CodeOffset + (utf8Code?.count ?? 0)
-    if endianness == machineEndianness {
-        p._stringByteCountPtr.storeBytes(of: UInt32(utf8Code?.count ?? 0), as: UInt32.self)
-    } else {
-        p._stringByteCountPtr.storeBytes(of: UInt32(utf8Code?.count ?? 0).byteSwapped, as: UInt32.self)
+extension BRString: Equatable {
+    
+    public static func == (lhs: BRString, rhs: BRString) -> Bool {
+        return lhs.utf8Code == rhs.utf8Code
     }
-    utf8Code?.copyBytes(to: p._stringUtf8CodePtr.assumingMemoryBound(to: UInt8.self), count: (utf8Code?.count ?? 0))
 }
+
+
+/// Adds the Coder protocol
+
+extension BRString: Coder {
+    
+    public var itemType: ItemType { return ItemType.string }
+
+    public var valueByteCount: Int { return stringUtf8CodeOffset + utf8Code.count }
+    
+    public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+        UInt32(utf8Code.count).copyBytes(to: ptr.advanced(by: stringByteCountOffset), endianness)
+        utf8Code.copyBytes(to: ptr.advanced(by: stringUtf8CodeOffset).assumingMemoryBound(to: UInt8.self), count: utf8Code.count)
+    }
+}
+
+
+/// Adds decoder
+
+extension BRString {
+    internal init?(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+        let c = Int(UInt32(fromPtr: fromPtr.advanced(by: stringByteCountOffset), endianness))
+        utf8Code = Data(bytes: fromPtr.advanced(by: stringUtf8CodeOffset), count: c)
+    }
+}
+

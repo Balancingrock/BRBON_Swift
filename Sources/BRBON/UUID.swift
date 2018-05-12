@@ -52,7 +52,7 @@ import Foundation
 import BRUtils
 
 
-fileprivate let uuidValueByteCount = 16
+internal let uuidValueByteCount = 16
 
 
 // Extensions that allow a portal to test and access an UUID
@@ -65,7 +65,7 @@ public extension Portal {
     /// - Returns: True if the value accessable through this portal is an UUID. False if the portal is invalid or the value is not an UUID.
 
     public var isUuid: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.uuid }
         if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uuid.rawValue }
         return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uuid.rawValue
@@ -80,15 +80,14 @@ public extension Portal {
 
     public var uuid: UUID? {
         get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isUuid else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a UUID"); return nil }
+            guard isValid else { return nil }
+            guard isUuid else { return nil }
             return UUID(fromPtr: valueFieldPtr, endianness)
         }
         set {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard isUuid else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a UUID"); return }
-
-            newValue?.storeValue(atPtr: valueFieldPtr, endianness)
+            guard isValid else { return }
+            guard isUuid else { return }
+            newValue?.copyBytes(to: valueFieldPtr, endianness)
         }
     }
 
@@ -99,22 +98,28 @@ public extension Portal {
     
     @discardableResult
     public func append(_ value: UUID) -> Result {
-        return appendClosure(for: value.itemType, with: value.valueByteCount) { value.storeValue(atPtr: _arrayElementPtr(for: _arrayElementCount), endianness) }
+        return appendClosure(for: value.itemType, with: value.valueByteCount) { value.copyBytes(to: _arrayElementPtr(for: _arrayElementCount), endianness) }
     }
 }
 
 
-/// Adds the Coder protocol to an UUID
+// Adds the Coder protocol to an UUID
 
 extension UUID: Coder {
     
-    internal var itemType: ItemType { return ItemType.uuid }
+    public var itemType: ItemType { return ItemType.uuid }
 
-    internal var valueByteCount: Int { return uuidValueByteCount }
+    public var valueByteCount: Int { return uuidValueByteCount }
         
-    internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        atPtr.storeBytes(of: self.uuid, as: uuid_t.self)
+    public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+        ptr.storeBytes(of: self.uuid, as: uuid_t.self)
     }
+}
+
+
+// Add decoder
+
+extension UUID {
     
     internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         let ptr = fromPtr.bindMemory(to: uuid_t.self, capacity: 1)
@@ -123,21 +128,4 @@ extension UUID: Coder {
 }
 
 
-/// Build an item with a UUID in it.
-///
-/// - Parameters:
-///   - withName: The namefield for the item. Optional.
-///   - value: The value to store in the smallValueField.
-///   - atPtr: The pointer at which to build the item structure.
-///   - endianness: The endianness to be used while creating the item.
-///
-/// - Returns: An ephemeral portal. Do not retain this portal.
-
-internal func buildUUIDItem(withName name: NameField?, value: UUID? = nil, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
-    let p = buildItem(ofType: .uuid, withName: name, atPtr: ptr, endianness)
-    p._itemByteCount += uuidValueByteCount
-    if let value = value {
-        p.itemValueFieldPtr.storeBytes(of: value.uuid, as: uuid_t.self)
-    }
-}
 

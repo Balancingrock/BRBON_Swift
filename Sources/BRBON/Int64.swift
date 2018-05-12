@@ -52,7 +52,7 @@ import Foundation
 import BRUtils
 
 
-fileprivate let int64ValueByteCount = 8
+internal let int64ValueByteCount = 8
 
 
 // Extensions that allow a portal to test and access an UInt64
@@ -63,7 +63,7 @@ public extension Portal {
     /// Returns true if the value accessable through this portal is an UInt64.
     
     public var isInt64: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.int64 }
         if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int64.rawValue }
         return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int64.rawValue
@@ -78,14 +78,12 @@ public extension Portal {
     
     public var int64: Int64? {
         get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isInt64 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Int64"); return nil }
+            guard isInt64 else { return nil }
             return Int64(fromPtr: valueFieldPtr, endianness)
         }
         set {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard isInt64 else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Int64"); return }
-            newValue?.storeValue(atPtr: valueFieldPtr, endianness)
+            guard isInt64 else { return }
+            newValue?.copyBytes(to: valueFieldPtr, endianness)
         }
     }
     
@@ -96,7 +94,7 @@ public extension Portal {
     
     @discardableResult
     public func append(_ value: Int64) -> Result {
-        return appendClosure(for: value.itemType, with: value.valueByteCount) { value.storeValue(atPtr: _arrayElementPtr(for: _arrayElementCount), endianness) }
+        return appendClosure(for: value.itemType, with: value.valueByteCount) { value.copyBytes(to: _arrayElementPtr(for: _arrayElementCount), endianness) }
     }
 }
 
@@ -104,18 +102,24 @@ public extension Portal {
 /// Adds the Coder protocol to an Int64
 
 extension Int64: Coder {
-
-    internal var itemType: ItemType { return ItemType.int64 }
-
-    internal var valueByteCount: Int { return int64ValueByteCount }
     
-    internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+    public var itemType: ItemType { return ItemType.int64 }
+
+    public var valueByteCount: Int { return int64ValueByteCount }
+    
+    public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         if endianness == machineEndianness {
-            atPtr.storeBytes(of: self, as: Int64.self)
+            ptr.storeBytes(of: self, as: Int64.self)
         } else {
-            atPtr.storeBytes(of: self.byteSwapped, as: Int64.self)
+            ptr.storeBytes(of: self.byteSwapped, as: Int64.self)
         }
     }
+}
+
+
+/// Add decoding
+
+extension Int64 {
     
     internal init(fromPtr: UnsafeMutableRawPointer, count: Int = 0, _ endianness: Endianness) {
         if endianness == machineEndianness {
@@ -126,25 +130,5 @@ extension Int64: Coder {
     }
 }
 
-
-/// Build an item with a Int64 in it.
-///
-/// - Parameters:
-///   - withName: The namefield for the item. Optional.
-///   - value: The value to store in the smallValueField.
-///   - atPtr: The pointer at which to build the item structure.
-///   - endianness: The endianness to be used while creating the item.
-///
-/// - Returns: An ephemeral portal. Do not retain this portal.
-
-internal func buildInt64Item(withName name: NameField?, value: Int64 = 0, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
-    let p = buildItem(ofType: .int64, withName: name, atPtr: ptr, endianness)
-    p._itemByteCount += int64ValueByteCount
-    if endianness == machineEndianness {
-        p.itemValueFieldPtr.storeBytes(of: value, as: Int64.self)
-    } else {
-        p.itemValueFieldPtr.storeBytes(of: value.byteSwapped, as: Int64.self)
-    }
-}
 
 

@@ -1,6 +1,6 @@
 // =====================================================================================================================
 //
-//  File:       CrcString.swift
+//  File:       BRCrcString.swift
 //  Project:    BRBON
 //
 //  Version:    0.7.0
@@ -44,7 +44,7 @@
 //
 // History
 //
-// 0.7.0 - Code reorganized
+// 0.7.0 - Reorganization & Simplification.
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -54,7 +54,7 @@ import BRUtils
 
 fileprivate let crcStringCrcOffset = 0
 fileprivate let crcStringByteCountOffset = crcStringCrcOffset + 4
-fileprivate let crcStringUtf8CodeOffset = crcStringByteCountOffset + 4
+internal let crcStringUtf8CodeOffset = crcStringByteCountOffset + 4
 
 
 extension Portal {
@@ -65,12 +65,12 @@ extension Portal {
     
     internal var _crcStringCrc: UInt32 {
         get { return UInt32(fromPtr: _crcStringCrcPtr, endianness) }
-        set { newValue.storeValue(atPtr: _crcStringCrcPtr, endianness) }
+        set { newValue.copyBytes(to: _crcStringCrcPtr, endianness) }
     }
     
     internal var _crcStringByteCount: Int {
         get { return Int(UInt32(fromPtr: _crcStringByteCountPtr, endianness)) }
-        set { UInt32(newValue).storeValue(atPtr: _crcStringByteCountPtr, endianness) }
+        set { UInt32(newValue).copyBytes(to: _crcStringByteCountPtr, endianness) }
     }
     
     internal var _crcStringUtf8Code: Data {
@@ -78,6 +78,8 @@ extension Portal {
             return Data(bytes: _crcStringUtf8CodePtr.assumingMemoryBound(to: UInt8.self), count: _crcStringByteCount)
         }
         set {
+            let result = ensureValueFieldByteCount(of: crcStringUtf8CodeOffset + newValue.count)
+            guard result == .success else { return }
             _crcStringCrc = newValue.crc32()
             _crcStringByteCount = newValue.count
             newValue.copyBytes(to: _crcStringUtf8CodePtr.assumingMemoryBound(to: UInt8.self), count: newValue.count)
@@ -95,7 +97,7 @@ extension Portal {
     /// Returns true if the value accessable through this portal is a CrcString.
     
     public var isCrcString: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.crcString }
         if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.crcString.rawValue }
         return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.crcString.rawValue
@@ -107,79 +109,107 @@ extension Portal {
     /// - Returns: True if the stored CRC value and the calculated CRC value of the string byte code are the same. False if not. Nil if the portal is invalid or does not refer to a CrcString.
     
     public var crcIsValid: Bool? {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-        guard isCrcString else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a CrcString"); return nil }
+        guard isCrcString else { return nil }
         return _crcStringUtf8Code.crc32() == _crcStringCrc
     }
     
     
-    /// Access the value through the portal as a String with associated CRC.
+    /// Access the value through the portal as a BRCrcString.
     ///
     /// - Note: Assigning a null has no effect.
     ///
     /// - Note: Returns nil if the CRC value was wrong.
     
-    public var crcString: String? {
+    public var brCrcString: BRCrcString? {
         get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isString else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a String"); return nil }
+            guard isCrcString else { return nil }
             
-            let data = _crcStringUtf8Code
+            let utf8Code = _crcStringUtf8Code
+            let crc = _crcStringCrc
             
-            guard data.crc32() == _crcStringCrc else { return nil }
+            guard utf8Code.crc32() == crc else { return nil }
             
-            return String(data: data, encoding: .utf8)
+            return BRCrcString(utf8Code: utf8Code, crc: crc)
         }
         set {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard isString else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a String"); return }
+            guard isCrcString else { return }
             guard let newValue = newValue else { return }
             
-            guard let utf8 = newValue.data(using: .utf8) else { return }
-            let result = newEnsureValueFieldByteCount(of: 4 + utf8.count)
-            guard result == .success else { return }
-            _stringUtf8Code = utf8
+            _crcStringUtf8Code = newValue.utf8Code
         }
     }
 
+    // Accessing as a String is covered in BRString.swift
     
-    /// Add a String to an Array of CrcString is done in String.swift
+    // Appending a String to an Array of CrcString is done in BRString.swift
 }
 
 
-/// Defines the BRBON CrcString class and conforms it to the Coder protocol.
+/// Defines the BRCrcString.
 
-internal final class CrcString: Coder, Equatable {
+public struct BRCrcString {
     
-    public static func ==(lhs: CrcString, rhs: CrcString) -> Bool {
-        if lhs.crc != rhs.crc { return false }
-        return lhs.data == rhs.data
-    }
-    
-    public let string: String
-    public let data: Data
+    public let utf8Code: Data
     public let crc: UInt32
     
-    public var itemType: ItemType { return ItemType.crcString }
+    public var crcIsValid: Bool { return utf8Code.crc32() == crc }
     
-    internal var valueByteCount: Int { return data.count + 8 }
+    public var string: String? { return crcIsValid ? String(data: utf8Code, encoding: .utf8) : nil }
     
-    internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        crc.storeValue(atPtr: atPtr, endianness)
-        data.storeValue(atPtr: atPtr.advanced(by: 4), endianness)
+    public init?(_ value: String?) {
+        guard let data = value?.data(using: .utf8) else { return nil }
+        utf8Code = data
+        crc = utf8Code.crc32()
     }
-    
-    public init(_ value: String) {
-        string = value
-        data = value.data(using: .utf8) ?? Data()
-        crc = data.crc32()
-    }
-    
-    public var isValid: Bool { return data.crc32() == crc }
 
-    internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        crc = UInt32(fromPtr: fromPtr, endianness)
-        data = Data(fromPtr: fromPtr.advanced(by: 4), endianness)
-        string = String(data: data, encoding: .utf8) ?? ""
+    public init(_ value: BRString) {
+        utf8Code = value.utf8Code
+        crc = utf8Code.crc32()
+    }
+    
+    public init(utf8Code: Data, crc: UInt32) {
+        self.utf8Code = utf8Code
+        self.crc = crc
     }
 }
+
+
+/// Add the equatable protocol
+
+extension BRCrcString: Equatable {
+    
+    public static func == (lhs: BRCrcString, rhs: BRCrcString) -> Bool {
+        if lhs.crc != rhs.crc { return false }
+        return lhs.utf8Code == rhs.utf8Code
+    }
+}
+
+
+/// Add Coder protocol
+
+extension BRCrcString: Coder {
+    
+    public var itemType: ItemType { return ItemType.crcString }
+
+    public var valueByteCount: Int { return utf8Code.count + crcStringUtf8CodeOffset }
+
+    public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+        crc.copyBytes(to: ptr, endianness)
+        UInt32(utf8Code.count).copyBytes(to: ptr.advanced(by: crcStringByteCountOffset), endianness)
+        utf8Code.copyBytes(to: ptr.advanced(by: crcStringUtf8CodeOffset).assumingMemoryBound(to: UInt8.self), count: utf8Code.count)
+    }
+}
+
+
+/// Add decoder
+
+extension BRCrcString {
+    
+    internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+        crc = UInt32(fromPtr: fromPtr.advanced(by: crcStringCrcOffset), endianness)
+        let c = Int(UInt32(fromPtr: fromPtr.advanced(by: crcStringByteCountOffset), endianness))
+        utf8Code = Data(bytes: fromPtr.advanced(by: crcStringUtf8CodeOffset), count: c)
+    }
+}
+
+

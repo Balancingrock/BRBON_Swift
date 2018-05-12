@@ -62,7 +62,7 @@ public extension Portal {
     /// - Returns: True if the value accessable through this portal is a Null. False if the portal is invalid or the value is not a Null.
 
     public var isNull: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.null }
         if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.null.rawValue }
         return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.null.rawValue
@@ -85,27 +85,14 @@ public extension Portal {
 }
 
 
-/// Defines the BRBON Null class and adds the Coder protocol
+/// Defines the BRBON Null and adds the Coder protocol
 
-internal final class Null: Coder {
+public struct Null: Coder {
     
-    var itemType: ItemType { return ItemType.null }
+    public var itemType: ItemType { return ItemType.null }
     
-    var valueByteCount: Int { return 0 }
+    public var valueByteCount: Int { return 0 }
     
-    func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) { }
+    public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) { }
 }
 
-
-/// Build an item with a null in it.
-///
-/// - Parameters:
-///   - withName: The namefield for the item. Optional.
-///   - atPtr: The pointer at which to build the item structure.
-///   - endianness: The endianness to be used while creating the item.
-///
-/// - Returns: An ephemeral portal. Do not retain this portal.
-
-internal func buildNullItem(withName name: NameField?, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
-    return buildItem(ofType: .null, withName: name, atPtr: ptr, endianness)
-}

@@ -60,33 +60,6 @@ import Foundation
 import BRUtils
 
 
-/// Allows fatal error's for recoverable conditions. I.e. the API can continue, but there is a chance that the API user has made an error.
-
-public var allowFatalError = true
-
-
-/// Raises a fatal error if 'allowFatalError' is set to true. Otherwise returns the NullPortal.
-
-@discardableResult
-internal func fatalOrNull(_ message: String = "") -> Portal {
-    if allowFatalError { fatalError(message) }
-    return Portal.nullPortal
-}
-
-
-/// This key is used to keep track of active portals. Active portals are tracked by the item manager to update the portals when data is shifted and to invalidate them when the data has been removed.
-
-internal struct PortalKey: Equatable, Hashable {
-    let itemPtr: UnsafeMutableRawPointer
-    let index: Int?
-    let column: Int?
-    var hashValue: Int { return itemPtr.hashValue ^ (index ?? 0).hashValue ^ (column ?? 0).hashValue }
-    static func == (lhs: PortalKey, rhs: PortalKey) -> Bool {
-        return (lhs.itemPtr == rhs.itemPtr) && (lhs.index == rhs.index) && (lhs.column == rhs.column)
-    }
-}
-
-
 /// A portal is an access point for items in the BRBON data structure. It hides the implementation of the BRBON data structure and provides an API to manipulate it at a higher abstraction level.
 
 public final class Portal {
@@ -203,274 +176,6 @@ public final class Portal {
 }
 
 
-// The active portals management needs the Equatable and Hashable
-
-extension Portal: Equatable {
-        
-    /// Compares the content pointed at by two portals and returns true if they are the same, regardless of endianness.
-    ///
-    /// Note that this opration only compares used bytes and excluding the flag bits and parent-offsets. A bit by bit compare would probably find differences even when this operation returns equality. Invalid item types will always be considered unequal.
-    
-    public static func ==(lhs: Portal, rhs: Portal) -> Bool {
-        
-        // Test if the portals are still valid
-        guard lhs.isValid, rhs.isValid else { return false }
-        
-        // Check indicies
-        if lhs.index != rhs.index { return false }
-        
-        // Check columns
-        if lhs.column != rhs.column { return false }
-
-        if lhs.index == nil {
-
-            // Compare items
-            
-            // Test type
-            guard let lType = lhs.itemType else { return false }
-            guard let rType = rhs.itemType else { return false }
-            guard lType == rType else { return false }
-            
-            // Test options
-            guard let lOptions = lhs.itemOptions else { return false }
-            guard let rOptions = rhs.itemOptions else { return false }
-            guard lOptions == rOptions else { return false }
-            
-            // Do not test flags
-            
-            // Do not test length of name field
-            
-            // Do not test the byte count
-            
-            // Do not test parent offset
-            
-            // Test count/value field (note that unused bytes must be zero!
-            guard UInt32(fromPtr: lhs.itemSmallValuePtr, lhs.endianness) == UInt32(fromPtr: rhs.itemSmallValuePtr, rhs.endianness) else { return false }
-            
-            // Test name field (if present)
-            if lhs._itemNameFieldByteCount != 0 {
-                guard let lnfd = lhs.nameField else { return false }
-                guard let rnfd = rhs.nameField else { return false }
-                guard lnfd == rnfd else { return false }
-            }
-            
-            // Test value field
-            switch lhs.itemType! {
-                
-            case .null, .bool, .int8, .int16, .int32, .uint8, .uint16, .uint32, .float32:
-
-                return true // Was already tested in the count/value field
-                
-                
-            case .int64, .uint64, .float64:
-
-                return lhs.uint64 == rhs.uint64
-
-                
-            case .uuid:
-                
-                return lhs.uuid == rhs.uuid
-                
-                
-            case .string:
-
-                return lhs.string == rhs.string
-                
-                
-            case .crcString:
-
-                return lhs.crcString == rhs.crcString
-                
-                
-            case .binary:
-
-                return lhs.binary == rhs.binary
-                
-                
-            case .crcBinary:
-                
-                return lhs.crcBinary == rhs.crcBinary
-                
-                
-            case .rgba:
-                
-                return lhs.rgba == rhs.rgba
-                
-                
-            case .font:
-                
-                return lhs.font == rhs.font
-                
-                
-            case .array:
-                
-                // Test element type
-                guard lhs._arrayElementType != nil else { return false }
-                guard rhs._arrayElementType != nil else { return false }
-                guard lhs._arrayElementType == rhs._arrayElementType else { return false }
-                
-                // Do not test the element byte count
-                
-                // Test the elements
-                for index in 0 ..< lhs._arrayElementCount {
-                    let lPortal = Portal(itemPtr: lhs.itemPtr, index: index, manager: lhs.manager, endianness: lhs.endianness)
-                    let rPortal = Portal(itemPtr: rhs.itemPtr, index: index, manager: rhs.manager, endianness: rhs.endianness)
-                    if lPortal != rPortal { return false }
-                }
-                
-                return true
-            
-                
-            case .dictionary:
-
-                var result = true
-                
-                lhs.forEachAbortOnTrue(){
-                    (lportal: Portal) -> Bool in
-                    let rportal = rhs[lportal.itemName!].portal
-                    result = (lportal == rportal)
-                    return !result
-                }
-                
-                return result
-                
-                
-            case .sequence:
-
-                for index in 0 ..< lhs._sequenceItemCount {
-                    let lPortal = lhs[index].portal
-                    let rPortal = rhs[index].portal
-                    if lPortal != rPortal { return false }
-                }
-                return true
-                
-                
-            case .table:
-                
-                if lhs._tableColumnCount != rhs._tableColumnCount { return false }
-                if lhs._tableRowCount != rhs._tableRowCount { return false }
-                
-                for ci in 0 ..< lhs._tableColumnCount {
-                    
-                    let lnamecrc = lhs._tableGetColumnNameCrc(for: ci)
-                    let rnamecrc = rhs._tableGetColumnNameCrc(for: ci)
-                    if lnamecrc != rnamecrc { return false }
-                    
-                    let lname = lhs._tableGetColumnName(for: ci)
-                    let rname = rhs._tableGetColumnName(for: ci)
-                    if lname != rname { return false }
-                    
-                    guard let lType = lhs._tableGetColumnType(for: ci) else { return false }
-                    guard let rType = rhs._tableGetColumnType(for: ci) else { return false }
-                    if lType != rType { return false }
-                    
-                    for ri in 0 ..< lhs._tableRowCount {
-                        
-                        switch lType {
-                        
-                        case .null: break
-                            
-                        case .bool:
-                            let lbool = Bool(fromPtr: lhs._tableFieldPtr(row: ri, column: ci), lhs.endianness)
-                            let rbool = Bool(fromPtr: rhs._tableFieldPtr(row: ri, column: ci), rhs.endianness)
-                            if lbool != rbool { return false }
-                        
-                        case .int8, .uint8:
-                            if lhs._tableFieldPtr(row: ri, column: ci).assumingMemoryBound(to: UInt8.self).pointee
-                                != rhs._tableFieldPtr(row: ri, column: ci).assumingMemoryBound(to: UInt8.self).pointee { return false }
-                            
-                        case .int16, .uint16:
-                            if lhs._tableFieldPtr(row: ri, column: ci).assumingMemoryBound(to: UInt16.self).pointee
-                                != rhs._tableFieldPtr(row: ri, column: ci).assumingMemoryBound(to: UInt16.self).pointee { return false }
-
-                        case .int32, .uint32, .float32:
-                            if lhs._tableFieldPtr(row: ri, column: ci).assumingMemoryBound(to: UInt32.self).pointee
-                                != rhs._tableFieldPtr(row: ri, column: ci).assumingMemoryBound(to: UInt32.self).pointee { return false }
-
-                        case .int64, .uint64, .float64:
-                            if lhs._tableFieldPtr(row: ri, column: ci).assumingMemoryBound(to: UInt64.self).pointee
-                                != rhs._tableFieldPtr(row: ri, column: ci).assumingMemoryBound(to: UInt64.self).pointee { return false }
-
-                        case .uuid:
-                            if lhs._tableFieldPtr(row: ri, column: ci).assumingMemoryBound(to: UInt64.self).pointee
-                                != rhs._tableFieldPtr(row: ri, column: ci).assumingMemoryBound(to: UInt64.self).pointee { return false }
-                            if lhs._tableFieldPtr(row: ri, column: ci).advanced(by: 8).assumingMemoryBound(to: UInt64.self).pointee
-                                != rhs._tableFieldPtr(row: ri, column: ci).advanced(by: 8).assumingMemoryBound(to: UInt64.self).pointee { return false }
-
-                        case .rgba:
-                            if lhs.rgba != rhs.rgba { return false }
-                            
-                        case .font:
-                            if lhs.font != rhs.font { return false }
-                            
-                        case .string:
-                            let lstr = String(fromPtr: lhs._tableFieldPtr(row: ri, column: ci), lhs.endianness)
-                            let rstr = String(fromPtr: rhs._tableFieldPtr(row: ri, column: ci), rhs.endianness)
-                            if lstr != rstr { return false }
-                            
-                        case .crcString:
-                            let lstr = CrcString(fromPtr: lhs._tableFieldPtr(row: ri, column: ci), lhs.endianness)
-                            let rstr = CrcString(fromPtr: rhs._tableFieldPtr(row: ri, column: ci), rhs.endianness)
-                            if lstr != rstr { return false }
-                            
-                        case .binary:
-                            let lstr = Data(fromPtr: lhs._tableFieldPtr(row: ri, column: ci), lhs.endianness)
-                            let rstr = Data(fromPtr: rhs._tableFieldPtr(row: ri, column: ci), rhs.endianness)
-                            if lstr != rstr { return false }
-                            
-                        case .crcBinary:
-                            let lstr = CrcBinary(fromPtr: lhs._tableFieldPtr(row: ri, column: ci), lhs.endianness)
-                            let rstr = CrcBinary(fromPtr: rhs._tableFieldPtr(row: ri, column: ci), rhs.endianness)
-                            if lstr != rstr { return false }
-
-                        case .array, .sequence, .dictionary, .table:
-                            let lportal = Portal(itemPtr: lhs._tableFieldPtr(row: ri, column: ci), manager: lhs.manager, endianness: lhs.endianness)
-                            let rportal = Portal(itemPtr: rhs._tableFieldPtr(row: ri, column: ci), manager: rhs.manager, endianness: rhs.endianness)
-                            if lportal != rportal { return false }
-                        }
-                    }
-                }
-                
-                return true
-            }
-            
-            
-        } else {
-            
-            // The lhs and rhs are an array element or a table field.
-            
-            // Test a single value
-            switch lhs.valueType! {
-                
-            case .null: return true
-            case .bool: return lhs.bool == rhs.bool
-            case .int8: return lhs.int8 == rhs.int8
-            case .int16: return lhs.int16 == rhs.int16
-            case .int32: return lhs.int32 == rhs.int32
-            case .int64: return lhs.int64 == rhs.int64
-            case .uint8: return lhs.uint8 == rhs.uint8
-            case .uint16: return lhs.uint16 == rhs.uint16
-            case .uint32: return lhs.uint32 == rhs.uint32
-            case .uint64: return lhs.uint64 == rhs.uint64
-            case .float32: return lhs.float32 == rhs.float32
-            case .float64: return lhs.float64 == rhs.float64
-            case .uuid: return lhs.uuid == rhs.uuid
-            case .rgba: return lhs.rgba == rhs.rgba
-            case .font: return lhs.font == rhs.font
-            case .string: return lhs.string == rhs.string
-            case .crcString: return lhs.crcString == rhs.crcString
-            case .binary: return lhs.binary == rhs.binary
-            case .crcBinary: return lhs.crcBinary == rhs.crcBinary
-            case .array, .dictionary, .sequence, .table:
-                let lPortal = Portal(itemPtr: lhs._arrayElementPtr(for: lhs.index!), index: nil, manager: lhs.manager, endianness: lhs.endianness)
-                let rPortal = Portal(itemPtr: rhs._arrayElementPtr(for: rhs.index!), index: nil, manager: rhs.manager, endianness: rhs.endianness)
-                return lPortal == rPortal
-            }
-        }
-    }
-}
-
-
 // MARK: - Memory management
 
 extension Portal {
@@ -493,7 +198,7 @@ extension Portal {
     
     /// Returns the number of bytes that are currently available for the value this portal offers access to.
     
-    internal var availableValueFieldByteCount: Int {
+    internal var currentValueFieldByteCount: Int {
         return _itemByteCount - itemMinimumByteCount - _itemNameFieldByteCount
     }
     
@@ -518,9 +223,14 @@ extension Portal {
     }
 
     
-    internal func newEnsureValueFieldByteCount(of bytes: Int) -> Result {
-        if index == nil { return itemEnsureValueFieldByteCount(of: bytes) }
-        if let column = column {
+    internal func ensureValueFieldByteCount(of bytes: Int) -> Result {
+        if index == nil {
+            if currentValueFieldByteCount < bytes {
+                return increaseItemByteCount(to: itemMinimumByteCount + _itemNameFieldByteCount + bytes)
+            } else {
+                return .success
+            }
+        } else if let column = column {
             return _tableEnsureColumnValueByteCount(of: bytes, in: column)
         } else {
             return _arrayEnsureValueFieldByteCount(of: bytes)
@@ -555,7 +265,7 @@ extension Portal {
                     
                     // Calculate the necessary byte count for the parent array
                     
-                    let necessaryParentItemByteCount = arrayMinimumItemByteCount + parent._arrayElementCount * newByteCount
+                    let necessaryParentItemByteCount = itemMinimumByteCount + arrayElementBaseOffset + parent._arrayElementCount * newByteCount
                     
                     
                     // Check if the parent item byte count must be increased
@@ -584,7 +294,7 @@ extension Portal {
                 
                 // Check if the byte count of the parent must be grown
                 
-                let necessaryParentItemByteCount = itemMinimumByteCount + parent._itemNameFieldByteCount + parent.availableValueFieldByteCount - _itemByteCount + newByteCount
+                let necessaryParentItemByteCount = itemMinimumByteCount + parent._itemNameFieldByteCount + parent.currentValueFieldByteCount - _itemByteCount + newByteCount
                 
                 if parent._itemByteCount < necessaryParentItemByteCount {
 
@@ -619,7 +329,7 @@ extension Portal {
 
                 // Check if the byte count of the parent must be grown
                 
-                let necessaryParentItemByteCount = itemMinimumByteCount + parent._itemNameFieldByteCount + parent.availableValueFieldByteCount - _itemByteCount + newByteCount
+                let necessaryParentItemByteCount = itemMinimumByteCount + parent._itemNameFieldByteCount + parent.currentValueFieldByteCount - _itemByteCount + newByteCount
                 
                 if parent._itemByteCount < necessaryParentItemByteCount {
                     
@@ -724,38 +434,25 @@ extension Portal {
     }
 
     
-    /// Returns a portal refering to the first item for a given name.
-    ///
-    /// - Returns: nil if the name cannot be found.
-    
-    internal func findPortalForItem(withName name: String) -> Portal? {
-        
-        guard let nameData = name.data(using: .utf8) else { return nil }
-        
-        let crc = nameData.crc16()
-        
-        return findPortalForItem(with: crc, utf8ByteCode: nameData)
-    }
-
-    
     /// Searches for an item with the same hash and string data as the search paremeters.
     ///
     /// Only for dictionaries, sequences and array's.
     ///
     /// - Parameters:
-    ///   - with: A CRC16 over the stringData.
-    ///   - utf8ByteCode: The bytes that make up a name string.
+    ///   - withName: The namefield of the item to find.
     ///
     /// - Returns: A pointer to the first byte
     
-    internal func findPortalForItem(with hash: UInt16, utf8ByteCode: Data) -> Portal? {
+    internal func findPortalForItem(withName name: NameField?) -> Portal? {
+        
+        guard let name = name else { return nil }
         
         var ptrFound: UnsafeMutableRawPointer?
         
         forEachAbortOnTrue() {
-            if $0._itemNameCrc != hash { return false }
-            if $0._itemNameUtf8CodeByteCount != utf8ByteCode.count { return false }
-            if $0._itemNameUtf8Code != utf8ByteCode { return false }
+            if $0._itemNameCrc != name.crc { return false }
+            if $0._itemNameUtf8CodeByteCount != name.data.count { return false }
+            if $0._itemNameUtf8Code != name.data { return false }
             ptrFound = $0.itemPtr
             return true
         }
@@ -827,8 +524,8 @@ extension Portal {
     ///
     /// - Subscript operators return unmanaged portals and should not be stored locally. To obtain a managed portal, use this operation.
     
-    public var portal: Portal {
-        guard isValid else { return fatalOrNull("Portal is no longer valid") }
+    public var portal: Portal? {
+        guard isValid else { return nil }
         return manager.getActivePortal(for: itemPtr, index: index, column: column)
     }
     
@@ -836,7 +533,7 @@ extension Portal {
     /// Returns true if the value accessable through this portal is an Array.
 
     public var isArray: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.array }
         if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.array.rawValue }
         return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.array.rawValue
@@ -846,7 +543,7 @@ extension Portal {
     /// Returns true if the value accessable through this portal is a Dictionary.
 
     public var isDictionary: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.dictionary }
         if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.dictionary.rawValue }
         return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.dictionary.rawValue
@@ -856,7 +553,7 @@ extension Portal {
     /// Returns true if the value accessable through this portal is a Sequence.
 
     public var isSequence: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.sequence }
         if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.sequence.rawValue }
         return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.sequence.rawValue
@@ -866,7 +563,7 @@ extension Portal {
     /// Returns true if the value accessable through this portal is a Table.
 
     public var isTable: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.table }
         if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.table.rawValue }
         return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.table.rawValue

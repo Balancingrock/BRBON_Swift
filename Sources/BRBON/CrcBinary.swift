@@ -54,7 +54,7 @@ import BRUtils
 
 fileprivate let crcBinaryCrcOffset = 0
 fileprivate let crcBinaryByteCountOffset = crcBinaryCrcOffset + 4
-fileprivate let crcBinaryDataOffset = crcBinaryByteCountOffset + 4
+internal let crcBinaryDataOffset = crcBinaryByteCountOffset + 4
 
 
 extension Portal {
@@ -66,17 +66,19 @@ extension Portal {
     
     internal var _crcBinaryCrc: UInt32 {
         get { return UInt32(fromPtr: _crcBinaryCrcPtr, endianness) }
-        set { newValue.storeValue(atPtr: _crcBinaryCrcPtr, endianness) }
+        set { newValue.copyBytes(to: _crcBinaryCrcPtr, endianness) }
     }
     
     internal var _crcBinaryByteCount: Int {
         get { return Int(UInt32(fromPtr: _crcBinaryByteCountPtr, endianness)) }
-        set { UInt32(newValue).storeValue(atPtr: _crcBinaryByteCountPtr, endianness) }
+        set { UInt32(newValue).copyBytes(to: _crcBinaryByteCountPtr, endianness) }
     }
     
     internal var _crcBinaryData: Data {
         get { return Data(bytes: _crcBinaryDataPtr.assumingMemoryBound(to: UInt8.self), count: _crcBinaryByteCount) }
         set {
+            let result = ensureValueFieldByteCount(of: crcBinaryDataOffset + newValue.count)
+            guard result == .success else { return }
             _crcBinaryCrc = newValue.crc32()
             _crcBinaryByteCount = newValue.count
             newValue.copyBytes(to: _crcBinaryDataPtr.assumingMemoryBound(to: UInt8.self), count: _crcBinaryByteCount)
@@ -95,7 +97,7 @@ public extension Portal {
     /// Returns true if the value accessable through this portal is a CrcBinary.
     
     public var isCrcBinary: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.crcBinary }
         if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.crcBinary.rawValue }
         return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.crcBinary.rawValue
@@ -108,70 +110,71 @@ public extension Portal {
     
     public var crcBinary: Data? {
         get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isCrcBinary else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a CrcBinary"); return nil }
+            guard isCrcBinary else { return nil }
             return _crcBinaryData
         }
         set {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard isCrcBinary else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a CrcBinary"); return }
+            guard isCrcBinary else { return }
             guard let newValue = newValue else { return }
-            let newValueFieldByteCount = newValue.valueByteCount
-            let result = newEnsureValueFieldByteCount(of: newValueFieldByteCount)
-            guard result == .success else { return }
             _crcBinaryData = newValue
         }
     }
 
 
-    /// Add a Data to an Array of CrcBinary is done in binary.swift
+    /// Adding a CrcBinary to an Array of CrcBinary is done in binary.swift
 }
 
-/// Defines the BRBON CrcBinary class and conforms it to the Coder protocol.
 
-internal final class CrcBinary: Coder, Equatable {
-    
-    public static func ==(lhs: CrcBinary, rhs: CrcBinary) -> Bool {
-        if lhs.crc != rhs.crc { return false }
-        return lhs.data == rhs.data
-    }
+/// Defines the BRCrcBinary.
 
-    public var itemType: ItemType { return ItemType.crcBinary }
+public struct BRCrcBinary {
     
-    
-    /// Creates a new CrcBinary
-    
+    public let data: Data
+    public let crc: UInt32
+
+    internal var crcIsValid: Bool { return data.crc32() == crc }
+
     public init(_ data: Data) {
         self.data = data
         self.crc = data.crc32()
     }
+}
 
+
+/// Add the equatable protocol
+
+extension BRCrcBinary: Equatable {
     
-    /// The data structure stored in this class.
-    
-    public let data: Data
-    
-    
-    /// The original CRC value read or calculated during 'init'.
-    
-    public let crc: UInt32
-    
-    
-    internal var valueByteCount: Int { return 8 + data.count }
-    
-    internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        crc.storeValue(atPtr: atPtr, endianness)
-        data.storeValue(atPtr: atPtr.advanced(by: 4), endianness)
+    public static func == (lhs: BRCrcBinary, rhs: BRCrcBinary) -> Bool {
+        if lhs.crc != rhs.crc { return false }
+        return lhs.data == rhs.data
     }
+}
+
+
+/// Add the coder protocol
+
+extension BRCrcBinary: Coder {
     
+    public var itemType: ItemType { return ItemType.crcBinary }
+
+    public var valueByteCount: Int { return crcBinaryDataOffset + data.count }
+
+    public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+        crc.copyBytes(to: ptr.advanced(by: crcBinaryCrcOffset), endianness)
+        UInt32(data.count).copyBytes(to: ptr.advanced(by: crcBinaryByteCountOffset), endianness)
+        data.copyBytes(to: ptr.advanced(by: crcBinaryDataOffset).assumingMemoryBound(to: UInt8.self), count: data.count)
+    }
+}
+
+
+/// Add a decoder
+
+extension BRCrcBinary {
     internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        crc = UInt32(fromPtr: fromPtr, endianness)
-        let byteCount = Int(UInt32(fromPtr: fromPtr.advanced(by: 4), endianness))
+        crc = UInt32(fromPtr: fromPtr.advanced(by: crcBinaryCrcOffset), endianness)
+        let byteCount = Int(UInt32(fromPtr: fromPtr.advanced(by: crcBinaryDataOffset), endianness))
         data = Data(bytes: fromPtr, count: byteCount)
     }
-    
-    
-    /// - Returns: True if a new CRC32 calculated over the data matches the stored CRC
-    
-    internal var isValid: Bool { return data.crc32() == crc }
 }
+

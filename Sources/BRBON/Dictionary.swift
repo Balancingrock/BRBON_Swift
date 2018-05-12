@@ -1,9 +1,9 @@
 // =====================================================================================================================
 //
-//  File:       Portal-Dictionary.swift
+//  File:       Dictionary.swift
 //  Project:    BRBON
 //
-//  Version:    0.4.2
+//  Version:    0.7.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -68,7 +68,7 @@ extension Portal {
     
     internal var _dictionaryItemCount: Int {
         get { return Int(UInt32(fromPtr: _dictionaryItemCountPtr, endianness)) }
-        set { UInt32(newValue).storeValue(atPtr: _dictionaryItemCountPtr, endianness) }
+        set { UInt32(newValue).copyBytes(to: _dictionaryItemCountPtr, endianness) }
     }
     
     
@@ -102,7 +102,7 @@ extension Portal {
     ///
     /// - Returns: 'success' or an error indicator (including 'itemNotFound').
     
-    internal func _dictionaryRemoveValue(forName name: String) -> Result {
+    internal func _dictionaryRemoveItem(withName name: NameField?) -> Result {
         
         guard let item = findPortalForItem(withName: name) else { return .itemNotFound }
         
@@ -139,44 +139,60 @@ extension Portal {
     ///
     /// - Returns: Either .success or an error indicator.
     
-    internal func _dictionaryUpdateValue(_ value: Coder, forName name: String) -> Result {
+    internal func _dictionaryUpdateItem(_ value: Coder, withName name: NameField?) -> Result {
         
-        guard let nfd = NameField(name) else { return .illegalNameField }
-        
-        guard let item = findPortalForItem(with: nfd.crc, utf8ByteCode: nfd.data) else {
-            return _dictionaryAddValue(value, name: nfd)
+        guard let item = findPortalForItem(withName: name) else {
+            return _dictionaryAddItem(value, withName: name)
         }
 
         
-        // Ensure enough space is available
+        // Update
         
-        let neededItemByteCount = value.itemByteCount(nfd)
-        
-        if item._itemByteCount < neededItemByteCount {
-            let result = item.increaseItemByteCount(to: neededItemByteCount)
+        if value.itemType.usesSmallValue {
+            value.copyBytes(to: item.itemSmallValuePtr, endianness)
+        } else {
+            let result = item.ensureValueFieldByteCount(of: value.valueByteCount.roundUpToNearestMultipleOf8())
             guard result == .success else { return result }
+            value.copyBytes(to: item.valueFieldPtr, endianness)
+            item._itemByteCount = itemMinimumByteCount + (name?.byteCount ?? 0) + value.valueByteCount.roundUpToNearestMultipleOf8()
         }
-        
-        let pOffset = manager.bufferPtr.distance(to: itemPtr)
-        value.storeAsItem(atPtr: item.itemPtr, name: nfd, parentOffset: pOffset, endianness)
-        
+                
         return .success
     }
     
-    internal func _dictionaryAddValue(_ value: Coder, name: NameField) -> Result {
+    internal func _dictionaryAddItem(_ value: Coder, withName name: NameField?) -> Result {
         
-        let neededItemByteCount = itemMinimumByteCount + _itemNameFieldByteCount + usedValueFieldByteCount + value.itemByteCount(name)
+        guard let name = name else { return .missingName }
         
-        if _itemByteCount < neededItemByteCount {
-            let result = increaseItemByteCount(to: neededItemByteCount)
-            guard result == .success else { return result }
-        }
+        let neededValueFieldByteCount = itemMinimumByteCount + name.byteCount + (value.itemType.usesSmallValue ? 0 : value.valueByteCount.roundUpToNearestMultipleOf8())
+        
+        let result = ensureValueFieldByteCount(of: usedValueFieldByteCount + neededValueFieldByteCount)
+        guard result == .success else { return result }
         
         let pOffset = manager.bufferPtr.distance(to: itemPtr)
-        value.storeAsItem(atPtr: _dictionaryAfterLastItemPtr, name: name, parentOffset: pOffset, endianness)
         
+        let p = buildItem(withValue: value, atPtr: _dictionaryAfterLastItemPtr, endianness)
+        p._itemParentOffset = pOffset
+
         _dictionaryItemCount += 1
         
         return .success
     }
 }
+
+
+/// Build an item with a Dictionary in it.
+///
+/// - Parameters:
+///   - withName: The namefield for the item. Optional.
+///   - endianness: The endianness to be used while creating the item.
+///
+/// - Returns: An ephemeral portal. Do not retain this portal.
+
+internal func buildDictionaryItem(withName name: NameField?, valueByteCount: Int, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
+    let p = buildItem(ofType: .dictionary, withName: name, atPtr: ptr, endianness)
+    p._itemByteCount += dictionaryItemBaseOffset + valueByteCount.roundUpToNearestMultipleOf8()
+    p._dictionaryItemCount = 0
+    return p
+}
+

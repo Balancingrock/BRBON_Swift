@@ -52,118 +52,38 @@ import Foundation
 import BRUtils
 
 
-/// This protocol is used to encode/decode types to/from a byte stream.
+/// This protocol is used to encode types to a byte stream.
 
-internal protocol Coder {
+public protocol Coder {
 
     
-    /// The number of bytes needed to encode the raw value of self into bytes.
+    /// The type of item
     
+    var itemType: ItemType { get }
+    
+    
+    /// The number of bytes needed to encode the raw value of self.
+
     var valueByteCount: Int { get }
     
     
-    /// The number of bytes needed to encode self into an item.
+    /// The number of bytes necessary for the value field. (Zero if the smallValueField is used)
     
-    func itemByteCount(_ nfd: NameField?) -> Int
+    var minimumValueFieldByteCount: Int { get }
     
     
-    /// Stores the raw bytes of the value.
-    ///
-    /// - Note: A fatal error will occur for container types and the null type. Container types and the null type must always be stored as items.
+    /// Stores the bytes of the value at the designated address.
     ///
     /// - Parameters:
-    ///   - atPtr: The address at which the first byte will be stored.
+    ///   - to: The address where the first byte must be stored.
     ///   - endianness: Specifies the endian ordering of the bytes. Only used when necessary.
     
-    func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness)
-    
-
-    /// Stores the value as a BRBON item.
-    ///
-    /// - Parameters:
-    ///   - atPtr: The address at which the first byte will be stored.
-    ///   - options: The item options field content.
-    ///   - flags: The item flags field content.
-    ///   - name: An optional name field descriptor if the item has a name.
-    ///   - parentOffset: The offset of the parent item this item is located in. The offset of the parent should be given in bytes from the first byte of the buffer the parent is in..
-    ///   - initialValueByteCount: If present, then the item will have a value field of at least this many bytes. Note that this value has 'suggestive' value only, if the actual byte count is larger, the larger value will be used. Any value will be rounded up to the nearest mutiple of 8. Range 0 ... Int32.max. Note: If this parameter is set, there will be a value field, even if the small-value field is used to store the data.
-    ///   - endianness: Specifies the endian ordering of the bytes. Only used when necessary.
-    
-    func storeAsItem(
-        atPtr: UnsafeMutableRawPointer,
-        options: ItemOptions,
-        flags: ItemFlags,
-        name: NameField?,
-        parentOffset: Int,
-        initialValueByteCount: Int?,
-        _ endianness: Endianness)
+    func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness)
 }
 
 extension Coder {
     
-    internal func itemByteCount(_ nfd: NameField?) -> Int {
-        return itemMinimumByteCount + (nfd?.byteCount ?? 0) + (itemType.usesSmallValue ? 0 : valueByteCount).roundUpToNearestMultipleOf8()
-    }
-    
-    internal func storeAsItem(
-        atPtr: UnsafeMutableRawPointer,
-        options: ItemOptions = ItemOptions.none,
-        flags: ItemFlags = ItemFlags.none,
-        name: NameField? = nil,
-        parentOffset: Int,
-        initialValueByteCount: Int? = nil,
-        _ endianness: Endianness) {
-        
-        let nameFieldByteCount = name?.byteCount ?? 0
-
-        let itemByteCount: Int
-        
-        if let initialValueByteCount = initialValueByteCount {
-            
-            // Using a fixed byte count means not using the value field even if the small-value field would be enough.
-            
-            if valueByteCount > initialValueByteCount {
-                itemByteCount = itemMinimumByteCount + nameFieldByteCount + valueByteCount.roundUpToNearestMultipleOf8()
-            } else {
-                itemByteCount = itemMinimumByteCount + nameFieldByteCount + initialValueByteCount.roundUpToNearestMultipleOf8()
-            }
-            
-        } else {
-            
-            // Using the default value means ignoring the value field if possible
-            
-            itemByteCount = itemMinimumByteCount + nameFieldByteCount + (itemType.usesSmallValue ? 0 : valueByteCount.roundUpToNearestMultipleOf8())
-        }
-        
-        // Type
-        itemType.storeValue(atPtr: atPtr.advanced(by: itemTypeOffset))
-        
-        // Options
-        options.storeValue(atPtr: atPtr.advanced(by: itemOptionsOffset))
-        
-        // Flags
-        flags.storeValue(atPtr: atPtr.advanced(by:itemFlagsOffset))
-        
-        // Name field byte count
-        UInt8(nameFieldByteCount).storeValue(atPtr: atPtr.advanced(by: itemNameFieldByteCountOffset), endianness)
-        
-        // Item byte count
-        UInt32(itemByteCount).storeValue(atPtr: atPtr.advanced(by: itemByteCountOffset), endianness)
-        
-        // Parent offset
-        UInt32(parentOffset).storeValue(atPtr: atPtr.advanced(by: itemParentOffsetOffset), endianness)
-        
-        // Small-value
-        UInt32(0).storeValue(atPtr: atPtr.advanced(by: itemSmallValueOffset), endianness)
-        
-        // Name field (if present)
-        name?.storeValue(atPtr: atPtr.advanced(by: itemNameFieldOffset), endianness)
-        
-        // Value
-        if itemType.usesSmallValue {
-            storeValue(atPtr: atPtr.advanced(by: itemSmallValueOffset), endianness)
-        } else {
-            storeValue(atPtr: atPtr.advanced(by: itemValueFieldOffset + nameFieldByteCount), endianness)
-        }
+    public var minimumValueFieldByteCount: Int {
+        return itemType.usesSmallValue ? 0 : valueByteCount.roundUpToNearestMultipleOf8()
     }
 }

@@ -58,7 +58,8 @@ fileprivate let rgbaRedOffset = 0
 fileprivate let rgbaGreenOffset = rgbaRedOffset + 4
 fileprivate let rgbaBlueOffset = rgbaGreenOffset + 4
 fileprivate let rgbaAlphaOffset = rgbaBlueOffset + 4
-fileprivate let rgbaValueByteCount = rgbaAlphaOffset + 4
+internal let rgbaValueByteCount = rgbaAlphaOffset + 4
+
 
 // Internal portal helpers
 
@@ -73,22 +74,22 @@ extension Portal {
     
     internal var _rgbaRed: Float32 {
         get { return Float32(fromPtr: _rbgaRedPtr, endianness) }
-        set { Float32(newValue).storeValue(atPtr: _rbgaRedPtr, endianness) }
+        set { Float32(newValue).copyBytes(to: _rbgaRedPtr, endianness) }
     }
     
     internal var _rgbaGreen: Float32 {
         get { return Float32(fromPtr: _rbgaGreenPtr, endianness) }
-        set { Float32(newValue).storeValue(atPtr: _rbgaGreenPtr, endianness) }
+        set { Float32(newValue).copyBytes(to: _rbgaGreenPtr, endianness) }
     }
     
     internal var _rgbaBlue: Float32 {
         get { return Float32(fromPtr: _rbgaBluePtr, endianness) }
-        set { Float32(newValue).storeValue(atPtr: _rbgaBluePtr, endianness) }
+        set { Float32(newValue).copyBytes(to: _rbgaBluePtr, endianness) }
     }
     
     internal var _rgbaAlpha: Float32 {
         get { return Float32(fromPtr: _rbgaAlphaPtr, endianness) }
-        set { Float32(newValue).storeValue(atPtr: _rbgaAlphaPtr, endianness) }
+        set { Float32(newValue).copyBytes(to: _rbgaAlphaPtr, endianness) }
     }
 }
 
@@ -103,7 +104,7 @@ public extension Portal {
     /// - Returns: True if the value accessable through this portal is an RBGA. False if the portal is invalid or the value is not an RBGA.
 
     public var isRgba: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.rgba }
         if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.rgba.rawValue }
         return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.rgba.rawValue
@@ -112,22 +113,19 @@ public extension Portal {
     
     /// Access the value through this portal as a NSColor
     
-    public var rgba: NSColor? {
+    public var rgba: RGBA? {
         get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isRgba else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a RGBA"); return nil }
-            return NSColor(red: CGFloat(_rgbaRed), green: CGFloat(_rgbaGreen), blue: CGFloat(_rgbaBlue), alpha: CGFloat(_rgbaAlpha))
+            guard isRgba else { return nil }
+            return RGBA(red: _rgbaRed, green: _rgbaGreen, blue: _rgbaBlue, alpha: _rgbaAlpha)
         }
         set {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard isRgba else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a RGBA"); return }
-
+            guard isRgba else { return }
             guard let newValue = newValue else { return }
             
-            _rgbaRed = Float32(newValue.redComponent)
-            _rgbaGreen = Float32(newValue.greenComponent)
-            _rgbaBlue = Float32(newValue.blueComponent)
-            _rgbaAlpha = Float32(newValue.alphaComponent)
+            _rgbaRed = newValue.redComponent
+            _rgbaGreen = newValue.greenComponent
+            _rgbaBlue = newValue.blueComponent
+            _rgbaAlpha = newValue.alphaComponent
         }
     }
     
@@ -139,80 +137,74 @@ public extension Portal {
     @discardableResult
     public func append(_ value: NSColor) -> Result {
         let rgba = RGBA(value)
-        return appendClosure(for: rgba.itemType, with: rgba.valueByteCount) { rgba.storeValue(atPtr: _arrayElementPtr(for: _arrayElementCount), endianness) }
+        return appendClosure(for: rgba.itemType, with: rgba.valueByteCount) { rgba.copyBytes(to: _arrayElementPtr(for: _arrayElementCount), endianness) }
     }
 }
 
 
-/// The RGBA class and the Coder protocol
+// The RGBA class and the Coder protocol
 
-internal struct RGBA: Coder {
+public struct RGBA {
     
+    public let redComponent: Float32
+    public let greenComponent: Float32
+    public let blueComponent: Float32
+    public let alphaComponent: Float32
     
-    /// The BRBON Item type of the item this value will be stored into.
+    public var color: NSColor { return NSColor(calibratedRed: CGFloat(redComponent), green: CGFloat(greenComponent), blue: CGFloat(blueComponent), alpha: CGFloat(alphaComponent)) }
+        
+    public init(_ color: NSColor) {
+        redComponent = Float32(color.redComponent)
+        greenComponent = Float32(color.greenComponent)
+        blueComponent = Float32(color.blueComponent)
+        alphaComponent = Float32(color.alphaComponent)
+    }
     
-    var itemType: ItemType { return ItemType.rgba }
+    public init(red: Float32, green: Float32, blue: Float32, alpha: Float32) {
+        redComponent = red
+        greenComponent = green
+        blueComponent = blue
+        alphaComponent = alpha
+    }
+}
+
+
+// Add equatable
+
+extension RGBA: Equatable {
     
+    public static func == (lhs: RGBA, rhs: RGBA) -> Bool {
+        if lhs.redComponent != rhs.redComponent { return false }
+        if lhs.greenComponent != rhs.greenComponent { return false }
+        if lhs.blueComponent != rhs.blueComponent { return false }
+        return lhs.alphaComponent == rhs.alphaComponent
+    }
+}
+
+
+// Add the Coder protocol
+
+extension RGBA {
     
-    /// Create a new item
+    public var itemType: ItemType { return ItemType.rgba }
     
-    init(_ color: NSColor) { self.color = color }
+    public var valueByteCount: Int { return rgbaValueByteCount }
     
-    
-    // The content
-    
-    let color: NSColor
-    
-    
-    /// The number of bytes needed to encode self into an BrbonBytes stream.
-    
-    var valueByteCount: Int { return 16 }
-    
-    
-    /// Stores the value without any other information in the memory area pointed at.
-    ///
-    /// - Parameters:
-    ///   - atPtr: The pointer at which the first byte will be stored. On return the pointer will be incremented for the number of bytes stored.
-    ///   - endianness: Specifies the endianness of the bytes.
-    
-    func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+    public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         
         if endianness == machineEndianness {
-            atPtr.storeBytes(of: Float32(color.redComponent).bitPattern, as: UInt32.self)
-            atPtr.advanced(by: 4).storeBytes(of: Float32(color.greenComponent).bitPattern, as: UInt32.self)
-            atPtr.advanced(by: 8).storeBytes(of: Float32(color.blueComponent).bitPattern, as: UInt32.self)
-            atPtr.advanced(by: 12).storeBytes(of: Float32(color.alphaComponent).bitPattern, as: UInt32.self)
+            ptr.storeBytes(of: Float32(color.redComponent).bitPattern, as: UInt32.self)
+            ptr.advanced(by: 4).storeBytes(of: Float32(color.greenComponent).bitPattern, as: UInt32.self)
+            ptr.advanced(by: 8).storeBytes(of: Float32(color.blueComponent).bitPattern, as: UInt32.self)
+            ptr.advanced(by: 12).storeBytes(of: Float32(color.alphaComponent).bitPattern, as: UInt32.self)
         } else {
-            atPtr.storeBytes(of: Float32(color.redComponent).bitPattern.byteSwapped, as: UInt32.self)
-            atPtr.advanced(by: 4).storeBytes(of: Float32(color.greenComponent).bitPattern.byteSwapped, as: UInt32.self)
-            atPtr.advanced(by: 8).storeBytes(of: Float32(color.blueComponent).bitPattern.byteSwapped, as: UInt32.self)
-            atPtr.advanced(by: 12).storeBytes(of: Float32(color.alphaComponent).bitPattern.byteSwapped, as: UInt32.self)
+            ptr.storeBytes(of: Float32(color.redComponent).bitPattern.byteSwapped, as: UInt32.self)
+            ptr.advanced(by: 4).storeBytes(of: Float32(color.greenComponent).bitPattern.byteSwapped, as: UInt32.self)
+            ptr.advanced(by: 8).storeBytes(of: Float32(color.blueComponent).bitPattern.byteSwapped, as: UInt32.self)
+            ptr.advanced(by: 12).storeBytes(of: Float32(color.alphaComponent).bitPattern.byteSwapped, as: UInt32.self)
         }
     }
 }
 
-
-/// Build an item with a RGBA in it.
-///
-/// - Parameters:
-///   - withName: The namefield for the item. Optional.
-///   - value: The value to store in the smallValueField.
-///   - atPtr: The pointer at which to build the item structure.
-///   - endianness: The endianness to be used while creating the item.
-///
-/// - Returns: An ephemeral portal. Do not retain this portal.
-
-internal func buildUInt64Item(withName name: NameField?, value: NSColor? = nil, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
-    let p = buildItem(ofType: .rgba, withName: name, atPtr: ptr, endianness)
-    p._itemByteCount += rgbaValueByteCount
-    if let value = value {
-        RGBA(value).storeValue(atPtr: p.itemValueFieldPtr, endianness)
-    } else {
-        p._rgbaRed = 0.0
-        p._rgbaGreen = 0.0
-        p._rgbaBlue = 0.0
-        p._rgbaAlpha = 0.0
-    }
-}
 
 

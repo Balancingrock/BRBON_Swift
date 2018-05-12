@@ -55,7 +55,7 @@ import BRUtils
 // Offset definitions
 
 fileprivate let binaryByteCountOffset = 0
-fileprivate let binaryDataOffset = binaryByteCountOffset + 4
+internal let binaryDataOffset = binaryByteCountOffset + 4
 
 
 // Internal portal helpers
@@ -68,12 +68,14 @@ internal extension Portal {
     
     internal var _binaryByteCount: Int {
         get { return Int(UInt32(fromPtr: _binaryByteCountPtr, endianness)) }
-        set { UInt32(newValue).storeValue(atPtr: _binaryByteCountPtr, endianness) }
+        set { UInt32(newValue).copyBytes(to: _binaryByteCountPtr, endianness) }
     }
     
     internal var _binaryData: Data {
         get { return Data(bytes: _binaryDataPtr.assumingMemoryBound(to: UInt8.self), count: _binaryByteCount) }
         set {
+            let result = ensureValueFieldByteCount(of: binaryDataOffset + newValue.count)
+            guard result == .success else { return }
             _binaryByteCount = newValue.count
             newValue.copyBytes(to: _binaryDataPtr.assumingMemoryBound(to: UInt8.self), count: newValue.count)
         }
@@ -91,7 +93,7 @@ public extension Portal {
     /// Returns true if the value accessable through this portal is a Binary.
     
     public var isBinary: Bool {
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return false }
+        guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.binary }
         if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.binary.rawValue }
         return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.binary.rawValue
@@ -104,20 +106,14 @@ public extension Portal {
     
     public var binary: Data? {
         get {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return nil }
-            guard isBinary else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Binary"); return nil }
+            guard isBinary else { return nil }
             return _binaryData
         }
         set {
-            guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-            guard isBinary else { fatalOrNull("Attempt to access \(String(describing: itemType)) as a Binary"); return }
+            guard isBinary else { return }
             
             guard let newValue = newValue else { return }
-            
-            let newValueFieldByteCount = 4 + newValue.count
-            let result = newEnsureValueFieldByteCount(of: newValueFieldByteCount)
-            guard result == .success else { return }
-            
+                        
             _binaryData = newValue
         }
     }
@@ -130,10 +126,10 @@ public extension Portal {
     @discardableResult
     public func append(_ value: Data) -> Result {
         if _arrayElementType == .binary {
-            return appendClosure(for: value.itemType, with: value.valueByteCount) { value.storeValue(atPtr: _arrayElementPtr(for: _arrayElementCount), endianness) }
+            return appendClosure(for: value.itemType, with: value.valueByteCount) { value.copyBytes(to: _arrayElementPtr(for: _arrayElementCount), endianness) }
         } else if _arrayElementType == .crcBinary {
-            let crcBinary = CrcBinary(value)
-            return appendClosure(for: crcBinary.itemType, with: crcBinary.valueByteCount) { crcBinary.storeValue(atPtr: _arrayElementPtr(for: _arrayElementCount), endianness) }
+            let crcBinary = BRCrcBinary(value)
+            return appendClosure(for: crcBinary.itemType, with: crcBinary.valueByteCount) { crcBinary.copyBytes(to: _arrayElementPtr(for: _arrayElementCount), endianness) }
         } else {
             return .typeConflict
         }
@@ -141,43 +137,32 @@ public extension Portal {
 }
 
 
+// Create a typealias for orthogonality
+
+public typealias BRBinary = Data
+
+
 // Adds the Coder protocol to Data
 
 extension Data: Coder {
     
-    internal var itemType: ItemType { return ItemType.binary }
+    public var itemType: ItemType { return ItemType.binary }
 
-    internal var valueByteCount: Int { return 4 + self.count }
+    public var valueByteCount: Int { return binaryDataOffset + self.count }
     
-    internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        UInt32(self.count).storeValue(atPtr: atPtr, endianness)
-        self.copyBytes(to: atPtr.advanced(by: 4).assumingMemoryBound(to: UInt8.self), count: self.count)
+    public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+        UInt32(self.count).copyBytes(to: ptr.advanced(by: binaryByteCountOffset), endianness)
+        self.copyBytes(to: ptr.advanced(by: binaryDataOffset).assumingMemoryBound(to: UInt8.self), count: self.count)
     }    
-    
+}
+
+
+/// Add a decoder
+
+extension Data {
     internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        let byteCount = Int(UInt32(fromPtr: fromPtr, endianness))
-        self.init(Data(bytes: fromPtr.advanced(by: 4), count: byteCount))
+        let byteCount = Int(UInt32(fromPtr: fromPtr.advanced(by: binaryByteCountOffset), endianness))
+        self.init(Data(bytes: fromPtr.advanced(by: binaryDataOffset), count: byteCount))
     }
 }
 
-
-/// Build an item with a Binary in it.
-///
-/// - Parameters:
-///   - withName: The namefield for the item. Optional.
-///   - value: The value to store in the smallValueField.
-///   - atPtr: The pointer at which to build the item structure.
-///   - endianness: The endianness to be used while creating the item.
-///
-/// - Returns: An ephemeral portal. Do not retain this portal.
-
-internal func buildBinaryItem(withName name: NameField?, value: Data? = nil, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
-    let p = buildItem(ofType: .binary, withName: name, atPtr: ptr, endianness)
-    p._itemByteCount += binaryDataOffset + (value?.count ?? 0)
-    if endianness == machineEndianness {
-        p._binaryByteCountPtr.storeBytes(of: UInt32(value?.count ?? 0), as: UInt32.self)
-    } else {
-        p._binaryByteCountPtr.storeBytes(of: UInt32(value?.count ?? 0).byteSwapped, as: UInt32.self)
-    }
-    value?.copyBytes(to: p._binaryDataPtr.assumingMemoryBound(to: UInt8.self), count: (value?.count ?? 0))
-}

@@ -63,12 +63,12 @@ public extension Portal {
             
             // The portal must be valid
             
-            guard isValid else { return fatalOrNull("Portal is no longer valid") }
+            guard isValid else { return Portal.nullPortal }
             
             
             // The index must be positive
             
-            guard index >= 0 else { return fatalOrNull("Index (\(index)) is negative") }
+            guard index >= 0 else { return Portal.nullPortal }
             
             
             // Implement for array
@@ -78,7 +78,7 @@ public extension Portal {
                 
                 // Index must be less than the number of elements
                 
-                guard index < _arrayElementCount else { return fatalOrNull("Index (\(index)) out of high bound (\(_arrayElementCount))") }
+                guard index < _arrayElementCount else { return Portal.nullPortal }
                 
                 return _arrayPortalForElement(at: index)
             }
@@ -91,7 +91,7 @@ public extension Portal {
 
                 // Index must be less than the number of items
 
-                guard index < _sequenceItemCount else { return fatalOrNull("Index (\(index)) out of high bound (\(_sequenceItemCount))") }
+                guard index < _sequenceItemCount else { return Portal.nullPortal }
 
                 return _sequencePortalForItem(at: index)
             }
@@ -99,7 +99,7 @@ public extension Portal {
             
             // For other type, return the NULL item
             
-            return fatalOrNull("Integer index subscript not supported on \(String(describing: itemType))")
+            return Portal.nullPortal
         }
     }
 
@@ -159,19 +159,20 @@ public extension Portal {
     }
     
     public subscript(index: Int) -> String? {
-        get {
-            if isString { return self[index].string }
-            return self[index].crcString
-        }
-        set {
-            if isString {
-                self[index].string = newValue
-            } else {
-                self[index].crcString = newValue
-            }
-        }
+        get { return self[index].string }
+        set { self[index].string = newValue }
     }
     
+    public subscript(index: Int) -> BRString? {
+        get { return self[index].brString }
+        set { self[index].brString = newValue }
+    }
+
+    public subscript(index: Int) -> BRCrcString? {
+        get { return self[index].brCrcString }
+        set { self[index].brCrcString = newValue }
+    }
+
     public subscript(index: Int) -> Data? {
         get {
             if isBinary { return self[index].binary }
@@ -200,35 +201,27 @@ public extension Portal {
     /// - Returns: 'success' or an error indicator.
     
     @discardableResult
-    public func createNewElements(amount: Int = 1, value: IsBrbon? = nil) -> Result {
+    public func createNewElements(amount: Int = 1, value: Coder? = nil) -> Result {
         
         
         // The portal must be valid
         
-        guard isValid else { fatalOrNull("Portal is invalid"); return .portalInvalid }
+        guard isValid else { return .portalInvalid }
         
         
         // Operation is only allowed on array items
         
-        guard isArray else {
-            fatalOrNull("_createNewElements not supported for \(String(describing: itemType))")
-            return .operationNotSupported
-        }
+        guard isArray else { return .operationNotSupported }
         
         
         // The number of new elements must be positive
         
-        guard amount > 0 else { fatalOrNull("createNewElements must have amount > 0, found \(amount)"); return .illegalAmount }
-        
-        
-        // Coder should be implemented for the default value
-        
-        if let value = value { assert(value is Coder) }
+        guard amount > 0 else { return .illegalAmount }
         
         
         // A default value should fit the element byte count
         
-        if let value = value as? Coder {
+        if let value = value {
             let result = _arrayEnsureElementByteCount(for: value)
             guard result == .success else { return result }
         }
@@ -238,7 +231,7 @@ public extension Portal {
         
         let newCount = _arrayElementCount + amount
         let neccesaryValueByteCount = 8 + _arrayElementByteCount * newCount
-        let result = itemEnsureValueFieldByteCount(of: neccesaryValueByteCount)
+        let result = ensureValueFieldByteCount(of: neccesaryValueByteCount)
         guard result == .success else { return result }
         
         
@@ -249,10 +242,10 @@ public extension Portal {
         
         // Use the default value if provided
         
-        if let value = value as? Coder {
+        if let value = value {
             var loopCount = amount
             repeat {
-                value.storeValue(atPtr: _arrayElementPtr(for: _arrayElementCount + loopCount - 1), endianness)
+                value.copyBytes(to: _arrayElementPtr(for: _arrayElementCount + loopCount - 1), endianness)
                 loopCount -= 1
             } while loopCount > 0
         }
@@ -265,54 +258,7 @@ public extension Portal {
         
         return .success
     }
-    
-
-    /// Appends a new value to an array or sequence.
-    ///
-    /// - Note: Only for array and sequence items.
-    ///
-    /// - Parameters:
-    ///   - value: The value to be added.
-    ///   - forName: An optional name, only used when the target is a sequence. Ignored for array's.
-    ///
-    /// - Returns: 'success' or an error indicator.
-    
-    @discardableResult
-    public func append(_ value: IsBrbon, forName name: String? = nil) -> Result {
         
-        
-        // Portal must be valid
-        
-        guard isValid else { return .portalInvalid }
-        
-        
-        // The value should implement the Coder protocol
-        
-        guard let value = value as? Coder else { return .missingCoder }
-        
-        
-        // Implement for array's
-        
-        //if isArray {
-            //guard _arrayElementType == value.itemType else { return .typeConflict }
-            //return _arrayAppend(value)
-        //}
-        
-        
-        // Implement for sequence's
-        
-        if isSequence {
-            return _sequenceAppend(value, name: NameField(name))
-        }
-        
-        
-        // Not supported for other item types.
-        
-        fatalOrNull("Append operation not valid on \(String(describing: itemType))")
-        
-        return .operationNotSupported
-    }
-    
     
     /// Removes an item.
     ///
@@ -330,12 +276,12 @@ public extension Portal {
         
         // Portal must be valid
         
-        guard isValid else { fatalOrNull("Portal is invalid"); return .portalInvalid }
+        guard isValid else { return .portalInvalid }
         
         
         // Index should be positive
         
-        guard index >= 0 else { fatalOrNull("Index (\(index)) below zero"); return .indexBelowLowerBound }
+        guard index >= 0 else { return .indexBelowLowerBound }
 
         
         // Implement for array
@@ -345,7 +291,7 @@ public extension Portal {
             
             // Index must be lower than the number of elements
             
-            guard index < _arrayElementCount else { fatalOrNull("Index (\(index)) above high bound (\(_arrayElementCount))"); return .indexAboveHigherBound }
+            guard index < _arrayElementCount else { return .indexAboveHigherBound }
             
             return _arrayRemove(at: index)
         }
@@ -358,16 +304,13 @@ public extension Portal {
             
             // Index must be lower than the number of items
             
-            guard index < _sequenceItemCount else { fatalOrNull("Index (\(index)) above high bound (\(_sequenceItemCount))"); return .indexAboveHigherBound }
+            guard index < _sequenceItemCount else { return .indexAboveHigherBound }
             
-            return _sequenceRemove(at: index)
+            return _sequenceRemoveItem(atIndex: index)
         }
         
         
         // Not supported for other types
-        
-        fatalOrNull("remove(int) not supported on \(itemPtr)")
-        
         
         return .operationNotSupported
     }
@@ -385,22 +328,19 @@ public extension Portal {
     /// - Returns: 'success' or an error indicator.
 
     @discardableResult
-    public func insert(_ value: IsBrbon, atIndex index: Int, withName name: String? = nil) -> Result {
+    public func insert(_ value: Coder, atIndex index: Int, withName name: String? = nil) -> Result {
+        
+        guard let name = NameField(name) else { return .illegalNameField }
         
         
         // The portal must be valid
         
-        guard isValid else { fatalOrNull("Portal is invalid"); return .portalInvalid }
+        guard isValid else { return .portalInvalid }
         
         
         // The index must be positive
         
-        guard index >= 0 else { fatalOrNull("Index (\(index)) below zero"); return .indexBelowLowerBound }
-
-        
-        // The new value must implement the Coder protocol
-        
-        guard let value = value as? Coder else { return .missingCoder }
+        guard index >= 0 else { return .indexBelowLowerBound }
 
         
         // Implement for array
@@ -410,7 +350,7 @@ public extension Portal {
             
             // Index must be lower than the number of elements
 
-            guard index < _arrayElementCount else { fatalOrNull("Index (\(index)) above high bound (\(_arrayElementCount))"); return .indexAboveHigherBound }
+            guard index < _arrayElementCount else { return .indexAboveHigherBound }
             
             
             // The type of the new element must match the existing element type
@@ -429,17 +369,14 @@ public extension Portal {
 
             // Index must be lower than the number of elements
 
-            guard index < _sequenceItemCount else { fatalOrNull("Index (\(index)) above high bound (\(_sequenceItemCount))"); return .indexAboveHigherBound }
+            guard index < _sequenceItemCount else { return .indexAboveHigherBound }
             
             
-            return _sequenceInsert(value, atIndex: index, withName: name)
+            return _sequenceInsertItem(value, atIndex: index, withName: name)
         }
         
         
-        // Not supported for other types
-
-        fatalOrNull("insert(Coder, int) not supported on \(itemPtr)")
-        
+        // Not supported for other types        
         
         return .operationNotSupported
     }

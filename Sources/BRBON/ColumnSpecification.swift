@@ -1,6 +1,6 @@
 // =====================================================================================================================
 //
-//  File:       Coder-BrbonTable.swift
+//  File:       ColumnSpecification.swift
 //  Project:    BRBON
 //
 //  Version:    0.7.0
@@ -121,52 +121,3 @@ public struct ColumnSpecification {
     }
 }
 
-
-/// Defines the BRBON Dictionary class and conforms it to the Coder protocol.
-
-public final class BrbonTable: Coder {
-
-    
-    public var itemType: ItemType { return ItemType.table }
-    
-    public init(columnSpecifications: Array<ColumnSpecification>) {
-        self.columns = columnSpecifications
-    }
-    
-    internal var columns: Array<ColumnSpecification>
-    
-    
-    internal var valueByteCount: Int {
-        
-        // Start with the first 4 table parameters, each 4 bytes long
-        
-        var total = 16
-
-        
-        // Exit if there are no columns
-        
-        if columns.count == 0 { return total }
-        
-        
-        // Add the column descriptor, 16 bytes for each column
-        
-        total += columns.count * 16
-        
-        
-        // Add the name field byte counts
-        
-        columns.forEach() {
-            total += $0.name.byteCount
-        }
-        
-        
-        // There are not rows yet.
-        
-        return total
-    }
-    
-    internal func storeValue(atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        UInt32(0).storeValue(atPtr: atPtr, endianness)
-        tableWriteSpecification(valueFieldPtr: atPtr, &columns, endianness)
-    }
-}

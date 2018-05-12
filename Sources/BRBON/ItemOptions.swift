@@ -56,8 +56,8 @@ import BRUtils
 public enum ItemOptions: UInt8 {
     case none = 0
     
-    internal func storeValue(atPtr: UnsafeMutableRawPointer) {
-        self.rawValue.storeValue(atPtr: atPtr, machineEndianness)
+    internal func copyBytes(to ptr: UnsafeMutableRawPointer) {
+        self.rawValue.copyBytes(to: ptr, machineEndianness)
     }
     
     internal static func readValue(atPtr: UnsafeMutableRawPointer) -> ItemOptions? {

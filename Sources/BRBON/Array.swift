@@ -58,7 +58,7 @@ internal let arrayElementCountOffset = arrayElementTypeOffset + 4
 internal let arrayElementByteCountOffset = arrayElementCountOffset + 4
 internal let arrayElementBaseOffset = arrayElementByteCountOffset + 4
 
-internal let arrayMinimumItemByteCount = itemMinimumByteCount + arrayElementBaseOffset
+//internal let arrayMinimumItemByteCount = itemMinimumByteCount + arrayElementBaseOffset
 
 
 extension Portal {
@@ -77,7 +77,7 @@ extension Portal {
     
     internal var _arrayElementType: ItemType? {
         get { return ItemType.readValue(atPtr: _arrayElementTypePtr) }
-        set { newValue?.storeValue(atPtr: _arrayElementTypePtr) }
+        set { newValue?.copyBytes(to: _arrayElementTypePtr) }
     }
     
 
@@ -85,7 +85,7 @@ extension Portal {
     
     internal var _arrayElementCount: Int {
         get { return Int(UInt32(fromPtr: _arrayElementCountPtr, endianness)) }
-        set { UInt32(newValue).storeValue(atPtr: _arrayElementCountPtr, endianness) }
+        set { UInt32(newValue).copyBytes(to: _arrayElementCountPtr, endianness) }
     }
     
     
@@ -93,7 +93,7 @@ extension Portal {
     
     internal var _arrayElementByteCount: Int {
         get { return Int(UInt32(fromPtr: _arrayElementByteCountPtr, endianness)) }
-        set { UInt32(newValue).storeValue(atPtr: _arrayElementByteCountPtr, endianness) }
+        set { UInt32(newValue).copyBytes(to: _arrayElementByteCountPtr, endianness) }
     }
     
     
@@ -125,14 +125,14 @@ extension Portal {
         
         // Check to see if the element byte count of the array must be increased.
         
-        let necessaryElementByteCount: Int = value.itemType.isContainer ? value.itemByteCount(nil) : value.valueByteCount
+        let necessaryElementByteCount: Int = value.itemType.isContainer ? (itemMinimumByteCount + value.valueByteCount) : value.valueByteCount
         
         if necessaryElementByteCount > _arrayElementByteCount {
             
             
             // This is the byte count that self has to become in order to accomodate the new value
             
-            let necessaryItemByteCount = _itemByteCount - availableValueFieldByteCount + arrayElementBaseOffset + ((_arrayElementCount + 1) * necessaryElementByteCount)
+            let necessaryItemByteCount = _itemByteCount - currentValueFieldByteCount + arrayElementBaseOffset + ((_arrayElementCount + 1) * necessaryElementByteCount)
             
             
             if necessaryItemByteCount > _itemByteCount {
@@ -160,7 +160,7 @@ extension Portal {
             
             // This is the byte count that self has to become in order to accomodate the new value
             
-            let necessaryItemByteCount = _itemByteCount - availableValueFieldByteCount + arrayElementBaseOffset + ((_arrayElementCount + 1) * bytes)
+            let necessaryItemByteCount = _itemByteCount - currentValueFieldByteCount + arrayElementBaseOffset + ((_arrayElementCount + 1) * bytes)
             
             
             if necessaryItemByteCount > _itemByteCount {
@@ -191,7 +191,7 @@ extension Portal {
             
             // This is the byte count that self has to become in order to accomodate the new value
             
-            let necessaryItemByteCount = _itemByteCount - availableValueFieldByteCount + arrayElementBaseOffset + ((_arrayElementCount + 1) * necessaryElementByteCount)
+            let necessaryItemByteCount = _itemByteCount - currentValueFieldByteCount + arrayElementBaseOffset + ((_arrayElementCount + 1) * necessaryElementByteCount)
             
             
             if necessaryItemByteCount > _itemByteCount {
@@ -302,7 +302,7 @@ extension Portal {
         
         let newCount = _arrayElementCount + 1
         let neccesaryValueByteCount = arrayElementBaseOffset + _arrayElementByteCount * newCount
-        result = itemEnsureValueFieldByteCount(of: neccesaryValueByteCount)
+        result = ensureValueFieldByteCount(of: neccesaryValueByteCount)
         guard result == .success else { return result }
         
         
@@ -316,7 +316,7 @@ extension Portal {
         
         // Insert the new element
         
-        value.storeValue(atPtr: _arrayElementPtr(for: index), endianness)
+        value.copyBytes(to: _arrayElementPtr(for: index), endianness)
         
         
         // Increase the number of elements
@@ -346,7 +346,7 @@ extension Portal {
         
         // Ensure that the new value can be added
         
-        if availableValueFieldByteCount - _arrayValueFieldUsedByteCount < bytes {
+        if currentValueFieldByteCount - _arrayValueFieldUsedByteCount < bytes {
             let result = increaseItemByteCount(to: _itemByteCount + arrayElementBaseOffset + ((_arrayElementCount + 1) * bytes).roundUpToNearestMultipleOf8())
             guard result == .success else { return result }
         }
@@ -387,7 +387,7 @@ extension Portal {
         // Ensure that all elements (including the new ones) can be accomodated
         
         let necessaryValueByteCountIncrease = _arrayElementByteCount
-        if availableValueFieldByteCount - _arrayValueFieldUsedByteCount < necessaryValueByteCountIncrease {
+        if currentValueFieldByteCount - _arrayValueFieldUsedByteCount < necessaryValueByteCountIncrease {
             let result = increaseItemByteCount(to: _itemByteCount + necessaryValueByteCountIncrease)
             guard result == .success else { return result }
         }
@@ -397,7 +397,7 @@ extension Portal {
         
         _ = Darwin.memcpy(_arrayElementPtr(for: _arrayElementCount), itemManager.bufferPtr, itemManager.count)
         let parentOffset = manager!.bufferPtr.distance(to: itemPtr)
-        UInt32(parentOffset).storeValue(atPtr: _arrayElementPtr(for: _arrayElementCount).advanced(by: itemParentOffsetOffset), endianness)
+        UInt32(parentOffset).copyBytes(to: _arrayElementPtr(for: _arrayElementCount).advanced(by: itemParentOffsetOffset), endianness)
 
         _arrayElementCount += 1
         
@@ -427,7 +427,7 @@ extension Portal {
         // Ensure that all elements (including the new ones) can be accomodated
         
         let necessaryValueByteCountIncrease = _arrayElementByteCount * arr.count
-        if availableValueFieldByteCount - _arrayValueFieldUsedByteCount < necessaryValueByteCountIncrease {
+        if currentValueFieldByteCount - _arrayValueFieldUsedByteCount < necessaryValueByteCountIncrease {
             let result = increaseItemByteCount(to: _itemByteCount + necessaryValueByteCountIncrease)
             guard result == .success else { return result }
         }
@@ -441,7 +441,7 @@ extension Portal {
             let dstPtr = _arrayElementPtr(for: _arrayElementCount)
             let length = $0.count
             _ = Darwin.memcpy(dstPtr, srcPtr, length)
-            UInt32(parentOffset).storeValue(atPtr: dstPtr.advanced(by: itemParentOffsetOffset), endianness)
+            UInt32(parentOffset).copyBytes(to: dstPtr.advanced(by: itemParentOffsetOffset), endianness)
             _arrayElementCount += 1
         }
         
@@ -449,6 +449,26 @@ extension Portal {
     }
 }
 
+
+/// Build an item with a Array in it.
+///
+/// - Parameters:
+///   - withName: The namefield for the item. Optional.
+///   - elementType: The type of elements in the array.
+///   - elementByteCount: The number of bytes used for each element in the array. It must be ensured that the byte count is large enough for the element type!
+///   - elementCount:
+///   - endianness: The endianness to be used while creating the item.
+///
+/// - Returns: An ephemeral portal. Do not retain this portal.
+
+internal func buildArrayItem(withName name: NameField?, elementType: ItemType, elementByteCount: Int, elementCount: Int, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
+    let p = buildItem(ofType: .array, withName: name, atPtr: ptr, endianness)
+    p._itemByteCount += arrayElementBaseOffset + (elementCount * elementByteCount).roundUpToNearestMultipleOf8()
+    p._arrayElementType = elementType
+    p._arrayElementByteCount = elementByteCount
+    p._arrayElementCount = 0
+    return p
+}
 
 
 
