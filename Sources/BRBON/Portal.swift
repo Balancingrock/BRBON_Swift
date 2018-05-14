@@ -44,7 +44,7 @@
 //
 // History
 //
-// 0.7.0 - Added type .rgba and .font
+// 0.7.0 - Added type .color and .font
 //         Type change is no longer possible
 // 0.5.0 - Migration to Swift 4
 // 0.4.3 - Changed access levels for index and column
@@ -130,17 +130,19 @@ public final class Portal {
     }
     
     
-    // The null portal is used to avoid an excess of unwrapping for the API user. API calls that must return a portal can return the null portal instead of returing nil.
+    // The null portal is used to avoid an excess of unwrapping for the API user. API calls that must return a portal can return the null portal instead of returning nil.
     
     public static var nullPortal: Portal = {
-        return Portal(itemPtr: UnsafeMutableRawPointer(bitPattern: 1)!, endianness: machineEndianness)
+        let p = Portal(itemPtr: UnsafeMutableRawPointer(bitPattern: 1)!, endianness: machineEndianness)
+        p.isValid = false
+        return p
     }()
     
     
     /// Initializer for the nullPortal and ephemeral portals.
     
     internal init(itemPtr: UnsafeMutableRawPointer, endianness: Endianness) {
-        isValid = false
+        isValid = true
         index = nil
         column = nil
         self.endianness = endianness
@@ -153,7 +155,7 @@ public final class Portal {
     public var count: Int {
         guard isValid else { return 0 }
         switch itemType! {
-        case .null, .bool, .int8, .int16, .int32, .int64, .uint8, .uint16, .uint32, .uint64, .float32, .float64, .string, .crcString, .binary, .crcBinary, .uuid, .rgba, .font: return 0
+        case .null, .bool, .int8, .int16, .int32, .int64, .uint8, .uint16, .uint32, .uint64, .float32, .float64, .string, .crcString, .binary, .crcBinary, .uuid, .color, .font: return 0
         case .dictionary: return _dictionaryItemCount
         case .sequence: return _sequenceItemCount
         case .array: return _arrayElementCount
@@ -171,7 +173,7 @@ public final class Portal {
     
     public var nameField: NameField? {
         guard _itemNameFieldByteCount > 0 else { return nil }
-        return NameField.readValue(fromPtr: _itemNameFieldPtr, endianness)
+        return NameField(fromPtr: _itemNameFieldPtr, byteCount: _itemNameFieldByteCount, endianness)
     }
 }
 
@@ -209,7 +211,7 @@ extension Portal {
         switch itemType! {
         case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32: return 0
         case .int64, .uint64, .float64: return 8
-        case .uuid, .rgba: return 16
+        case .uuid, .color: return 16
         case .font: return _fontValueFieldUsedByteCount
         case .string: return _stringValueFieldUsedByteCount
         case .crcString: return _crcStringValueFieldUsedByteCount
@@ -659,7 +661,7 @@ extension Portal {
                 removeChildItems()
             }
         }
-    }*/
+    }
 
     
     /// Changes the type of self to a null.
@@ -673,5 +675,5 @@ extension Portal {
         if removeSelf {
             manager.removeActivePortal(self)
         }
-    }
+    }*/
 }

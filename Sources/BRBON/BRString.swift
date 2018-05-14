@@ -126,33 +126,12 @@ extension Portal {
     public var string: String? {
         get {
             if isString { return brString?.string }
-            if isCrcString { return brCrcString?.string }
+            if isCrcString { return crcString?.string }
             return nil
         }
         set {
             if isString { brString = BRString(newValue) }
-            if isCrcString { brCrcString = BRCrcString(newValue) }
-        }
-    }
-    
-
-    /// Add a String to an Array of either String or CrcString.
-    ///
-    /// - Returns: .success or one of .portalInvalid, .operationNotSupported, .typeConflict
-    
-    @discardableResult
-    public func append(_ value: BRString) -> Result {
-        if _arrayElementType == .string {
-            return appendClosure(for: value.itemType, with: value.valueByteCount) {
-                value.copyBytes(to: _arrayElementPtr(for: _arrayElementCount), endianness)
-            }
-        } else if _arrayElementType == .crcString {
-            let crcString = BRCrcString(value)
-            return appendClosure(for: crcString.itemType, with: crcString.valueByteCount) {
-                crcString.copyBytes(to: _arrayElementPtr(for: _arrayElementCount), endianness)
-            }
-        } else {
-            return .typeConflict
+            if isCrcString { crcString = BRCrcString(newValue) }
         }
     }
 }

@@ -45,7 +45,7 @@
 //
 // History
 //
-// 0.7.0  - Added RGBA and Font
+// 0.7.0  - Added Color and Font
 // 0.4.2  - Changed raw values and redone access levels
 // 0.1.0  - Initial version
 // =====================================================================================================================
@@ -164,9 +164,9 @@ public enum ItemType: UInt8 {
     case uuid           = 0x15
     
     
-    /// A RGBA
+    /// A Color
     
-    case rgba           = 0x16
+    case color          = 0x16
     
     
     /// A Font
@@ -176,15 +176,15 @@ public enum ItemType: UInt8 {
     
     internal var usesSmallValue: Bool {
         switch self {
-        case .null, .bool, .int8, .int16, .int32, .uint8, .uint16, .uint32, .float32: return true
-        case .int64, .uint64, .float64, .string, .crcString, .binary, .crcBinary, .array, .dictionary, .sequence, .table, .uuid, .rgba, .font : return false
+        case .null, .bool, .int8, .int16, .int32, .uint8, .uint16, .uint32, .float32, .color: return true
+        case .int64, .uint64, .float64, .string, .crcString, .binary, .crcBinary, .array, .dictionary, .sequence, .table, .uuid, .font : return false
         }
     }
     
     
     internal var hasFlexibleLength: Bool {
         switch self {
-        case .null, .bool, .int8, .int16, .int32, .uint8, .uint16, .uint32, .float32, .int64, .uint64, .float64, .uuid, .rgba: return false
+        case .null, .bool, .int8, .int16, .int32, .uint8, .uint16, .uint32, .float32, .int64, .uint64, .float64, .uuid, .color: return false
         case .string, .crcString, .binary, .crcBinary, .array, .dictionary, .sequence, .table, .font: return true
         }
     }
@@ -197,7 +197,7 @@ public enum ItemType: UInt8 {
         case .int32, .uint32, .float32: return 4
         case .int64, .uint64, .float64: return 8
         case .uuid: return uuidValueByteCount
-        case .rgba: return rgbaValueByteCount
+        case .color: return colorValueByteCount
         case .font: return fontFamilyNameUtf8CodeOffset
         case .string: return stringUtf8CodeOffset
         case .binary: return binaryDataOffset
@@ -212,7 +212,7 @@ public enum ItemType: UInt8 {
     
     internal var isContainer: Bool {
         switch self {
-        case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32, .int64, .uint64, .float64, .string, .crcString, .binary, .crcBinary, .uuid, .rgba, .font: return false
+        case .null, .bool, .int8, .uint8, .int16, .uint16, .int32, .uint32, .float32, .int64, .uint64, .float64, .string, .crcString, .binary, .crcBinary, .uuid, .color, .font: return false
         case .array, .dictionary, .sequence, .table: return true
         }
     }

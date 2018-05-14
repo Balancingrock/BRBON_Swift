@@ -44,7 +44,7 @@
 //
 // History
 //
-// 0.7.0 - Added type .rgba and .font
+// 0.7.0 - Added type .color and .font
 //         Type change is no longer possible
 // 0.5.0 - Migration to Swift 4
 // 0.4.3 - Changed access levels for index and column
@@ -143,9 +143,9 @@ extension Portal: Equatable {
                 return lhs.crcBinary == rhs.crcBinary
                 
                 
-            case .rgba:
+            case .color:
                 
-                return lhs.rgba == rhs.rgba
+                return lhs.color == rhs.color
                 
                 
             case .font:
@@ -248,8 +248,8 @@ extension Portal: Equatable {
                             if lhs._tableFieldPtr(row: ri, column: ci).advanced(by: 8).assumingMemoryBound(to: UInt64.self).pointee
                                 != rhs._tableFieldPtr(row: ri, column: ci).advanced(by: 8).assumingMemoryBound(to: UInt64.self).pointee { return false }
                             
-                        case .rgba:
-                            if lhs.rgba != rhs.rgba { return false }
+                        case .color:
+                            if lhs.color != rhs.color { return false }
                             
                         case .font:
                             if lhs.font != rhs.font { return false }
@@ -306,7 +306,7 @@ extension Portal: Equatable {
             case .float32: return lhs.float32 == rhs.float32
             case .float64: return lhs.float64 == rhs.float64
             case .uuid: return lhs.uuid == rhs.uuid
-            case .rgba: return lhs.rgba == rhs.rgba
+            case .color: return lhs.color == rhs.color
             case .font: return lhs.font == rhs.font
             case .string: return lhs.string == rhs.string
             case .crcString: return lhs.string == rhs.string

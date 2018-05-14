@@ -120,7 +120,7 @@ extension Portal {
     ///
     /// - Note: Returns nil if the CRC value was wrong.
     
-    public var brCrcString: BRCrcString? {
+    public var crcString: BRCrcString? {
         get {
             guard isCrcString else { return nil }
             
@@ -139,9 +139,7 @@ extension Portal {
         }
     }
 
-    // Accessing as a String is covered in BRString.swift
-    
-    // Appending a String to an Array of CrcString is done in BRString.swift
+    // Accessing as a String is covered in BRString.swift    
 }
 
 

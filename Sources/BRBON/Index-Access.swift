@@ -169,8 +169,8 @@ public extension Portal {
     }
 
     public subscript(index: Int) -> BRCrcString? {
-        get { return self[index].brCrcString }
-        set { self[index].brCrcString = newValue }
+        get { return self[index].crcString }
+        set { self[index].crcString = newValue }
     }
 
     public subscript(index: Int) -> Data? {

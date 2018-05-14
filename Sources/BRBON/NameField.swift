@@ -56,14 +56,13 @@ import BRUtils
 public struct NameField: Equatable, Hashable {
     
     public static func ==(lhs: NameField, rhs: NameField) -> Bool {
-        guard lhs.crc == rhs.crc else { return false }
-        guard lhs.byteCount == rhs.byteCount else { return false }
-        guard lhs.data == rhs.data else { return false }
-        return true
+        if lhs.crc != rhs.crc { return false }
+        if lhs.byteCount != rhs.byteCount { return false }
+        return lhs.data == rhs.data
     }
 
     
-    /// UTF* code of the name
+    /// UTF8 code of the name
     
     internal let data: Data
     
@@ -77,48 +76,59 @@ public struct NameField: Equatable, Hashable {
     
     internal let byteCount: Int
     
+    
+    /// A hash allows a namefield to be used as a directory key
+    
     public internal(set) var hashValue: Int
+    
+    
+    /// Reonstructs the string that was used to create this namefield
     
     public var string: String { return String(data: data, encoding: .utf8)! }
     
-    public init?(_ name: String?, fixedLength: Int? = nil) {
+    
+    /// Create a new NameField.
+    ///
+    /// Creation fails if the parameters are out of range, the name is nil, the name is empty, if the name cannot be converted into UTF8 or if the resulting UTF8 code exceeds either 245 bytes or the fixedByteCount (when present).
+    ///
+    /// - Parameters:
+    ///   - name: The string to be converted to a UTF8 code sequence. Maximum length of the UTF8 byte code 245 bytes.
+    ///   - fixedByteCount: When present, the byteCount will be fixed to this number. Range 8 ... 248, only multiples of 8 can be used.
+
+    public init?(_ name: String?, fixedByteCount: Int? = nil) {
         
-        guard let name = name else { return nil }
         
-        var length: Int = 0
+        // Name must be present
+        
+        guard let name = name, !name.isEmpty else { return nil }
+        
+        
+        // fixedByteCount must be in range 8 ... 248 and only a multiple of 8
+        
+        if let fixedByteCount = fixedByteCount {
+            guard fixedByteCount >= 8, fixedByteCount <= 248, fixedByteCount % 8 == 0 else { return nil }
+        }
         
         
         // Create a data object from the name with maximal 245 bytes
         
         guard let (nameData, charRemoved) = name.utf8CodeMaxBytes(245) else { return nil }
         guard !charRemoved else { return nil }
-        self.data = nameData
+
         
+        // Limit the byte count to the fixed byte count if given
         
-        // If a fixed length is specified, determine if it can be used
-        
-        if let fixedLength = fixedLength {
-            guard fixedLength <= 245 else { return nil }
-            if fixedLength < data.count { return nil }
-            length = Int(fixedLength)
-        } else {
-            length = self.data.count
+        if let fixedByteCount = fixedByteCount {
+            guard nameData.count <= (fixedByteCount - 3) else { return nil }
         }
         
         
-        // If there is a field, then add 3 bytes for the hash and length indicator
+        // Initialization
         
-        self.byteCount = (length == 0) ? 0 : (length + 3).roundUpToNearestMultipleOf8()
-        
-        
-        // Create the crc
-        
-        self.crc = data.crc16()
-        
-        
-        // And the hash
-        
+        self.data = nameData
+        self.crc = nameData.crc16()
         self.hashValue = data.hashValue
+        self.byteCount = fixedByteCount ?? (nameData.count + 3).roundUpToNearestMultipleOf8()
     }
     
     internal init(data: Data, crc: UInt16, byteCount: Int) {
@@ -141,11 +151,10 @@ public struct NameField: Equatable, Hashable {
         }
     }
 
-    internal static func readValue(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) -> NameField {
+    internal init(fromPtr: UnsafeMutableRawPointer, byteCount: Int, _ endianness: Endianness) {
         let crc = UInt16(fromPtr: fromPtr, endianness)
         let count = Int(UInt8(fromPtr: fromPtr.advanced(by: 2), endianness))
-        let byteCount = 3 + count
         let data = Data(bytes: fromPtr.advanced(by: 3), count: count)
-        return NameField(data: data, crc: crc, byteCount: byteCount)
+        self.init(data: data, crc: crc, byteCount: byteCount)
     }
 }

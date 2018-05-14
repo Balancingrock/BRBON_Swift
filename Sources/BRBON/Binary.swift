@@ -117,23 +117,6 @@ public extension Portal {
             _binaryData = newValue
         }
     }
-
-
-    /// Add a Data to an Array of Binary or CrcBinary.
-    ///
-    /// - Returns: .success or one of .portalInvalid, .operationNotSupported, .typeConflict
-    
-    @discardableResult
-    public func append(_ value: Data) -> Result {
-        if _arrayElementType == .binary {
-            return appendClosure(for: value.itemType, with: value.valueByteCount) { value.copyBytes(to: _arrayElementPtr(for: _arrayElementCount), endianness) }
-        } else if _arrayElementType == .crcBinary {
-            let crcBinary = BRCrcBinary(value)
-            return appendClosure(for: crcBinary.itemType, with: crcBinary.valueByteCount) { crcBinary.copyBytes(to: _arrayElementPtr(for: _arrayElementCount), endianness) }
-        } else {
-            return .typeConflict
-        }
-    }
 }
 
 

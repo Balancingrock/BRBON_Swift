@@ -1,6 +1,6 @@
 // =====================================================================================================================
 //
-//  File:       Font.swift
+//  File:       BRFont.swift
 //  Project:    BRBON
 //
 //  Version:    0.7.0
@@ -226,7 +226,7 @@ extension BRFont: Equatable {
 
 extension BRFont: Coder {
     
-    public var itemType: ItemType { return ItemType.rgba }
+    public var itemType: ItemType { return ItemType.font }
 
     public var valueByteCount: Int { return fontFamilyNameUtf8CodeOffset + (familyNameUtf8Code?.count ?? 0) + fontNameUtf8Code.count }
 
@@ -239,5 +239,4 @@ extension BRFont: Coder {
         fontNameUtf8Code.copyBytes(to: ptr.advanced(by: fontFamilyNameUtf8CodeOffset + (familyNameUtf8Code?.count ?? 0)).assumingMemoryBound(to: UInt8.self), count: fontNameUtf8Code.count)
     }
 }
-
 

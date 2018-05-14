@@ -85,16 +85,6 @@ public extension Portal {
             newValue?.copyBytes(to: valueFieldPtr, endianness)
         }
     }
-    
-    
-    /// Add a Bool to an Array.
-    ///
-    /// - Returns: .success or one of .portalInvalid, .operationNotSupported, .typeConflict
-    
-    @discardableResult
-    public func append(_ value: Bool) -> Result {
-        return appendClosure(for: value.itemType, with: value.valueByteCount) { value.copyBytes(to: _arrayElementPtr(for: _arrayElementCount), endianness) }
-    }
 }
 
 

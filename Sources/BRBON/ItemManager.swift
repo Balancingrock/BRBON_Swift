@@ -44,7 +44,7 @@
 //
 // History
 //
-// 0.7.0 - Added .rgba and .font
+// 0.7.0 - Added .color and .font
 // 0.5.0 - Migration to Swift 4
 //         Changed ActivePortal from struct to class to avoid concurrent memory access problem.
 // 0.4.3 - Added init:from:withMinimumBufferByteCount
@@ -292,7 +292,7 @@ public final class ItemManager {
             
             switch root.itemType! {
                 
-            case .null, .bool, .int8, .int16, .int32, .int64, .uint8, .uint16, .uint32, .uint64, .float32, .float64, .string, .crcString, .binary, .crcBinary, .uuid, .dictionary, .sequence, .rgba, .font:
+            case .null, .bool, .int8, .int16, .int32, .int64, .uint8, .uint16, .uint32, .uint64, .float32, .float64, .string, .crcString, .binary, .crcBinary, .uuid, .dictionary, .sequence, .color, .font:
                 
                 newByteCount = max(asked, count)
                 
@@ -339,7 +339,7 @@ public final class ItemManager {
     ///   - requestedValueFieldByteCount: The number of bytes to allocate for the value field (actual value may be larger, never smaller).
     ///   - endianness: The endianness used by the item manager and items under its control.
     
-    public static func createManager(withValue value: Coder, withName name: NameField? = nil, requestedValueFieldByteCount: Int = 0, endianness: Endianness) -> ItemManager {
+    public static func createManager(withValue value: Coder, withName name: NameField? = nil, requestedValueFieldByteCount: Int = 0, endianness: Endianness = machineEndianness) -> ItemManager {
         
         // Determine the size of the buffer
         let byteCount = itemMinimumByteCount + (name?.byteCount ?? 0) + max(value.minimumValueFieldByteCount, requestedValueFieldByteCount.roundUpToNearestMultipleOf8())

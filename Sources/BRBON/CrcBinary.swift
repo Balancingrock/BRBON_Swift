@@ -104,7 +104,7 @@ public extension Portal {
     }
     
     
-    /// Access the value through the portal as a CrcBinary.
+    /// Access the value through the portal as a BrCrcBinary.
     ///
     /// - Note: Assigning a nil has no effect.
     
@@ -119,9 +119,6 @@ public extension Portal {
             _crcBinaryData = newValue
         }
     }
-
-
-    /// Adding a CrcBinary to an Array of CrcBinary is done in binary.swift
 }
 
 
@@ -173,8 +170,8 @@ extension BRCrcBinary: Coder {
 extension BRCrcBinary {
     internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         crc = UInt32(fromPtr: fromPtr.advanced(by: crcBinaryCrcOffset), endianness)
-        let byteCount = Int(UInt32(fromPtr: fromPtr.advanced(by: crcBinaryDataOffset), endianness))
-        data = Data(bytes: fromPtr, count: byteCount)
+        let byteCount = Int(UInt32(fromPtr: fromPtr.advanced(by: crcBinaryByteCountOffset), endianness))
+        data = Data(bytes: fromPtr.advanced(by: crcBinaryDataOffset), count: byteCount)
     }
 }
 
