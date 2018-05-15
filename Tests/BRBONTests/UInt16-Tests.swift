@@ -84,7 +84,6 @@ class UInt16_Tests: XCTestCase {
         
         XCTAssertEqual(im.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(im.root.itemFlags, ItemFlags.none)
-        XCTAssertEqual(im.root.valueType, ItemType.uint16)
         
         
         // Buffer content

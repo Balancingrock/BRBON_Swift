@@ -106,15 +106,14 @@ public extension Portal {
     
     public var binary: Data? {
         get {
-            guard isBinary else { return nil }
-            return _binaryData
+            if isBinary { return _binaryData }
+            if isCrcBinary { return _crcBinaryData }
+            return nil
         }
         set {
-            guard isBinary else { return }
-            
             guard let newValue = newValue else { return }
-                        
-            _binaryData = newValue
+            if isBinary { _binaryData = newValue }
+            if isCrcBinary { _crcBinaryData = newValue }
         }
     }
 }

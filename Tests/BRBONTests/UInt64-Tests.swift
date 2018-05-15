@@ -84,7 +84,6 @@ class UInt64_Tests: XCTestCase {
         
         XCTAssertEqual(im.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(im.root.itemFlags, ItemFlags.none)
-        XCTAssertEqual(im.root.valueType, ItemType.uint64)
         
         
         // Buffer content

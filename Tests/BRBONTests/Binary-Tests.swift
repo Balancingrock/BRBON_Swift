@@ -92,7 +92,6 @@ class Binary_Tests: XCTestCase {
         
         XCTAssertEqual(im.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(im.root.itemFlags, ItemFlags.none)
-        XCTAssertEqual(im.root.valueType, ItemType.binary)
         XCTAssertNil(im.root.itemName)
         
         

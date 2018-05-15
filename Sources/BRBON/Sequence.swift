@@ -367,7 +367,7 @@ extension Portal {
     
     /// Appends a new value to an array or sequence.
     ///
-    /// - Note: Only for array and sequence items.
+    /// - Note: Only for sequence items.
     ///
     /// - Parameters:
     ///   - value: The value to be added.
@@ -376,32 +376,17 @@ extension Portal {
     /// - Returns: 'success' or an error indicator.
     
     @discardableResult
-    public func append(_ value: Coder, forName name: String? = nil) -> Result {
+    public func appendItem(_ value: Coder, forName name: String? = nil) -> Result {
         
         
         // Portal must be valid
         
-        guard isValid else { return .portalInvalid }
-        
-        
-        // Implement for array's
-        
-        if isArray {
-            guard _arrayElementType == value.itemType else { return .typeConflict }
-            return append(value)
-        }
+        guard isSequence else { return .portalInvalid }
         
         
         // Implement for sequence's
         
-        if isSequence {
-            return _sequenceAppendItem(value, withName: NameField(name))
-        }
-        
-        
-        // Not supported for other item types.
-        
-        return .operationNotSupported
+        return _sequenceAppendItem(value, withName: NameField(name))
     }
 }
 

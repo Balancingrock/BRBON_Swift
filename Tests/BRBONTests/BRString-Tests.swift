@@ -112,7 +112,6 @@ class BRString_Tests: XCTestCase {
         
         XCTAssertEqual(im.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(im.root.itemFlags, ItemFlags.none)
-        XCTAssertEqual(im.root.valueType, ItemType.string)
         XCTAssertNil(im.root.itemName)
         
         
@@ -150,7 +149,6 @@ class BRString_Tests: XCTestCase {
         
         XCTAssertEqual(im.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(im.root.itemFlags, ItemFlags.none)
-        XCTAssertEqual(im.root.valueType, ItemType.string)
         XCTAssertEqual(im.root.itemName, "one")
 
         

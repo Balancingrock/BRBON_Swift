@@ -219,25 +219,7 @@ public extension Portal {
         set { newValue?.copyBytes(to: itemTypePtr) }
     }
     
-    
-    /// The type of value this portal refers to.
-    ///
-    /// - Note: The type of the value and the type of the item may differ when the item is a container type.
-    
-    public var valueType: ItemType? {
-        get {
-            guard isValid else { return nil }
-            if let column = column {
-                return _tableGetColumnType(for: column)
-            } else if index != nil {
-                return _arrayElementType
-            } else {
-                return itemType
-            }
-        }
-    }
-    
-    
+        
     /// The options for the item this portal refers to.
     
     public var itemOptions: ItemOptions? {

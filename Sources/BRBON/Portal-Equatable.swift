@@ -290,8 +290,10 @@ extension Portal: Equatable {
             
             // The lhs and rhs are an array element or a table field.
             
+            let switchType: ItemType = (lhs.column == nil) ? lhs._arrayElementType! : lhs._tableGetColumnType(for: lhs.column!)!
+            
             // Test a single value
-            switch lhs.valueType! {
+            switch switchType {
                 
             case .null: return true
             case .bool: return lhs.bool == rhs.bool

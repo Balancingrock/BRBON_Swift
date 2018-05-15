@@ -86,11 +86,10 @@ class CrcBinary_Tests: XCTestCase {
         XCTAssertNil(im.root.nameField)
         
         XCTAssertTrue(im.root.isCrcBinary)
-        XCTAssertEqual(im.root.crcBinary, Data(bytes: [0x01, 0x02, 0x03]))
+        XCTAssertEqual(im.root.crcBinary, BRCrcBinary(Data(bytes: [0x01, 0x02, 0x03])))
         
         XCTAssertEqual(im.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(im.root.itemFlags, ItemFlags.none)
-        XCTAssertEqual(im.root.valueType, ItemType.crcBinary)
         
         
         // Buffer content

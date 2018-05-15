@@ -571,10 +571,6 @@ extension Portal {
         return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.table.rawValue
     }
     
-    
-
-        
-    
 
     
     /// General purpose assignment assistance for small-value setters.

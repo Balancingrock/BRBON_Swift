@@ -374,39 +374,42 @@ extension Portal {
     public subscript(row: Int, column: NameField) -> Data? {
         get {
             if isBinary { return self[row, column].binary }
-            return self[row, column].crcBinary
+            return self[row, column].crcBinary?.data
         }
         set {
+            guard let newValue = newValue else { return }
             if isBinary {
                 self[row, column].binary = newValue
             } else {
-                self[row, column].crcBinary = newValue
+                self[row, column].crcBinary = BRCrcBinary(newValue)
             }
         }
     }
     public subscript(row: Int, column: String) -> Data? {
         get {
             if isBinary { return self[row, column].binary }
-            return self[row, column].crcBinary
+            return self[row, column].crcBinary?.data
         }
         set {
+            guard let newValue = newValue else { return }
             if isBinary {
                 self[row, column].binary = newValue
             } else {
-                self[row, column].crcBinary = newValue
+                self[row, column].crcBinary = BRCrcBinary(newValue)
             }
         }
     }
     public subscript(row: Int, column: Int) -> Data? {
         get {
             if isBinary { return self[row, column].binary }
-            return self[row, column].crcBinary
+            return self[row, column].crcBinary?.data
         }
         set {
+            guard let newValue = newValue else { return }
             if isBinary {
                 self[row, column].binary = newValue
             } else {
-                self[row, column].crcBinary = newValue
+                self[row, column].crcBinary = BRCrcBinary(newValue)
             }
         }
     }

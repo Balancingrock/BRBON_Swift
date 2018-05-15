@@ -79,9 +79,17 @@ extension Portal {
         set {
             let result = ensureValueFieldByteCount(of: crcBinaryDataOffset + newValue.count)
             guard result == .success else { return }
-            _crcBinaryCrc = newValue.crc32()
             _crcBinaryByteCount = newValue.count
             newValue.copyBytes(to: _crcBinaryDataPtr.assumingMemoryBound(to: UInt8.self), count: _crcBinaryByteCount)
+        }
+    }
+    
+    internal var _crcBinary: BRCrcBinary {
+        get { return BRCrcBinary(data: _crcBinaryData, crc: _crcBinaryCrc) }
+        set {
+            _crcBinaryData = newValue.data
+            _crcBinaryByteCount = newValue.data.count
+            _crcBinaryCrc = newValue.crc
         }
     }
     
@@ -104,19 +112,15 @@ public extension Portal {
     }
     
     
-    /// Access the value through the portal as a BrCrcBinary.
-    ///
-    /// - Note: Assigning a nil has no effect.
-    
-    public var crcBinary: Data? {
+    public var crcBinary: BRCrcBinary? {
         get {
             guard isCrcBinary else { return nil }
-            return _crcBinaryData
+            return _crcBinary
         }
         set {
-            guard isCrcBinary else { return }
             guard let newValue = newValue else { return }
-            _crcBinaryData = newValue
+            guard isCrcBinary else { return }
+            _crcBinary = newValue
         }
     }
 }
@@ -134,6 +138,11 @@ public struct BRCrcBinary {
     public init(_ data: Data) {
         self.data = data
         self.crc = data.crc32()
+    }
+    
+    public init(data: Data, crc: UInt32) {
+        self.data = data
+        self.crc = crc
     }
 }
 

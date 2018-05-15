@@ -265,11 +265,13 @@ public final class ItemManager {
     ///
     /// - Note: This results in an incomplete item manager, be sure to create an initial item and set the root portal before using the manager.
     
-    internal init(bufferByteCount: Int = 1024, endianness: Endianness) {
+    internal init(requestedByteCount: Int = 1024, endianness: Endianness) {
+        
+        let actualByteCount = requestedByteCount.roundUpToNearestMultipleOf8()
         
         self.endianness = endianness
         
-        self.buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: bufferByteCount.roundUpToNearestMultipleOf8(), alignment: 8)
+        self.buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: actualByteCount, alignment: 8)
         self.bufferPtr = buffer.baseAddress!
         
         if ItemManager.startWithZeroedBuffers {
@@ -280,29 +282,29 @@ public final class ItemManager {
     
     /// Return a new item manager with the contents of self and optionally a larger buffer.
     ///
-    /// - Parameter allocation: When not specified, the size of the new buffer will be the same as the buffersize in other. When specified the buffer size will be as requested, but it will always be big enough to accomodate the root item in other. The interpretation of this parameter depends on the type of the root in other. For array it is in elements, for table it is in rows, for all other items it is in bytes.
+    /// - Parameter ask: When not specified, the size of the new buffer will be the same as the buffersize in other. When specified the buffer size will be as requested, but it will always be big enough to accomodate the root item in other. The interpretation of this parameter depends on the type of the root in other. For array it is in elements, for table it is in rows, for all other items it is in bytes.
 
     
-    public func copy(allocation: Int? = nil) -> ItemManager {
+    public func copyWithRecalculatedBufferSize(ask: Int? = nil) -> ItemManager {
         
         // Determine the size of the buffer for self
         
         var newByteCount: Int
-        if let asked = allocation {
+        if let ask = ask {
             
             switch root.itemType! {
                 
             case .null, .bool, .int8, .int16, .int32, .int64, .uint8, .uint16, .uint32, .uint64, .float32, .float64, .string, .crcString, .binary, .crcBinary, .uuid, .dictionary, .sequence, .color, .font:
                 
-                newByteCount = max(asked, count)
+                newByteCount = max(ask, count)
                 
             case .array:
                 
-                newByteCount = max(itemMinimumByteCount + arrayElementBaseOffset + (root._arrayElementByteCount * asked), count)
+                newByteCount = max(itemMinimumByteCount + arrayElementBaseOffset + (root._arrayElementByteCount * ask), count)
                 
             case .table:
                 
-                newByteCount = max(itemMinimumByteCount + root._tableRowsOffset + (root._tableRowByteCount * asked), count)
+                newByteCount = max(itemMinimumByteCount + root._tableRowsOffset + (root._tableRowByteCount * ask), count)
             }
             
         } else {
@@ -312,7 +314,7 @@ public final class ItemManager {
         
         // Create the new manager
         
-        let newManager = ItemManager(bufferByteCount: newByteCount, endianness: endianness)
+        let newManager = ItemManager(requestedByteCount: newByteCount, endianness: endianness)
         
         
         // Copy the data from other
@@ -345,7 +347,7 @@ public final class ItemManager {
         let byteCount = itemMinimumByteCount + (name?.byteCount ?? 0) + max(value.minimumValueFieldByteCount, requestedValueFieldByteCount.roundUpToNearestMultipleOf8())
         
         // Create the new item manager
-        let im = ItemManager(bufferByteCount: byteCount, endianness: endianness)
+        let im = ItemManager(requestedByteCount: byteCount, endianness: endianness)
         
         // Build the item structure
         _ = buildItem(withValue: value, withName: name, atPtr: im.bufferPtr, endianness)
@@ -366,15 +368,15 @@ public final class ItemManager {
     ///   - elementCount: The number of elements for which initial memory allocation is made. Notice that this is for speed improvement only, there is no limit enforced upon the number of elements (with the exception of Int32.max).
     ///   - endianness: The endianness used by the item manager and items under its control.
     
-    public static func createArrayManager(withName name: NameField? = nil, elementType: ItemType, elementByteCount: Int, elementCount: Int, endianness: Endianness) -> ItemManager {
+    public static func createArrayManager(withName name: NameField? = nil, elementType: ItemType, elementByteCount: Int = 0, elementCount: Int = 0, endianness: Endianness) -> ItemManager {
         
         let neededElementByteCount = elementType.hasFlexibleLength ? elementByteCount : max(elementType.minimumElementByteCount, elementByteCount)
         
         // Determine the size of the buffer
-        let byteCount = itemMinimumByteCount + (name?.byteCount ?? 0) + (neededElementByteCount * elementCount).roundUpToNearestMultipleOf8()
+        let byteCount = itemMinimumByteCount + (name?.byteCount ?? 0) + arrayElementBaseOffset + (neededElementByteCount * elementCount).roundUpToNearestMultipleOf8()
         
         // Create the new item manager
-        let im = ItemManager(bufferByteCount: byteCount, endianness: endianness)
+        let im = ItemManager(requestedByteCount: byteCount, endianness: endianness)
         
         // Build the item structure
         _ = buildArrayItem(withName: name, elementType: elementType, elementByteCount: neededElementByteCount, elementCount: elementCount, atPtr: im.bufferPtr, endianness)
@@ -637,7 +639,8 @@ public final class ItemManager {
     
     public static func createArrayManager(withName name: NameField? = nil, values array: Array<Data>, endianness: Endianness = machineEndianness) -> ItemManager? {
         
-        let maxByteCount = array.max(by: { $0.count > $1.count })?.count ?? 0
+        var maxByteCount = array.max(by: { $0.count > $1.count })?.count ?? 0
+        maxByteCount = maxByteCount.roundUpToNearestMultipleOf8()
         
         let im = ItemManager.createArrayManager(withName: name, elementType: .binary, elementByteCount: maxByteCount, elementCount: array.count, endianness: endianness)
 
@@ -663,7 +666,7 @@ public final class ItemManager {
 
         let arrayData = array.compactMap({ $0.data(using: .utf8)})
         
-        let im = ItemManager.createArrayManager(withName: name, values: arrayData,endianness:  endianness)
+        let im = ItemManager.createArrayManager(withName: name, values: arrayData, endianness:  endianness)
         im?.root._arrayElementType = .string
         
         return im
@@ -724,7 +727,7 @@ public final class ItemManager {
         
         let newItemByteCount = itemMinimumByteCount + (name?.byteCount ?? 0) + dictionaryItemBaseOffset + valueFieldByteCount.roundUpToNearestMultipleOf8()
         
-        let im = ItemManager(bufferByteCount: newItemByteCount, endianness: endianness)
+        let im = ItemManager(requestedByteCount: newItemByteCount, endianness: endianness)
         
         _ = buildDictionaryItem(withName: name, valueByteCount: valueFieldByteCount, atPtr: im.bufferPtr, endianness)
         
@@ -749,7 +752,7 @@ public final class ItemManager {
         
         let newItemByteCount = itemMinimumByteCount + (name?.byteCount ?? 0) + sequenceItemBaseOffset + valueFieldByteCount.roundUpToNearestMultipleOf8()
         
-        let im = ItemManager(bufferByteCount: newItemByteCount, endianness: endianness)
+        let im = ItemManager(requestedByteCount: newItemByteCount, endianness: endianness)
         
         _ = buildSequenceItem(withName: name, valueByteCount: valueFieldByteCount, atPtr: im.bufferPtr, endianness)
 
@@ -783,7 +786,7 @@ public final class ItemManager {
         newItemByteCount += descriptorByteCount + columnNamesByteCount
         newItemByteCount += initialRowsAllocated * rowByteCount
         
-        let im = ItemManager(bufferByteCount: newItemByteCount, endianness: endianness)
+        let im = ItemManager(requestedByteCount: newItemByteCount, endianness: endianness)
         
         _ = buildTableItem(withName: name, columns: &columns, initialRowsAllocated: initialRowsAllocated, atPtr: im.bufferPtr, endianness)
         

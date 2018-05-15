@@ -174,90 +174,16 @@ public extension Portal {
     }
 
     public subscript(index: Int) -> Data? {
-        get {
-            if isBinary { return self[index].binary }
-            return self[index].crcBinary
-        }
-        set {
-            if isBinary {
-                self[index].binary = newValue
-            } else {
-                self[index].crcBinary = newValue
-            }
-        }
+        get { return self[index].binary }
+        set { self[index].binary = newValue }
     }
-    
-    
-    /// Appends one or more new elements to the end of an array.
-    ///
-    /// If a default value is given, it will be used. If no default value is specified the content bytes will be set to zero.
-    ///
-    /// - Note: Only for array item portals.
-    ///
-    /// - Parameters:
-    ///   - amount: The number of elements to create, default = 1.
-    ///   - value: The default value for the new elements, default = nil.
-    ///
-    /// - Returns: 'success' or an error indicator.
-    
-    @discardableResult
-    public func createNewElements(amount: Int = 1, value: Coder? = nil) -> Result {
-        
-        
-        // The portal must be valid
-        
-        guard isValid else { return .portalInvalid }
-        
-        
-        // Operation is only allowed on array items
-        
-        guard isArray else { return .operationNotSupported }
-        
-        
-        // The number of new elements must be positive
-        
-        guard amount > 0 else { return .illegalAmount }
-        
-        
-        // A default value should fit the element byte count
-        
-        if let value = value {
-            let result = _arrayEnsureElementByteCount(for: value)
-            guard result == .success else { return result }
-        }
-        
-        
-        // Ensure that the item storage capacity is sufficient
-        
-        let newCount = _arrayElementCount + amount
-        let neccesaryValueByteCount = 8 + _arrayElementByteCount * newCount
-        let result = ensureValueFieldByteCount(of: neccesaryValueByteCount)
-        guard result == .success else { return result }
-        
-        
-        // Initialize the area of the new elements to zero
-        
-        _ = Darwin.memset(_arrayElementPtr(for: _arrayElementCount), 0, amount * _arrayElementByteCount)
-        
-        
-        // Use the default value if provided
-        
-        if let value = value {
-            var loopCount = amount
-            repeat {
-                value.copyBytes(to: _arrayElementPtr(for: _arrayElementCount + loopCount - 1), endianness)
-                loopCount -= 1
-            } while loopCount > 0
-        }
-        
-        
-        // Increment the number of elements
-        
-        _arrayElementCount += amount
-        
-        
-        return .success
+
+    public subscript(index: Int) -> UUID? {
+        get { return self[index].uuid }
+        set { self[index].uuid = newValue }
     }
+
+    
         
     
     /// Removes an item.
@@ -271,7 +197,7 @@ public extension Portal {
     /// - Returns: success or an error indicator.
 
     @discardableResult
-    public func remove(at index: Int) -> Result {
+    public func removeItem(at index: Int) -> Result {
         
         
         // Portal must be valid
@@ -283,19 +209,6 @@ public extension Portal {
         
         guard index >= 0 else { return .indexBelowLowerBound }
 
-        
-        // Implement for array
-        
-        if isArray {
-            
-            
-            // Index must be lower than the number of elements
-            
-            guard index < _arrayElementCount else { return .indexAboveHigherBound }
-            
-            return _arrayRemove(at: index)
-        }
-        
         
         // Implement for sequence
         
@@ -321,17 +234,20 @@ public extension Portal {
     /// - Note: Only for array and sequence items.
     ///
     /// - Parameters:
-    ///   - value: The value to be inserted.
+    ///   - value: The value to be inserted. Note that adding a nil will be reported as success, but will not change an array nor a sequence.
     ///   - atIndex: The index at which to insert the value.
     ///   - withName: A name for the value, only used if the target is a sequence. Ignorded for arrays.
     ///
     /// - Returns: 'success' or an error indicator.
 
     @discardableResult
-    public func insert(_ value: Coder, atIndex index: Int, withName name: String? = nil) -> Result {
+    public func insert(_ value: Coder?, atIndex index: Int, withName name: String? = nil) -> Result {
         
-        guard let name = NameField(name) else { return .illegalNameField }
         
+        // Ignore nil's
+        
+        guard let value = value else { return .success }
+
         
         // The portal must be valid
         
@@ -346,7 +262,11 @@ public extension Portal {
         // Implement for array
         
         if isArray {
-        
+            
+            // Names are not allowed for Coders in an array (only for ItemManagers, but then they are 'hidden' inside the item)
+            
+            guard name == nil else { return .noNameAllowed }
+            
             
             // Index must be lower than the number of elements
 
@@ -366,13 +286,11 @@ public extension Portal {
         
         if isSequence {
             
-
             // Index must be lower than the number of elements
 
             guard index < _sequenceItemCount else { return .indexAboveHigherBound }
-            
-            
-            return _sequenceInsertItem(value, atIndex: index, withName: name)
+
+            return _sequenceInsertItem(value, atIndex: index, withName: NameField(name))
         }
         
         
