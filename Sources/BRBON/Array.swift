@@ -124,30 +124,17 @@ extension Portal {
         
         
         // Check to see if the element byte count of the array must be increased.
-        
-        let necessaryElementByteCount: Int = value.itemType.isContainer ? (itemMinimumByteCount + value.valueByteCount) : value.valueByteCount
-        
-        if necessaryElementByteCount > _arrayElementByteCount {
-            
-            
-            // This is the byte count that self has to become in order to accomodate the new value
-            
-            let necessaryItemByteCount = _itemByteCount - currentValueFieldByteCount + arrayElementBaseOffset + ((_arrayElementCount + 1) * necessaryElementByteCount)
-            
-            
-            if necessaryItemByteCount > _itemByteCount {
-                // It is necessary to increase the bytecount for the array item itself
-                let result = increaseItemByteCount(to: necessaryItemByteCount.roundUpToNearestMultipleOf8())
-                guard result == .success else { return result }
-            }
-            
-            
-            // Increase the byte count of the elements by shifting them up inside the enlarged array.
-            
-            _arrayIncreaseElementByteCount(to: necessaryElementByteCount)
+
+        let necessaryElementByteCount: Int
+        if value.itemType.isContainer {
+            necessaryElementByteCount = itemMinimumByteCount + value.minimumValueFieldByteCount
+        } else if value.itemType.hasFlexibleLength {
+            necessaryElementByteCount = value.valueByteCount.roundUpToNearestMultipleOf8()
+        } else {
+            necessaryElementByteCount = value.valueByteCount
         }
         
-        return .success
+        return _arrayEnsureElementByteCount(of: necessaryElementByteCount)
     }
     
     internal func _arrayEnsureElementByteCount(of bytes: Int) -> Result {
@@ -158,9 +145,9 @@ extension Portal {
         if bytes > _arrayElementByteCount {
             
             
-            // This is the byte count that self has to become in order to accomodate the new value
+            // This is the byte count that self has to become in order to accomodate the new element bytecount
             
-            let necessaryItemByteCount = _itemByteCount - currentValueFieldByteCount + arrayElementBaseOffset + ((_arrayElementCount + 1) * bytes)
+            let necessaryItemByteCount = _itemByteCount - currentValueFieldByteCount + arrayElementBaseOffset + (_arrayElementCount * bytes)
             
             
             if necessaryItemByteCount > _itemByteCount {
@@ -365,7 +352,7 @@ extension Portal {
         // Ensure that the new value can be added
         
         if currentValueFieldByteCount - _arrayValueFieldUsedByteCount < byteCountPerElement {
-            let result = increaseItemByteCount(to: itemMinimumByteCount + arrayElementBaseOffset + (_arrayElementCount + 1) * byteCountPerElement)
+            let result = increaseItemByteCount(to: itemMinimumByteCount + arrayElementBaseOffset + ((_arrayElementCount + 1) * byteCountPerElement).roundUpToNearestMultipleOf8())
             guard result == .success else { return result }
         }
         
@@ -544,7 +531,7 @@ extension Portal {
     }
 
     @discardableResult
-    public func appendElement(_ arr: Array<ItemManager>) -> Result {
+    public func appendElements(_ arr: Array<ItemManager>) -> Result {
         
         guard isValid else { return .portalInvalid }
         guard isArray else { return .operationNotSupported }
@@ -585,6 +572,54 @@ extension Portal {
         }
         
         return .success
+    }
+    
+    @discardableResult
+    public func insertElement(_ itemManager: ItemManager?, atIndex index: Int) -> Result {
+        
+        guard let value = itemManager?.data else { return .success }
+        guard isArray else { return .portalInvalid }
+        guard index >= 0 else { return .indexBelowLowerBound }
+        guard index < _arrayElementCount else { return .indexAboveHigherBound }
+        guard _arrayElementType!.isContainer else { return .typeConflict }
+        
+        
+        // Ensure that the element byte count is sufficient
+        
+        var result = _arrayEnsureElementByteCount(of: value.count)
+        guard result == .success else { return result }
+        
+        
+        // Ensure that the item storage capacity is sufficient
+        
+        let newCount = _arrayElementCount + 1
+        let neccesaryValueByteCount = arrayElementBaseOffset + _arrayElementByteCount * newCount
+        result = ensureValueFieldByteCount(of: neccesaryValueByteCount)
+        guard result == .success else { return result }
+        
+        
+        // Copy the existing elements upward
+        
+        let dstPtr = _arrayElementPtr(for: index + 1)
+        let srcPtr = _arrayElementPtr(for: index)
+        let length = (_arrayElementCount - index) * _arrayElementByteCount
+        manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: length, removeCount: 0, updateMovedPortals: false, updateRemovedPortals: false)
+        if ItemManager.startWithZeroedBuffers {
+            Darwin.memset(srcPtr, 0, _arrayElementByteCount)
+        }
+        
+        // Insert the new element
+        
+        value.copyBytes(to: _arrayElementPtr(for: index).assumingMemoryBound(to: UInt8.self), count: value.count)
+        
+        
+        // Increase the number of elements
+        
+        _arrayElementCount += 1
+        
+        
+        return .success
+
     }
 }
 

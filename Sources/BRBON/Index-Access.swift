@@ -178,13 +178,25 @@ public extension Portal {
         set { self[index].binary = newValue }
     }
 
+    public subscript(index: Int) -> BRCrcBinary? {
+        get { return self[index].crcBinary }
+        set { self[index].crcBinary = newValue }
+    }
+    
     public subscript(index: Int) -> UUID? {
         get { return self[index].uuid }
         set { self[index].uuid = newValue }
     }
 
+    public subscript(index: Int) -> BRFont? {
+        get { return self[index].font }
+        set { self[index].font = newValue }
+    }
     
-        
+    public subscript(index: Int) -> BRColor? {
+        get { return self[index].color }
+        set { self[index].color = newValue }
+    }
     
     /// Removes an item.
     ///

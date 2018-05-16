@@ -61,7 +61,7 @@ public enum Result: Int {
     case indexBelowLowerBound = 5
     case indexAboveHigherBound = 6
     case itemNotFound = 8
-    case missingCoder = 9
+    case missingValue = 9
     case increaseFailed = 10
     case illegalNameField = 11
     case typeConflict = 12
@@ -90,7 +90,7 @@ public enum Result: Int {
         case .indexBelowLowerBound: return "Index below lower bound"
         case .indexAboveHigherBound: return "Index above higher bound"
         case .itemNotFound: return "Item not found"
-        case .missingCoder: return "Missing Coder"
+        case .missingValue: return "Missing Value"
         case .increaseFailed: return "Memory increase failed"
         case .illegalNameField: return "Illegal name field values"
         case .typeConflict: return "Type conflict"

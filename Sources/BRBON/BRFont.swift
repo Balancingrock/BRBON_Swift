@@ -66,11 +66,11 @@ internal let fontFamilyNameUtf8CodeOffset = fontFontNameByteCountOffset + 1
 extension Portal {
     
     
-    internal var _fontPointSizePtr: UnsafeMutableRawPointer { return itemValueFieldPtr.advanced(by: fontPointSizeOffset) }
-    internal var _fontFamilyNameByteCountPtr: UnsafeMutableRawPointer { return itemValueFieldPtr.advanced(by: fontFamilyNameByteCountOffset) }
-    internal var _fontFontNameByteCountPtr: UnsafeMutableRawPointer { return itemValueFieldPtr.advanced(by: fontFontNameByteCountOffset) }
-    internal var _fontFamilyNameUtf8CodePtr: UnsafeMutableRawPointer { return itemValueFieldPtr.advanced(by: fontFamilyNameUtf8CodeOffset) }
-    internal var _fontFontNameUtf8CodePtr: UnsafeMutableRawPointer { return itemValueFieldPtr.advanced(by: fontFamilyNameUtf8CodeOffset + Int(_fontFamilyNameByteCount)) }
+    internal var _fontPointSizePtr: UnsafeMutableRawPointer { return valueFieldPtr.advanced(by: fontPointSizeOffset) }
+    internal var _fontFamilyNameByteCountPtr: UnsafeMutableRawPointer { return valueFieldPtr.advanced(by: fontFamilyNameByteCountOffset) }
+    internal var _fontFontNameByteCountPtr: UnsafeMutableRawPointer { return valueFieldPtr.advanced(by: fontFontNameByteCountOffset) }
+    internal var _fontFamilyNameUtf8CodePtr: UnsafeMutableRawPointer { return valueFieldPtr.advanced(by: fontFamilyNameUtf8CodeOffset) }
+    internal var _fontFontNameUtf8CodePtr: UnsafeMutableRawPointer { return valueFieldPtr.advanced(by: fontFamilyNameUtf8CodeOffset + Int(_fontFamilyNameByteCount)) }
     
     
     internal var _fontPointSize: Float32 {
@@ -154,7 +154,7 @@ public extension Portal {
     public var font: BRFont? {
         get {
             guard isFont else { return nil }
-            return BRFont(familyNameUtf8Code: _fontFontNameUtf8Code, fontNameUtf8Code: _fontFontNameUtf8Code, pointSize: _fontPointSize)
+            return BRFont(familyNameUtf8Code: _fontFamilyNameUtf8Code, fontNameUtf8Code: _fontFontNameUtf8Code, pointSize: _fontPointSize)
         }
         set {
             guard isFont else { return }
@@ -190,7 +190,9 @@ public struct BRFont {
         return nil
     }
     
-    public init?(_ font: NSFont) {
+    public init?(_ font: NSFont?) {
+        
+        guard let font = font else { return nil }
         
         let f = font.familyName?.data(using: .utf8)
         if let f = f { guard f.count < 256 else { return nil } }
