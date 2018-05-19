@@ -238,6 +238,8 @@ public extension Portal {
     
     /// A string with the name for the item this portal refers to.
     ///
+    /// - Note: To change a name, use the function _setItemName_ instead.
+    ///
     /// Nil if the item does not have a name. Empty if the conversion of UTF8 code to a string failed.
     
     public var itemName: String? {
@@ -246,6 +248,59 @@ public extension Portal {
             if _itemNameFieldByteCount == 0 { return nil }
             return String(data: _itemNameUtf8Code, encoding: .utf8)
         }
+    }
+    
+    
+    /// Set or remove an item name.
+    ///
+    /// Setting the name to nil will remove the name and the name-field from the item. Setting a smaller name will not reduce the size of the name-field however.
+    
+    public func setItemName(to name: NameField?) -> Result {
+        
+        if let name = name {
+        
+            // Set a new name
+            
+            // If the name is larger, increase the item size and move the value field
+            
+            if name.byteCount > _itemNameFieldByteCount {
+                let ibc = itemMinimumByteCount + name.byteCount + usedValueFieldByteCount.roundUpToNearestMultipleOf8()
+                if ibc > _itemByteCount {
+                    let result = increaseItemByteCount(to: ibc)
+                    guard result == .success else { return result }
+                }
+                let srcPtr = valueFieldPtr
+                let dstPtr = valueFieldPtr.advanced(by: (name.byteCount - _itemNameFieldByteCount))
+                let shiftSize = usedValueFieldByteCount
+                manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: shiftSize, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
+                _itemNameFieldByteCount = name.byteCount
+            }
+            if ItemManager.startWithZeroedBuffers {
+                _ = Darwin.memset(_itemNameFieldPtr, 0, _itemNameFieldByteCount)
+            }
+            _itemNameCrc = name.crc
+            _itemNameUtf8CodeByteCount = name.data.count
+            _itemNameUtf8Code = name.data
+            
+        } else {
+            
+            // Remove the name field if present
+            
+            if _itemNameFieldByteCount > 0 {
+                let srcPtr = valueFieldPtr
+                let dstPtr = _itemNameFieldPtr
+                let shiftSize = valueFieldPtr.distance(to: itemPtr.advanced(by: _itemByteCount))
+                manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: shiftSize, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
+                _itemNameFieldByteCount = 0
+                
+                if ItemManager.startWithZeroedBuffers {
+                    let zerosize = dstPtr.distance(to: srcPtr)
+                    let targetPtr = valueFieldPtr.advanced(by: shiftSize)
+                    _ = Darwin.memset(targetPtr, 0, zerosize)
+                }
+            }
+        }
+        return .success
     }
 }
 

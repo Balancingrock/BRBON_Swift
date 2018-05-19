@@ -172,8 +172,10 @@ public final class Portal {
     /// The NameField for this item, nil if there is none.
     
     public var nameField: NameField? {
-        guard _itemNameFieldByteCount > 0 else { return nil }
-        return NameField(fromPtr: _itemNameFieldPtr, byteCount: _itemNameFieldByteCount, endianness)
+        get {
+            guard _itemNameFieldByteCount > 0 else { return nil }
+            return NameField(fromPtr: _itemNameFieldPtr, byteCount: _itemNameFieldByteCount, endianness)
+        }
     }
 }
 
@@ -299,7 +301,6 @@ extension Portal {
                 let necessaryParentItemByteCount = itemMinimumByteCount + parent._itemNameFieldByteCount + parent.currentValueFieldByteCount - _itemByteCount + newByteCount
                 
                 if parent._itemByteCount < necessaryParentItemByteCount {
-
                     let result = parent.increaseItemByteCount(to: necessaryParentItemByteCount)
                     guard result == .success else { return result }
                 }
@@ -317,6 +318,11 @@ extension Portal {
                     let dstPtr = srcPtr.advanced(by: newByteCount - _itemByteCount)
                     
                     manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
+
+
+                    // Set extra bytes in self conditionally to zero
+                    
+                    if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(srcPtr, 0, srcPtr.distance(to: dstPtr)) }
                 }
                 
                 
@@ -405,6 +411,14 @@ extension Portal {
             }
             
             
+            // Zero the extra bytes conditionally
+            
+            if ItemManager.startWithZeroedBuffers {
+                let extraBytes = newByteCount - _itemByteCount
+                _ = Darwin.memset(itemPtr.advanced(by: _itemByteCount), 0, extraBytes)
+            }
+            
+            
             // Update the byte count
             
             _itemByteCount = newByteCount
@@ -432,7 +446,7 @@ extension Portal {
     
     internal var parentPortal: Portal? {
         if parentPtr == itemPtr { return nil }
-        return Portal(itemPtr: parentPtr, manager: manager, endianness: endianness)
+        return manager.getActivePortal(for: parentPtr)
     }
 
     
@@ -460,7 +474,7 @@ extension Portal {
         }
         
         if let aptr = ptrFound {
-            return Portal(itemPtr: aptr, manager: manager, endianness: endianness)
+            return manager.getActivePortal(for: aptr)
         } else {
             return nil
         }

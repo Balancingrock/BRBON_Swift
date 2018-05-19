@@ -253,7 +253,7 @@ public extension Portal {
     /// - Returns: 'success' or an error indicator.
 
     @discardableResult
-    public func insert(_ value: Coder?, atIndex index: Int, withName name: String? = nil) -> Result {
+    public func insertItem(_ value: Coder?, atIndex index: Int, withName name: String? = nil) -> Result {
         
         
         // Ignore nil's
@@ -272,7 +272,7 @@ public extension Portal {
 
         
         // Implement for array
-        
+        /*
         if isArray {
             
             // Names are not allowed for Coders in an array (only for ItemManagers, but then they are 'hidden' inside the item)
@@ -291,7 +291,7 @@ public extension Portal {
             
             
             return _arrayInsert(value, atIndex: index)
-        }
+        }*/
         
         
         // Implement for sequence

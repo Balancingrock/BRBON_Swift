@@ -497,11 +497,12 @@ extension Portal {
 extension Portal {
 
     @discardableResult
-    public func appendElement(_ itemManager: ItemManager) -> Result {
+    public func appendElement(_ itemManager: ItemManager?) -> Result {
         
+        guard let itemManager = itemManager else { return .missingValue }
         guard isValid else { return .portalInvalid }
         guard isArray else { return .operationNotSupported }
-        guard _arrayElementType?.isContainer ?? false else { return .typeConflict }
+        guard _arrayElementType! == itemManager.root.itemType! else { return .typeConflict }
         
         
         // Ensure that the maximum element size can be accomodated
@@ -535,8 +536,8 @@ extension Portal {
         
         guard isValid else { return .portalInvalid }
         guard isArray else { return .operationNotSupported }
-        guard _arrayElementType?.isContainer ?? false else { return .typeConflict }
-
+        for im in arr { guard im.root.itemType == _arrayElementType! else { return .typeConflict }}
+        
         
         // Determine the largest new byte count of the elements
         
@@ -581,7 +582,7 @@ extension Portal {
         guard isArray else { return .portalInvalid }
         guard index >= 0 else { return .indexBelowLowerBound }
         guard index < _arrayElementCount else { return .indexAboveHigherBound }
-        guard _arrayElementType!.isContainer else { return .typeConflict }
+        guard _arrayElementType! == itemManager!.root.itemType! else { return .typeConflict }
         
         
         // Ensure that the element byte count is sufficient

@@ -230,6 +230,45 @@ public extension Portal {
         }
     }
 
+    public subscript(name: String) -> UUID? {
+        get {
+            guard isValid else { return nil }
+            guard isDictionary || isSequence else { return nil }
+            return findPortalForItem(withName: NameField(name))?.uuid
+        }
+        set {
+            guard isValid else { return }
+            if isDictionary { _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name)) }
+            if isSequence { _ = _sequenceUpdateItem(newValue ?? Null(), withName: NameField(name)) }
+        }
+    }
+
+    public subscript(name: String) -> BRColor? {
+        get {
+            guard isValid else { return nil }
+            guard isDictionary || isSequence else { return nil }
+            return findPortalForItem(withName: NameField(name))?.color
+        }
+        set {
+            guard isValid else { return }
+            if isDictionary { _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name)) }
+            if isSequence { _ = _sequenceUpdateItem(newValue ?? Null(), withName: NameField(name)) }
+        }
+    }
+
+    public subscript(name: String) -> BRFont? {
+        get {
+            guard isValid else { return nil }
+            guard isDictionary || isSequence else { return nil }
+            return findPortalForItem(withName: NameField(name))?.font
+        }
+        set {
+            guard isValid else { return }
+            if isDictionary { _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name)) }
+            if isSequence { _ = _sequenceUpdateItem(newValue ?? Null(), withName: NameField(name)) }
+        }
+    }
+
 
     /// Updates the value of the item or adds a new item.
     ///
@@ -237,44 +276,71 @@ public extension Portal {
     ///
     /// - Parameters:
     ///   - value: The new value, may be nil. If nil, the value will be removed.
-    ///   - forName: The name of the item to update. If the portal points to a sequence, only the first item with this name will be updated (or removed).
+    ///   - withName: The name of the item to update. If the portal points to a sequence, only the first item with this name will be updated (or removed).
     ///
     /// - Returns: 'success' or an error indicator.
     
     @discardableResult
-    public func updateValue(_ value: Coder?, forName name: String) -> Result {
+    public func updateItem(_ value: Coder?, withName name: NameField?) -> Result {
         
+        guard let name = name else { return .missingName }
         guard isValid else { return .portalInvalid }
         
         if let value = value {
-            if isDictionary { return _dictionaryUpdateItem(value, withName: NameField(name)) }
-            if isSequence { return _sequenceUpdateItem(value, withName: NameField(name)) }
+            if isDictionary { return _dictionaryUpdateItem(value, withName: name) }
+            if isSequence { return _sequenceUpdateItem(value, withName: name) }
         } else {
-            if isDictionary { return _dictionaryRemoveItem(withName: NameField(name)) }
-            if isSequence { return _sequenceRemoveItem(withName: NameField(name)) }
+            if isDictionary { return _dictionaryRemoveItem(withName: name) }
+            if isSequence { return _sequenceRemoveItem(withName: name) }
         }
         return .operationNotSupported
     }
     
     
+    /// Updates the value of the item or adds a new item.
+    ///
+    /// Only valid for dictionary and sequence items.
+    ///
+    /// - Parameters:
+    ///   - value: The new value, may be nil. If nil, the value will be removed.
+    ///   - withName: The name of the item to update. If the portal points to a sequence, only the first item with this name will be updated (or removed).
+    ///
+    /// - Returns: 'success' or an error indicator.
+    
+    @discardableResult
+    public func updateItem(_ value: ItemManager?, withName name: NameField?) -> Result {
+        
+        guard let name = name else { return .missingName }
+        guard isValid else { return .portalInvalid }
+        
+        if let value = value {
+            if isDictionary { return _dictionaryUpdateItem(value, withName: name) }
+            //if isSequence { return _sequenceUpdateItem(value, withName: name) }
+        } else {
+            if isDictionary { return _dictionaryRemoveItem(withName: name) }
+            //if isSequence { return _sequenceRemoveItem(withName: name) }
+        }
+        return .operationNotSupported
+    }
+
     
     /// Removes an item with the given name from the dictionary or all the items with the given name from a sequence.
     ///
     /// Works only on dictionaries and sequences.
     ///
-    /// - Parameter forName: The name of the item to remove.
+    /// - Parameter withName: The name of the item to remove.
     ///
     /// - Returns: 'success' or an error indicator (including 'itemNotFound').
     
     @discardableResult
-    public func removeValue(forName name: String) -> Result {
+    public func removeItem(withName name: NameField?) -> Result {
 
+        guard let name = name else { return .missingName }
         guard isValid else { return .portalInvalid }
         
-        if isDictionary { return _dictionaryRemoveItem(withName: NameField(name)) }
+        if isDictionary { return _dictionaryRemoveItem(withName: name) }
+        if isSequence { return _sequenceRemoveItem(withName: name) }
         
-        if isSequence { return _sequenceRemoveItem(withName: NameField(name)) }
-                
         return .operationNotSupported
     }
 }

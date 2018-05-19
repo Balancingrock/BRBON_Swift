@@ -276,7 +276,7 @@ class Array_Tests: XCTestCase {
         
         // Insert an element
         
-        XCTAssertEqual(am.root.insert(Int8(0), atIndex: 6), Result.success)
+        XCTAssertEqual(am.root.insertElement(Int8(0), atIndex: 6), Result.success)
         
         XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 16)
         XCTAssertEqual(am.root.count, 9)
@@ -2491,5 +2491,4 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(exp, am.data)
     }
-
 }

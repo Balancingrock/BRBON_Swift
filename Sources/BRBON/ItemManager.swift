@@ -721,7 +721,7 @@ public final class ItemManager {
     
     public static func createDictionaryManager(
         name: NameField? = nil,
-        valueFieldByteCount: Int = 256,
+        valueFieldByteCount: Int = 0,
         endianness: Endianness = machineEndianness
         ) -> ItemManager {
         
@@ -730,6 +730,8 @@ public final class ItemManager {
         let im = ItemManager(requestedByteCount: newItemByteCount, endianness: endianness)
         
         _ = buildDictionaryItem(withName: name, valueByteCount: valueFieldByteCount, atPtr: im.bufferPtr, endianness)
+        
+        im.root = im.getActivePortal(for: im.bufferPtr)
         
         return im
     }

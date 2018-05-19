@@ -153,8 +153,10 @@ extension Portal {
         } else {
             let result = item.ensureValueFieldByteCount(of: value.valueByteCount.roundUpToNearestMultipleOf8())
             guard result == .success else { return result }
+            if ItemManager.startWithZeroedBuffers {
+                _ = Darwin.memset(item.valueFieldPtr, 0, item.valueFieldPtr.distance(to: item.itemPtr.advanced(by: item._itemByteCount)))
+            }
             value.copyBytes(to: item.valueFieldPtr, endianness)
-            item._itemByteCount = itemMinimumByteCount + (name?.byteCount ?? 0) + value.valueByteCount.roundUpToNearestMultipleOf8()
         }
                 
         return .success
@@ -171,13 +173,99 @@ extension Portal {
         
         let pOffset = manager.bufferPtr.distance(to: itemPtr)
         
-        let p = buildItem(withValue: value, atPtr: _dictionaryAfterLastItemPtr, endianness)
+        let p = buildItem(withValue: value, withName: name, atPtr: _dictionaryAfterLastItemPtr, endianness)
         p._itemParentOffset = pOffset
 
         _dictionaryItemCount += 1
         
         return .success
     }
+    
+    /// Updating an item with a given name.
+    ///
+    /// - Parameters:
+    ///   - value: The new value.
+    ///   - name: The name of the item to update.
+    ///
+    /// - Returns: Either .success or an error indicator.
+    
+    internal func _dictionaryUpdateItem(_ value: ItemManager, withName name: NameField?) -> Result {
+        
+        guard let item = findPortalForItem(withName: name) else {
+            return _dictionaryAddItem(value, withName: name)
+        }
+        
+        
+        // Update
+        
+        let newByteCount = value.root._itemByteCount
+        let oldByteCount = item._itemByteCount
+        let pOffset = item._itemParentOffset
+        if oldByteCount > newByteCount {
+            // Choose speed over compactness: update the size of the new item to the size of the old item
+            // Note that the memmove will update the _itemByteCount
+            _ = Darwin.memmove(item.itemPtr, value.bufferPtr, newByteCount)
+            item._itemByteCount = oldByteCount
+        } else if oldByteCount == newByteCount {
+            _ = Darwin.memmove(item.itemPtr, value.bufferPtr, oldByteCount)
+        } else {
+            // Increase the size of item to the necessary size
+            let result = item.increaseItemByteCount(to: newByteCount)
+            guard result == .success else { return result }
+            _ = Darwin.memmove(item.itemPtr, value.bufferPtr, newByteCount)
+        }
+        item._itemParentOffset = pOffset
+        
+        return .success
+    }
+    
+    
+    /// Add a new item to the dictionary.
+    ///
+    /// - Note: This operation does not check for name duplication!.
+    
+    internal func _dictionaryAddItem(_ value: ItemManager, withName name: NameField?) -> Result {
+        
+
+        // Make sure there is a name
+        
+        guard let name = name else { return .missingName }
+
+        
+        // Make sure the new item has the appropriate name
+        
+        let result1 = value.root.setItemName(to: name)
+        guard result1 == .success else { return result1 }
+
+        
+        // The new value field byte count for the dictionary
+        
+        let neededValueFieldByteCount = usedValueFieldByteCount.roundUpToNearestMultipleOf8() + value.root._itemByteCount
+        
+        
+        // Increase the value field of the dictionary if necessary
+        
+        let result2 = ensureValueFieldByteCount(of: neededValueFieldByteCount)
+        guard result2 == .success else { return result2 }
+        
+        
+        // Copy the new item into place
+        
+        let pOffset = manager.bufferPtr.distance(to: itemPtr)
+        let dstPtr = _dictionaryAfterLastItemPtr
+        
+        _ = Darwin.memmove(_dictionaryAfterLastItemPtr, value.bufferPtr, value.root._itemByteCount)
+
+        UInt32(pOffset).copyBytes(to: dstPtr.advanced(by: itemParentOffsetOffset), endianness)
+        
+        
+        // Increase the item count
+        
+        _dictionaryItemCount += 1
+        
+        return .success
+    }
+
 }
 
 
