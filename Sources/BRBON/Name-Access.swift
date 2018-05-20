@@ -55,292 +55,184 @@ public extension Portal {
     
     public subscript(name: String) -> Portal {
         get {
-            guard isValid else { return Portal.nullPortal }
-            guard isDictionary || isSequence else { return Portal.nullPortal }
+            guard isDictionary else { return Portal.nullPortal }
             return findPortalForItem(withName: NameField(name)) ?? Portal.nullPortal
         }
     }
     
     public subscript(name: String) -> Bool? {
         get {
-            guard isValid else { return nil }
-            guard isDictionary || isSequence else { return nil }
+            guard isDictionary else { return nil }
             return findPortalForItem(withName: NameField(name))?.bool
         }
         set {
-            guard isValid else { return }
-            if isDictionary { _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name)) }
-            if isSequence { _ = _sequenceUpdateItem(newValue ?? Null(), withName: NameField(name)) }
+            guard isDictionary else { return }
+            _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name))
         }
     }
     
     public subscript(name: String) -> Int8? {
         get {
-            guard isValid else { return nil }
-            guard isDictionary || isSequence else { return nil }
+            guard isDictionary else { return nil }
             return findPortalForItem(withName: NameField(name))?.int8
         }
         set {
-            guard isValid else { return }
-            if isDictionary { _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name)) }
-            if isSequence { _ = _sequenceUpdateItem(newValue ?? Null(), withName: NameField(name)) }
+            guard isDictionary else { return }
+            _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name))
         }
     }
     
     public subscript(name: String) -> Int16? {
         get {
-            guard isValid else { return nil }
-            guard isDictionary || isSequence else { return nil }
+            guard isDictionary else { return nil }
             return findPortalForItem(withName: NameField(name))?.int16
         }
         set {
-            guard isValid else { return }
-            if isDictionary { _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name)) }
-            if isSequence { _ = _sequenceUpdateItem(newValue ?? Null(), withName: NameField(name)) }
+            guard isDictionary else { return }
+            _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name))
         }
     }
     
     public subscript(name: String) -> Int32? {
         get {
-            guard isValid else { return nil }
-            guard isDictionary || isSequence else { return nil }
+            guard isDictionary else { return nil }
             return findPortalForItem(withName: NameField(name))?.int32
         }
         set {
-            guard isValid else { return }
-            if isDictionary { _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name)) }
-            if isSequence { _ = _sequenceUpdateItem(newValue ?? Null(), withName: NameField(name)) }
+            guard isDictionary else { return }
+            _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name))
         }
     }
     
     public subscript(name: String) -> Int64? {
         get {
-            guard isValid else { return nil }
-            guard isDictionary || isSequence else { return nil }
+            guard isDictionary else { return nil }
             return findPortalForItem(withName: NameField(name))?.int64
         }
         set {
-            guard isValid else { return }
-            if isDictionary { _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name)) }
-            if isSequence { _ = _sequenceUpdateItem(newValue ?? Null(), withName: NameField(name)) }
+            guard isDictionary else { return }
+            _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name))
         }
     }
     
     public subscript(name: String) -> UInt8? {
         get {
-            guard isValid else { return nil }
-            guard isDictionary || isSequence else { return nil }
+            guard isDictionary else { return nil }
             return findPortalForItem(withName: NameField(name))?.uint8
         }
         set {
-            guard isValid else { return }
-            if isDictionary { _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name)) }
-            if isSequence { _ = _sequenceUpdateItem(newValue ?? Null(), withName: NameField(name)) }
+            guard isDictionary else { return }
+            _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name))
         }
     }
     
     public subscript(name: String) -> UInt16? {
         get {
-            guard isValid else { return nil }
-            guard isDictionary || isSequence else { return nil }
+            guard isDictionary else { return nil }
             return findPortalForItem(withName: NameField(name))?.uint16
         }
         set {
-            guard isValid else { return }
-            if isDictionary { _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name)) }
-            if isSequence { _ = _sequenceUpdateItem(newValue ?? Null(), withName: NameField(name)) }
+            guard isDictionary else { return }
+            _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name))
         }
     }
     
     public subscript(name: String) -> UInt32? {
         get {
-            guard isValid else { return nil }
-            guard isDictionary || isSequence else { return nil }
+            guard isDictionary else { return nil }
             return findPortalForItem(withName: NameField(name))?.uint32
         }
         set {
-            guard isValid else { return }
-            if isDictionary { _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name)) }
-            if isSequence { _ = _sequenceUpdateItem(newValue ?? Null(), withName: NameField(name)) }
+            guard isDictionary else { return }
+            _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name))
         }
     }
     
     public subscript(name: String) -> UInt64? {
         get {
-            guard isValid else { return nil }
-            guard isDictionary || isSequence else { return nil }
+            guard isDictionary else { return nil }
             return findPortalForItem(withName: NameField(name))?.uint64
         }
         set {
-            guard isValid else { return }
-            if isDictionary { _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name)) }
-            if isSequence { _ = _sequenceUpdateItem(newValue ?? Null(), withName: NameField(name)) }
+            guard isDictionary else { return }
+            _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name))
         }
     }
     
     public subscript(name: String) -> Float32? {
         get {
-            guard isValid else { return nil }
-            guard isDictionary || isSequence else { return nil }
+            guard isDictionary else { return nil }
             return findPortalForItem(withName: NameField(name))?.float32
         }
         set {
-            guard isValid else { return }
-            if isDictionary { _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name)) }
-            if isSequence { _ = _sequenceUpdateItem(newValue ?? Null(), withName: NameField(name)) }
+            guard isDictionary else { return }
+            _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name))
         }
     }
     
     public subscript(name: String) -> Float64? {
         get {
-            guard isValid else { return nil }
-            guard isDictionary || isSequence else { return nil }
+            guard isDictionary else { return nil }
             return findPortalForItem(withName: NameField(name))?.float64
         }
         set {
-            guard isValid else { return }
-            if isDictionary { _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name)) }
-            if isSequence { _ = _sequenceUpdateItem(newValue ?? Null(), withName: NameField(name)) }
+            guard isDictionary else { return }
+            _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name))
         }
     }
     
     public subscript(name: String) -> String? {
         get {
-            guard isValid else { return nil }
-            guard isDictionary || isSequence else { return nil }
+            guard isDictionary else { return nil }
             return findPortalForItem(withName: NameField(name))?.string
         }
         set {
-            guard isValid else { return }
-            if isDictionary { _ = _dictionaryUpdateItem(BRString(newValue) ?? Null(), withName: NameField(name)) }
-            if isSequence { _ = _sequenceUpdateItem(BRString(newValue) ?? Null(), withName: NameField(name)) }
+            guard isDictionary else { return }
+            _ = _dictionaryUpdateItem(BRString(newValue) ?? Null(), withName: NameField(name))
         }
     }
     
     public subscript(name: String) -> Data? {
         get {
-            guard isValid else { return nil }
-            guard isDictionary || isSequence else { return nil }
+            guard isDictionary else { return nil }
             return findPortalForItem(withName: NameField(name))?.binary
         }
         set {
-            guard isValid else { return }
-            if isDictionary { _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name)) }
-            if isSequence { _ = _sequenceUpdateItem(newValue ?? Null(), withName: NameField(name)) }
+            guard isDictionary else { return }
+            _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name))
         }
     }
 
     public subscript(name: String) -> UUID? {
         get {
-            guard isValid else { return nil }
-            guard isDictionary || isSequence else { return nil }
+            guard isDictionary else { return nil }
             return findPortalForItem(withName: NameField(name))?.uuid
         }
         set {
-            guard isValid else { return }
-            if isDictionary { _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name)) }
-            if isSequence { _ = _sequenceUpdateItem(newValue ?? Null(), withName: NameField(name)) }
+            guard isDictionary else { return }
+            _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name))
         }
     }
 
     public subscript(name: String) -> BRColor? {
         get {
-            guard isValid else { return nil }
-            guard isDictionary || isSequence else { return nil }
+            guard isDictionary else { return nil }
             return findPortalForItem(withName: NameField(name))?.color
         }
         set {
-            guard isValid else { return }
-            if isDictionary { _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name)) }
-            if isSequence { _ = _sequenceUpdateItem(newValue ?? Null(), withName: NameField(name)) }
+            guard isDictionary else { return }
+            _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name))
         }
     }
 
     public subscript(name: String) -> BRFont? {
         get {
-            guard isValid else { return nil }
-            guard isDictionary || isSequence else { return nil }
+            guard isDictionary else { return nil }
             return findPortalForItem(withName: NameField(name))?.font
         }
         set {
-            guard isValid else { return }
-            if isDictionary { _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name)) }
-            if isSequence { _ = _sequenceUpdateItem(newValue ?? Null(), withName: NameField(name)) }
+            guard isDictionary else { return }
+            _ = _dictionaryUpdateItem(newValue ?? Null(), withName: NameField(name))
         }
-    }
-
-
-    /// Updates the value of the item or adds a new item.
-    ///
-    /// Only valid for dictionary and sequence items.
-    ///
-    /// - Parameters:
-    ///   - value: The new value, may be nil. If nil, the value will be removed.
-    ///   - withName: The name of the item to update. If the portal points to a sequence, only the first item with this name will be updated (or removed).
-    ///
-    /// - Returns: 'success' or an error indicator.
-    
-    @discardableResult
-    public func updateItem(_ value: Coder?, withName name: NameField?) -> Result {
-        
-        guard let name = name else { return .missingName }
-        guard isValid else { return .portalInvalid }
-        
-        if let value = value {
-            if isDictionary { return _dictionaryUpdateItem(value, withName: name) }
-            if isSequence { return _sequenceUpdateItem(value, withName: name) }
-        } else {
-            if isDictionary { return _dictionaryRemoveItem(withName: name) }
-            if isSequence { return _sequenceRemoveItem(withName: name) }
-        }
-        return .operationNotSupported
-    }
-    
-    
-    /// Updates the value of the item or adds a new item.
-    ///
-    /// Only valid for dictionary and sequence items.
-    ///
-    /// - Parameters:
-    ///   - value: The new value, may be nil. If nil, the value will be removed.
-    ///   - withName: The name of the item to update. If the portal points to a sequence, only the first item with this name will be updated (or removed).
-    ///
-    /// - Returns: 'success' or an error indicator.
-    
-    @discardableResult
-    public func updateItem(_ value: ItemManager?, withName name: NameField?) -> Result {
-        
-        guard let name = name else { return .missingName }
-        guard isValid else { return .portalInvalid }
-        
-        if let value = value {
-            if isDictionary { return _dictionaryUpdateItem(value, withName: name) }
-            //if isSequence { return _sequenceUpdateItem(value, withName: name) }
-        } else {
-            if isDictionary { return _dictionaryRemoveItem(withName: name) }
-            //if isSequence { return _sequenceRemoveItem(withName: name) }
-        }
-        return .operationNotSupported
-    }
-
-    
-    /// Removes an item with the given name from the dictionary or all the items with the given name from a sequence.
-    ///
-    /// Works only on dictionaries and sequences.
-    ///
-    /// - Parameter withName: The name of the item to remove.
-    ///
-    /// - Returns: 'success' or an error indicator (including 'itemNotFound').
-    
-    @discardableResult
-    public func removeItem(withName name: NameField?) -> Result {
-
-        guard let name = name else { return .missingName }
-        guard isValid else { return .portalInvalid }
-        
-        if isDictionary { return _dictionaryRemoveItem(withName: name) }
-        if isSequence { return _sequenceRemoveItem(withName: name) }
-        
-        return .operationNotSupported
     }
 }

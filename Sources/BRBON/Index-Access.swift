@@ -302,7 +302,7 @@ public extension Portal {
 
             guard index < _sequenceItemCount else { return .indexAboveHigherBound }
 
-            return _sequenceInsertItem(value, atIndex: index, withName: NameField(name))
+            return _sequenceInsertItem(value, atIndex: index, withNameField: NameField(name))
         }
         
         

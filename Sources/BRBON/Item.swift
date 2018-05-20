@@ -236,6 +236,14 @@ public extension Portal {
     }
     
     
+    /// Returns true if the portal is valid and the item referred to has a name
+    
+    public var hasName: Bool {
+        guard isValid else { return false }
+        return _itemNameFieldByteCount != 0
+    }
+    
+    
     /// A string with the name for the item this portal refers to.
     ///
     /// - Note: To change a name, use the function _setItemName_ instead.

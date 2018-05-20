@@ -227,15 +227,14 @@ extension Portal {
     internal func _dictionaryAddItem(_ value: ItemManager, withName name: NameField?) -> Result {
         
 
-        // Make sure there is a name
-        
-        guard let name = name else { return .missingName }
-
-        
         // Make sure the new item has the appropriate name
+
+        if let name = name {
+            let result = value.root.setItemName(to: name)
+            guard result == .success else { return result }
+        }
         
-        let result1 = value.root.setItemName(to: name)
-        guard result1 == .success else { return result1 }
+        guard value.root.hasName else { return .missingName }
 
         
         // The new value field byte count for the dictionary
@@ -265,9 +264,77 @@ extension Portal {
         
         return .success
     }
-
 }
 
+
+// Public operations on the dictionary type
+
+public extension Portal {
+    
+    
+    /// Updates the value of the referenced item in the dictionary or adds it to the dictionary.
+    ///
+    /// - Parameters:
+    ///   - value: The new value.
+    ///   - withName: The name of the item to update/add.
+    ///
+    /// - Returns: 'success' or an error indicator. If the name or value is nil, 'success' will be returned.
+    
+    @discardableResult
+    public func updateItem(_ value: Coder?, withName name: NameField?) -> Result {
+        
+        guard let name = name else { return .success }
+        guard let value = value else { return .success }
+
+        guard isValid else { return .portalInvalid }
+        guard isDictionary else { return .operationNotSupported }
+        
+        return _dictionaryUpdateItem(value, withName: name)
+    }
+
+    
+    /// Updates the value of the referenced item in the dictionary or adds it to the dictionary.
+    ///
+    /// - Note: If the name is nil, but the value.root has a name, then that name will be used.
+    ///
+    /// - Parameters:
+    ///   - value: The new value.
+    ///   - withName: The name of the item to update/add.
+    ///
+    /// - Returns: 'success' or an error indicator.
+    
+    @discardableResult
+    public func updateItem(_ value: ItemManager?, withName name: NameField?) -> Result {
+        
+        guard let value = value else { return .success }
+        guard (name != nil) || (value.root.itemName != nil ) else { return .success }
+
+        guard isValid else { return .portalInvalid }
+        guard isDictionary else { return .operationNotSupported }
+
+        return _dictionaryUpdateItem(value, withName: name)
+    }
+
+    
+    /// Removes an item with the given name from the dictionary or all the items with the given name from a sequence.
+    ///
+    /// Works only on dictionaries and sequences.
+    ///
+    /// - Parameter withName: The name of the item to remove.
+    ///
+    /// - Returns: 'success' or an error indicator (including 'itemNotFound').
+    
+    @discardableResult
+    public func removeItem(withName name: NameField?) -> Result {
+        
+        guard let name = name else { return .missingName }
+        
+        guard isValid else { return .portalInvalid }
+        guard isDictionary else { return .operationNotSupported }
+
+        return _dictionaryRemoveItem(withName: name)
+    }
+}
 
 /// Build an item with a Dictionary in it.
 ///
