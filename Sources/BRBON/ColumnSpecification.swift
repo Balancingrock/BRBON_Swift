@@ -69,7 +69,7 @@ public struct ColumnSpecification {
     
     /// The name field for this column.
     
-    internal var name: NameField
+    internal var nameField: NameField
     
     
     /// The offset for the name in the value field, will be computed when storing to memory
@@ -86,15 +86,15 @@ public struct ColumnSpecification {
     ///
     /// - Parameters:
     ///   - type: The type of value that will be stored in this column.
-    ///   - name: The column name.
+    ///   - nameField: The name field for the column.
     ///   - byteCount: The initial byte count reserved for items in this column. Maximum byte count is Int32.max, minimum is the minimum byte count possible for the type. Will always be rounded up to a multiple of 8 bytes. (Note that 8 bytes is the minimum possible, even for booleans)
     
     public init(
         type: ItemType,
-        name: NameField,
+        nameField: NameField,
         byteCount: Int) {
         
-        self.name = name
+        self.nameField = nameField
         self.fieldType = type
         self.fieldByteCount = byteCount.roundUpToNearestMultipleOf8()
     }
@@ -117,7 +117,7 @@ public struct ColumnSpecification {
         let nameUtf8Offset = Int(UInt32(fromPtr: ptr.advanced(by: tableColumnNameUtf8CodeOffsetOffset), endianness))
         let nameDataCount = Int(Int8(fromPtr: fromPtr.advanced(by: nameUtf8Offset), endianness))
         let nameData = Data(bytes: fromPtr.advanced(by: nameUtf8Offset + 1), count: nameDataCount)
-        self.name = NameField(data: nameData, crc: nameCrc, byteCount: nameByteCount)
+        self.nameField = NameField(data: nameData, crc: nameCrc, byteCount: nameByteCount)
     }
 }
 

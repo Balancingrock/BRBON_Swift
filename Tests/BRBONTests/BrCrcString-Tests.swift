@@ -108,7 +108,7 @@ class BrCrcString_Tests: XCTestCase {
         XCTAssertNil(im.root.index)
         XCTAssertNil(im.root.column)
         XCTAssertEqual(im.root.count, 0)
-        XCTAssertNil(im.root.nameField)
+        XCTAssertNil(im.root.itemNameField)
         
         XCTAssertTrue(im.root.isCrcString)
         XCTAssertEqual(im.root.crcString, b)

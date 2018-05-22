@@ -77,7 +77,7 @@ class UInt16_Tests: XCTestCase {
         XCTAssertNil(im.root.index)
         XCTAssertNil(im.root.column)
         XCTAssertEqual(im.root.count, 0)
-        XCTAssertNil(im.root.nameField)
+        XCTAssertNil(im.root.itemNameField)
         
         XCTAssertTrue(im.root.isUInt16)
         XCTAssertEqual(im.root.uint16, UInt16(0x1234))

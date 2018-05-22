@@ -77,7 +77,7 @@ class UInt32_Tests: XCTestCase {
         XCTAssertNil(im.root.index)
         XCTAssertNil(im.root.column)
         XCTAssertEqual(im.root.count, 0)
-        XCTAssertNil(im.root.nameField)
+        XCTAssertNil(im.root.itemNameField)
         
         XCTAssertTrue(im.root.isUInt32)
         XCTAssertEqual(im.root.uint32, UInt32(0x12345678))

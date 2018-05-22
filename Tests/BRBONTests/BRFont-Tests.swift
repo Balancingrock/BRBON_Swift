@@ -90,7 +90,7 @@ class BRFont_Tests: XCTestCase {
         XCTAssertNil(im.root.index)
         XCTAssertNil(im.root.column)
         XCTAssertEqual(im.root.count, 0)
-        XCTAssertNil(im.root.nameField)
+        XCTAssertNil(im.root.itemNameField)
         
         XCTAssertTrue(im.root.isFont)
         XCTAssertEqual(im.root.font, BRFont(NSFont(name: "Courier", size: 12.0)!))

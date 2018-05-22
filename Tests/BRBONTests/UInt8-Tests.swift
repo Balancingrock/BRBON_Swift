@@ -78,7 +78,7 @@ class UInt8_Tests: XCTestCase {
         XCTAssertNil(im.root.index)
         XCTAssertNil(im.root.column)
         XCTAssertEqual(im.root.count, 0)
-        XCTAssertNil(im.root.nameField)
+        XCTAssertNil(im.root.itemNameField)
         
         XCTAssertTrue(im.root.isUInt8)
         XCTAssertEqual(im.root.uint8, UInt8(12))

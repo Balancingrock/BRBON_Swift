@@ -70,7 +70,7 @@ class Uuid_Tests: XCTestCase {
         XCTAssertNil(im.root.index)
         XCTAssertNil(im.root.column)
         XCTAssertEqual(im.root.count, 0)
-        XCTAssertNil(im.root.nameField)
+        XCTAssertNil(im.root.itemNameField)
         
         XCTAssertTrue(im.root.isUuid)
         XCTAssertEqual(im.root.uuid, UUID(uuidString: "01234567-1234-1234-1234-123456789011"))

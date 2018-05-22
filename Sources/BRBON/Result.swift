@@ -52,9 +52,8 @@ import Foundation
 
 /// Results for some of the operations provided by the API
 
-public enum Result: Int {
+public enum ErrorCode: Int, CustomStringConvertible {
 
-    case success = 0
     case nameFieldError = 1
     case outOfStorage = 2
     case dataInconsistency = 3
@@ -83,7 +82,6 @@ public enum Result: Int {
     
     public var description: String {
         switch self {
-        case .success: return "Succesful execution"
         case .nameFieldError: return "Name field error"
         case .outOfStorage: return "Out of storage"
         case .dataInconsistency: return "Data inconsistency"
@@ -112,3 +110,37 @@ public enum Result: Int {
         }
     }
 }
+
+public enum Result: CustomStringConvertible, Equatable {
+    
+    case success
+    case noAction
+    case error(ErrorCode)
+    
+    public var description: String {
+        switch self {
+        case .success: return "Succesful execution"
+        case .noAction: return "There was no error, but nothing was done either"
+        case .error(let code): return "En error occured, code = \(code)"
+        }
+    }
+    
+    public static func == (lhs: Result, rhs: Result) -> Bool {
+        switch lhs {
+        case .success:
+            switch rhs {
+            case .success: return true
+            default: return false
+            }
+        case .noAction:
+            switch rhs {
+            case .noAction: return true
+            default: return false
+            }
+        case .error(let lcode):
+            if case let .error(rcode) = rhs { return lcode == rcode }
+            return false
+        }
+    }
+}
+

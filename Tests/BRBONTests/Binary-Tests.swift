@@ -85,7 +85,7 @@ class Binary_Tests: XCTestCase {
         XCTAssertNil(im.root.index)
         XCTAssertNil(im.root.column)
         XCTAssertEqual(im.root.count, 0)
-        XCTAssertNil(im.root.nameField)
+        XCTAssertNil(im.root.itemNameField)
         
         XCTAssertTrue(im.root.isBinary)
         XCTAssertEqual(im.root.binary, Data(bytes: [0x11, 0x22, 0x33]))

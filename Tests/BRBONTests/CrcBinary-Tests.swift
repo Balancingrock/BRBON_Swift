@@ -83,7 +83,7 @@ class CrcBinary_Tests: XCTestCase {
         XCTAssertNil(im.root.index)
         XCTAssertNil(im.root.column)
         XCTAssertEqual(im.root.count, 0)
-        XCTAssertNil(im.root.nameField)
+        XCTAssertNil(im.root.itemNameField)
         
         XCTAssertTrue(im.root.isCrcBinary)
         XCTAssertEqual(im.root.crcBinary, BRCrcBinary(Data(bytes: [0x01, 0x02, 0x03])))

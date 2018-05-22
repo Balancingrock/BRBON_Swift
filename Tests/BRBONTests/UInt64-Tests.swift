@@ -77,7 +77,7 @@ class UInt64_Tests: XCTestCase {
         XCTAssertNil(im.root.index)
         XCTAssertNil(im.root.column)
         XCTAssertEqual(im.root.count, 0)
-        XCTAssertNil(im.root.nameField)
+        XCTAssertNil(im.root.itemNameField)
         
         XCTAssertTrue(im.root.isUInt64)
         XCTAssertEqual(im.root.uint64, UInt64(0x1122334455667788))

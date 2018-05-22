@@ -128,13 +128,13 @@ class Bool_Tests: XCTestCase {
         XCTAssertEqual(data, exp)
 
         guard let one = NameField("one") else { XCTFail(); return }
-        let im = ItemManager.createManager(withValue: true, withName: one)
+        let im = ItemManager.createManager(withValue: true, withNameField: one)
         
         XCTAssertTrue(im.root.isValid)
         XCTAssertNil(im.root.index)
         XCTAssertNil(im.root.column)
         XCTAssertEqual(im.root.count, 0)
-        XCTAssertEqual(im.root.nameField, one)
+        XCTAssertEqual(im.root.itemNameField, one)
         
         XCTAssertTrue(im.root.isBool)
         XCTAssertEqual(im.root.bool, true)

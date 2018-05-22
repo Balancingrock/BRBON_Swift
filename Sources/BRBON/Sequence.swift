@@ -134,48 +134,6 @@ extension Portal {
     }
     
     
-    /// Removes all the items with a name equal to the namefield from the sequence.
-    ///
-    /// - Parameter with: The name of the item to remove.
-    ///
-    /// - Returns: 'success' or an error indicator (including 'itemNotFound').
-    
-    internal func _sequenceRemoveItems(with nameField: NameField?) -> Result {
-        
-        var item = findPortalForItem(withName: nameField)
-        
-        if item == nil { return .itemNotFound }
-        
-        while item != nil {
-            
-            let afterLastItemPtr = _sequenceAfterLastItemPtr
-            
-            // Last item does not need a block move
-            if afterLastItemPtr == item!.itemPtr.advanced(by: item!._itemByteCount) {
-                
-                // Update the active portals list (remove deleted item)
-                manager.removeActivePortal(item!)
-                
-            } else {
-                
-                // Move the items after the found item over the found item
-                
-                let srcPtr = item!.itemPtr.advanced(by: item!._itemByteCount)
-                let dstPtr = item!.itemPtr
-                let len = srcPtr.distance(to: afterLastItemPtr)
-                
-                manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: item!._itemByteCount, updateMovedPortals: true, updateRemovedPortals: true)
-            }
-            
-            _sequenceItemCount -= 1
-            
-            item = findPortalForItem(withName: nameField)
-        }
-        
-        return .success
-    }
-    
-    
     /// Removes an item from a sequence.
     ///
     /// - Parameter index: The index of the element to remove.
@@ -207,13 +165,13 @@ extension Portal {
     ///
     /// - Parameters:
     ///   - value: The value to be added to the sequence.
-    ///   - name: The name for the new value.
+    ///   - withNameField: The name field for the new value.
     ///
     /// - Returns: 'success' or an error indicator.
     
-    internal func _sequenceAppendItem(_ value: Coder, withName name: NameField?) -> Result {
+    internal func _sequenceAppendItem(_ value: Coder, withNameField nameField: NameField?) -> Result {
         
-        let neededItemByteCount = (currentValueFieldByteCount - usedValueFieldByteCount) + itemMinimumByteCount + (name?.byteCount ?? 0) + value.minimumValueFieldByteCount
+        let neededItemByteCount = (currentValueFieldByteCount - usedValueFieldByteCount) + itemMinimumByteCount + (nameField?.byteCount ?? 0) + value.minimumValueFieldByteCount
         let result = ensureValueFieldByteCount(of: neededItemByteCount)
         guard result == .success else { return result }
         
@@ -231,16 +189,16 @@ extension Portal {
     /// - Parameters:
     ///   - value: The value to be inserted.
     ///   - atIndex: The index at which to insert the value.
-    ///   - withName: A name for the value.
+    ///   - withNameField: The name field for the value.
     ///
     /// - Returns: 'success' or an error indicator.
     
-    internal func _sequenceInsertItem(_ value: Coder, atIndex index: Int, withNameField name: NameField? = nil) -> Result {
+    internal func _sequenceInsertItem(_ value: Coder, atIndex index: Int, withNameField nameField: NameField? = nil) -> Result {
         
         
         // Ensure that there is enough space available
         
-        let newItemByteCount = itemMinimumByteCount + (name?.byteCount ?? 0) + value.minimumValueFieldByteCount
+        let newItemByteCount = itemMinimumByteCount + (nameField?.byteCount ?? 0) + value.minimumValueFieldByteCount
         
         if currentValueFieldByteCount - usedValueFieldByteCount < newItemByteCount {
             let result = increaseItemByteCount(to: itemMinimumByteCount + usedValueFieldByteCount + newItemByteCount)
@@ -266,7 +224,7 @@ extension Portal {
         
         // Insert the new element
         
-        let p = buildItem(withValue: value, withName: name, atPtr: srcPtr, endianness)
+        let p = buildItem(withValue: value, withNameField: nameField, atPtr: srcPtr, endianness)
         p._itemParentOffset = manager.bufferPtr.distance(to: itemPtr)
         
         
@@ -288,7 +246,7 @@ extension Portal {
         
         let item = _sequencePortalForItem(at: index)
         
-        guard item.itemType! == value.itemType else { return .typeConflict }
+        guard item.itemType! == value.itemType else { return .error(.typeConflict) }
         
         
         // Update
@@ -315,7 +273,7 @@ extension Portal {
     internal func _sequenceReplaceItem(_ value: Coder, atIndex index: Int) -> Result {
         
         let oldItem = _sequencePortalForItem(at: index)
-        let oldNameField = oldItem.nameField
+        let oldNameField = oldItem.itemNameField
         
         
         // Make sure the item byte count is big enough
@@ -336,7 +294,7 @@ extension Portal {
         
         // Write the new value as an item
             
-        let newItem = buildItem(withValue: value, withName: nameField, atPtr: oldItem.itemPtr, endianness)
+        let newItem = buildItem(withValue: value, withNameField: oldNameField, atPtr: oldItem.itemPtr, endianness)
         newItem._itemParentOffset = manager.bufferPtr.distance(to: itemPtr)
         newItem._itemByteCount = max(newItemByteCount, oldItemByteCount)
         
@@ -367,10 +325,10 @@ public extension Portal {
     @discardableResult
     public func insertItem(atIndex index: Int, withValue value: Coder, withNameField nameField: NameField? = nil) -> Result {
         
-        guard isValid else { return .portalInvalid }
-        guard isSequence else { return .operationNotSupported }
-        guard index >= 0 else { return .indexBelowLowerBound }
-        guard index < count else { return .indexAboveHigherBound }
+        guard isValid else { return .error(.portalInvalid) }
+        guard isSequence else { return .error(.operationNotSupported) }
+        guard index >= 0 else { return .error(.indexBelowLowerBound) }
+        guard index < count else { return .error(.indexAboveHigherBound) }
 
         return _sequenceInsertItem(value, atIndex: index, withNameField: nameField)
     }
@@ -387,10 +345,10 @@ public extension Portal {
     @discardableResult
     public func updateItem(atIndex index: Int, withValue value: Coder) -> Result {
         
-        guard isValid else { return .portalInvalid }
-        guard isSequence else { return .operationNotSupported }
-        guard index >= 0 else { return .indexBelowLowerBound }
-        guard index < count else { return .indexAboveHigherBound }
+        guard isValid else { return .error(.portalInvalid) }
+        guard isSequence else { return .error(.operationNotSupported) }
+        guard index >= 0 else { return .error(.indexBelowLowerBound) }
+        guard index < count else { return .error(.indexAboveHigherBound) }
         
         return _sequenceUpdateItem(value, atIndex: index)
     }
@@ -409,10 +367,10 @@ public extension Portal {
     @discardableResult
     public func replaceItem(atIndex index: Int, withValue value: Coder) -> Result {
         
-        guard isValid else { return .portalInvalid }
-        guard isSequence else { return .operationNotSupported }
-        guard index >= 0 else { return .indexBelowLowerBound }
-        guard index < count else { return .indexAboveHigherBound }
+        guard isValid else { return .error(.portalInvalid) }
+        guard isSequence else { return .error(.operationNotSupported) }
+        guard index >= 0 else { return .error(.indexBelowLowerBound) }
+        guard index < count else { return .error(.indexAboveHigherBound) }
         
         return _sequenceReplaceItem(value, atIndex: index)
     }
@@ -428,10 +386,10 @@ public extension Portal {
     @discardableResult
     public func removeItem(atIndex index: Int) -> Result {
         
-        guard isValid else { return .portalInvalid }
-        guard isSequence else { return .operationNotSupported }
-        guard index >= 0 else { return .indexBelowLowerBound }
-        guard index < count else { return .indexAboveHigherBound }
+        guard isValid else { return .error(.portalInvalid) }
+        guard isSequence else { return .error(.operationNotSupported) }
+        guard index >= 0 else { return .error(.indexBelowLowerBound) }
+        guard index < count else { return .error(.indexAboveHigherBound) }
 
         return _sequenceRemoveItem(atIndex: index)
     }
@@ -441,53 +399,20 @@ public extension Portal {
     ///
     /// - Parameters:
     ///   - value: The value to be added.
-    ///   - forName: An optional name.
+    ///   - withName: An optional name.
     ///
     /// - Returns: 'success' or an error indicator.
     
     @discardableResult
     public func appendItem(_ value: Coder, withName name: String? = nil) -> Result {
         
-        guard isValid else { return .portalInvalid }
-        guard isSequence else { return .operationNotSupported }
+        guard isValid else { return .error(.portalInvalid) }
+        guard isSequence else { return .error(.operationNotSupported) }
         
-        guard let nameField = NameField(name) else { return .nameFieldError }
+        guard let nameField = NameField(name) else { return .error(.nameFieldError) }
 
-        return _sequenceAppendItem(value, withName: nameField)
-    }
-
-    
-    /// Removes items from a sequence.
-    ///
-    /// - Parameter withName: The name of the items to be removed.
-    ///
-    /// - Returns: .success if at least 1 items was removed, an error indication otherwise.
-
-    @discardableResult
-    public func removeItems(withNameField nameField: NameField?) -> Result {
-        
-        guard let nameField = nameField else { return .missingName }
-        guard isValid else { return .portalInvalid }
-        guard isSequence else { return .operationNotSupported }
-        
-        return _sequenceRemoveItems(with: nameField)
-    }
-
-    
-    /// Removes items from a sequence.
-    ///
-    /// Convenience function that maps onto removeItems:withNameField.
-    ///
-    /// - Note: Will return .missingName if the given name is missing or cannot be converted into a NameField.
-    ///
-    /// - Parameter withName: The name of the items to be removed.
-    ///
-    /// - Returns: .success if at least 1 items was removed, an error indication otherwise.
-    
-    @discardableResult
-    public func removeItems(withName name: String?) -> Result {
-        return removeItems(withNameField: NameField(name))
-    }
+        return _sequenceAppendItem(value, withNameField: nameField)
+    }    
 }
 
 
@@ -499,8 +424,8 @@ public extension Portal {
 ///
 /// - Returns: An ephemeral portal. Do not retain this portal.
 
-internal func buildSequenceItem(withName name: NameField?, valueByteCount: Int, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
-    let p = buildItem(ofType: .sequence, withName: name, atPtr: ptr, endianness)
+internal func buildSequenceItem(withNameField nameField: NameField?, valueByteCount: Int, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
+    let p = buildItem(ofType: .sequence, withNameField: nameField, atPtr: ptr, endianness)
     p._itemByteCount += sequenceItemBaseOffset + valueByteCount.roundUpToNearestMultipleOf8()
     p._sequenceItemCount = 0
     return p

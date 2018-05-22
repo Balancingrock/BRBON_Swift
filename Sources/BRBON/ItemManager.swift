@@ -108,26 +108,29 @@ fileprivate class ActivePortals {
         
         if let column = portal.column, let index = portal.index {
             
+            // Setup for remval of all portals in the content area
             startAddress = portal._tableFieldPtr(row: index, column: column)
             endAddress = startAddress.advanced(by: portal._tableGetColumnFieldByteCount(for: column))
             
+            // Remove the portal itself
             portal.isValid = false
             dict.removeValue(forKey: portal.key)
         
         } else if let index = portal.index {
             
+            // Setup for removal of all portals in the content area
             startAddress = portal._arrayElementPtr(for: index)
             endAddress = startAddress.advanced(by: portal._arrayElementByteCount)
 
+            // Remove the portal itself
             portal.isValid = false
             dict.removeValue(forKey: portal.key)
             
         } else {
             
+            // Setup the portal itself for removal
             startAddress = portal.itemPtr
             endAddress = startAddress.advanced(by: portal._itemByteCount)
-            
-            // The portal itself will be removed in the loop below.
         }
         
         for (key, value) in dict {
@@ -337,20 +340,20 @@ public final class ItemManager {
     ///
     /// - Parameters:
     ///   - withValue: The initial value of the root item.
-    ///   - withName: The name for the root item.
+    ///   - withNameField: The name for the root item.
     ///   - requestedValueFieldByteCount: The number of bytes to allocate for the value field (actual value may be larger, never smaller).
     ///   - endianness: The endianness used by the item manager and items under its control.
     
-    public static func createManager(withValue value: Coder, withName name: NameField? = nil, requestedValueFieldByteCount: Int = 0, endianness: Endianness = machineEndianness) -> ItemManager {
+    public static func createManager(withValue value: Coder, withNameField nameField: NameField? = nil, requestedValueFieldByteCount: Int = 0, endianness: Endianness = machineEndianness) -> ItemManager {
         
         // Determine the size of the buffer
-        let byteCount = itemMinimumByteCount + (name?.byteCount ?? 0) + max(value.minimumValueFieldByteCount, requestedValueFieldByteCount.roundUpToNearestMultipleOf8())
+        let byteCount = itemMinimumByteCount + (nameField?.byteCount ?? 0) + max(value.minimumValueFieldByteCount, requestedValueFieldByteCount.roundUpToNearestMultipleOf8())
         
         // Create the new item manager
         let im = ItemManager(requestedByteCount: byteCount, endianness: endianness)
         
         // Build the item structure
-        _ = buildItem(withValue: value, withName: name, atPtr: im.bufferPtr, endianness)
+        _ = buildItem(withValue: value, withNameField: nameField, atPtr: im.bufferPtr, endianness)
         
         // initialize the root portal
         im.root = im.getActivePortal(for: im.bufferPtr)
@@ -368,18 +371,18 @@ public final class ItemManager {
     ///   - elementCount: The number of elements for which initial memory allocation is made. Notice that this is for speed improvement only, there is no limit enforced upon the number of elements (with the exception of Int32.max).
     ///   - endianness: The endianness used by the item manager and items under its control.
     
-    public static func createArrayManager(withName name: NameField? = nil, elementType: ItemType, elementByteCount: Int = 0, elementCount: Int = 0, endianness: Endianness) -> ItemManager {
+    public static func createArrayManager(withNameField nameField: NameField? = nil, elementType: ItemType, elementByteCount: Int = 0, elementCount: Int = 0, endianness: Endianness) -> ItemManager {
         
         let neededElementByteCount = elementType.hasFlexibleLength ? elementByteCount : max(elementType.minimumElementByteCount, elementByteCount)
         
         // Determine the size of the buffer
-        let byteCount = itemMinimumByteCount + (name?.byteCount ?? 0) + arrayElementBaseOffset + (neededElementByteCount * elementCount).roundUpToNearestMultipleOf8()
+        let byteCount = itemMinimumByteCount + (nameField?.byteCount ?? 0) + arrayElementBaseOffset + (neededElementByteCount * elementCount).roundUpToNearestMultipleOf8()
         
         // Create the new item manager
         let im = ItemManager(requestedByteCount: byteCount, endianness: endianness)
         
         // Build the item structure
-        _ = buildArrayItem(withName: name, elementType: elementType, elementByteCount: neededElementByteCount, elementCount: elementCount, atPtr: im.bufferPtr, endianness)
+        _ = buildArrayItem(withNameField: nameField, elementType: elementType, elementByteCount: neededElementByteCount, elementCount: elementCount, atPtr: im.bufferPtr, endianness)
         
         // initialize the root portal
         im.root = im.getActivePortal(for: im.bufferPtr)
@@ -391,13 +394,13 @@ public final class ItemManager {
     /// Create an Array item manager with the contents of the given array.
     ///
     /// - Parameters:
-    ///   - withName: The name to be used for the root item (optional)
+    ///   - withNameField: The name to be used for the root item (optional)
     ///   - values: The values to include in the root item of the item manager.
     ///   - endianness: The endianness to use for the data managed by the item manager (optional).
     
-    public static func createArrayManager(withName name: NameField? = nil, values array: Array<Bool>, endianness: Endianness = machineEndianness) -> ItemManager? {
+    public static func createArrayManager(withNameField nameField: NameField? = nil, values array: Array<Bool>, endianness: Endianness = machineEndianness) -> ItemManager? {
         
-        let im = ItemManager.createArrayManager(withName: name, elementType: .bool, elementByteCount: 1, elementCount: array.count, endianness: endianness)
+        let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .bool, elementByteCount: 1, elementCount: array.count, endianness: endianness)
     
         for (i, element) in array.enumerated() {
             let eptr = im.root._arrayElementPtr(for: i)
@@ -413,13 +416,13 @@ public final class ItemManager {
     /// Create an Array item manager with the contents of the given array.
     ///
     /// - Parameters:
-    ///   - name: The name to be used for the root item (optional)
+    ///   - withNameField: The name to be used for the root item (optional)
     ///   - values: The values to include in the root item of the item manager.
     ///   - endianness: The endianness to use for the data managed by the item manager (optional).
     
-    public static func createArrayManager(withName name: NameField? = nil, values array: Array<UInt8>, endianness: Endianness = machineEndianness) -> ItemManager? {
+    public static func createArrayManager(withNameField nameField: NameField? = nil, values array: Array<UInt8>, endianness: Endianness = machineEndianness) -> ItemManager? {
         
-        let im = ItemManager.createArrayManager(withName: name, elementType: .uint8, elementByteCount: 1, elementCount: array.count, endianness: endianness)
+        let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .uint8, elementByteCount: 1, elementCount: array.count, endianness: endianness)
         
         for (i, element) in array.enumerated() {
             let eptr = im.root._arrayElementPtr(for: i)
@@ -435,13 +438,13 @@ public final class ItemManager {
     /// Create an Array item manager with the contents of the given array.
     ///
     /// - Parameters:
-    ///   - name: The name to be used for the root item (optional)
+    ///   - withNameField: The name to be used for the root item (optional)
     ///   - values: The values to include in the root item of the item manager.
     ///   - endianness: The endianness to use for the data managed by the item manager (optional).
     
-    public static func createArrayManager(withName name: NameField? = nil, values array: Array<UInt16>, endianness: Endianness = machineEndianness) -> ItemManager? {
+    public static func createArrayManager(withNameField nameField: NameField? = nil, values array: Array<UInt16>, endianness: Endianness = machineEndianness) -> ItemManager? {
         
-        let im = ItemManager.createArrayManager(withName: name, elementType: .uint16, elementByteCount: 2, elementCount: array.count, endianness: endianness)
+        let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .uint16, elementByteCount: 2, elementCount: array.count, endianness: endianness)
 
         for (i, element) in array.enumerated() {
             let eptr = im.root._arrayElementPtr(for: i)
@@ -457,13 +460,13 @@ public final class ItemManager {
     /// Create an Array item manager with the contents of the given array.
     ///
     /// - Parameters:
-    ///   - name: The name to be used for the root item (optional)
+    ///   - withNameField: The name to be used for the root item (optional)
     ///   - values: The values to include in the root item of the item manager.
     ///   - endianness: The endianness to use for the data managed by the item manager (optional).
     
-    public static func createArrayManager(withName name: NameField? = nil, values array: Array<UInt32>, endianness: Endianness = machineEndianness) -> ItemManager? {
+    public static func createArrayManager(withNameField nameField: NameField? = nil, values array: Array<UInt32>, endianness: Endianness = machineEndianness) -> ItemManager? {
         
-        let im = ItemManager.createArrayManager(withName: name, elementType: .uint32, elementByteCount: 4, elementCount: array.count, endianness: endianness)
+        let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .uint32, elementByteCount: 4, elementCount: array.count, endianness: endianness)
 
         for (i, element) in array.enumerated() {
             let eptr = im.root._arrayElementPtr(for: i)
@@ -479,13 +482,13 @@ public final class ItemManager {
     /// Create an Array item manager with the contents of the given array.
     ///
     /// - Parameters:
-    ///   - name: The name to be used for the root item (optional)
+    ///   - withNameField: The name to be used for the root item (optional)
     ///   - values: The values to include in the root item of the item manager.
     ///   - endianness: The endianness to use for the data managed by the item manager (optional).
     
-    public static func createArrayManager(withName name: NameField? = nil, values array: Array<UInt64>, endianness: Endianness = machineEndianness) -> ItemManager? {
+    public static func createArrayManager(withNameField nameField: NameField? = nil, values array: Array<UInt64>, endianness: Endianness = machineEndianness) -> ItemManager? {
         
-        let im = ItemManager.createArrayManager(withName: name, elementType: .uint64, elementByteCount: 8, elementCount: array.count, endianness: endianness)
+        let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .uint64, elementByteCount: 8, elementCount: array.count, endianness: endianness)
 
         for (i, element) in array.enumerated() {
             let eptr = im.root._arrayElementPtr(for: i)
@@ -501,13 +504,13 @@ public final class ItemManager {
     /// Create an Array item manager with the contents of the given array.
     ///
     /// - Parameters:
-    ///   - name: The name to be used for the root item (optional)
+    ///   - withNameField: The name to be used for the root item (optional)
     ///   - values: The values to include in the root item of the item manager.
     ///   - endianness: The endianness to use for the data managed by the item manager (optional).
     
-    public static func createArrayManager(withName name: NameField? = nil, values array: Array<Int8>, endianness: Endianness = machineEndianness) -> ItemManager? {
+    public static func createArrayManager(withNameField nameField: NameField? = nil, values array: Array<Int8>, endianness: Endianness = machineEndianness) -> ItemManager? {
         
-        let im = ItemManager.createArrayManager(withName: name, elementType: .int8, elementByteCount: 1, elementCount: array.count, endianness: endianness)
+        let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .int8, elementByteCount: 1, elementCount: array.count, endianness: endianness)
 
         for (i, element) in array.enumerated() {
             let eptr = im.root._arrayElementPtr(for: i)
@@ -523,13 +526,13 @@ public final class ItemManager {
     /// Create an Array item manager with the contents of the given array.
     ///
     /// - Parameters:
-    ///   - name: The name to be used for the root item (optional)
+    ///   - withNameField: The name to be used for the root item (optional)
     ///   - values: The values to include in the root item of the item manager.
     ///   - endianness: The endianness to use for the data managed by the item manager (optional).
     
-    public static func createArrayManager(withName name: NameField? = nil, values array: Array<Int16>, endianness: Endianness = machineEndianness) -> ItemManager? {
+    public static func createArrayManager(withNameField nameField: NameField? = nil, values array: Array<Int16>, endianness: Endianness = machineEndianness) -> ItemManager? {
         
-        let im = ItemManager.createArrayManager(withName: name, elementType: .int16, elementByteCount: 2, elementCount: array.count, endianness: endianness)
+        let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .int16, elementByteCount: 2, elementCount: array.count, endianness: endianness)
 
         for (i, element) in array.enumerated() {
             let eptr = im.root._arrayElementPtr(for: i)
@@ -545,35 +548,13 @@ public final class ItemManager {
     /// Create an Array item manager with the contents of the given array.
     ///
     /// - Parameters:
-    ///   - name: The name to be used for the root item (optional)
+    ///   - withNameField: The name to be used for the root item (optional)
     ///   - values: The values to include in the root item of the item manager.
     ///   - endianness: The endianness to use for the data managed by the item manager (optional).
     
-    public static func createArrayManager(withName name: NameField? = nil, values array: Array<Int32>, endianness: Endianness = machineEndianness) -> ItemManager? {
+    public static func createArrayManager(withNameField nameField: NameField? = nil, values array: Array<Int32>, endianness: Endianness = machineEndianness) -> ItemManager? {
         
-        let im = ItemManager.createArrayManager(withName: name, elementType: .int32, elementByteCount: 4, elementCount: array.count, endianness: endianness)
-
-        for (i, element) in array.enumerated() {
-            let eptr = im.root._arrayElementPtr(for: i)
-            element.copyBytes(to: eptr, endianness)
-        }
-        
-        im.root._arrayElementCount = array.count
-        
-        return im
-    }
-    
-    
-    /// Create an Array item manager with the contents of the given array.
-    ///
-    /// - Parameters:
-    ///   - name: The name to be used for the root item (optional)
-    ///   - values: The values to include in the root item of the item manager.
-    ///   - endianness: The endianness to use for the data managed by the item manager (optional).
-    
-    public static func createArrayManager(withName name: NameField? = nil, values array: Array<Int64>, endianness: Endianness = machineEndianness) -> ItemManager? {
-        
-        let im = ItemManager.createArrayManager(withName: name, elementType: .int64, elementByteCount: 8, elementCount: array.count, endianness: endianness)
+        let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .int32, elementByteCount: 4, elementCount: array.count, endianness: endianness)
 
         for (i, element) in array.enumerated() {
             let eptr = im.root._arrayElementPtr(for: i)
@@ -593,9 +574,9 @@ public final class ItemManager {
     ///   - values: The values to include in the root item of the item manager.
     ///   - endianness: The endianness to use for the data managed by the item manager (optional).
     
-    public static func createArrayManager(withName name: NameField? = nil, values array: Array<Float32>, endianness: Endianness = machineEndianness) -> ItemManager? {
+    public static func createArrayManager(withNameField nameField: NameField? = nil, values array: Array<Int64>, endianness: Endianness = machineEndianness) -> ItemManager? {
         
-        let im = ItemManager.createArrayManager(withName: name, elementType: .float32, elementByteCount: 4, elementCount: array.count, endianness: endianness)
+        let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .int64, elementByteCount: 8, elementCount: array.count, endianness: endianness)
 
         for (i, element) in array.enumerated() {
             let eptr = im.root._arrayElementPtr(for: i)
@@ -611,13 +592,13 @@ public final class ItemManager {
     /// Create an Array item manager with the contents of the given array.
     ///
     /// - Parameters:
-    ///   - name: The name to be used for the root item (optional)
+    ///   - withNameField: The name to be used for the root item (optional)
     ///   - values: The values to include in the root item of the item manager.
     ///   - endianness: The endianness to use for the data managed by the item manager (optional).
     
-    public static func createArrayManager(withName name: NameField? = nil, values array: Array<Float64>, endianness: Endianness = machineEndianness) -> ItemManager? {
+    public static func createArrayManager(withNameField nameField: NameField? = nil, values array: Array<Float32>, endianness: Endianness = machineEndianness) -> ItemManager? {
         
-        let im = ItemManager.createArrayManager(withName: name, elementType: .float64, elementByteCount: 8, elementCount: array.count, endianness: endianness)
+        let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .float32, elementByteCount: 4, elementCount: array.count, endianness: endianness)
 
         for (i, element) in array.enumerated() {
             let eptr = im.root._arrayElementPtr(for: i)
@@ -633,16 +614,38 @@ public final class ItemManager {
     /// Create an Array item manager with the contents of the given array.
     ///
     /// - Parameters:
-    ///   - name: The name to be used for the root item (optional)
+    ///   - withNameField: The name to be used for the root item (optional)
     ///   - values: The values to include in the root item of the item manager.
     ///   - endianness: The endianness to use for the data managed by the item manager (optional).
     
-    public static func createArrayManager(withName name: NameField? = nil, values array: Array<Data>, endianness: Endianness = machineEndianness) -> ItemManager? {
+    public static func createArrayManager(withNameField nameField: NameField? = nil, values array: Array<Float64>, endianness: Endianness = machineEndianness) -> ItemManager? {
+        
+        let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .float64, elementByteCount: 8, elementCount: array.count, endianness: endianness)
+
+        for (i, element) in array.enumerated() {
+            let eptr = im.root._arrayElementPtr(for: i)
+            element.copyBytes(to: eptr, endianness)
+        }
+        
+        im.root._arrayElementCount = array.count
+        
+        return im
+    }
+    
+    
+    /// Create an Array item manager with the contents of the given array.
+    ///
+    /// - Parameters:
+    ///   - withNameField: The name to be used for the root item (optional)
+    ///   - values: The values to include in the root item of the item manager.
+    ///   - endianness: The endianness to use for the data managed by the item manager (optional).
+    
+    public static func createArrayManager(withNameField nameField: NameField? = nil, values array: Array<Data>, endianness: Endianness = machineEndianness) -> ItemManager? {
         
         var maxByteCount = array.max(by: { $0.count > $1.count })?.count ?? 0
         maxByteCount = maxByteCount.roundUpToNearestMultipleOf8()
         
-        let im = ItemManager.createArrayManager(withName: name, elementType: .binary, elementByteCount: maxByteCount, elementCount: array.count, endianness: endianness)
+        let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .binary, elementByteCount: maxByteCount, elementCount: array.count, endianness: endianness)
 
         for (i, element) in array.enumerated() {
             let eptr = im.root._arrayElementPtr(for: i)
@@ -658,15 +661,15 @@ public final class ItemManager {
     /// Create an Array item manager with the contents of the given array.
     ///
     /// - Parameters:
-    ///   - name: The name to be used for the root item (optional)
+    ///   - withNameField: The name to be used for the root item (optional)
     ///   - values: The values to include in the root item of the item manager.
     ///   - endianness: The endianness to use for the data managed by the item manager (optional).
     
-    public static func createArrayManager(withName name: NameField? = nil, values array: Array<String>, endianness: Endianness = machineEndianness) -> ItemManager? {
+    public static func createArrayManager(withNameField nameField: NameField? = nil, values array: Array<String>, endianness: Endianness = machineEndianness) -> ItemManager? {
 
         let arrayData = array.compactMap({ $0.data(using: .utf8)})
         
-        let im = ItemManager.createArrayManager(withName: name, values: arrayData, endianness:  endianness)
+        let im = ItemManager.createArrayManager(withNameField: nameField, values: arrayData, endianness:  endianness)
         im?.root._arrayElementType = .string
         
         return im
@@ -676,11 +679,11 @@ public final class ItemManager {
     /// Create an Array item manager with the contents of the given array.
     ///
     /// - Parameters:
+    ///   - withNameField: The name to be used for the root item (optional)
     ///   - array: The values to include in the root item of the item manager. Note that only those strings will be included in the array that can be coded in UTF8. If the conversion produces an error, the string will not be included and no error will be generated.
-    ///   - name: The name to be used for the root item (optional)
     ///   - endianness: The endianness to use for the data managed by the item manager (optional).
     
-    public static func createArrayManager(withName name: NameField? = nil, values array: Array<ItemManager>, endianness: Endianness = machineEndianness) -> ItemManager? {
+    public static func createArrayManager(withNameField nameField: NameField? = nil, values array: Array<ItemManager>, endianness: Endianness = machineEndianness) -> ItemManager? {
         
         
         // Determine the largest new byte count of the elements
@@ -691,7 +694,7 @@ public final class ItemManager {
 
         // Create array
         
-        let im = ItemManager.createArrayManager(withName: name, elementType: .array, elementByteCount: maxByteCount, elementCount: array.count, endianness: endianness)
+        let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .array, elementByteCount: maxByteCount, elementCount: array.count, endianness: endianness)
         
 
         // Add the new items
@@ -713,23 +716,23 @@ public final class ItemManager {
     /// Create an item manager that contains an ItemType 'dictionary'.
     ///
     /// - Parameters:
-    ///   - name: The name to be used for the root item.
+    ///   - withNameField: The name to be used for the root item.
     ///   - valueFieldByteCount: The number of bytes allocated for the value field. Default value is 256.
     ///   - endianness: The kind of endian representation to be used.
     ///
     /// - Returns: A new item manager.
     
     public static func createDictionaryManager(
-        name: NameField? = nil,
+        withNameField nameField: NameField? = nil,
         valueFieldByteCount: Int = 0,
         endianness: Endianness = machineEndianness
         ) -> ItemManager {
         
-        let newItemByteCount = itemMinimumByteCount + (name?.byteCount ?? 0) + dictionaryItemBaseOffset + valueFieldByteCount.roundUpToNearestMultipleOf8()
+        let newItemByteCount = itemMinimumByteCount + (nameField?.byteCount ?? 0) + dictionaryItemBaseOffset + valueFieldByteCount.roundUpToNearestMultipleOf8()
         
         let im = ItemManager(requestedByteCount: newItemByteCount, endianness: endianness)
         
-        _ = buildDictionaryItem(withName: name, valueByteCount: valueFieldByteCount, atPtr: im.bufferPtr, endianness)
+        _ = buildDictionaryItem(withNameField: nameField, valueByteCount: valueFieldByteCount, atPtr: im.bufferPtr, endianness)
         
         im.root = im.getActivePortal(for: im.bufferPtr)
         
@@ -740,23 +743,23 @@ public final class ItemManager {
     /// Create an item manager that contains an ItemType 'sequence'.
     ///
     /// - Parameters:
-    ///   - name: The name to be used for the root item.
+    ///   - withNameField: The name to be used for the root item.
     ///   - valueFieldByteCount: The number of bytes allocated for the value field. Default value is 256.
     ///   - endianness: The kind of endian representation to be used.
     ///
     /// - Returns: A new item manager.
     
     public static func createSequenceManager(
-        name: NameField? = nil,
+        withNameField nameField: NameField? = nil,
         valueFieldByteCount: Int = 0,
         endianness: Endianness = machineEndianness
         ) -> ItemManager {
         
-        let newItemByteCount = itemMinimumByteCount + (name?.byteCount ?? 0) + sequenceItemBaseOffset + valueFieldByteCount.roundUpToNearestMultipleOf8()
+        let newItemByteCount = itemMinimumByteCount + (nameField?.byteCount ?? 0) + sequenceItemBaseOffset + valueFieldByteCount.roundUpToNearestMultipleOf8()
         
         let im = ItemManager(requestedByteCount: newItemByteCount, endianness: endianness)
         
-        _ = buildSequenceItem(withName: name, valueByteCount: valueFieldByteCount, atPtr: im.bufferPtr, endianness)
+        _ = buildSequenceItem(withNameField: nameField, valueByteCount: valueFieldByteCount, atPtr: im.bufferPtr, endianness)
 
         im.root = im.getActivePortal(for: im.bufferPtr)
 
@@ -767,32 +770,32 @@ public final class ItemManager {
     /// Create an item manager that contains an ItemType 'table'.
     ///
     /// - Parameters:
+    ///   - withNameField: The name to be used for the root item.
     ///   - columns: The columns for the table.
-    ///   - name: The name to be used for the root item.
     ///   - initialRowsAllocated: The number of rows allocated for the value field. Default value is 1.
     ///   - endianness: The kind of endian representation to be used.
     ///
     /// - Returns: A new item manager.
     
     public static func createTableManager(
+        withNameField nameField: NameField? = nil,
         columns: inout Array<ColumnSpecification>,
-        name: NameField? = nil,
         initialRowsAllocated: Int = 1,
         endianness: Endianness = machineEndianness
         ) -> ItemManager {
         
         let rowByteCount: Int = columns.reduce(0) { $0 + $1.fieldByteCount }
         let descriptorByteCount = tableColumnDescriptorByteCount * columns.count
-        let columnNamesByteCount: Int = columns.reduce(0) { $0 + $1.name.byteCount }
+        let columnNamesByteCount: Int = columns.reduce(0) { $0 + $1.nameField.byteCount }
 
-        var newItemByteCount = itemMinimumByteCount + (name?.byteCount ?? 0)
+        var newItemByteCount = itemMinimumByteCount + (nameField?.byteCount ?? 0)
         newItemByteCount += tableColumnDescriptorBaseOffset
         newItemByteCount += descriptorByteCount + columnNamesByteCount
         newItemByteCount += initialRowsAllocated * rowByteCount
         
         let im = ItemManager(requestedByteCount: newItemByteCount, endianness: endianness)
         
-        _ = buildTableItem(withName: name, columns: &columns, initialRowsAllocated: initialRowsAllocated, atPtr: im.bufferPtr, endianness)
+        _ = buildTableItem(withNameField: nameField, columns: &columns, initialRowsAllocated: initialRowsAllocated, atPtr: im.bufferPtr, endianness)
         
         return im
     }

@@ -100,8 +100,8 @@ extension Portal: Equatable {
             
             // Test name field (if present)
             if lhs._itemNameFieldByteCount != 0 {
-                guard let lnfd = lhs.nameField else { return false }
-                guard let rnfd = rhs.nameField else { return false }
+                guard let lnfd = lhs.itemNameField else { return false }
+                guard let rnfd = rhs.itemNameField else { return false }
                 guard lnfd == rnfd else { return false }
             }
             

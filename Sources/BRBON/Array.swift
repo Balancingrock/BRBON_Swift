@@ -246,10 +246,10 @@ extension Portal {
     internal func _arrayRemove(at index: Int) -> Result {
         
         
-        // Remove the active portals for the items inside the element to be removed, but not the element itself.
+        // Remove the active portals for the items inside the element to be removed.
         
         let eptr = _arrayElementPtr(for: index)
-        manager.removeActivePortals(atAndAbove: eptr.advanced(by: 1), below: eptr.advanced(by: _arrayElementByteCount))
+        manager.removeActivePortals(atAndAbove: eptr, below: eptr.advanced(by: _arrayElementByteCount))
         
         
         // Shift the remaining elements into their new place
@@ -267,8 +267,7 @@ extension Portal {
         
         // The last index portal (if present) must be removed
         
-        let lptr = _arrayElementPtr(for: _arrayElementCount - 1)
-        manager.removeActivePortals(atAndAbove: lptr, below: lptr.advanced(by: 1))
+        manager.removeActivePortal(Portal(itemPtr: itemPtr, index: (_arrayElementCount - 1), manager: manager, endianness: endianness))
         
         
         // Decrease the number of elements
@@ -310,10 +309,13 @@ extension Portal {
         let dstPtr = _arrayElementPtr(for: index + 1)
         let srcPtr = _arrayElementPtr(for: index)
         let length = (_arrayElementCount - index) * _arrayElementByteCount
-        manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: length, removeCount: 0, updateMovedPortals: false, updateRemovedPortals: false)
-        if ItemManager.startWithZeroedBuffers {
-            Darwin.memset(srcPtr, 0, _arrayElementByteCount)
-        }
+        manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: length, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
+        
+        
+        // Zero bytes - if necessary
+        
+        if ItemManager.startWithZeroedBuffers { Darwin.memset(srcPtr, 0, _arrayElementByteCount) }
+        
         
         // Insert the new element
         
@@ -327,21 +329,17 @@ extension Portal {
         
         return .success
     }
-}
-
-
-extension Portal {
     
     internal func appendClosure(for type: ItemType, with bytes: Int, assignment: () -> Void) -> Result {
         
-        guard isArray else { return .operationNotSupported }
-        guard _arrayElementType == type else { return .typeConflict }
+        guard isArray else { return .error(.operationNotSupported) }
+        guard _arrayElementType == type else { return .error(.typeConflict) }
         
         
         // Determine number of bytes per element
         
         let byteCountPerElement: Int = type.hasFlexibleLength ? bytes.roundUpToNearestMultipleOf8() : bytes
-
+        
         
         // Ensure that the element byte count is sufficient
         
@@ -368,11 +366,24 @@ extension Portal {
         
         return .success
     }
+}
+
+
+// The public interface
+
+extension Portal {
     
     
-    /// Add a value that confirms to the Coder protocol to an Array. Note that adding a nil does not change the array, but is also not considered an error.
+    /// Appends a value to the end of an Array item.
     ///
-    /// - Returns: .success or one of .portalInvalid, .operationNotSupported, .typeConflict
+    /// - Parameter value: The value to be appended.
+    ///
+    /// - Returns:
+    ///   success: When the value was appended
+    ///
+    ///   noAction: If the value was nil or a Null
+    ///
+    ///   error(code): If an error prevented the completion, de code details the kind of error.
     
     @discardableResult
     public func appendElement(_ value: Coder?) -> Result {
@@ -381,45 +392,53 @@ extension Portal {
     }
     
     
-    /// Removes an item.
+    /// Removes an item from an Array item.
     ///
-    /// If the index is out of bounds the operation will fail. Notice that the itemByteCount of the array will not decrease.
+    /// This operation does not decrease the byte count of the Array item.
     ///
-    /// - Note: Only for array or sequence items.
+    /// - Note: The portals for sub-items of the removed item will be invalidated. The portal for the last element in the array (if any) will also be invalidated.
     ///
-    /// - Parameter index: The index of the element to remove.
+    /// - Parameter at: The index of the element to remove.
     ///
-    /// - Returns: success or an error indicator.
+    /// - Returns:
+    ///   success: If the item was removed
+    ///
+    ///   error(code): If an error prevented the removal, the code details the kind of error.
     
     @discardableResult
     public func removeElement(at index: Int) -> Result {
         
-        guard isArray else { return .portalInvalid }
-        guard index >= 0 else { return .indexBelowLowerBound }
-        guard index < _arrayElementCount else { return .indexAboveHigherBound }
+        guard isArray else { return .error(.portalInvalid) }
+        guard index >= 0 else { return .error(.indexBelowLowerBound) }
+        guard index < _arrayElementCount else { return .error(.indexAboveHigherBound) }
             
         return _arrayRemove(at: index)
     }
 
     
-    /// Inserts a new element.
-    ///
-    /// - Note: Only for arrays.
+    /// Inserts a new element into an Array item.
     ///
     /// - Parameters:
-    ///   - value: The value to be inserted. Note that inserting a nil will be reported as success, but will not change the array.
+    ///   - value: The value to be inserted.
     ///   - atIndex: The index at which to insert the value.
     ///
-    /// - Returns: 'success' or an error indicator.
+    /// - Returns:
+    ///   success: If the insertion was successful.
+    ///
+    ///   noAction: If the value was nil or Null.
+    ///
+    ///   error(code): If an error prevented the insertion, the code details the kind of error.
     
     @discardableResult
     public func insertElement(_ value: Coder?, atIndex index: Int) -> Result {
         
-        guard let value = value else { return .success }
-        guard isArray else { return .portalInvalid }
-        guard index >= 0 else { return .indexBelowLowerBound }
-        guard index < _arrayElementCount else { return .indexAboveHigherBound }
-        guard value.itemType == _arrayElementType else { return .typeConflict }
+        guard let value = value else { return .noAction }
+        guard value.itemType != .null else { return .noAction }
+        
+        guard isArray else { return .error(.portalInvalid) }
+        guard index >= 0 else { return .error(.indexBelowLowerBound) }
+        guard index < _arrayElementCount else { return .error(.indexAboveHigherBound) }
+        guard value.itemType == _arrayElementType else { return .error(.typeConflict) }
             
         return _arrayInsert(value, atIndex: index)
     }
@@ -440,13 +459,13 @@ extension Portal {
     @discardableResult
     public func createNewElements(amount: Int = 1, value: Coder? = nil) -> Result {
         
-        guard isArray else { return .operationNotSupported }
-        if let value = value, value.itemType != _arrayElementType { return .typeConflict }
+        guard isArray else { return .error(.operationNotSupported) }
+        if let value = value, value.itemType != _arrayElementType { return .error(.typeConflict) }
         
         
         // The number of new elements must be positive
         
-        guard amount > 0 else { return .illegalAmount }
+        guard amount > 0 else { return .error(.illegalAmount) }
         
         
         // A default value should fit the element byte count
@@ -489,20 +508,25 @@ extension Portal {
         return .success
     }
 
-}
 
-
-// Adding containers to an Array
-
-extension Portal {
-
+    /// Append the contens of an item manager to the Array item.
+    ///
+    /// Note that the type of the item manager root item must be the same as the element type.
+    ///
+    /// - Parameter itemManager: The item manager with the content to append.
+    ///
+    /// - Returns:
+    ///   success: If the content was appended.
+    ///
+    ///   error(code): If the append failed, the code will detail the kind of error.
+    
     @discardableResult
     public func appendElement(_ itemManager: ItemManager?) -> Result {
         
-        guard let itemManager = itemManager else { return .missingValue }
-        guard isValid else { return .portalInvalid }
-        guard isArray else { return .operationNotSupported }
-        guard _arrayElementType! == itemManager.root.itemType! else { return .typeConflict }
+        guard let itemManager = itemManager else { return .error(.missingValue) }
+        guard isValid else { return .error(.portalInvalid) }
+        guard isArray else { return .error(.operationNotSupported) }
+        guard _arrayElementType! == itemManager.root.itemType! else { return .error(.typeConflict) }
         
         
         // Ensure that the maximum element size can be accomodated
@@ -534,9 +558,9 @@ extension Portal {
     @discardableResult
     public func appendElements(_ arr: Array<ItemManager>) -> Result {
         
-        guard isValid else { return .portalInvalid }
-        guard isArray else { return .operationNotSupported }
-        for im in arr { guard im.root.itemType == _arrayElementType! else { return .typeConflict }}
+        guard isValid else { return .error(.portalInvalid) }
+        guard isArray else { return .error(.operationNotSupported) }
+        for im in arr { guard im.root.itemType == _arrayElementType! else { return .error(.typeConflict) }}
         
         
         // Determine the largest new byte count of the elements
@@ -579,10 +603,10 @@ extension Portal {
     public func insertElement(_ itemManager: ItemManager?, atIndex index: Int) -> Result {
         
         guard let value = itemManager?.data else { return .success }
-        guard isArray else { return .portalInvalid }
-        guard index >= 0 else { return .indexBelowLowerBound }
-        guard index < _arrayElementCount else { return .indexAboveHigherBound }
-        guard _arrayElementType! == itemManager!.root.itemType! else { return .typeConflict }
+        guard isArray else { return .error(.portalInvalid) }
+        guard index >= 0 else { return .error(.indexBelowLowerBound) }
+        guard index < _arrayElementCount else { return .error(.indexAboveHigherBound) }
+        guard _arrayElementType! == itemManager!.root.itemType! else { return .error(.typeConflict) }
         
         
         // Ensure that the element byte count is sufficient
@@ -604,10 +628,13 @@ extension Portal {
         let dstPtr = _arrayElementPtr(for: index + 1)
         let srcPtr = _arrayElementPtr(for: index)
         let length = (_arrayElementCount - index) * _arrayElementByteCount
-        manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: length, removeCount: 0, updateMovedPortals: false, updateRemovedPortals: false)
-        if ItemManager.startWithZeroedBuffers {
-            Darwin.memset(srcPtr, 0, _arrayElementByteCount)
-        }
+        manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: length, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
+        
+        
+        // Zero bytes - if necessary
+        
+        if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(srcPtr, 0, _arrayElementByteCount) }
+        
         
         // Insert the new element
         
@@ -620,7 +647,6 @@ extension Portal {
         
         
         return .success
-
     }
 }
 
@@ -628,7 +654,7 @@ extension Portal {
 /// Build an item with a Array in it.
 ///
 /// - Parameters:
-///   - withName: The namefield for the item. Optional.
+///   - withNameField: The namefield for the item. Optional.
 ///   - elementType: The type of elements in the array.
 ///   - elementByteCount: The number of bytes used for each element in the array. It must be ensured that the byte count is large enough for the element type!
 ///   - elementCount:
@@ -636,8 +662,8 @@ extension Portal {
 ///
 /// - Returns: An ephemeral portal. Do not retain this portal.
 
-internal func buildArrayItem(withName name: NameField?, elementType: ItemType, elementByteCount: Int, elementCount: Int, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
-    let p = buildItem(ofType: .array, withName: name, atPtr: ptr, endianness)
+internal func buildArrayItem(withNameField nameField: NameField?, elementType: ItemType, elementByteCount: Int, elementCount: Int, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
+    let p = buildItem(ofType: .array, withNameField: nameField, atPtr: ptr, endianness)
     p._itemByteCount += arrayElementBaseOffset + (elementCount * elementByteCount).roundUpToNearestMultipleOf8()
     p._arrayElementType = elementType
     p._arrayElementByteCount = elementByteCount

@@ -171,7 +171,7 @@ public final class Portal {
     
     /// The NameField for this item, nil if there is none.
     
-    public var nameField: NameField? {
+    public var itemNameField: NameField? {
         get {
             guard _itemNameFieldByteCount > 0 else { return nil }
             return NameField(fromPtr: _itemNameFieldPtr, byteCount: _itemNameFieldByteCount, endianness)
@@ -392,7 +392,7 @@ extension Portal {
                 
             } else {
                 
-                return .outOfStorage
+                return .error(.outOfStorage)
             }
             
             
@@ -407,7 +407,7 @@ extension Portal {
                 
                 // Note: The following operation also updates all active portals
                 
-                guard manager.increaseBufferSize(to: newByteCount) else { return .increaseFailed }
+                guard manager.increaseBufferSize(to: newByteCount) else { return .error(.increaseFailed) }
             }
             
             
@@ -449,37 +449,6 @@ extension Portal {
         return manager.getActivePortal(for: parentPtr)
     }
 
-    
-    /// Searches for an item with the same hash and string data as the search paremeters.
-    ///
-    /// Only for dictionaries, sequences and array's.
-    ///
-    /// - Parameters:
-    ///   - withName: The namefield of the item to find.
-    ///
-    /// - Returns: A pointer to the first byte
-    
-    internal func findPortalForItem(withName name: NameField?) -> Portal? {
-        
-        guard let name = name else { return nil }
-        
-        var ptrFound: UnsafeMutableRawPointer?
-        
-        forEachAbortOnTrue() {
-            if $0._itemNameCrc != name.crc { return false }
-            if $0._itemNameUtf8CodeByteCount != name.data.count { return false }
-            if $0._itemNameUtf8Code != name.data { return false }
-            ptrFound = $0.itemPtr
-            return true
-        }
-        
-        if let aptr = ptrFound {
-            return manager.getActivePortal(for: aptr)
-        } else {
-            return nil
-        }
-    }
-    
     
     /// A pointer to the first byte after the item this portal refers to.
     
@@ -585,7 +554,6 @@ extension Portal {
         return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.table.rawValue
     }
     
-
     
     /// General purpose assignment assistance for small-value setters.
     ///

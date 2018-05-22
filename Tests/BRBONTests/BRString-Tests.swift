@@ -104,7 +104,7 @@ class BRString_Tests: XCTestCase {
         XCTAssertNil(im.root.index)
         XCTAssertNil(im.root.column)
         XCTAssertEqual(im.root.count, 0)
-        XCTAssertNil(im.root.nameField)
+        XCTAssertNil(im.root.itemNameField)
         
         XCTAssertTrue(im.root.isString)
         XCTAssertEqual(im.root.brString, b)
@@ -132,7 +132,7 @@ class BRString_Tests: XCTestCase {
         guard let s = BRString("test") else { XCTFail(); return } // 0x74 0x65 0x73 0x74
 
         guard let one = NameField("one") else { XCTFail(); return }
-        let im = ItemManager.createManager(withValue: s, withName: one)
+        let im = ItemManager.createManager(withValue: s, withNameField: one)
         
         
         // Portal Properties
@@ -141,7 +141,7 @@ class BRString_Tests: XCTestCase {
         XCTAssertNil(im.root.index)
         XCTAssertNil(im.root.column)
         XCTAssertEqual(im.root.count, 0)
-        XCTAssertEqual(im.root.nameField, one)
+        XCTAssertEqual(im.root.itemNameField, one)
 
         XCTAssertTrue(im.root.isString)
         XCTAssertEqual(im.root.brString, s)

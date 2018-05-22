@@ -78,7 +78,7 @@ extension Portal {
         get { return Data(bytes: _crcBinaryDataPtr.assumingMemoryBound(to: UInt8.self), count: _crcBinaryByteCount) }
         set {
             let result = ensureValueFieldByteCount(of: crcBinaryDataOffset + newValue.count)
-            guard result == .success else { return }
+            guard result == Result.success else { return }
             _crcBinaryByteCount = newValue.count
             newValue.copyBytes(to: _crcBinaryDataPtr.assumingMemoryBound(to: UInt8.self), count: _crcBinaryByteCount)
         }

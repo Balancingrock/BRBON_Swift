@@ -179,28 +179,6 @@ extension Portal {
         get { return Data(bytes: _itemNameUtf8CodePtr, count: _itemNameUtf8CodeByteCount) }
         set { newValue.withUnsafeBytes({ _itemNameUtf8CodePtr.copyMemory(from: $0, byteCount: newValue.count)}) }
     }
-    
-    
-    /// Ensures that the item can accomodate a value of the given length.
-    ///
-    /// - Parameter for: The number of bytes needed.
-    ///
-    /// - Returns: True if the item or element has sufficient bytes available.
-    /*
-    internal func itemEnsureValueFieldByteCount(of bytes: Int) -> Result {
-        
-        
-        // If the current value field byte count is sufficient, return immediately
-        
-        if availableValueFieldByteCount >= bytes { return .success }
-        
-        
-        // The byte count should be increased
-        
-        let necessaryItemByteCount = itemMinimumByteCount + _itemNameFieldByteCount + bytes.roundUpToNearestMultipleOf8()
-        
-        return increaseItemByteCount(to: necessaryItemByteCount)
-    }*/
 }
 
 
@@ -246,7 +224,7 @@ public extension Portal {
     
     /// A string with the name for the item this portal refers to.
     ///
-    /// - Note: To change a name, use the function _setItemName_ instead.
+    /// - Note: To change a name, use the function _updateNameField_ instead.
     ///
     /// Nil if the item does not have a name. Empty if the conversion of UTF8 code to a string failed.
     
@@ -263,32 +241,32 @@ public extension Portal {
     ///
     /// Setting the name to nil will remove the name and the name-field from the item. Setting a smaller name will not reduce the size of the name-field however.
     
-    public func setItemName(to name: NameField?) -> Result {
+    public func updateItemName(to nameField: NameField?) -> Result {
         
-        if let name = name {
+        if let nameField = nameField {
         
             // Set a new name
             
             // If the name is larger, increase the item size and move the value field
             
-            if name.byteCount > _itemNameFieldByteCount {
-                let ibc = itemMinimumByteCount + name.byteCount + usedValueFieldByteCount.roundUpToNearestMultipleOf8()
+            if nameField.byteCount > _itemNameFieldByteCount {
+                let ibc = itemMinimumByteCount + nameField.byteCount + usedValueFieldByteCount.roundUpToNearestMultipleOf8()
                 if ibc > _itemByteCount {
                     let result = increaseItemByteCount(to: ibc)
                     guard result == .success else { return result }
                 }
                 let srcPtr = valueFieldPtr
-                let dstPtr = valueFieldPtr.advanced(by: (name.byteCount - _itemNameFieldByteCount))
+                let dstPtr = valueFieldPtr.advanced(by: (nameField.byteCount - _itemNameFieldByteCount))
                 let shiftSize = usedValueFieldByteCount
                 manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: shiftSize, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
-                _itemNameFieldByteCount = name.byteCount
+                _itemNameFieldByteCount = nameField.byteCount
             }
             if ItemManager.startWithZeroedBuffers {
                 _ = Darwin.memset(_itemNameFieldPtr, 0, _itemNameFieldByteCount)
             }
-            _itemNameCrc = name.crc
-            _itemNameUtf8CodeByteCount = name.data.count
-            _itemNameUtf8Code = name.data
+            _itemNameCrc = nameField.crc
+            _itemNameUtf8CodeByteCount = nameField.data.count
+            _itemNameUtf8Code = nameField.data
             
         } else {
             
@@ -310,6 +288,105 @@ public extension Portal {
         }
         return .success
     }
+    
+    
+    /// Update the value in this item.
+    ///
+    /// The portal of self will not be affected. All portals referencing an item in self will be invalidated.
+    ///
+    /// - Parameter value: The new value.
+    ///
+    /// - Returns:
+    ///   success: if the value was updated.
+    ///
+    ///   error(code): if something prevented the update, the code details the reason.
+    
+    internal func _updateItemValue(_ value: Coder) -> Result {
+        
+        
+        // Update the proper region
+        
+        if value.itemType.usesSmallValue {
+        
+            value.copyBytes(to: itemSmallValuePtr, endianness)
+        
+        } else {
+        
+            
+            // Make sure the value field is big enough
+            
+            let result = ensureValueFieldByteCount(of: value.minimumValueFieldByteCount)
+            guard result == .success else { return result }
+            
+            
+            // Invalidate portals
+            
+            manager.removeActivePortals(atAndAbove: valueFieldPtr, below: itemPtr.advanced(by: _itemByteCount))
+            
+            
+            // Reset the value field to zero - when necessary
+            
+            if ItemManager.startWithZeroedBuffers {
+                _ = Darwin.memset(valueFieldPtr, 0, valueFieldPtr.distance(to: itemPtr.advanced(by: _itemByteCount)))
+            }
+            
+            
+            // Set the new value
+            
+            value.copyBytes(to: valueFieldPtr, endianness)
+        }
+        
+        return .success
+    }
+    
+    
+    /// Update the value in this item.
+    ///
+    /// The portal of self will not be affected. All portals contained in self will be invalidated.
+    ///
+    /// - Parameter value: The item manager with the new value.
+    ///
+    /// - Returns:
+    ///
+    ///   success: if the value was updated.
+    ///
+    ///   error(code): if something prevented the update, the code details the reason.
+
+    internal func _updateItemValue(_ value: ItemManager) -> Result {
+        
+        let newByteCount = value.root._itemByteCount
+        let oldByteCount = _itemByteCount
+        let pOffset = _itemParentOffset
+        
+        manager.removeActivePortals(atAndAbove: valueFieldPtr, below: itemPtr.advanced(by: _itemByteCount))
+
+        if oldByteCount > newByteCount {
+
+            manager.moveBlock(to: itemPtr, from: value.bufferPtr, moveCount: value.root._itemByteCount, removeCount: 0, updateMovedPortals: false, updateRemovedPortals: false)
+            
+            _itemByteCount = oldByteCount
+
+            if ItemManager.startWithZeroedBuffers {
+                _ = Darwin.memset(itemPtr.advanced(by: newByteCount), 0, (oldByteCount - newByteCount))
+            }
+            
+        } else if oldByteCount == newByteCount {
+
+            manager.moveBlock(to: itemPtr, from: value.bufferPtr, moveCount: value.root._itemByteCount, removeCount: 0, updateMovedPortals: false, updateRemovedPortals: false)
+
+        } else {
+            
+            // Increase the size of item to the necessary size
+            let result = increaseItemByteCount(to: newByteCount)
+            guard result == .success else { return result }
+            
+            _ = Darwin.memmove(itemPtr, value.bufferPtr, newByteCount)
+        }
+        
+        _itemParentOffset = pOffset
+        
+        return .success
+    }
 }
 
 
@@ -319,25 +396,25 @@ public extension Portal {
 ///
 /// - Parameters:
 ///   - ofType: The type to put in the itemType field.
-///   - withName: The namefield for the item. Optional.
+///   - withNameField: The namefield for the item. Optional.
 ///   - atPtr: The pointer at which to build the item structure.
 ///   - endianness: The endianness to be used while creating the item.
 ///
 /// - Returns: An ephemeral portal. Do not retain this portal, use it only to complete the rest of the structure.
 
-internal func buildItem(ofType type: ItemType, withName name: NameField? = nil, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
+internal func buildItem(ofType type: ItemType, withNameField nameField: NameField? = nil, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
     
     let portal = Portal.init(itemPtr: ptr, endianness: endianness)
     
     portal.itemType = type
     portal.itemFlags = ItemFlags.none
     portal.itemOptions = ItemOptions.none
-    portal._itemNameFieldByteCount = name?.byteCount ?? 0
-    portal._itemByteCount = itemMinimumByteCount + (name?.byteCount ?? 0)
+    portal._itemNameFieldByteCount = nameField?.byteCount ?? 0
+    portal._itemByteCount = itemMinimumByteCount + (nameField?.byteCount ?? 0)
     portal._itemParentOffset = 0
     portal._itemSmallValue = 0
     
-    name?.copyBytes(to: ptr.advanced(by: itemValueFieldOffset), endianness)
+    nameField?.copyBytes(to: ptr.advanced(by: itemValueFieldOffset), endianness)
     
     return portal
 }
@@ -349,15 +426,15 @@ internal func buildItem(ofType type: ItemType, withName name: NameField? = nil, 
 ///
 /// - Parameters:
 ///   - withValue: The value to put in the item.
-///   - withName: The namefield for the item. Optional.
+///   - withNameField: The namefield for the item. Optional.
 ///   - atPtr: The pointer at which to build the item structure.
 ///   - endianness: The endianness to be used while creating the item.
 ///
 /// - Returns: An ephemeral portal. Do not retain this portal, use it only to complete the rest of the structure.
 
-internal func buildItem(withValue value: Coder, withName name: NameField? = nil, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
+internal func buildItem(withValue value: Coder, withNameField nameField: NameField? = nil, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
 
-    let p = buildItem(ofType: value.itemType, withName: name, atPtr: ptr, endianness)
+    let p = buildItem(ofType: value.itemType, withNameField: nameField, atPtr: ptr, endianness)
 
     if value.itemType.usesSmallValue {
         value.copyBytes(to: p.itemSmallValuePtr, endianness)

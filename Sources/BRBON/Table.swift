@@ -77,7 +77,7 @@ internal func tableWriteSpecification(valueFieldPtr ptr: UnsafeMutableRawPointer
     var fieldOffset = 0
     for i in 0 ..< arr.count {
         arr[i].nameOffset = nameOffset
-        nameOffset += arr[i].name.byteCount
+        nameOffset += arr[i].nameField.byteCount
         arr[i].fieldOffset = fieldOffset
         fieldOffset += arr[i].fieldByteCount
     }
@@ -97,8 +97,8 @@ internal func tableWriteSpecification(valueFieldPtr ptr: UnsafeMutableRawPointer
     let columnDescriptorsPtr = ptr.advanced(by: tableColumnDescriptorBaseOffset)
     for (index, column) in arr.enumerated() {
         let descriptorPtr = columnDescriptorsPtr.advanced(by: index * tableColumnDescriptorByteCount)
-        column.name.crc.copyBytes(to: descriptorPtr, endianness)
-        UInt8(column.name.byteCount).copyBytes(to: descriptorPtr.advanced(by: tableColumnNameByteCountOffset), endianness)
+        column.nameField.crc.copyBytes(to: descriptorPtr, endianness)
+        UInt8(column.nameField.byteCount).copyBytes(to: descriptorPtr.advanced(by: tableColumnNameByteCountOffset), endianness)
         column.fieldType.copyBytes(to: descriptorPtr.advanced(by: tableColumnFieldTypeOffset))
         UInt32(column.nameOffset).copyBytes(to: descriptorPtr.advanced(by: tableColumnNameUtf8CodeOffsetOffset), endianness)
         UInt32(column.fieldOffset).copyBytes(to: descriptorPtr.advanced(by: tableColumnFieldOffsetOffset), endianness)
@@ -107,8 +107,8 @@ internal func tableWriteSpecification(valueFieldPtr ptr: UnsafeMutableRawPointer
     
     // Column names
     for column in arr {
-        UInt8(column.name.data.count).copyBytes(to: ptr.advanced(by: column.nameOffset), endianness)
-        column.name.data.copyBytes(to: ptr.advanced(by: column.nameOffset + 1).assumingMemoryBound(to: UInt8.self), count: column.name.data.count)
+        UInt8(column.nameField.data.count).copyBytes(to: ptr.advanced(by: column.nameOffset), endianness)
+        column.nameField.data.copyBytes(to: ptr.advanced(by: column.nameOffset + 1).assumingMemoryBound(to: UInt8.self), count: column.nameField.data.count)
     }
 }
 
@@ -514,7 +514,7 @@ extension Portal {
     internal func _tableSetColumnName(_ value: String, for column: Int) -> Result {
         
         // Convert the name into a NFD
-        guard let nfd = NameField(value) else { return .nameFieldError }
+        guard let nfd = NameField(value) else { return .error(.nameFieldError) }
         
         // Expand the name storage field when necessary
         if (nfd.data.count + 1) > _tableGetColumnNameByteCount(for: column) {
@@ -679,12 +679,12 @@ extension Portal {
             guard let colSpec = ColumnSpecification(fromPtr: itemValueFieldPtr, forColumn: i, endianness) else {
                 // Undo: Move the table back to its original place
                 manager.moveBlock(to: srcPtr, from: dstPtr, moveCount: len, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
-                return .invalidTableColumnType
+                return .error(.invalidTableColumnType)
             }
             cols.append(colSpec)
         }
-        let name = NameField(data: cols[column].name.data, crc: cols[column].name.crc, byteCount: bytes)
-        cols[column].name = name
+        let nameField = NameField(data: cols[column].nameField.data, crc: cols[column].nameField.crc, byteCount: bytes)
+        cols[column].nameField = nameField
         
         tableWriteSpecification(valueFieldPtr: itemValueFieldPtr, &cols, endianness)
 
@@ -696,7 +696,7 @@ extension Portal {
     
     internal func _tableEnsureColumnValueByteCount(of bytes: Int, in column: Int) -> Result {
 
-        guard let cspec = ColumnSpecification(fromPtr: itemValueFieldPtr, forColumn: column, endianness) else { return .invalidTableColumnType }
+        guard let cspec = ColumnSpecification(fromPtr: itemValueFieldPtr, forColumn: column, endianness) else { return .error(.invalidTableColumnType) }
 
         if bytes > cspec.fieldByteCount {
             let result = _tableIncreaseColumnValueByteCount(to: bytes.roundUpToNearestMultipleOf8(), for: column)
@@ -917,8 +917,8 @@ extension Portal {
     @discardableResult
     public func addRows(_ amount: Int, values closure: SetTableFieldDefaultValue? = nil) -> Result {
        
-        guard isValid else { return .portalInvalid }
-        guard isTable else { return .operationNotSupported }
+        guard isValid else { return .error(.portalInvalid) }
+        guard isTable else { return .error(.operationNotSupported) }
         
         let necessaryValueFieldByteCount = _tableRowsOffset + ((_tableRowCount + amount) * _tableRowByteCount)
         
@@ -964,11 +964,11 @@ extension Portal {
     @discardableResult
     public func removeRow(_ index: Int) -> Result {
         
-        guard isValid else { return .portalInvalid }
-        guard isTable else { return .operationNotSupported }
+        guard isValid else { return .error(.portalInvalid) }
+        guard isTable else { return .error(.operationNotSupported) }
         
-        guard index >= 0 else { return .indexBelowLowerBound }
-        guard index < _tableRowCount else { return .indexAboveHigherBound }
+        guard index >= 0 else { return .error(.indexBelowLowerBound) }
+        guard index < _tableRowCount else { return .error(.indexAboveHigherBound) }
         
         let dstPtr = _tableFieldPtr(row: index, column: 0)
         let srcPtr = dstPtr.advanced(by: _tableRowByteCount)
@@ -994,13 +994,13 @@ extension Portal {
     @discardableResult
     public func removeColumn(_ name: String) -> Result {
         
-        guard isValid else { return .portalInvalid }
-        guard isTable else { return .operationNotSupported }
+        guard isValid else { return .error(.portalInvalid) }
+        guard isTable else { return .error(.operationNotSupported) }
         
         
         // Get the index of the column to remove
         
-        guard let column = _tableColumnIndex(for: name) else { return .columnNotFound }
+        guard let column = _tableColumnIndex(for: name) else { return .error(.columnNotFound) }
         
         
         // Build an array of column descriptors to re-create the table descriptor without the removed column
@@ -1009,7 +1009,7 @@ extension Portal {
         for i in 0 ..< _tableColumnCount {
             if i != column {
                 guard let colSpec = ColumnSpecification(fromPtr: itemValueFieldPtr, forColumn: i, endianness) else {
-                    return .invalidTableColumnType
+                    return .error(.invalidTableColumnType)
                 }
                 cols.append(colSpec)
             }
@@ -1105,22 +1105,22 @@ extension Portal {
     ///
     /// - Parameters:
     ///   - type: The type stored in this column.
-    ///   - name: A namefield descriptor for the column name.
+    ///   - nameField: A namefield descriptor for the column name.
     ///   - byteCount: The number of bytes reserved for the new column value.
     ///   - default: A closure that can be used to set the default value for each new field.
     ///
     /// - Returns: Success or an error indicator.
 
     @discardableResult
-    public func addColumn(type: ItemType, name nfd: NameField, byteCount: Int, default closure: SetTableFieldDefaultValue? = nil) -> Result {
+    public func addColumn(type: ItemType, nameField nfd: NameField, byteCount: Int, default closure: SetTableFieldDefaultValue? = nil) -> Result {
         
-        guard isValid else { return .portalInvalid }
-        guard isTable else { return .operationNotSupported }
+        guard isValid else { return .error(.portalInvalid) }
+        guard isTable else { return .error(.operationNotSupported) }
 
         
         // Create a new column specification
         
-        let newSpec = ColumnSpecification(type: type, name: nfd, byteCount: byteCount)
+        let newSpec = ColumnSpecification(type: type, nameField: nfd, byteCount: byteCount)
 
         
         // Add the new spec
@@ -1140,8 +1140,8 @@ extension Portal {
     @discardableResult
     public func addColumns(_ specs: Array<ColumnSpecification>, defaultValues closure: SetTableFieldDefaultValue? = nil) -> Result {
         
-        guard isValid else { return .portalInvalid }
-        guard isTable else { return .operationNotSupported }
+        guard isValid else { return .error(.portalInvalid) }
+        guard isTable else { return .error(.operationNotSupported) }
 
         for spec in specs {
             let result = addColumn(spec, defaultValues: closure)
@@ -1164,13 +1164,13 @@ extension Portal {
     @discardableResult
     public func addColumn(_ colSpec: ColumnSpecification, defaultValues closure: SetTableFieldDefaultValue? = nil) -> Result {
         
-        guard isValid else { return .portalInvalid }
-        guard isTable else { return .operationNotSupported }
+        guard isValid else { return .error(.portalInvalid) }
+        guard isTable else { return .error(.operationNotSupported) }
 
         
         // The name may not exist already
         
-        guard _tableColumnIndex(for: colSpec.name) == nil else { return .nameExists }
+        guard _tableColumnIndex(for: colSpec.nameField) == nil else { return .error(.nameExists) }
         
         
         // Build an array of column descriptors to re-create the table descriptor
@@ -1178,7 +1178,7 @@ extension Portal {
         var cols: Array<ColumnSpecification> = []
         for i in 0 ..< _tableColumnCount {
             guard let spec = ColumnSpecification(fromPtr: itemValueFieldPtr, forColumn: i, endianness) else {
-                    return .invalidTableColumnType
+                    return .error(.invalidTableColumnType)
             }
             cols.append(spec)
         }
@@ -1197,7 +1197,7 @@ extension Portal {
         let oldRowByteCount = _tableRowByteCount
         
         var newRowsOffset = tableColumnDescriptorBaseOffset + cols.count * tableColumnDescriptorByteCount
-        for col in cols { newRowsOffset += col.name.byteCount }
+        for col in cols { newRowsOffset += col.nameField.byteCount }
         newRowsOffset = newRowsOffset.roundUpToNearestMultipleOf8()
         let newRowByteCount = oldRowByteCount + colSpec.fieldByteCount
         
@@ -1261,13 +1261,13 @@ extension Portal {
     
     public func insertRows(at index: Int, amount: Int = 1, defaultValues closure: SetTableFieldDefaultValue? = nil) -> Result {
         
-        guard isValid else { return .portalInvalid }
-        guard isTable else { return .operationNotSupported }
+        guard isValid else { return .error(.portalInvalid) }
+        guard isTable else { return .error(.operationNotSupported) }
         
-        guard index >= 0 else { return .indexBelowLowerBound }
-        guard index < _tableRowCount else { return .indexAboveHigherBound }
+        guard index >= 0 else { return .error(.indexBelowLowerBound) }
+        guard index < _tableRowCount else { return .error(.indexAboveHigherBound) }
         
-        guard (amount > 0) && (amount < Int(Int32.max)) else { return .illegalAmount }
+        guard (amount > 0) && (amount < Int(Int32.max)) else { return .error(.illegalAmount) }
         
         let necessaryValueFieldByteCount = _tableRowsOffset + ((_tableRowCount + amount) * _tableRowByteCount)
         
@@ -1322,20 +1322,20 @@ extension Portal {
     @discardableResult
     public func assignField(at row: Int, in column: Int, fromManager source: ItemManager) -> Result {
         
-        guard isValid else { return .portalInvalid }
-        guard itemType == .table else { return .operationNotSupported }
+        guard isValid else { return .error(.portalInvalid) }
+        guard itemType == .table else { return .error(.operationNotSupported) }
 
         
         // Prevent errors
         
-        guard row >= 0 else { return Result.indexBelowLowerBound }
-        guard row < _tableRowCount else { return Result.indexAboveHigherBound }
+        guard row >= 0 else { return .error(.indexBelowLowerBound) }
+        guard row < _tableRowCount else { return .error(.indexAboveHigherBound) }
         
-        guard (column >= 0) && (column < _tableColumnCount) else { return Result.columnNotFound }
+        guard (column >= 0) && (column < _tableColumnCount) else { return .error(.columnNotFound) }
         
-        guard source.root.itemType?.isContainer ?? false else { return Result.dataInconsistency }
+        guard source.root.itemType?.isContainer ?? false else { return .error(.dataInconsistency) }
         
-        guard _tableGetColumnType(for: column)?.isContainer ?? false else { return Result.invalidTableColumnType }
+        guard _tableGetColumnType(for: column)?.isContainer ?? false else { return .error(.invalidTableColumnType) }
         
         
         // Ensure that there is sufficient space
@@ -1378,8 +1378,8 @@ extension Portal {
     @discardableResult
     public func createFieldArray(at row: Int, in column: Int, elementType: ItemType, elementByteCount: Int? = nil, elementCount: Int) -> Result {
         
-        guard isValid else { return Result.portalInvalid }
-        guard itemType == .table else { return Result.operationNotSupported }
+        guard isValid else { return .error(.portalInvalid) }
+        guard itemType == .table else { return .error(.operationNotSupported) }
         
         let im = ItemManager.createArrayManager(elementType: elementType, elementByteCount: elementByteCount ?? 0, elementCount: elementCount, endianness: endianness)
         
@@ -1401,8 +1401,8 @@ extension Portal {
     @discardableResult
     public func createFieldSequence(at row: Int, in column: Int, valueByteCount: Int? = nil) -> Result {
         
-        guard isValid else { return Result.portalInvalid }
-        guard itemType == .table else { return Result.operationNotSupported }
+        guard isValid else { return .error(.portalInvalid) }
+        guard itemType == .table else { return .error(.operationNotSupported) }
 
         let im = ItemManager.createSequenceManager(valueFieldByteCount: valueByteCount ?? 0, endianness: endianness)
         
@@ -1424,8 +1424,8 @@ extension Portal {
     @discardableResult
     public func createFieldDictionary(at row: Int, in column: Int, valueByteCount: Int? = nil) -> Result {
         
-        guard isValid else { return Result.portalInvalid }
-        guard itemType == .table else { return Result.operationNotSupported }
+        guard isValid else { return .error(.portalInvalid) }
+        guard itemType == .table else { return .error(.operationNotSupported) }
         
         let im = ItemManager.createDictionaryManager(valueFieldByteCount: valueByteCount ?? 0, endianness: endianness)
         
@@ -1447,8 +1447,8 @@ extension Portal {
     @discardableResult
     public func createFieldTable(at row: Int, in column: Int, columnSpecifications: inout Array<ColumnSpecification>) -> Result {
         
-        guard isValid else { return Result.portalInvalid }
-        guard itemType == .table else { return Result.operationNotSupported }
+        guard isValid else { return .error(.portalInvalid) }
+        guard itemType == .table else { return .error(.operationNotSupported) }
         
         let im = ItemManager.createTableManager(columns: &columnSpecifications, endianness: endianness)
         
@@ -1457,7 +1457,7 @@ extension Portal {
 }
 
 
-internal func buildTableItem(withName: NameField?, columns: inout Array<ColumnSpecification>, initialRowsAllocated: Int, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+internal func buildTableItem(withNameField nameField: NameField?, columns: inout Array<ColumnSpecification>, initialRowsAllocated: Int, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
     
     let rowByteCount: Int = columns.reduce(0) { $0 + $1.fieldByteCount }
 
@@ -1481,7 +1481,7 @@ internal func buildTableItem(withName: NameField?, columns: inout Array<ColumnSp
         // Add the name field byte counts
         
         columns.forEach() {
-            total += $0.name.byteCount
+            total += $0.nameField.byteCount
         }
         
         
@@ -1493,7 +1493,7 @@ internal func buildTableItem(withName: NameField?, columns: inout Array<ColumnSp
         return total
     }()
 
-    let p = buildItem(ofType: .table, atPtr: ptr, endianness)
+    let p = buildItem(ofType: .table, withNameField: nameField, atPtr: ptr, endianness)
     p._itemByteCount += valueByteCount
     
     UInt32(0).copyBytes(to: p.valueFieldPtr.advanced(by: tableRowCountOffset), endianness)

@@ -52,7 +52,7 @@ class Dictionary_Tests: XCTestCase {
         
         // Add a Null item
         
-        XCTAssertEqual(dm.root.updateItem(Null(), withName: NameField("null")), .success)
+        XCTAssertEqual(dm.root.updateItem(Null(), withNameField: NameField("null")), .success)
         XCTAssertEqual(dm.root.count, 1)
         XCTAssertTrue(dm.root["null"].isNull)
         
@@ -71,7 +71,7 @@ class Dictionary_Tests: XCTestCase {
         
         // Add a Bool item
         
-        XCTAssertEqual(dm.root.updateItem(true, withName: NameField("bool")), .success)
+        XCTAssertEqual(dm.root.updateItem(true, withNameField: NameField("bool")), .success)
         XCTAssertEqual(dm.root.count, 2)
         XCTAssertTrue(dm.root["null"].isNull)
         XCTAssertTrue(dm.root["bool"].isBool)
@@ -97,7 +97,7 @@ class Dictionary_Tests: XCTestCase {
         
         // Add an Int8
         
-        XCTAssertEqual(dm.root.updateItem(Int8(0x12), withName: NameField("int8")), .success)
+        XCTAssertEqual(dm.root.updateItem(Int8(0x12), withNameField: NameField("int8")), .success)
         XCTAssertEqual(dm.root.count, 3)
         XCTAssertTrue(dm.root["null"].isNull)
         XCTAssertTrue(dm.root["bool"].isBool)
@@ -129,7 +129,7 @@ class Dictionary_Tests: XCTestCase {
         
         // Add an Int16
         
-        XCTAssertEqual(dm.root.updateItem(Int16(0x1234), withName: NameField("int16")), .success)
+        XCTAssertEqual(dm.root.updateItem(Int16(0x1234), withNameField: NameField("int16")), .success)
         XCTAssertEqual(dm.root.count, 4)
         XCTAssertTrue(dm.root["null"].isNull)
         XCTAssertTrue(dm.root["bool"].isBool)
@@ -165,7 +165,7 @@ class Dictionary_Tests: XCTestCase {
 
         // Add an Int32
         
-        XCTAssertEqual(dm.root.updateItem(Int32(0x12345678), withName: NameField("int32")), .success)
+        XCTAssertEqual(dm.root.updateItem(Int32(0x12345678), withNameField: NameField("int32")), .success)
         XCTAssertEqual(dm.root.count, 5)
         XCTAssertTrue(dm.root["null"].isNull)
         XCTAssertTrue(dm.root["bool"].isBool)
@@ -208,7 +208,7 @@ class Dictionary_Tests: XCTestCase {
         
         // Add an Int64
         
-        XCTAssertEqual(dm.root.updateItem(Int64(0x1234567887654321), withName: NameField("int64")), .success)
+        XCTAssertEqual(dm.root.updateItem(Int64(0x1234567887654321), withNameField: NameField("int64")), .success)
         XCTAssertEqual(dm.root.count, 6)
         XCTAssertTrue(dm.root["null"].isNull)
         XCTAssertTrue(dm.root["bool"].isBool)
@@ -258,7 +258,7 @@ class Dictionary_Tests: XCTestCase {
         
         // Add an UInt8
         
-        XCTAssertEqual(dm.root.updateItem(UInt8(0x12), withName: NameField("uint8")), .success)
+        XCTAssertEqual(dm.root.updateItem(UInt8(0x12), withNameField: NameField("uint8")), .success)
         XCTAssertEqual(dm.root.count, 7)
         XCTAssertTrue(dm.root["null"].isNull)
         XCTAssertTrue(dm.root["bool"].isBool)
@@ -315,7 +315,7 @@ class Dictionary_Tests: XCTestCase {
         
         // Add an UInt16
         
-        XCTAssertEqual(dm.root.updateItem(UInt16(0x1234), withName: NameField("uint16")), .success)
+        XCTAssertEqual(dm.root.updateItem(UInt16(0x1234), withNameField: NameField("uint16")), .success)
         XCTAssertEqual(dm.root.count, 8)
         XCTAssertTrue(dm.root["null"].isNull)
         XCTAssertTrue(dm.root["bool"].isBool)
@@ -378,7 +378,7 @@ class Dictionary_Tests: XCTestCase {
         
         // Add an UInt32
         
-        XCTAssertEqual(dm.root.updateItem(UInt32(0x12345678), withName: NameField("uint32")), .success)
+        XCTAssertEqual(dm.root.updateItem(UInt32(0x12345678), withNameField: NameField("uint32")), .success)
         XCTAssertEqual(dm.root.count, 9)
         XCTAssertTrue(dm.root["null"].isNull)
         XCTAssertTrue(dm.root["bool"].isBool)
@@ -448,7 +448,7 @@ class Dictionary_Tests: XCTestCase {
         
         // Add an UInt64
         
-        XCTAssertEqual(dm.root.updateItem(UInt64(0x1234567887654321), withName: NameField("uint64")), .success)
+        XCTAssertEqual(dm.root.updateItem(UInt64(0x1234567887654321), withNameField: NameField("uint64")), .success)
         XCTAssertEqual(dm.root.count, 10)
         XCTAssertTrue(dm.root["null"].isNull)
         XCTAssertTrue(dm.root["bool"].isBool)
@@ -526,7 +526,7 @@ class Dictionary_Tests: XCTestCase {
     
         // Add an Float32
         
-        XCTAssertEqual(dm.root.updateItem(Float32(12), withName: NameField("float32")), .success)
+        XCTAssertEqual(dm.root.updateItem(Float32(12), withNameField: NameField("float32")), .success)
         XCTAssertEqual(dm.root.count, 11)
         XCTAssertTrue(dm.root["null"].isNull)
         XCTAssertTrue(dm.root["bool"].isBool)
@@ -612,7 +612,7 @@ class Dictionary_Tests: XCTestCase {
         
         // Add an Float64
         
-        XCTAssertEqual(dm.root.updateItem(Float64(1.23), withName: NameField("float64")), .success)
+        XCTAssertEqual(dm.root.updateItem(Float64(1.23), withNameField: NameField("float64")), .success)
         XCTAssertEqual(dm.root.count, 12)
         XCTAssertTrue(dm.root["null"].isNull)
         XCTAssertTrue(dm.root["bool"].isBool)
@@ -706,7 +706,7 @@ class Dictionary_Tests: XCTestCase {
         
         // Add a string
         
-        XCTAssertEqual(dm.root.updateItem(BRString("string"), withName: NameField("string")), .success)
+        XCTAssertEqual(dm.root.updateItem(BRString("string"), withNameField: NameField("string")), .success)
         XCTAssertEqual(dm.root.count, 13)
         XCTAssertTrue(dm.root["null"].isNull)
         XCTAssertTrue(dm.root["bool"].isBool)
@@ -809,7 +809,7 @@ class Dictionary_Tests: XCTestCase {
         
         // Add a CrcString
         
-        XCTAssertEqual(dm.root.updateItem(BRCrcString("crcstring"), withName: NameField("crcstring")), .success)
+        XCTAssertEqual(dm.root.updateItem(BRCrcString("crcstring"), withNameField: NameField("crcstring")), .success)
         XCTAssertEqual(dm.root.count, 14)
         XCTAssertTrue(dm.root["null"].isNull)
         XCTAssertTrue(dm.root["bool"].isBool)
@@ -921,7 +921,7 @@ class Dictionary_Tests: XCTestCase {
         
         // Add a Binary
         
-        XCTAssertEqual(dm.root.updateItem(Data(bytes: [0x11, 0x22, 0x33]), withName: NameField("binary")), .success)
+        XCTAssertEqual(dm.root.updateItem(Data(bytes: [0x11, 0x22, 0x33]), withNameField: NameField("binary")), .success)
         XCTAssertEqual(dm.root.count, 15)
         XCTAssertTrue(dm.root["null"].isNull)
         XCTAssertTrue(dm.root["bool"].isBool)
@@ -1042,7 +1042,7 @@ class Dictionary_Tests: XCTestCase {
         
         // Add a CrcBinary
         
-        XCTAssertEqual(dm.root.updateItem(BRCrcBinary(Data(bytes: [0x11, 0x22, 0x33])), withName: NameField("crcbinary")), .success)
+        XCTAssertEqual(dm.root.updateItem(BRCrcBinary(Data(bytes: [0x11, 0x22, 0x33])), withNameField: NameField("crcbinary")), .success)
         XCTAssertEqual(dm.root.count, 16)
         XCTAssertTrue(dm.root["null"].isNull)
         XCTAssertTrue(dm.root["bool"].isBool)
@@ -1174,7 +1174,7 @@ class Dictionary_Tests: XCTestCase {
         
         let aim = ItemManager.createArrayManager(values: [true, true, false])
         
-        XCTAssertEqual(dm.root.updateItem(aim, withName: NameField("array")), .success)
+        XCTAssertEqual(dm.root.updateItem(aim, withNameField: NameField("array")), .success)
         XCTAssertEqual(dm.root.count, 17)
         XCTAssertTrue(dm.root["null"].isNull)
         XCTAssertTrue(dm.root["bool"].isBool)
@@ -1316,9 +1316,9 @@ class Dictionary_Tests: XCTestCase {
         // Add a dctionary
         
         let dim = ItemManager.createDictionaryManager()
-        guard dim.root.updateItem(Null(), withName: NameField("null")) == .success else { XCTFail(); return }
+        guard dim.root.updateItem(Null(), withNameField: NameField("null")) == .success else { XCTFail(); return }
         
-        XCTAssertEqual(dm.root.updateItem(dim, withName: NameField("dict")), .success)
+        XCTAssertEqual(dm.root.updateItem(dim, withNameField: NameField("dict")), .success)
         XCTAssertEqual(dm.root.count, 18)
         XCTAssertTrue(dm.root["null"].isNull)
         XCTAssertTrue(dm.root["bool"].isBool)
@@ -1474,7 +1474,7 @@ class Dictionary_Tests: XCTestCase {
         
         guard let u = UUID(uuidString: "01234567-1234-1234-1234-123456789011") else { XCTFail(); return }
         
-        XCTAssertEqual(dm.root.updateItem(u, withName: NameField("uuid")), .success)
+        XCTAssertEqual(dm.root.updateItem(u, withNameField: NameField("uuid")), .success)
         XCTAssertEqual(dm.root.count, 19)
         XCTAssertTrue(dm.root["null"].isNull)
         XCTAssertTrue(dm.root["bool"].isBool)
@@ -1635,7 +1635,7 @@ class Dictionary_Tests: XCTestCase {
         
         let c = BRColor(NSColor.blue)
         
-        XCTAssertEqual(dm.root.updateItem(c, withName: NameField("color")), .success)
+        XCTAssertEqual(dm.root.updateItem(c, withNameField: NameField("color")), .success)
         XCTAssertEqual(dm.root.count, 20)
         XCTAssertTrue(dm.root["null"].isNull)
         XCTAssertTrue(dm.root["bool"].isBool)
@@ -1802,7 +1802,7 @@ class Dictionary_Tests: XCTestCase {
         
         let f = BRFont(NSFont(name:"Courier", size: 12.0))
         
-        XCTAssertEqual(dm.root.updateItem(f, withName: NameField("font")), .success)
+        XCTAssertEqual(dm.root.updateItem(f, withNameField: NameField("font")), .success)
         XCTAssertEqual(dm.root.count, 21)
         XCTAssertTrue(dm.root["null"].isNull)
         XCTAssertTrue(dm.root["bool"].isBool)
@@ -1981,9 +1981,9 @@ class Dictionary_Tests: XCTestCase {
         
         let dm = ItemManager.createDictionaryManager()
         
-        XCTAssertEqual(dm.root.updateItem(BRString("11111111")!, withName: NameField("11")), .success)
-        XCTAssertEqual(dm.root.updateItem(BRString("22222222")!, withName: NameField("22")), .success)
-        XCTAssertEqual(dm.root.updateItem(BRString("33333333")!, withName: NameField("33")), .success)
+        XCTAssertEqual(dm.root.updateItem(BRString("11111111")!, withNameField: NameField("11")), .success)
+        XCTAssertEqual(dm.root.updateItem(BRString("22222222")!, withNameField: NameField("22")), .success)
+        XCTAssertEqual(dm.root.updateItem(BRString("33333333")!, withNameField: NameField("33")), .success)
         
         var exp = Data(bytes: [
             0x12, 0x00, 0x00, 0x00,  0x90, 0x00, 0x00, 0x00,
@@ -2011,7 +2011,7 @@ class Dictionary_Tests: XCTestCase {
 
         XCTAssertEqual(dm.data, exp)
 
-        XCTAssertEqual(dm.root.updateItem(BRString("4444444444444"), withName: NameField("22")), .success)
+        XCTAssertEqual(dm.root.updateItem(BRString("4444444444444"), withNameField: NameField("22")), .success)
         
         exp = Data(bytes: [
             0x12, 0x00, 0x00, 0x00,  0x98, 0x00, 0x00, 0x00,
@@ -2040,7 +2040,7 @@ class Dictionary_Tests: XCTestCase {
 
         XCTAssertEqual(dm.data, exp)
 
-        XCTAssertEqual(dm.root.updateItem(BRString("55"), withName: NameField("22")), .success)
+        XCTAssertEqual(dm.root.updateItem(BRString("55"), withNameField: NameField("22")), .success)
 
         exp = Data(bytes: [
             0x12, 0x00, 0x00, 0x00,  0x98, 0x00, 0x00, 0x00,
@@ -2068,11 +2068,11 @@ class Dictionary_Tests: XCTestCase {
             ])
 
         
-        XCTAssertEqual(dm.root.removeItem(withName: NameField("44")), .itemNotFound)
+        XCTAssertEqual(dm.root.removeItem(withNameField: NameField("44")), .error(.itemNotFound))
 
         XCTAssertEqual(dm.data, exp)
 
-        XCTAssertEqual(dm.root.removeItem(withName: NameField("11")), .success)
+        XCTAssertEqual(dm.root.removeItem(withNameField: NameField("11")), .success)
         
         exp = Data(bytes: [
             0x12, 0x00, 0x00, 0x00,  0x70, 0x00, 0x00, 0x00,
@@ -2093,7 +2093,7 @@ class Dictionary_Tests: XCTestCase {
             0x33, 0x33, 0x33, 0x33,  0x00, 0x00, 0x00, 0x00,
             ])
 
-        XCTAssertEqual(dm.root.removeItem(withName: NameField("33")), .success)
+        XCTAssertEqual(dm.root.removeItem(withNameField: NameField("33")), .success)
         
         exp = Data(bytes: [
             0x12, 0x00, 0x00, 0x00,  0x48, 0x00, 0x00, 0x00,
@@ -2108,7 +2108,7 @@ class Dictionary_Tests: XCTestCase {
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             ])
 
-        XCTAssertEqual(dm.root.removeItem(withName: NameField("22")), .success)
+        XCTAssertEqual(dm.root.removeItem(withNameField: NameField("22")), .success)
         
         exp = Data(bytes: [
             0x12, 0x00, 0x00, 0x00,  0x18, 0x00, 0x00, 0x00,

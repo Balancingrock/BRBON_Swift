@@ -102,119 +102,67 @@ extension Portal {
     ///
     /// - Returns: 'success' or an error indicator (including 'itemNotFound').
     
-    internal func _dictionaryRemoveItem(withName name: NameField?) -> Result {
+    internal func _dictionaryRemoveItem(withNameField nameField: NameField?) -> Result {
         
-        guard let item = findPortalForItem(withName: name) else { return .itemNotFound }
+        let item = dictionaryFindItem(nameField)
         
+        guard item.isValid else { return .error(.itemNotFound) }
+        
+        let itemStartPtr = item.itemPtr
+        let itemByteCount = item._itemByteCount
+        let nextItemPtr = item.itemPtr.advanced(by: itemByteCount)
         let afterLastItemPtr = _dictionaryAfterLastItemPtr
-            
+
+        assert(nextItemPtr <= afterLastItemPtr)
+        
         // Last item does not need a block move
-        if afterLastItemPtr == item.itemPtr.advanced(by: item._itemByteCount) {
+        
+        if afterLastItemPtr == nextItemPtr {
                 
             // Update the active portals list (remove deleted item)
-            manager.removeActivePortal(item)
-                
+            
+            manager.removeActivePortals(atAndAbove: itemStartPtr, below: afterLastItemPtr)
+            
+            
+            // Zero the 'removed' bytes
+            
+            if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(itemStartPtr, 0, itemByteCount) }
+
         } else {
                 
             // Move the items after the found item over the found item
                 
-            let srcPtr = item.itemPtr.advanced(by: item._itemByteCount)
-            let dstPtr = item.itemPtr
-            let len = srcPtr.distance(to: afterLastItemPtr)
+            let len = nextItemPtr.distance(to: afterLastItemPtr)
                 
-            manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: item._itemByteCount, updateMovedPortals: true, updateRemovedPortals: true)
-        }
+            manager.moveBlock(to: itemStartPtr, from: nextItemPtr, moveCount: len, removeCount: itemByteCount, updateMovedPortals: true, updateRemovedPortals: true)
             
+            
+            // Zero the freed bytes
+            
+            if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(nextItemPtr.advanced(by: len), 0, itemByteCount) }
+        }
+        
         _dictionaryItemCount -= 1
         
         return .success
     }
 
     
-    /// Updating an item with a given name.
-    ///
-    /// - Parameters:
-    ///   - value: The new value.
-    ///   - name: The name of the item to update.
-    ///
-    /// - Returns: Either .success or an error indicator.
-    
-    internal func _dictionaryUpdateItem(_ value: Coder, withName name: NameField?) -> Result {
+    internal func _dictionaryAddItem(_ value: Coder, withNameField nameField: NameField?) -> Result {
         
-        guard let item = findPortalForItem(withName: name) else {
-            return _dictionaryAddItem(value, withName: name)
-        }
-
+        guard let nameField = nameField else { return .error(.missingName) }
         
-        // Update
-        
-        if value.itemType.usesSmallValue {
-            value.copyBytes(to: item.itemSmallValuePtr, endianness)
-        } else {
-            let result = item.ensureValueFieldByteCount(of: value.valueByteCount.roundUpToNearestMultipleOf8())
-            guard result == .success else { return result }
-            if ItemManager.startWithZeroedBuffers {
-                _ = Darwin.memset(item.valueFieldPtr, 0, item.valueFieldPtr.distance(to: item.itemPtr.advanced(by: item._itemByteCount)))
-            }
-            value.copyBytes(to: item.valueFieldPtr, endianness)
-        }
-                
-        return .success
-    }
-    
-    internal func _dictionaryAddItem(_ value: Coder, withName name: NameField?) -> Result {
-        
-        guard let name = name else { return .missingName }
-        
-        let neededValueFieldByteCount = itemMinimumByteCount + name.byteCount + (value.itemType.usesSmallValue ? 0 : value.valueByteCount.roundUpToNearestMultipleOf8())
+        let neededValueFieldByteCount = itemMinimumByteCount + nameField.byteCount + (value.itemType.usesSmallValue ? 0 : value.valueByteCount.roundUpToNearestMultipleOf8())
         
         let result = ensureValueFieldByteCount(of: usedValueFieldByteCount + neededValueFieldByteCount)
         guard result == .success else { return result }
         
         let pOffset = manager.bufferPtr.distance(to: itemPtr)
         
-        let p = buildItem(withValue: value, withName: name, atPtr: _dictionaryAfterLastItemPtr, endianness)
+        let p = buildItem(withValue: value, withNameField: nameField, atPtr: _dictionaryAfterLastItemPtr, endianness)
         p._itemParentOffset = pOffset
 
         _dictionaryItemCount += 1
-        
-        return .success
-    }
-    
-    /// Updating an item with a given name.
-    ///
-    /// - Parameters:
-    ///   - value: The new value.
-    ///   - name: The name of the item to update.
-    ///
-    /// - Returns: Either .success or an error indicator.
-    
-    internal func _dictionaryUpdateItem(_ value: ItemManager, withName name: NameField?) -> Result {
-        
-        guard let item = findPortalForItem(withName: name) else {
-            return _dictionaryAddItem(value, withName: name)
-        }
-        
-        
-        // Update
-        
-        let newByteCount = value.root._itemByteCount
-        let oldByteCount = item._itemByteCount
-        let pOffset = item._itemParentOffset
-        if oldByteCount > newByteCount {
-            // Choose speed over compactness: update the size of the new item to the size of the old item
-            // Note that the memmove will update the _itemByteCount
-            _ = Darwin.memmove(item.itemPtr, value.bufferPtr, newByteCount)
-            item._itemByteCount = oldByteCount
-        } else if oldByteCount == newByteCount {
-            _ = Darwin.memmove(item.itemPtr, value.bufferPtr, oldByteCount)
-        } else {
-            // Increase the size of item to the necessary size
-            let result = item.increaseItemByteCount(to: newByteCount)
-            guard result == .success else { return result }
-            _ = Darwin.memmove(item.itemPtr, value.bufferPtr, newByteCount)
-        }
-        item._itemParentOffset = pOffset
         
         return .success
     }
@@ -224,17 +172,17 @@ extension Portal {
     ///
     /// - Note: This operation does not check for name duplication!.
     
-    internal func _dictionaryAddItem(_ value: ItemManager, withName name: NameField?) -> Result {
+    internal func _dictionaryAddItem(_ value: ItemManager, withNameField nameField: NameField?) -> Result {
         
 
         // Make sure the new item has the appropriate name
 
-        if let name = name {
-            let result = value.root.setItemName(to: name)
+        if let nameField = nameField {
+            let result = value.root.updateItemName(to: nameField)
             guard result == .success else { return result }
         }
         
-        guard value.root.hasName else { return .missingName }
+        guard value.root.hasName else { return .error(.missingName) }
 
         
         // The new value field byte count for the dictionary
@@ -264,6 +212,41 @@ extension Portal {
         
         return .success
     }
+    
+    
+    /// Returns a portal for the item with the specified name field.
+    ///
+    /// Returns the nullPortal if the item cannot be found.
+    ///
+    /// - Parameter nameField: The name field to look for.
+    ///
+    /// - Returns: The requested portal or the null portal.
+    
+    internal func dictionaryFindItem(_ nameField: NameField?) -> Portal {
+        guard isDictionary else { return Portal.nullPortal }
+        guard let nameField = nameField else { return Portal.nullPortal }
+        var remainder = _dictionaryItemCount
+        var itemPtr = _dictionaryItemBasePtr
+        while remainder > 0 {
+            if UInt16(fromPtr: itemPtr.advanced(by: itemNameCrcOffset), endianness) == nameField.crc {
+                if itemPtr.advanced(by: itemNameUtf8ByteCountOffset).assumingMemoryBound(to: UInt8.self).pointee == UInt8(nameField.data.count) {
+                    var dataIsEqual = true
+                    for i in 0 ..< nameField.data.count {
+                        if itemPtr.advanced(by: itemNameUtf8CodeOffset + i).assumingMemoryBound(to: UInt8.self).pointee != nameField.data[i] {
+                            dataIsEqual = false
+                            break
+                        }
+                    }
+                    if dataIsEqual {
+                        return manager.getActivePortal(for: itemPtr)
+                    }
+                }
+            }
+            remainder -= 1
+            itemPtr += Int(UInt32.init(fromPtr: itemPtr.advanced(by: itemByteCountOffset), endianness))
+        }
+        return Portal.nullPortal
+    }
 }
 
 
@@ -272,47 +255,181 @@ extension Portal {
 public extension Portal {
     
     
-    /// Updates the value of the referenced item in the dictionary or adds it to the dictionary.
+    /// Updates the referenced item or adds a new item to a dictionary.
+    ///
+    /// The type of the value and of the referenced item must be the same. Use 'replaceItem' to change the type of the referenced item.
+    ///
+    /// - Note: The portal 'self' will not be affected, portals referring to items in the content field will be invalidated.
     ///
     /// - Parameters:
     ///   - value: The new value.
-    ///   - withName: The name of the item to update/add.
+    ///   - withNameField: The name field of the item to update/add.
     ///
-    /// - Returns: 'success' or an error indicator. If the name or value is nil, 'success' will be returned.
+    /// - Returns:
+    ///   success: if the update was made.
+    ///
+    ///   noAction: if either value or withNameField is nil.
+    ///
+    ///   error(code): if the update could not be made because of an error, the code details the kind of error.
     
     @discardableResult
-    public func updateItem(_ value: Coder?, withName name: NameField?) -> Result {
+    public func updateItem(_ value: Coder?, withNameField nameField: NameField?) -> Result {
         
-        guard let name = name else { return .success }
+        guard let nameField = nameField else { return .noAction }
         guard let value = value else { return .success }
 
-        guard isValid else { return .portalInvalid }
-        guard isDictionary else { return .operationNotSupported }
+        guard isValid else { return .error(.portalInvalid) }
+        guard isDictionary else { return .error(.operationNotSupported) }
         
-        return _dictionaryUpdateItem(value, withName: name)
+        let item = dictionaryFindItem(nameField)
+        
+        if item.isValid {
+            guard item.itemType! == value.itemType else { return .error(.typeConflict) }
+            return item._updateItemValue(value)
+        } else {
+            return _dictionaryAddItem(value, withNameField: nameField)
+        }
     }
 
     
-    /// Updates the value of the referenced item in the dictionary or adds it to the dictionary.
+    /// Updates the referenced item or adds a new item to a dictionary.
+    ///
+    /// If the referenced item has an active portal, that portal is unaffected. However any active portal to the content of the items will be invalidated.
+    ///
+    /// - Note: The type in value.root and in the referenced item must be the same. Use 'replaceItem' to change the type of the referenced item.
     ///
     /// - Note: If the name is nil, but the value.root has a name, then that name will be used.
     ///
     /// - Parameters:
     ///   - value: The new value.
-    ///   - withName: The name of the item to update/add.
+    ///   - withNameField: The name of the item to update/add.
     ///
     /// - Returns: 'success' or an error indicator.
     
     @discardableResult
-    public func updateItem(_ value: ItemManager?, withName name: NameField?) -> Result {
+    public func updateItem(_ value: ItemManager?, withNameField nameField: NameField?) -> Result {
         
-        guard let value = value else { return .success }
-        guard (name != nil) || (value.root.itemName != nil ) else { return .success }
+        guard let value = value else { return .noAction }
+        guard (nameField != nil) || value.root.hasName else { return .noAction }
 
-        guard isValid else { return .portalInvalid }
-        guard isDictionary else { return .operationNotSupported }
+        guard isValid else { return .error(.portalInvalid) }
+        guard isDictionary else { return .error(.operationNotSupported) }
 
-        return _dictionaryUpdateItem(value, withName: name)
+        let item = dictionaryFindItem(nameField)
+        
+        if item.isValid {
+            guard item.itemType! == value.root.itemType else { return .error(.typeConflict) }
+            return item._updateItemValue(value)
+        } else {
+            return _dictionaryAddItem(value, withNameField: nameField)
+        }
+    }
+
+    
+    /// Replaces an item with a new item. If the item is not yet present, the new value will be rejected.
+    ///
+    /// - Note: The portal of the replaced item will be invalidated, as will the portals to any item in the content area of the replaced item.
+    ///
+    /// - Parameters:
+    ///   - value: The new content for the item.
+    ///   - withNameField: The name field for the item to be replaced (and the new item).
+    ///
+    /// - Returns:
+    ///   success: If the old item was replaced.
+    ///
+    ///   noAction: If either parameter was nil.
+    ///
+    ///   error(code): If an error prevented completion of the request, the code will detail the kind of error.
+    
+    @discardableResult
+    public func replaceItem(_ value: Coder?, withNameField nameField: NameField?) -> Result {
+        
+        guard let nameField = nameField else { return .noAction }
+        guard let value = value else { return .noAction }
+        
+        guard isValid else { return .error(.portalInvalid) }
+        guard isDictionary else { return .error(.operationNotSupported) }
+        
+        let item = dictionaryFindItem(nameField)
+        
+        if item.isValid {
+
+            // Ensure sufficient storage
+            let result = item.ensureValueFieldByteCount(of: value.minimumValueFieldByteCount)
+            guard result == .success else { return result }
+
+            // Save the parameters that must be restored
+            let pOffset = item._itemParentOffset
+            let oldByteCount = item._itemByteCount
+            
+            // Invalidate contained portals
+            manager.removeActivePortals(atAndAbove: item.itemPtr, below: item.itemPtr.advanced(by: item._itemByteCount))
+            
+            // Create the new item
+            let p = buildItem(withValue: value, withNameField: nameField, atPtr: itemPtr, endianness)
+            
+            // Restore the saved parameters
+            p._itemParentOffset = pOffset
+            p._itemByteCount = oldByteCount
+            
+            return .success
+
+        } else {
+            return .error(.itemNotFound)
+        }
+    }
+    
+    
+    /// Replaces an item with the contents from an item manager. If the item is not present, the new content will be rejected.
+    ///
+    /// - Note: The portal of the replaced item will be invalidated, as will the portals to any item in the content area of the replaced item.
+    ///
+    /// - Parameters:
+    ///   - value: The new content for the item.
+    ///   - withNameField: The name field for the item to be replaced (and the new item).
+    ///
+    /// - Returns:
+    ///   success: If the old item was replaced.
+    ///
+    ///   noAction: If either parameter was nil.
+    ///
+    ///   error(code): If an error prevented completion of the request, the code will detail the kind of error.
+
+    @discardableResult
+    public func replaceItem(_ value: ItemManager?, withNameField nameField: NameField?) -> Result {
+        
+        guard let nameField = nameField else { return .noAction }
+        guard let value = value else { return .noAction }
+        
+        guard isValid else { return .error(.portalInvalid) }
+        guard isDictionary else { return .error(.operationNotSupported) }
+        
+        let item = dictionaryFindItem(nameField)
+        
+        if item.isValid {
+            
+            // Ensure sufficient storage
+            let result = item.ensureValueFieldByteCount(of: value.root._itemByteCount)
+            guard result == .success else { return result }
+            
+            // Save the parameters that must be restored
+            let pOffset = item._itemParentOffset
+            let oldByteCount = item._itemByteCount
+            let ipooPtr = item.itemParentOffsetPtr
+            let ibcPtr = item.itemByteCountPtr
+            
+            // Copy the new item
+            manager.moveBlock(to: item.itemPtr, from: value.bufferPtr, moveCount: value.root._itemByteCount, removeCount: item._itemByteCount, updateMovedPortals: false, updateRemovedPortals: true)
+            
+            // Restore the saved parameters
+            UInt32(pOffset).copyBytes(to: ipooPtr, endianness)
+            UInt32(oldByteCount).copyBytes(to: ibcPtr, endianness)
+            
+            return .success
+            
+        } else {
+            return .error(.itemNotFound)
+        }
     }
 
     
@@ -320,32 +437,132 @@ public extension Portal {
     ///
     /// Works only on dictionaries and sequences.
     ///
-    /// - Parameter withName: The name of the item to remove.
+    /// - Parameter withNameField: The name of the item to remove.
     ///
     /// - Returns: 'success' or an error indicator (including 'itemNotFound').
     
     @discardableResult
-    public func removeItem(withName name: NameField?) -> Result {
+    public func removeItem(withNameField nameField: NameField?) -> Result {
         
-        guard let name = name else { return .missingName }
+        guard let nameField = nameField else { return .error(.missingName) }
         
-        guard isValid else { return .portalInvalid }
-        guard isDictionary else { return .operationNotSupported }
+        guard isValid else { return .error(.portalInvalid) }
+        guard isDictionary else { return .error(.operationNotSupported) }
 
-        return _dictionaryRemoveItem(withName: name)
+        return _dictionaryRemoveItem(withNameField: nameField)
+    }
+}
+
+public extension Portal {
+    
+    public subscript(name: String) -> Portal { get { return dictionaryFindItem(NameField(name)) } }
+    
+    public subscript(name: String) -> Bool? {
+        get { return dictionaryFindItem(NameField(name)).bool }
+        set { updateItem(newValue, withNameField: NameField(name)) }
+    }
+    
+    public subscript(name: String) -> Int8? {
+        get { return dictionaryFindItem(NameField(name)).int8 }
+        set { updateItem(newValue, withNameField: NameField(name)) }
+    }
+    
+    public subscript(name: String) -> Int16? {
+        get { return dictionaryFindItem(NameField(name)).int16 }
+        set { updateItem(newValue, withNameField: NameField(name)) }
+    }
+    
+    public subscript(name: String) -> Int32? {
+        get { return dictionaryFindItem(NameField(name)).int32 }
+        set { updateItem(newValue, withNameField: NameField(name)) }
+    }
+    
+    public subscript(name: String) -> Int64? {
+        get { return dictionaryFindItem(NameField(name)).int64 }
+        set { updateItem(newValue, withNameField: NameField(name)) }
+    }
+    
+    public subscript(name: String) -> UInt8? {
+        get { return dictionaryFindItem(NameField(name)).uint8 }
+        set { updateItem(newValue, withNameField: NameField(name)) }
+    }
+    
+    public subscript(name: String) -> UInt16? {
+        get { return dictionaryFindItem(NameField(name)).uint16 }
+        set { updateItem(newValue, withNameField: NameField(name)) }
+    }
+    
+    public subscript(name: String) -> UInt32? {
+        get { return dictionaryFindItem(NameField(name)).uint32 }
+        set { updateItem(newValue, withNameField: NameField(name)) }
+    }
+    
+    public subscript(name: String) -> UInt64? {
+        get { return dictionaryFindItem(NameField(name)).uint64 }
+        set { updateItem(newValue, withNameField: NameField(name)) }
+    }
+    
+    public subscript(name: String) -> Float32? {
+        get { return dictionaryFindItem(NameField(name)).float32 }
+        set { updateItem(newValue, withNameField: NameField(name)) }
+    }
+    
+    public subscript(name: String) -> Float64? {
+        get { return dictionaryFindItem(NameField(name)).float64 }
+        set { updateItem(newValue, withNameField: NameField(name)) }
+    }
+    
+    public subscript(name: String) -> String? {
+        get { return dictionaryFindItem(NameField(name)).string }
+        set { updateItem(BRString(newValue), withNameField: NameField(name)) }
+    }
+    
+    public subscript(name: String) -> BRString? {
+        get { return dictionaryFindItem(NameField(name)).brString }
+        set { updateItem(newValue, withNameField: NameField(name)) }
+    }
+    
+    public subscript(name: String) -> BRCrcString? {
+        get { return dictionaryFindItem(NameField(name)).crcString }
+        set { updateItem(newValue, withNameField: NameField(name)) }
+    }
+    
+    public subscript(name: String) -> Data? {
+        get { return dictionaryFindItem(NameField(name)).binary }
+        set { updateItem(newValue, withNameField: NameField(name)) }
+    }
+    
+    public subscript(name: String) -> BRCrcBinary? {
+        get { return dictionaryFindItem(NameField(name)).crcBinary }
+        set { updateItem(newValue, withNameField: NameField(name)) }
+    }
+    
+    public subscript(name: String) -> UUID? {
+        get { return dictionaryFindItem(NameField(name)).uuid }
+        set { updateItem(newValue, withNameField: NameField(name)) }
+    }
+    
+    public subscript(name: String) -> BRColor? {
+        get { return dictionaryFindItem(NameField(name)).color }
+        set { updateItem(newValue, withNameField: NameField(name)) }
+    }
+    
+    public subscript(name: String) -> BRFont? {
+        get { return dictionaryFindItem(NameField(name)).font }
+        set { updateItem(newValue, withNameField: NameField(name)) }
     }
 }
 
 /// Build an item with a Dictionary in it.
 ///
 /// - Parameters:
-///   - withName: The namefield for the item. Optional.
+///   - withNameField: The namefield for the item. Optional.
 ///   - endianness: The endianness to be used while creating the item.
 ///
 /// - Returns: An ephemeral portal. Do not retain this portal.
 
-internal func buildDictionaryItem(withName name: NameField?, valueByteCount: Int, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
-    let p = buildItem(ofType: .dictionary, withName: name, atPtr: ptr, endianness)
+internal func buildDictionaryItem(withNameField nameField: NameField?, valueByteCount: Int, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
+    let p = buildItem(ofType: .dictionary, withNameField: nameField, atPtr: ptr, endianness)
     p._itemByteCount += dictionaryItemBaseOffset + valueByteCount.roundUpToNearestMultipleOf8()
     p._dictionaryItemCount = 0
     return p

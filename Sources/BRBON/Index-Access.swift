@@ -197,7 +197,7 @@ public extension Portal {
         get { return self[index].color }
         set { self[index].color = newValue }
     }
-    
+    /*
     /// Removes an item.
     ///
     /// If the index is out of bounds the operation will fail. Notice that the itemByteCount of the array will not decrease.
@@ -214,12 +214,12 @@ public extension Portal {
         
         // Portal must be valid
         
-        guard isValid else { return .portalInvalid }
+        guard isValid else { return .error(.portalInvalid) }
         
         
         // Index should be positive
         
-        guard index >= 0 else { return .indexBelowLowerBound }
+        guard index >= 0 else { return .error(.indexBelowLowerBound) }
 
         
         // Implement for sequence
@@ -229,7 +229,7 @@ public extension Portal {
             
             // Index must be lower than the number of items
             
-            guard index < _sequenceItemCount else { return .indexAboveHigherBound }
+            guard index < _sequenceItemCount else { return .error(.indexAboveHigherBound) }
             
             return _sequenceRemoveItem(atIndex: index)
         }
@@ -237,7 +237,7 @@ public extension Portal {
         
         // Not supported for other types
         
-        return .operationNotSupported
+        return .error(.operationNotSupported)
     }
     
     
@@ -263,36 +263,13 @@ public extension Portal {
         
         // The portal must be valid
         
-        guard isValid else { return .portalInvalid }
+        guard isValid else { return .error(.portalInvalid) }
         
         
         // The index must be positive
         
-        guard index >= 0 else { return .indexBelowLowerBound }
+        guard index >= 0 else { return .error(.indexBelowLowerBound) }
 
-        
-        // Implement for array
-        /*
-        if isArray {
-            
-            // Names are not allowed for Coders in an array (only for ItemManagers, but then they are 'hidden' inside the item)
-            
-            guard name == nil else { return .noNameAllowed }
-            
-            
-            // Index must be lower than the number of elements
-
-            guard index < _arrayElementCount else { return .indexAboveHigherBound }
-            
-            
-            // The type of the new element must match the existing element type
-            
-            guard value.itemType == _arrayElementType else { return .typeConflict }
-            
-            
-            return _arrayInsert(value, atIndex: index)
-        }*/
-        
         
         // Implement for sequence
         
@@ -300,7 +277,7 @@ public extension Portal {
             
             // Index must be lower than the number of elements
 
-            guard index < _sequenceItemCount else { return .indexAboveHigherBound }
+            guard index < _sequenceItemCount else { return .error(.indexAboveHigherBound) }
 
             return _sequenceInsertItem(value, atIndex: index, withNameField: NameField(name))
         }
@@ -309,5 +286,5 @@ public extension Portal {
         // Not supported for other types        
         
         return .operationNotSupported
-    }
+    }*/
 }

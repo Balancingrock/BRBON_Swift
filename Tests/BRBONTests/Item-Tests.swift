@@ -36,7 +36,7 @@ class Item_Tests: XCTestCase {
         
         // Item with name
         
-        im = ItemManager.createManager(withValue: Int64(0x1234567887654321), withName: NameField("Name"))
+        im = ItemManager.createManager(withValue: Int64(0x1234567887654321), withNameField: NameField("Name"))
 
         XCTAssertEqual(im.root.itemName, "Name")
         
@@ -52,7 +52,7 @@ class Item_Tests: XCTestCase {
         
         // Remove name
         
-        XCTAssertEqual(im.root.setItemName(to: nil), .success)
+        XCTAssertEqual(im.root.updateItemName(to: nil), .success)
         
         exp = Data(bytes: [
             0x06, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
@@ -66,7 +66,7 @@ class Item_Tests: XCTestCase {
         
         // Add name
         
-        XCTAssertEqual(im.root.setItemName(to: NameField("Name")), .success)
+        XCTAssertEqual(im.root.updateItemName(to: NameField("Name")), .success)
 
         exp = Data(bytes: [
             0x06, 0x00, 0x00, 0x08,  0x20, 0x00, 0x00, 0x00,
@@ -80,7 +80,7 @@ class Item_Tests: XCTestCase {
         
         // Decrease name size
         
-        XCTAssertEqual(im.root.setItemName(to: NameField("one")), .success)
+        XCTAssertEqual(im.root.updateItemName(to: NameField("one")), .success)
         
         exp = Data(bytes: [
             0x06, 0x00, 0x00, 0x08,  0x20, 0x00, 0x00, 0x00,
@@ -94,7 +94,7 @@ class Item_Tests: XCTestCase {
         
         // Increase name size
         
-        XCTAssertEqual(im.root.setItemName(to: NameField("onetwo")), .success)
+        XCTAssertEqual(im.root.updateItemName(to: NameField("onetwo")), .success)
         
         exp = Data(bytes: [
             0x06, 0x00, 0x00, 0x10,  0x28, 0x00, 0x00, 0x00,
