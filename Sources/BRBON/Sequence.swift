@@ -234,6 +234,57 @@ extension Portal {
     }
     
     
+    /// Inserts a new element.
+    ///
+    /// - Parameters:
+    ///   - value: The value to be inserted.
+    ///   - atIndex: The index at which to insert the value.
+    ///   - withNameField: The name field for the value.
+    ///
+    /// - Returns: 'success' or an error indicator.
+    
+    internal func _sequenceInsertItem(_ value: ItemManager, atIndex index: Int, withNameField nameField: NameField? = nil) -> Result {
+        
+        
+        // Ensure that there is enough space available
+        
+        let newItemByteCount = value.root._itemByteCount
+        
+        if currentValueFieldByteCount - usedValueFieldByteCount < newItemByteCount {
+            let result = increaseItemByteCount(to: itemMinimumByteCount + usedValueFieldByteCount + newItemByteCount)
+            guard result == .success else { return result }
+        }
+        
+        
+        // Copy the existing items upward
+        
+        let itm = _sequencePortalForItem(at: index)
+        
+        let dstPtr = itm.itemPtr.advanced(by: newItemByteCount)
+        let srcPtr = itm.itemPtr
+        let length = itm.itemPtr.distance(to: _sequenceAfterLastItemPtr)
+        
+        manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: length, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
+        
+        
+        // Zero the new space
+        
+        if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(srcPtr, 0, newItemByteCount) }
+        
+        
+        // Insert the new element
+        
+        manager.moveBlock(to: srcPtr, from: value.bufferPtr, moveCount: value.root._itemByteCount, removeCount: 0, updateMovedPortals: false, updateRemovedPortals: false)
+
+        UInt32(manager.bufferPtr.distance(to: itemPtr)).copyBytes(to: srcPtr.advanced(by: itemParentOffsetOffset), endianness)
+        
+        
+        _sequenceItemCount += 1
+        
+        return .success
+    }
+
+    
     /// Updates an item in a sequence.
     ///
     /// - Parameters:
@@ -265,6 +316,60 @@ extension Portal {
         return .success
     }
     
+    
+    /// Updates an item in a sequence.
+    ///
+    /// - Parameters:
+    ///   - value: The new value.
+    ///   - name: The name of the item to update.
+    ///
+    /// - Returns: Either .success or an error indicator.
+    
+    internal func _sequenceUpdateItem(_ value: ItemManager, atIndex index: Int) -> Result {
+        
+        let item = _sequencePortalForItem(at: index)
+        
+        guard item.itemType! == value.root.itemType else { return .error(.typeConflict) }
+        
+        
+        // Save important data for later
+        
+        let ptr = item.itemPtr
+        let bc = item._itemByteCount
+        let po = item._itemParentOffset
+        
+        
+        // Ensure storage requirement is met
+        
+        if item._itemByteCount < value.root._itemByteCount {
+            let result = item.increaseItemByteCount(to: value.root._itemByteCount)
+            guard result == .success else { return result }
+        }
+
+        
+        // Remove the portal
+        
+        manager.removeActivePortal(self)
+
+        
+        // Zero bytes - if necessary
+        
+        if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(ptr, 0, bc) }
+        
+        
+        // Move bytes into place
+        
+        manager.moveBlock(to: ptr, from: value.bufferPtr, moveCount: value.root._itemByteCount, removeCount: 0, updateMovedPortals: false, updateRemovedPortals: false)
+        
+        
+        // Restore original content
+        
+        UInt32(po).copyBytes(to: ptr.advanced(by: itemParentOffsetOffset), endianness)
+        
+        
+        return .success
+    }
+
     
     /// Replaces an item in a sequence.
     ///
@@ -313,7 +418,7 @@ extension Portal {
 public extension Portal {
     
     
-    /// Inserts an item into a sequence. Optionally with a name.
+    /// Inserts an item into a sequence.
     ///
     /// - Parameters:
     ///   - atIndex: The index of the location where to insert the new value.
@@ -323,13 +428,96 @@ public extension Portal {
     /// - Returns: Either .success or an error indicator.
     
     @discardableResult
-    public func insertItem(atIndex index: Int, withValue value: Coder, withNameField nameField: NameField? = nil) -> Result {
+    public func insertItem(atIndex index: Int, withValue value: Coder) -> Result {
+        return insertItem(atIndex: index, withValue: value, withNameField: nil)
+    }
+
+    
+    /// Inserts an item into a sequence.
+    ///
+    /// - Parameters:
+    ///   - atIndex: The index of the location where to insert the new value.
+    ///   - withValue: The value to insert.
+    ///   - withNameField: An optional namefield specifying the name of the new item.
+    ///
+    /// - Returns: Either .success or an error indicator.
+    
+    @discardableResult
+    public func insertItem(atIndex index: Int, withValue value: Coder, withName name: String) -> Result {
+        guard let nameField = NameField(name) else { return .error(.nameFieldError) }
+        return insertItem(atIndex: index, withValue: value, withNameField: nameField)
+    }
+
+    
+    /// Inserts an item into a sequence.
+    ///
+    /// - Parameters:
+    ///   - atIndex: The index of the location where to insert the new value.
+    ///   - withValue: The value to insert.
+    ///   - withNameField: An optional namefield specifying the name of the new item.
+    ///
+    /// - Returns: Either .success or an error indicator.
+    
+    @discardableResult
+    public func insertItem(atIndex index: Int, withValue value: Coder, withNameField nameField: NameField?) -> Result {
         
         guard isValid else { return .error(.portalInvalid) }
         guard isSequence else { return .error(.operationNotSupported) }
         guard index >= 0 else { return .error(.indexBelowLowerBound) }
         guard index < count else { return .error(.indexAboveHigherBound) }
 
+        return _sequenceInsertItem(value, atIndex: index, withNameField: nameField)
+    }
+
+    
+    /// Inserts an item into a sequence.
+    ///
+    /// - Parameters:
+    ///   - atIndex: The index of the location where to insert the new value.
+    ///   - withValue: The value to insert.
+    ///   - withNameField: An optional namefield specifying the name of the new item.
+    ///
+    /// - Returns: Either .success or an error indicator.
+    
+    @discardableResult
+    public func insertItem(atIndex index: Int, withValue value: ItemManager) -> Result {
+        return insertItem(atIndex: index, withValue: value, withNameField: nil)
+    }
+    
+    
+    /// Inserts an item into a sequence.
+    ///
+    /// - Parameters:
+    ///   - atIndex: The index of the location where to insert the new value.
+    ///   - withValue: The value to insert.
+    ///   - withNameField: An optional namefield specifying the name of the new item.
+    ///
+    /// - Returns: Either .success or an error indicator.
+    
+    @discardableResult
+    public func insertItem(atIndex index: Int, withValue value: ItemManager, withName name: String) -> Result {
+        guard let nameField = NameField(name) else { return .error(.nameFieldError) }
+        return insertItem(atIndex: index, withValue: value, withNameField: nameField)
+    }
+    
+    
+    /// Inserts an item into a sequence.
+    ///
+    /// - Parameters:
+    ///   - atIndex: The index of the location where to insert the new value.
+    ///   - withValue: The value to insert.
+    ///   - withNameField: An optional namefield specifying the name of the new item.
+    ///
+    /// - Returns: Either .success or an error indicator.
+    
+    @discardableResult
+    public func insertItem(atIndex index: Int, withValue value: ItemManager, withNameField nameField: NameField?) -> Result {
+        
+        guard isValid else { return .error(.portalInvalid) }
+        guard isSequence else { return .error(.operationNotSupported) }
+        guard index >= 0 else { return .error(.indexBelowLowerBound) }
+        guard index < count else { return .error(.indexAboveHigherBound) }
+        
         return _sequenceInsertItem(value, atIndex: index, withNameField: nameField)
     }
 
@@ -354,6 +542,26 @@ public extension Portal {
     }
     
     
+    /// Updates an item in a sequence with the contents of the ItemManager.
+    ///
+    /// - Parameters:
+    ///   - atIndex: The index of the item to update.
+    ///   - withValue: The new value for the item. The type of the value and item must be the same. Use 'replaceItem' if the type of the item must be changed.
+    ///
+    /// - Returns: Either .success or an error indicator.
+    
+    @discardableResult
+    public func updateItem(atIndex index: Int, withValue value: ItemManager) -> Result {
+        
+        guard isValid else { return .error(.portalInvalid) }
+        guard isSequence else { return .error(.operationNotSupported) }
+        guard index >= 0 else { return .error(.indexBelowLowerBound) }
+        guard index < count else { return .error(.indexAboveHigherBound) }
+        
+        return _sequenceUpdateItem(value, atIndex: index)
+    }
+
+    
     /// Replaces an item in a sequence.
     ///
     /// - Note: If the present item has a name, the name will be retained for the new item.
@@ -365,7 +573,7 @@ public extension Portal {
     /// - Returns: Either .success or an error indicator.
 
     @discardableResult
-    public func replaceItem(atIndex index: Int, withValue value: Coder) -> Result {
+    public func replaceItem(atIndex index: Int, withValue value: Coder, withNameField nameField: NameField?) -> Result {
         
         guard isValid else { return .error(.portalInvalid) }
         guard isSequence else { return .error(.operationNotSupported) }
@@ -399,20 +607,48 @@ public extension Portal {
     ///
     /// - Parameters:
     ///   - value: The value to be added.
+    ///
+    /// - Returns: 'success' or an error indicator.
+    
+    @discardableResult
+    public func appendItem(_ value: Coder) -> Result {
+        return appendItem(value, withNameField: nil)
+    }
+
+    
+    /// Appends a new value to a sequence.
+    ///
+    /// - Parameters:
+    ///   - value: The value to be added.
     ///   - withName: An optional name.
     ///
     /// - Returns: 'success' or an error indicator.
     
     @discardableResult
-    public func appendItem(_ value: Coder, withName name: String? = nil) -> Result {
+    public func appendItem(_ value: Coder, withName name: String) -> Result {
+        
+        guard let nameField = NameField(name) else { return .error(.nameFieldError) }
+        return appendItem(value, withNameField: nameField)
+    }
+    
+    
+    /// Appends a new value to a sequence.
+    ///
+    /// - Parameters:
+    ///   - value: The value to be added.
+    ///   - withName: An optional name.
+    ///
+    /// - Returns: 'success' or an error indicator.
+    
+    @discardableResult
+    public func appendItem(_ value: Coder, withNameField nameField: NameField?) -> Result {
         
         guard isValid else { return .error(.portalInvalid) }
         guard isSequence else { return .error(.operationNotSupported) }
         
-        guard let nameField = NameField(name) else { return .error(.nameFieldError) }
-
         return _sequenceAppendItem(value, withNameField: nameField)
-    }    
+    }
+
 }
 
 

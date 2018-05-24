@@ -99,6 +99,8 @@ fileprivate class ActivePortals {
     }
     
 
+    /// Inactivates and remove this portal from the active portals list and all portals that may refer to the contents of the item this portal refers to.
+
     func remove(_ portal: Portal) {
         
         // Remove any portal that may be contained inside an item or element within this portal
@@ -142,7 +144,9 @@ fileprivate class ActivePortals {
     }
     
     
-    /// Remove a series of portals from the list.
+    /// Inactivates and removes all portals that have an itemPtr that is equal to or above the first value and lower than the second value.
+    ///
+    /// Note: Element and Field portals refer to their parent item in their itemPtr.
     
     func removePortals(atAndAbove: UnsafeMutableRawPointer, below: UnsafeMutableRawPointer) {
         
@@ -154,7 +158,7 @@ fileprivate class ActivePortals {
                 dict.removeValue(forKey: key)
 
             } else {
-                
+                /*
                 if let column = portal.column, let index = portal.index {
                     
                     let ptr = portal._tableFieldPtr(row: index, column: column)
@@ -172,7 +176,7 @@ fileprivate class ActivePortals {
                         portal.isValid = false
                         dict.removeValue(forKey: key)
                     }
-                }
+                }*/
             }
         }
     }
@@ -181,15 +185,16 @@ fileprivate class ActivePortals {
     /// Update the active portals
     
     func updatePointers(atAndAbove: UnsafeMutableRawPointer, below: UnsafeMutableRawPointer, toNewBase: UnsafeMutableRawPointer) {
+        // Note that the portals that need changing will modify their key. Key updates must be implemented through removal under the old key and adding under the new key. However doing that in the same dictionary will cause problems since the new keys may overlap with existing (as yet unmodified) keys due to (temporary) address duplication. Hence all keys are copied from one directory to another while updating the keys that need changing.
+        var newDict: Dictionary<PortalKey, Portal> = [:]
         let delta = atAndAbove.distance(to: toNewBase)
-        for (_, portal) in dict {
+        dict.forEach() { (_, portal) in
             if portal.itemPtr >= atAndAbove && portal.itemPtr < below {
-                let oldKey = portal.key
                 portal.itemPtr = portal.itemPtr.advanced(by: delta)
-                dict.removeValue(forKey: oldKey)
-                dict[portal.key] = portal
             }
+            newDict[portal.key] = portal
         }
+        dict = newDict
     }
 
     
@@ -705,9 +710,9 @@ public final class ItemManager {
             let length = $0.count
             _ = Darwin.memcpy(dstPtr, srcPtr, length)
             UInt32(0).copyBytes(to: dstPtr.advanced(by: itemParentOffsetOffset), endianness)
+            im.root._arrayElementCount += 1
+            
         }
-
-        im.root._arrayElementCount = array.count
 
         return im
     }

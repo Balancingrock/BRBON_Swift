@@ -47,6 +47,21 @@
 // 0.7.0 - Code reorganization and API simplification
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
+//
+// Definition: An array is an item that contains a number of elements. All elements are of the same type and occupy the
+// same number of bytes in memory.
+//
+// Purpose: An array is used to store values as compact as possible will still offering high speeds access across a
+// large number of elements.
+//
+// Portals: Portals for non-container element values (i.e. confirm to the Coder protocol) are index based, not item
+// based. I.e. once created will keep referring to the same index, regardless of the insertion or removal of elements.
+// It is invalidated if the index position itself no longer exists. (Or the array item itself is invalidated)
+// Portals for element values that are Items are item-based, i.e. they will change when elements are removed or
+// inserted. They are invalidated when the element itself is removed.
+//
+// =====================================================================================================================
+
 
 import Foundation
 import BRUtils
@@ -57,8 +72,6 @@ internal let arrayElementTypeOffset = arrayReservedOffset + 4
 internal let arrayElementCountOffset = arrayElementTypeOffset + 4
 internal let arrayElementByteCountOffset = arrayElementCountOffset + 4
 internal let arrayElementBaseOffset = arrayElementByteCountOffset + 4
-
-//internal let arrayMinimumItemByteCount = itemMinimumByteCount + arrayElementBaseOffset
 
 
 extension Portal {
@@ -205,16 +218,16 @@ extension Portal {
         let oldByteCount = _arrayElementByteCount
         
         for index in (0 ..< _arrayElementCount).reversed() {
+            
             let dstPtr = elementBasePtr.advanced(by: index * newByteCount)
             let srcPtr = elementBasePtr.advanced(by: index * oldByteCount)
+            
             manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: oldByteCount, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
+            
             if ItemManager.startWithZeroedBuffers {
-                if dstPtr != srcPtr {
-                    let nonOverlap = srcPtr.distance(to: dstPtr)
-                    var cleanByteCount = oldByteCount
-                    if nonOverlap < oldByteCount { cleanByteCount = nonOverlap }
-                    Darwin.memset(srcPtr, 0, cleanByteCount)
-                }
+                let startPtr = dstPtr.advanced(by: oldByteCount)
+                let len = newByteCount - oldByteCount
+                Darwin.memset(startPtr, 0, len)
             }
         }
         
@@ -230,9 +243,9 @@ extension Portal {
     internal func _arrayPortalForElement(at index: Int) -> Portal {
         
         if _arrayElementType!.isContainer {
-            return Portal(itemPtr: _arrayElementPtr(for: index), index: nil, manager: manager, endianness: endianness)
+            return manager.getActivePortal(for: _arrayElementPtr(for: index), index: nil, column: nil)
         } else {
-            return Portal(itemPtr: itemPtr, index: index, manager: manager, endianness: endianness)
+            return manager.getActivePortal(for: itemPtr, index: index, column: nil)
         }
     }
 
@@ -267,8 +280,8 @@ extension Portal {
         
         // The last index portal (if present) must be removed
         
-        manager.removeActivePortal(Portal(itemPtr: itemPtr, index: (_arrayElementCount - 1), manager: manager, endianness: endianness))
-        
+        let lastPortal = manager.getActivePortal(for: itemPtr, index: (_arrayElementCount - 1), column: nil)
+        manager.removeActivePortal(lastPortal)
         
         // Decrease the number of elements
         
@@ -369,12 +382,35 @@ extension Portal {
 }
 
 
+/// Build an item with a Array in it.
+///
+/// - Parameters:
+///   - withNameField: The namefield for the item. Optional.
+///   - elementType: The type of elements in the array.
+///   - elementByteCount: The number of bytes used for each element in the array. It must be ensured that the byte count is large enough for the element type!
+///   - elementCount:
+///   - endianness: The endianness to be used while creating the item.
+///
+/// - Returns: An ephemeral portal. Do not retain this portal.
+
+internal func buildArrayItem(withNameField nameField: NameField?, elementType: ItemType, elementByteCount: Int, elementCount: Int, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
+    let p = buildItem(ofType: .array, withNameField: nameField, atPtr: ptr, endianness)
+    p._itemByteCount += arrayElementBaseOffset + (elementCount * elementByteCount).roundUpToNearestMultipleOf8()
+    p._arrayElementType = elementType
+    p._arrayElementByteCount = elementByteCount
+    p._arrayElementCount = 0
+    return p
+}
+
+
 // The public interface
 
 extension Portal {
     
     
     /// Appends a value to the end of an Array item.
+    ///
+    /// Portals: Appending an element does not invalidate portals.
     ///
     /// - Parameter value: The value to be appended.
     ///
@@ -396,7 +432,7 @@ extension Portal {
     ///
     /// This operation does not decrease the byte count of the Array item.
     ///
-    /// - Note: The portals for sub-items of the removed item will be invalidated. The portal for the last element in the array (if any) will also be invalidated.
+    /// Portals: The portals for sub-items of the removed item will be invalidated. The portal for the last element in the array (if any) will be invalidated. Any portal for the sub-items in the last element will also be invalidated.
     ///
     /// - Parameter at: The index of the element to remove.
     ///
@@ -555,6 +591,18 @@ extension Portal {
         return .success
     }
 
+    
+    /// Append the contens of an array of item managers to the Array item.
+    ///
+    /// Note that the type of the item manager root items must be the same as the element type.
+    ///
+    /// - Parameter arr: The item managers with the content to append.
+    ///
+    /// - Returns:
+    ///   success: If the content was appended.
+    ///
+    ///   error(code): If the append failed, the code will detail the kind of error.
+
     @discardableResult
     public func appendElements(_ arr: Array<ItemManager>) -> Result {
         
@@ -599,10 +647,24 @@ extension Portal {
         return .success
     }
     
+    
+    /// Inserts an item manager's content into an Array item.
+    ///
+    /// - Parameters:
+    ///   - value: The item manager with the content to be inserted.
+    ///   - atIndex: The index at which to insert the value.
+    ///
+    /// - Returns:
+    ///   success: If the insertion was successful.
+    ///
+    ///   noAction: If the value was nil or Null.
+    ///
+    ///   error(code): If an error prevented the insertion, the code details the kind of error.
+
     @discardableResult
     public func insertElement(_ itemManager: ItemManager?, atIndex index: Int) -> Result {
         
-        guard let value = itemManager?.data else { return .success }
+        guard let value = itemManager?.data else { return .noAction }
         guard isArray else { return .error(.portalInvalid) }
         guard index >= 0 else { return .error(.indexBelowLowerBound) }
         guard index < _arrayElementCount else { return .error(.indexAboveHigherBound) }
@@ -649,30 +711,6 @@ extension Portal {
         return .success
     }
 }
-
-
-/// Build an item with a Array in it.
-///
-/// - Parameters:
-///   - withNameField: The namefield for the item. Optional.
-///   - elementType: The type of elements in the array.
-///   - elementByteCount: The number of bytes used for each element in the array. It must be ensured that the byte count is large enough for the element type!
-///   - elementCount:
-///   - endianness: The endianness to be used while creating the item.
-///
-/// - Returns: An ephemeral portal. Do not retain this portal.
-
-internal func buildArrayItem(withNameField nameField: NameField?, elementType: ItemType, elementByteCount: Int, elementCount: Int, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
-    let p = buildItem(ofType: .array, withNameField: nameField, atPtr: ptr, endianness)
-    p._itemByteCount += arrayElementBaseOffset + (elementCount * elementByteCount).roundUpToNearestMultipleOf8()
-    p._arrayElementType = elementType
-    p._arrayElementByteCount = elementByteCount
-    p._arrayElementCount = 0
-    return p
-}
-
-
-
 
 
 

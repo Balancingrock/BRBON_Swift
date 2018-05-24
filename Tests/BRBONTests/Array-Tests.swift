@@ -2491,4 +2491,226 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(exp, am.data)
     }
+    
+    func testArrayCoderPortals() {
+        
+        guard let am = ItemManager.createArrayManager(values: [Int8(3), Int8(5), Int8(7)]) else { XCTFail(); return }
+        
+        let portal0: Portal = am.root[0]
+        let portal1: Portal = am.root[1]
+        let portal2: Portal = am.root[2]
+
+        XCTAssertTrue(portal0.isValid)
+        XCTAssertEqual(portal0.int8, Int8(3))
+
+        XCTAssertTrue(portal1.isValid)
+        XCTAssertEqual(portal1.int8, Int8(5))
+
+        XCTAssertTrue(portal2.isValid)
+        XCTAssertEqual(portal2.int8, Int8(7))
+        
+        
+        // Appending an element does not change the existing portal's validity
+        
+        XCTAssertEqual(am.root.appendElement(Int8(9)), .success)
+        
+        let portal3: Portal = am.root[3]
+
+        XCTAssertTrue(portal0.isValid)
+        XCTAssertEqual(portal0.int8, Int8(3))
+        
+        XCTAssertTrue(portal1.isValid)
+        XCTAssertEqual(portal1.int8, Int8(5))
+        
+        XCTAssertTrue(portal2.isValid)
+        XCTAssertEqual(portal2.int8, Int8(7))
+        
+        XCTAssertTrue(portal3.isValid)
+        XCTAssertEqual(portal3.int8, Int8(9))
+
+        
+        // Removing an element removes a portal to the last element
+        
+        XCTAssertEqual(am.root.removeElement(at: 0), .success)
+        
+        XCTAssertTrue(portal0.isValid)
+        XCTAssertEqual(portal0.int8, Int8(5))
+        
+        XCTAssertTrue(portal1.isValid)
+        XCTAssertEqual(portal1.int8, Int8(7))
+        
+        XCTAssertTrue(portal2.isValid)
+        XCTAssertEqual(portal2.int8, Int8(9))
+        
+        XCTAssertFalse(portal3.isValid)
+
+        
+        // Inserting an element keeps the portals referring to the same index
+        
+        XCTAssertEqual(am.root.insertElement(Int8(1), atIndex: 0), .success)
+        
+        XCTAssertTrue(portal0.isValid)
+        XCTAssertEqual(portal0.int8, Int8(1))
+        
+        XCTAssertTrue(portal1.isValid)
+        XCTAssertEqual(portal1.int8, Int8(5))
+        
+        XCTAssertTrue(portal2.isValid)
+        XCTAssertEqual(portal2.int8, Int8(7))
+        
+        XCTAssertFalse(portal3.isValid)
+    }
+    
+    func testArrayItemPortals() {
+        
+        ItemManager.startWithZeroedBuffers = true
+        
+        let am0 = ItemManager.createArrayManager(elementType: .int8, endianness: Endianness.little)
+        let am1 = ItemManager.createArrayManager(elementType: .int16, endianness: Endianness.little)
+        let am2 = ItemManager.createArrayManager(elementType: .int32, endianness: Endianness.little)
+        let am3 = ItemManager.createArrayManager(elementType: .int64, endianness: Endianness.little)
+        let am4 = ItemManager.createArrayManager(elementType: .uint64, endianness: Endianness.little)
+
+        guard let am = ItemManager.createArrayManager(values: [am0, am1, am2]) else { XCTFail(); return }
+        
+        let portal0: Portal = am.root[0]
+        let portal1: Portal = am.root[1]
+        let portal2: Portal = am.root[2]
+        
+        XCTAssertTrue(portal0.isValid)
+        XCTAssertTrue(portal0.isArray)
+        XCTAssertEqual(portal0._arrayElementType, .int8)
+        
+        XCTAssertTrue(portal1.isValid)
+        XCTAssertTrue(portal1.isArray)
+        XCTAssertEqual(portal1._arrayElementType, .int16)
+        
+        XCTAssertTrue(portal2.isValid)
+        XCTAssertTrue(portal2.isArray)
+        XCTAssertEqual(portal2._arrayElementType, .int32)
+        
+        
+        // Appending an element does not change the existing portal's validity
+        
+        XCTAssertEqual(am.root.appendElement(am3), .success)
+        
+        let portal3: Portal = am.root[3]
+        
+        XCTAssertTrue(portal0.isValid)
+        XCTAssertTrue(portal0.isArray)
+        XCTAssertEqual(portal0._arrayElementType, .int8)
+        
+        XCTAssertTrue(portal1.isValid)
+        XCTAssertTrue(portal1.isArray)
+        XCTAssertEqual(portal1._arrayElementType, .int16)
+        
+        XCTAssertTrue(portal2.isValid)
+        XCTAssertTrue(portal2.isArray)
+        XCTAssertEqual(portal2._arrayElementType, .int32)
+
+        XCTAssertTrue(portal3.isValid)
+        XCTAssertTrue(portal3.isArray)
+        XCTAssertEqual(portal3._arrayElementType, .int64)
+
+        
+        // Removing an element with an item removes only the portal to that item
+        
+        XCTAssertEqual(am.root.removeElement(at: 0), .success)
+        
+        XCTAssertFalse(portal0.isValid)
+        
+        XCTAssertTrue(portal1.isValid)
+        XCTAssertTrue(portal1.isArray)
+        XCTAssertEqual(portal1._arrayElementType, .int16)
+        
+        XCTAssertTrue(portal2.isValid)
+        XCTAssertTrue(portal2.isArray)
+        XCTAssertEqual(portal2._arrayElementType, .int32)
+        
+        XCTAssertTrue(portal3.isValid)
+        XCTAssertTrue(portal3.isArray)
+        XCTAssertEqual(portal3._arrayElementType, .int64)
+
+        
+        // Inserting an element keeps the portals referring to the same index
+        
+        XCTAssertEqual(am.root.insertElement(am4, atIndex: 0), .success)
+        
+        XCTAssertFalse(portal0.isValid)
+        
+        XCTAssertTrue(portal1.isValid)
+        XCTAssertTrue(portal1.isArray)
+        XCTAssertEqual(portal1._arrayElementType, .int16)
+        
+        XCTAssertTrue(portal2.isValid)
+        XCTAssertTrue(portal2.isArray)
+        XCTAssertEqual(portal2._arrayElementType, .int32)
+        
+        XCTAssertTrue(portal3.isValid)
+        XCTAssertTrue(portal3.isArray)
+        XCTAssertEqual(portal3._arrayElementType, .int64)
+
+        let portal4: Portal = am.root[0]
+        XCTAssertTrue(portal4.isValid)
+        XCTAssertTrue(portal4.isArray)
+        XCTAssertEqual(portal4._arrayElementType, .uint64)
+        
+        
+        // Check that inserting a coder element into an item element will not invalidate the subsequent item-element portals.
+        
+        XCTAssertEqual(portal1.append(Int16(0x1616)), .success)
+        XCTAssertEqual(portal1.append(Int16(0x1717)), .success)
+        XCTAssertEqual(portal1.append(Int16(0x1818)), .success)
+
+        let portal10: Portal = portal1[0]
+        let portal11: Portal = portal1[1]
+        let portal12: Portal = portal1[2]
+
+        XCTAssertTrue(portal2.isValid)
+        XCTAssertTrue(portal2.isArray)
+        XCTAssertEqual(portal2._arrayElementType, .int32)
+        
+        XCTAssertTrue(portal3.isValid)
+        XCTAssertTrue(portal3.isArray)
+        XCTAssertEqual(portal3._arrayElementType, .int64)
+        
+        XCTAssertTrue(portal4.isValid)
+        XCTAssertTrue(portal4.isArray)
+        XCTAssertEqual(portal4._arrayElementType, .uint64)
+
+        XCTAssertTrue(portal10.isValid)
+        XCTAssertEqual(portal10.int16, 0x1616)
+
+        XCTAssertTrue(portal11.isValid)
+        XCTAssertEqual(portal11.int16, 0x1717)
+
+        XCTAssertTrue(portal12.isValid)
+        XCTAssertEqual(portal12.int16, 0x1818)
+
+        
+        // Check that removing a coder element from an item element will not invalidate the subsequent item element portals, but will affect the subsequent coder-portals.
+        
+        XCTAssertEqual(portal1.removeElement(at: 0), .success)
+        
+        XCTAssertTrue(portal2.isValid)
+        XCTAssertTrue(portal2.isArray)
+        XCTAssertEqual(portal2._arrayElementType, .int32)
+        
+        XCTAssertTrue(portal3.isValid)
+        XCTAssertTrue(portal3.isArray)
+        XCTAssertEqual(portal3._arrayElementType, .int64)
+        
+        XCTAssertTrue(portal4.isValid)
+        XCTAssertTrue(portal4.isArray)
+        XCTAssertEqual(portal4._arrayElementType, .uint64)
+        
+        XCTAssertTrue(portal10.isValid)
+        XCTAssertEqual(portal10.int16, 0x1717)
+        
+        XCTAssertTrue(portal11.isValid)
+        XCTAssertEqual(portal11.int16, 0x1818)
+        
+        XCTAssertFalse(portal12.isValid)
+    }
+
 }

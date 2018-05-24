@@ -109,8 +109,8 @@ extension Portal {
         guard item.isValid else { return .error(.itemNotFound) }
         
         let itemStartPtr = item.itemPtr
-        let itemByteCount = item._itemByteCount
-        let nextItemPtr = item.itemPtr.advanced(by: itemByteCount)
+        let ibc = item._itemByteCount
+        let nextItemPtr = item.itemPtr.advanced(by: ibc)
         let afterLastItemPtr = _dictionaryAfterLastItemPtr
 
         assert(nextItemPtr <= afterLastItemPtr)
@@ -126,7 +126,7 @@ extension Portal {
             
             // Zero the 'removed' bytes
             
-            if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(itemStartPtr, 0, itemByteCount) }
+            if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(itemStartPtr, 0, ibc) }
 
         } else {
                 
@@ -134,12 +134,12 @@ extension Portal {
                 
             let len = nextItemPtr.distance(to: afterLastItemPtr)
                 
-            manager.moveBlock(to: itemStartPtr, from: nextItemPtr, moveCount: len, removeCount: itemByteCount, updateMovedPortals: true, updateRemovedPortals: true)
+            manager.moveBlock(to: itemStartPtr, from: nextItemPtr, moveCount: len, removeCount: ibc, updateMovedPortals: true, updateRemovedPortals: true)
             
             
             // Zero the freed bytes
             
-            if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(nextItemPtr.advanced(by: len), 0, itemByteCount) }
+            if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(itemStartPtr.advanced(by: len), 0, ibc) }
         }
         
         _dictionaryItemCount -= 1
@@ -226,24 +226,24 @@ extension Portal {
         guard isDictionary else { return Portal.nullPortal }
         guard let nameField = nameField else { return Portal.nullPortal }
         var remainder = _dictionaryItemCount
-        var itemPtr = _dictionaryItemBasePtr
+        var ptr = _dictionaryItemBasePtr
         while remainder > 0 {
-            if UInt16(fromPtr: itemPtr.advanced(by: itemNameCrcOffset), endianness) == nameField.crc {
-                if itemPtr.advanced(by: itemNameUtf8ByteCountOffset).assumingMemoryBound(to: UInt8.self).pointee == UInt8(nameField.data.count) {
+            if UInt16(fromPtr: ptr.advanced(by: itemNameCrcOffset), endianness) == nameField.crc {
+                if ptr.advanced(by: itemNameUtf8ByteCountOffset).assumingMemoryBound(to: UInt8.self).pointee == UInt8(nameField.data.count) {
                     var dataIsEqual = true
                     for i in 0 ..< nameField.data.count {
-                        if itemPtr.advanced(by: itemNameUtf8CodeOffset + i).assumingMemoryBound(to: UInt8.self).pointee != nameField.data[i] {
+                        if ptr.advanced(by: itemNameUtf8CodeOffset + i).assumingMemoryBound(to: UInt8.self).pointee != nameField.data[i] {
                             dataIsEqual = false
                             break
                         }
                     }
                     if dataIsEqual {
-                        return manager.getActivePortal(for: itemPtr)
+                        return manager.getActivePortal(for: ptr)
                     }
                 }
             }
             remainder -= 1
-            itemPtr += Int(UInt32.init(fromPtr: itemPtr.advanced(by: itemByteCountOffset), endianness))
+            ptr += Int(UInt32.init(fromPtr: ptr.advanced(by: itemByteCountOffset), endianness))
         }
         return Portal.nullPortal
     }
