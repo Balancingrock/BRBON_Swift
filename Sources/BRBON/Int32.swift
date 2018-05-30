@@ -64,8 +64,8 @@ public extension Portal {
     public var isInt32: Bool {
         guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.int32 }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int32.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int32.rawValue
+        if index != nil { return itemPtr.itemValueFieldPtr.arrayElementType == ItemType.int32.rawValue }
+        return itemPtr.itemType == ItemType.int32.rawValue
     }
 
     
@@ -78,22 +78,12 @@ public extension Portal {
     public var int32: Int32? {
         get {
             guard isInt32 else { return nil }
-            return Int32(fromPtr: valueFieldPtr, endianness)
+            return Int32(fromPtr: _valuePtr, endianness)
         }
         set {
             guard isInt32 else { return }
-            newValue?.copyBytes(to: valueFieldPtr, endianness)
+            newValue?.copyBytes(to: _valuePtr, endianness)
         }
-    }
-    
-    
-    /// Add an Int32 to an Array.
-    ///
-    /// - Returns: .success or one of .portalInvalid, .operationNotSupported, .typeConflict
-    
-    @discardableResult
-    public func append(_ value: Int32) -> Result {
-        return appendClosure(for: value.itemType, with: value.valueByteCount) { value.copyBytes(to: _arrayElementPtr(for: _arrayElementCount), endianness) }
     }
 }
 

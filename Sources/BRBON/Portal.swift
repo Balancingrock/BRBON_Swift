@@ -74,12 +74,12 @@ public final class Portal {
     
     /// If the portal refers to an element of an array, or a row in a table, then this is the index of that element/row.
 
-    public let index: Int?
+    internal let index: Int?
     
     
     /// If the portal refers to a field of a table, this is the index of the column.
     
-    public let column: Int?
+    internal let column: Int?
 
     
     /// The endianness of the data and its surrounding structure.
@@ -174,8 +174,9 @@ public final class Portal {
     public var itemNameField: NameField? {
         get {
             guard _itemNameFieldByteCount > 0 else { return nil }
-            return NameField(fromPtr: _itemNameFieldPtr, byteCount: _itemNameFieldByteCount, endianness)
+            return NameField(fromPtr: itemPtr.itemNameFieldPtr, endianness)
         }
+        set { _ = updateItemName(to: newValue) }
     }
 }
 
@@ -187,23 +188,30 @@ extension Portal {
     
     /// Returns a pointer to the start of the value field or the small-value field depending on the value type the portal refers to.
     
-    internal var valueFieldPtr: UnsafeMutableRawPointer {
+    internal var _valuePtr: UnsafeMutableRawPointer {
+        get {
         if let index = index {
             if let column = column {
-                return _tableFieldPtr(row: index, column: column)
+                return itemPtr.itemValueFieldPtr.tableFieldPtr(row: index, column: column, endianness)
             } else {
                 return _arrayElementPtr(for: index)
             }
         } else {
-            return itemValueFieldPtr
+            if itemType!.usesSmallValue {
+                return itemPtr.itemSmallValuePtr
+            } else {
+                return itemPtr.itemValueFieldPtr
+            }
         }
+        }
+        set {} // Empty setter allows updating of the pointee
     }
     
     
     /// Returns the number of bytes that are currently available for the value this portal offers access to.
     
     internal var currentValueFieldByteCount: Int {
-        return _itemByteCount - itemMinimumByteCount - _itemNameFieldByteCount
+        return _itemByteCount - itemHeaderByteCount - _itemNameFieldByteCount
     }
     
     
@@ -230,7 +238,7 @@ extension Portal {
     internal func ensureValueFieldByteCount(of bytes: Int) -> Result {
         if index == nil {
             if currentValueFieldByteCount < bytes {
-                return increaseItemByteCount(to: itemMinimumByteCount + _itemNameFieldByteCount + bytes)
+                return increaseItemByteCount(to: itemHeaderByteCount + _itemNameFieldByteCount + bytes)
             } else {
                 return .success
             }
@@ -242,17 +250,24 @@ extension Portal {
     }
 
     
-    /// Increases the byte count of the item.
+    /// Increases the byte count of the item. Note that the actual number of bytes of the item will always be a multiple of 8.
     ///
     /// This operation might affect the itemByteCount and elementByteCount of multiple items if self is contained in other items. This can result in a total size increase many times the value in this call.
     ///
     /// This operation might fail if an upstream item cannot be increased in byte count.
     ///
-    /// - Parameter newByteCount: The number of bytes this item should encompass.
+    /// - Parameter to: The requested number of bytes for this item. Range 0 ... Int32.max. Will be rounded up to a multiple of 8 if necessary.
     ///
-    /// - Returns: Success if the operation succeeded. An error id if not.
+    /// - Returns:
+    ///   success: If the operation succeeded.
+    ///
+    ///   error(code): When the operation failed, the code indicates the cause.
     
-    internal func increaseItemByteCount(to newByteCount: Int) -> Result {
+    internal func increaseItemByteCount(to bytes: Int) -> Result {
+        
+        let newByteCount = bytes.roundUpToNearestMultipleOf8()
+        
+        if newByteCount > Int(Int32.max) { return .error(.itemByteCountOutOfRange) }
         
         if let parent = parentPortal {
             
@@ -269,7 +284,7 @@ extension Portal {
                     
                     // Calculate the necessary byte count for the parent array
                     
-                    let necessaryParentItemByteCount = itemMinimumByteCount + arrayElementBaseOffset + parent._arrayElementCount * newByteCount
+                    let necessaryParentItemByteCount = itemHeaderByteCount + arrayElementBaseOffset + parent._arrayElementCount * newByteCount
                     
                     
                     // Check if the parent item byte count must be increased
@@ -298,7 +313,7 @@ extension Portal {
                 
                 // Check if the byte count of the parent must be grown
                 
-                let necessaryParentItemByteCount = itemMinimumByteCount + parent._itemNameFieldByteCount + parent.currentValueFieldByteCount - _itemByteCount + newByteCount
+                let necessaryParentItemByteCount = itemHeaderByteCount + parent._itemNameFieldByteCount + parent.currentValueFieldByteCount - _itemByteCount + newByteCount
                 
                 if parent._itemByteCount < necessaryParentItemByteCount {
                     let result = parent.increaseItemByteCount(to: necessaryParentItemByteCount)
@@ -337,7 +352,7 @@ extension Portal {
 
                 // Check if the byte count of the parent must be grown
                 
-                let necessaryParentItemByteCount = itemMinimumByteCount + parent._itemNameFieldByteCount + parent.currentValueFieldByteCount - _itemByteCount + newByteCount
+                let necessaryParentItemByteCount = itemHeaderByteCount + parent._itemNameFieldByteCount + parent.currentValueFieldByteCount + newByteCount
                 
                 if parent._itemByteCount < necessaryParentItemByteCount {
                     
@@ -350,12 +365,11 @@ extension Portal {
                 
                 let srcPtr = itemPtr.advanced(by: _itemByteCount)
                 let pastLastItemPtr = parent._sequenceAfterLastItemPtr
-                if srcPtr != pastLastItemPtr {
+                let len = srcPtr.distance(to: pastLastItemPtr)
+                if len > 0 {
                     
                     // Items must be moved
-                    
-                    let len = pastLastItemPtr - srcPtr
-                    let dstPtr = srcPtr.advanced(by: newByteCount - _itemByteCount)
+                    let dstPtr = itemPtr.advanced(by: newByteCount)
                     
                     manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
                 }
@@ -374,12 +388,12 @@ extension Portal {
                 // The column index could be nil if the column contains a container and the container must grow in size.
                 // So determine the column index by searching for it.
                 
-                let rowColOffset = parent.itemValueFieldPtr.distance(to: itemPtr) - parent._tableRowsOffset
+                let rowColOffset = parent.itemPtr.itemValueFieldPtr.distance(to: itemPtr) - parent._tableRowsOffset
                 let colOffset = rowColOffset % parent._tableRowByteCount
                 
                 var columnIndex: Int?
                 for i in 0 ..< parent._tableColumnCount {
-                    if colOffset == parent._tableGetColumnFieldOffset(for: i) { columnIndex = i; break }
+                    if colOffset == parent.itemPtr.itemValueFieldPtr.tableColumnFieldOffset(for: i, endianness) { columnIndex = i; break }
                 }
                 
                 assert(columnIndex != nil)
@@ -475,7 +489,7 @@ extension Portal {
     
         } else if isDictionary {
             
-            var aPtr = itemValueFieldPtr.advanced(by: dictionaryItemBaseOffset)
+            var aPtr = _itemValueFieldPtr.advanced(by: dictionaryItemBaseOffset)
             var remainder = _dictionaryItemCount
             while remainder > 0 {
                 let portal = Portal(itemPtr: aPtr, manager: manager, endianness: endianness)
@@ -486,7 +500,7 @@ extension Portal {
             
         } else if isSequence {
             
-            var aPtr = itemValueFieldPtr.advanced(by: sequenceItemBaseOffset)
+            var aPtr = _itemValueFieldPtr.advanced(by: sequenceItemBaseOffset)
             var remainder = _sequenceItemCount
             while remainder > 0 {
                 let portal = Portal(itemPtr: aPtr, manager: manager, endianness: endianness)
@@ -520,8 +534,8 @@ extension Portal {
     public var isArray: Bool {
         guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.array }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.array.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.array.rawValue
+        if index != nil { return itemPtr.itemValueFieldPtr.arrayElementType == ItemType.array.rawValue }
+        return itemPtr.itemType == ItemType.array.rawValue
     }
     
     
@@ -530,8 +544,8 @@ extension Portal {
     public var isDictionary: Bool {
         guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.dictionary }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.dictionary.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.dictionary.rawValue
+        if index != nil { return itemPtr.itemValueFieldPtr.arrayElementType == ItemType.dictionary.rawValue }
+        return itemPtr.itemType == ItemType.dictionary.rawValue
     }
     
     
@@ -540,8 +554,8 @@ extension Portal {
     public var isSequence: Bool {
         guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.sequence }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.sequence.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.sequence.rawValue
+        if index != nil { return itemPtr.itemValueFieldPtr.arrayElementType == ItemType.sequence.rawValue }
+        return itemPtr.itemType == ItemType.sequence.rawValue
     }
     
     
@@ -550,8 +564,8 @@ extension Portal {
     public var isTable: Bool {
         guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.table }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.table.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.table.rawValue
+        if index != nil { return itemPtr.itemValueFieldPtr.arrayElementType == ItemType.table.rawValue }
+        return itemPtr.itemType == ItemType.table.rawValue
     }
     
     

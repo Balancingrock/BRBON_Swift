@@ -151,10 +151,10 @@ public struct NameField: Equatable, Hashable {
         }
     }
 
-    internal init(fromPtr: UnsafeMutableRawPointer, byteCount: Int, _ endianness: Endianness) {
+    internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         let crc = UInt16(fromPtr: fromPtr, endianness)
         let count = Int(UInt8(fromPtr: fromPtr.advanced(by: 2), endianness))
         let data = Data(bytes: fromPtr.advanced(by: 3), count: count)
-        self.init(data: data, crc: crc, byteCount: byteCount)
+        self.init(data: data, crc: crc, byteCount: count)
     }
 }

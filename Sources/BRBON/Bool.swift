@@ -64,8 +64,8 @@ public extension Portal {
     public var isBool: Bool {
         guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.bool }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.bool.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.bool.rawValue
+        if index != nil { return itemPtr.itemValueFieldPtr.arrayElementType == ItemType.bool.rawValue } // minor speed advantage over using _arrayElementType
+        return itemPtr.itemType == ItemType.bool.rawValue
     }
 
     
@@ -78,11 +78,11 @@ public extension Portal {
     public var bool: Bool? {
         get {
             guard isBool else { return nil }
-            return Bool(fromPtr: valueFieldPtr, endianness)
+            return Bool(fromPtr: _valuePtr, endianness)
         }
         set {
             guard isBool else { return }
-            newValue?.copyBytes(to: valueFieldPtr, endianness)
+            newValue?.copyBytes(to: _valuePtr, endianness)
         }
     }
 }

@@ -79,6 +79,8 @@ public enum ErrorCode: Int, CustomStringConvertible {
     case illegalAmount = 25
     case missingName = 26
     case noNameAllowed = 27
+    case itemByteCountOutOfRange = 28
+    case illegalTypeFieldValue = 29
     
     public var description: String {
         switch self {
@@ -107,6 +109,8 @@ public enum ErrorCode: Int, CustomStringConvertible {
         case .illegalAmount: return "Illegal amount"
         case .missingName: return "Missing name"
         case .noNameAllowed: return "Name not allowed"
+        case .itemByteCountOutOfRange: return "Item byte count out of range"
+        case .illegalTypeFieldValue: return "Illegal type field value"
         }
     }
 }

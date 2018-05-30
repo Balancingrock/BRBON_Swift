@@ -230,7 +230,7 @@ class Array_Tests: XCTestCase {
         
         // Append a new element
         
-        XCTAssertEqual(am.root.append(Int8(4)), Result.success)
+        XCTAssertEqual(am.root.appendElement(Int8(4)), Result.success)
         
         XCTAssertEqual(am.root.count, 4)
         XCTAssertEqual(am.root[3], Int8(4))
@@ -2658,9 +2658,9 @@ class Array_Tests: XCTestCase {
         
         // Check that inserting a coder element into an item element will not invalidate the subsequent item-element portals.
         
-        XCTAssertEqual(portal1.append(Int16(0x1616)), .success)
-        XCTAssertEqual(portal1.append(Int16(0x1717)), .success)
-        XCTAssertEqual(portal1.append(Int16(0x1818)), .success)
+        XCTAssertEqual(portal1.appendElement(Int16(0x1616)), .success)
+        XCTAssertEqual(portal1.appendElement(Int16(0x1717)), .success)
+        XCTAssertEqual(portal1.appendElement(Int16(0x1818)), .success)
 
         let portal10: Portal = portal1[0]
         let portal11: Portal = portal1[1]

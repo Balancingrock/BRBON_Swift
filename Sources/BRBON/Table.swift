@@ -129,6 +129,612 @@ internal let tableColumnFieldByteCountOffset = tableColumnFieldOffsetOffset + 4
 internal let tableColumnDescriptorByteCount = tableColumnFieldByteCountOffset + 4
 
 
+// Table item pointer manipulations
+
+extension UnsafeMutableRawPointer {
+    
+    
+    /// A pointer to the row count assuming self points to the first byte of the value.
+    
+    internal var tableRowCountPtr: UnsafeMutableRawPointer { return self.advanced(by: tableRowCountOffset) }
+    
+    
+    /// A pointer to the column count assuming self points to the first byte of the value.
+    
+    internal var tableColumnCountPtr: UnsafeMutableRawPointer { return self.advanced(by: tableColumnCountOffset) }
+    
+    
+    /// A pointer to the rows offset assuming self points to the first byte of the value.
+    
+    internal var tableRowsOffsetPtr: UnsafeMutableRawPointer { return self.advanced(by: tableRowsOffsetOffset) }
+    
+    
+    /// A pointer to the row byte count assuming self points to the first byte of the value.
+    
+    internal var tableRowByteCountPtr: UnsafeMutableRawPointer { return self.advanced(by: tableRowByteCountOffset) }
+    
+
+    /// A pointer to the base of the column descriptors assuming self points to the first byte of the value.
+    
+    internal var tableColumnDescriptorBasePtr: UnsafeMutableRawPointer { return self.advanced(by: tableColumnDescriptorBaseOffset) }
+    
+    
+    /// A pointer to the column descriptor for a column assuming self points to the first byte of the value.
+    
+    internal func tableColumnDescriptorPtr(for column: Int) -> UnsafeMutableRawPointer {
+        return tableColumnDescriptorBasePtr.advanced(by: column * tableColumnDescriptorByteCount)
+    }
+    
+
+    /// Returns the CRC for the given column.
+    
+    internal func tableColumnNameCrc(for column: Int, _ endianness: Endianness) -> UInt16 {
+        if endianness == machineEndianness {
+            return tableColumnDescriptorPtr(for: column).advanced(by: tableColumnNameCrcOffset).assumingMemoryBound(to: UInt16.self).pointee
+        } else {
+            return tableColumnDescriptorPtr(for: column).advanced(by: tableColumnNameCrcOffset).assumingMemoryBound(to: UInt16.self).pointee.byteSwapped
+        }
+    }
+    
+    
+    /// Sets the CRC of the column name to a new value.
+    
+    internal func setTableColumnNameCrc(_ value: UInt16, for column: Int, _ endianness: Endianness) {
+        if endianness == machineEndianness {
+            tableColumnDescriptorPtr(for: column).advanced(by: tableColumnNameCrcOffset).storeBytes(of: value, as: UInt16.self)
+        } else {
+            tableColumnDescriptorPtr(for: column).advanced(by: tableColumnNameCrcOffset).storeBytes(of: value.byteSwapped, as: UInt16.self)
+        }
+    }
+
+    
+    /// Returns the offset for the column name UTF8 field relative to the first byte of the item value field assuming self points to the first byte of the value field.
+    
+    internal func tableColumnNameUtf8Offset(for column: Int, _ endianness: Endianness) -> UInt32 {
+        if endianness == machineEndianness {
+            return tableColumnDescriptorPtr(for: column).advanced(by: tableColumnNameUtf8CodeOffsetOffset).assumingMemoryBound(to: UInt32.self).pointee
+        } else {
+            return tableColumnDescriptorPtr(for: column).advanced(by: tableColumnNameUtf8CodeOffsetOffset).assumingMemoryBound(to: UInt32.self).pointee.byteSwapped
+        }
+    }
+    
+    
+    /// Sets a new offset for column name UTF8 field relative to the first byte of the item value field.
+    
+    internal func setTableColumnNameUtf8Offset(_ value: UInt32, for column: Int, _ endianness: Endianness) {
+        if endianness == machineEndianness {
+            tableColumnDescriptorPtr(for: column).advanced(by: tableColumnNameUtf8CodeOffsetOffset).storeBytes(of: value, as: UInt32.self)
+        } else {
+            tableColumnDescriptorPtr(for: column).advanced(by: tableColumnNameUtf8CodeOffsetOffset).storeBytes(of: value.byteSwapped, as: UInt32.self)
+        }
+    }
+
+    
+    /// Returns the byte count for the column name field.
+    
+    internal func tableColumnNameByteCount(for column: Int) -> UInt8 {
+        return tableColumnDescriptorPtr(for: column).advanced(by: tableColumnNameByteCountOffset).assumingMemoryBound(to: UInt8.self).pointee
+    }
+    
+    
+    /// Sets a new byte count for the column name field.
+    
+    internal func setTableColumnNameByteCount(_ value: UInt8, for column: Int) {
+        tableColumnDescriptorPtr(for: column).advanced(by: tableColumnNameByteCountOffset).storeBytes(of: value, as: UInt8.self)
+    }
+    
+    
+    /// Returns the item type of the value stored in the column.
+    
+    internal func tableColumnType(for column: Int) -> UInt8 {
+        return tableColumnDescriptorPtr(for: column).advanced(by: tableColumnFieldTypeOffset).assumingMemoryBound(to: UInt8.self).pointee
+    }
+    
+    
+    /// Sets a new item type for the value stored in the column.
+    
+    internal func setTableColumnType(_ value: UInt8, for column: Int) {
+        tableColumnDescriptorPtr(for: column).advanced(by: tableColumnFieldTypeOffset).storeBytes(of: value, as: UInt8.self)
+    }
+
+    
+    /// Returns the offset of the first byte of the location where the value for the column is stored, relative to the first byte of the row.
+    
+    internal func tableColumnFieldOffset(for column: Int, _ endianness: Endianness) -> UInt32 {
+        if endianness == machineEndianness {
+            return tableColumnDescriptorPtr(for: column).advanced(by: tableColumnFieldOffsetOffset).assumingMemoryBound(to: UInt32.self).pointee
+        } else {
+            return tableColumnDescriptorPtr(for: column).advanced(by: tableColumnFieldOffsetOffset).assumingMemoryBound(to: UInt32.self).pointee.byteSwapped
+        }
+    }
+    
+    
+    /// Sets a new value for the offset of the first byte of the column relative to the first byte of the row.
+    
+    internal func setTableColumnFieldOffset(_ value: UInt32, for column: Int, _ endianness: Endianness) {
+        if endianness == machineEndianness {
+            tableColumnDescriptorPtr(for: column).advanced(by: tableColumnFieldOffsetOffset).storeBytes(of: value, as: UInt32.self)
+        } else {
+            tableColumnDescriptorPtr(for: column).advanced(by: tableColumnFieldOffsetOffset).storeBytes(of: value.byteSwapped, as: UInt32.self)
+        }
+    }
+    
+    
+    /// Returns the byte count that is reserved for the value in the column.
+    
+    internal func tableColumnFieldByteCount(for column: Int, _ endianness: Endianness) -> UInt32 {
+        if endianness == machineEndianness {
+            return tableColumnDescriptorPtr(for: column).advanced(by: tableColumnFieldByteCountOffset).assumingMemoryBound(to: UInt32.self).pointee
+        } else {
+            return tableColumnDescriptorPtr(for: column).advanced(by: tableColumnFieldByteCountOffset).assumingMemoryBound(to: UInt32.self).pointee.byteSwapped
+        }
+    }
+    
+    
+    /// Sets a new value in the column descriptor table for the number of bytes that can be stored in the column.
+    
+    internal func setTableColumnFieldByteCount(_ value: UInt32, for column: Int, _ endianness: Endianness) {
+        if endianness == machineEndianness {
+            tableColumnDescriptorPtr(for: column).advanced(by: tableColumnFieldByteCountOffset).storeBytes(of: value, as: UInt32.self)
+        } else {
+            tableColumnDescriptorPtr(for: column).advanced(by: tableColumnFieldByteCountOffset).storeBytes(of: value.byteSwapped, as: UInt32.self)
+        }
+    }
+
+    
+    /// Returns the number of rows in a table item assuming self points to the first byte of the value.
+
+    internal func tableRowCount(_ endianness: Endianness) -> UInt32 {
+        if endianness == machineEndianness {
+            return tableRowCountPtr.assumingMemoryBound(to: UInt32.self).pointee
+        } else {
+            return tableRowCountPtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped
+        }
+    }
+    
+    
+    /// Sets the number of rows in a table item assuming self points to the first byte of the value.
+    
+    internal func setTableRowCount(to value: UInt32, _ endianness: Endianness) {
+        if endianness == machineEndianness {
+            tableRowCountPtr.storeBytes(of: value, as: UInt32.self)
+        } else {
+            tableRowCountPtr.storeBytes(of: value.byteSwapped, as: UInt32.self)
+        }
+    }
+    
+    
+    /// Increments the number of rows count by 1 assuming self points to the first byte of the value.
+    
+    internal func incrementTableRowCount(_ endianness: Endianness) {
+        if endianness == machineEndianness {
+            let value = tableRowCountPtr.assumingMemoryBound(to: UInt32.self).pointee + 1
+            tableRowCountPtr.storeBytes(of: value, as: UInt32.self)
+        } else {
+            let value = tableRowCountPtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped + 1
+            tableRowCountPtr.storeBytes(of: value.byteSwapped, as: UInt32.self)
+        }
+    }
+    
+    
+    /// Increments the number of rows count by 1 assuming self points to the first byte of the value.
+    
+    internal func decrementTableRowCount(_ endianness: Endianness) {
+        if endianness == machineEndianness {
+            let value = tableRowCountPtr.assumingMemoryBound(to: UInt32.self).pointee - 1
+            tableRowCountPtr.storeBytes(of: value, as: UInt32.self)
+        } else {
+            let value = tableRowCountPtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped - 1
+            tableRowCountPtr.storeBytes(of: value.byteSwapped, as: UInt32.self)
+        }
+    }
+
+    
+    /// Returns the number of columns in the table assuming self points to the first byte of the value.
+    
+    internal func tableColumnCount(_ endianness: Endianness) -> UInt32 {
+        if endianness == machineEndianness {
+            return tableColumnCountPtr.assumingMemoryBound(to: UInt32.self).pointee
+        } else {
+            return tableColumnCountPtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped
+        }
+    }
+    
+    
+    /// Sets the number of columns in the table assuming self points to the first byte of the value.
+
+    internal func setTableColumnCount(to value: UInt32, _ endianness: Endianness) {
+        if endianness == machineEndianness {
+            tableColumnCountPtr.storeBytes(of: value, as: UInt32.self)
+        } else {
+            tableColumnCountPtr.storeBytes(of: value.byteSwapped, as: UInt32.self)
+        }
+    }
+    
+    
+    /// The offset from the start of the item value field to the first byte of the row content fields.
+    
+    internal func tableRowsOffset(_ endianness: Endianness) -> UInt32 {
+        if endianness == machineEndianness {
+            return tableRowsOffsetPtr.assumingMemoryBound(to: UInt32.self).pointee
+        } else {
+            return tableRowsOffsetPtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped
+        }
+    }
+    
+    internal func setTableRowsOffset(to value: UInt32, _ endianness: Endianness) {
+        if endianness == machineEndianness {
+            tableRowsOffsetPtr.storeBytes(of: value, as: UInt32.self)
+        } else {
+            tableRowsOffsetPtr.storeBytes(of: value.byteSwapped, as: UInt32.self)
+        }
+    }
+    
+    
+    /// The number of bytes in a row. This is the raw number of bytes, including filler bytes.
+    
+    internal func tableRowByteCount(_ endianness: Endianness) -> UInt32 {
+        if endianness == machineEndianness {
+            return tableRowByteCountPtr.assumingMemoryBound(to: UInt32.self).pointee
+        } else {
+            return tableRowByteCountPtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped
+        }
+    }
+    
+    
+    internal func setTableRowByteCount(to value: UInt32, _ endianness: Endianness) {
+        if endianness == machineEndianness {
+            tableRowByteCountPtr.storeBytes(of: value, as: UInt32.self)
+        } else {
+            tableRowByteCountPtr.storeBytes(of: value.byteSwapped, as: UInt32.self)
+        }
+    }
+    
+
+    internal func tableColumnNameUtf8Code(for column: Int, _ endianness: Endianness) -> Data {
+        let nameUtf8Ptr = self.advanced(by: Int(tableColumnNameUtf8Offset(for: column, endianness)))
+        let nameCount = Int(nameUtf8Ptr.assumingMemoryBound(to: UInt8.self).pointee)
+        return Data(bytes: nameUtf8Ptr.advanced(by: 1), count: nameCount)
+    }
+
+    
+    internal func setTableColumnNameUtf8Code(to value: Data, for column: Int, _ endianness: Endianness) {
+        let nameUtf8Ptr = self.advanced(by: Int(tableColumnNameUtf8Offset(for: column, endianness)))
+        nameUtf8Ptr.storeBytes(of: UInt8(value.count), as: UInt8.self)
+        value.copyBytes(to: nameUtf8Ptr.advanced(by: 1).assumingMemoryBound(to: UInt8.self), count: value.count)
+    }
+
+    
+    /// Returns a pointer to the first byte of the first item in a row
+    
+    internal func tableRowPtr(for row: Int, _ endianness: Endianness) -> UnsafeMutableRawPointer {
+        let rowOffset = row * Int(tableRowByteCount(endianness))
+        return self.advanced(by: Int(tableRowsOffset(endianness)) + rowOffset)
+    }
+
+    
+    /// Returns a pointer to the first byte of the value in the row/column combination.
+    
+    internal func tableFieldPtr(row: Int, column: Int, _ endianness: Endianness) -> UnsafeMutableRawPointer {
+        let rowPtr = tableRowPtr(for: row, endianness)
+        let columnOffset = Int(tableColumnFieldOffset(for: column, endianness))
+        return rowPtr.advanced(by: columnOffset)
+    }
+    
+}
+
+
+// Table item access
+
+extension Portal {
+    
+    
+    /// The number of rows in the table
+    
+    internal var _tableRowCount: Int {
+        get { return Int(itemPtr.itemValueFieldPtr.tableRowCount(endianness)) }
+        set { itemPtr.itemValueFieldPtr.setTableRowCount(to: UInt32(newValue), endianness) }
+    }
+    
+    
+    /// The number of columns in the table
+    
+    internal var _tableColumnCount: Int {
+        get { return Int(itemPtr.itemValueFieldPtr.tableColumnCount(endianness)) }
+        set { itemPtr.itemValueFieldPtr.setTableColumnCount(to: UInt32(newValue), endianness) }
+    }
+    
+    
+    /// The offset for the column field in a table row
+    
+    internal var _tableRowsOffset: Int {
+        get { return Int(itemPtr.itemValueFieldPtr.tableRowsOffset(endianness)) }
+        set { itemPtr.itemValueFieldPtr.setTableRowsOffset(to: UInt32(newValue), endianness) }
+    }
+
+    
+    /// The byte count for a table row
+    
+    internal var _tableRowByteCount: Int {
+        get { return Int(itemPtr.itemValueFieldPtr.tableRowByteCount(endianness)) }
+        set { itemPtr.itemValueFieldPtr.setTableRowByteCount(to: UInt32(newValue), endianness) }
+    }
+
+    
+    /// Returns the column name for a column.
+    
+    internal func _tableGetColumnName(for column: Int) -> String {
+        let utf8Code = itemPtr.itemValueFieldPtr.tableColumnNameUtf8Code(for: column, endianness)
+        return (String(data: utf8Code, encoding: .utf8) ?? "")
+    }
+    
+    
+    /// Sets the column name for a column.
+    ///
+    /// Updates the column descriptors as well as the column name fields. May shift the entire content area of the table if the new name is larger as the old name.
+    
+    internal func _tableSetColumnName(_ value: String, for column: Int) -> Result {
+        
+        // Convert the name into a NFD
+        guard let nfd = NameField(value) else { return .error(.nameFieldError) }
+        
+        // Expand the name storage field when necessary
+        if (nfd.data.count + 1) > itemPtr.itemValueFieldPtr.tableColumnNameByteCount(for: column) {
+            let result = _tableIncreaseColumnNameByteCount(to: (nfd.data.count + 1), for: column)
+            guard result == .success else { return result }
+        }
+        
+        // Store the new name
+        itemPtr.itemValueFieldPtr.setTableColumnNameUtf8Code(to: nfd.data, for: column, endianness)
+        
+        // Store the new crc
+        itemPtr.itemValueFieldPtr.setTableColumnNameCrc(nfd.crc, for: column, endianness)
+        
+        return .success
+    }
+    
+    
+    /// The used area in the value field
+    
+    internal var _tableValueFieldUsedByteCount: Int {
+        return _tableRowsOffset + _tableRowCount * _tableRowByteCount
+    }
+    
+    
+    /// Returns a NFD for the column.
+    
+    internal func _tableColumnNameField(_ column: Int) -> NameField {
+        let crc = itemPtr.itemValueFieldPtr.tableColumnNameCrc(for: column, endianness)
+        let byteCount = Int(itemPtr.itemValueFieldPtr.tableColumnNameCrc(for: column, endianness))
+        let dataOffset = Int(itemPtr.itemValueFieldPtr.tableColumnNameUtf8Offset(for: column, endianness))
+        let dataPtr = itemPtr.itemValueFieldPtr.advanced(by: dataOffset)
+        let dataCount = Int(UInt8(fromPtr: dataPtr, endianness))
+        let data = Data(bytes: dataPtr.advanced(by: 1), count: dataCount)
+        return NameField(data: data, crc: crc, byteCount: byteCount)
+    }
+    
+    
+    /// Increases the space available for storage of the column's name utf8-byte-code sequence (and count byte).
+    
+    internal func _tableIncreaseColumnNameByteCount(to bytes: Int, for column: Int) -> Result {
+        
+        let delta = bytes - Int(itemPtr.itemValueFieldPtr.tableColumnNameByteCount(for: column))
+        let srcPtr = itemPtr.itemValueFieldPtr.advanced(by: _tableRowsOffset)
+        let dstPtr = srcPtr.advanced(by: delta)
+        let len = _tableContentByteCount
+        
+        let bytesNeeded = len + delta
+        if (_itemByteCount - itemHeaderByteCount) < bytesNeeded {
+            let result = _tableEnsureColumnValueByteCount(of: bytesNeeded, in: column)
+            guard result == .success else { return result }
+        }
+        
+        // Move the table values up
+        manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
+        
+        // Rebuild the table and column description area
+        var cols: Array<ColumnSpecification> = []
+        for i in 0 ..< _tableColumnCount {
+            guard let colSpec = ColumnSpecification(fromPtr: itemPtr.itemValueFieldPtr, forColumn: i, endianness) else {
+                // Undo: Move the table back to its original place
+                manager.moveBlock(to: srcPtr, from: dstPtr, moveCount: len, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
+                return .error(.invalidTableColumnType)
+            }
+            cols.append(colSpec)
+        }
+        let nameField = NameField(data: cols[column].nameField.data, crc: cols[column].nameField.crc, byteCount: bytes)
+        cols[column].nameField = nameField
+        
+        tableWriteSpecification(valueFieldPtr: itemPtr.itemValueFieldPtr, &cols, endianness)
+        
+        return .success
+    }
+    
+    
+    /// Makes sure the byte count for the column's value is sufficient to store the value.
+    
+    internal func _tableEnsureColumnValueByteCount(of bytes: Int, in column: Int) -> Result {
+        
+        guard let cspec = ColumnSpecification(fromPtr: itemPtr.itemValueFieldPtr, forColumn: column, endianness) else { return .error(.invalidTableColumnType) }
+        
+        if bytes > cspec.fieldByteCount {
+            let result = _tableIncreaseColumnValueByteCount(to: bytes.roundUpToNearestMultipleOf8(), for: column)
+            guard result == .success else { return result }
+        }
+        
+        return .success
+    }
+    
+    
+    /// Increases the value byte count for the column.
+    
+    internal func _tableIncreaseColumnValueByteCount(to bytes: Int, for column: Int) -> Result {
+        
+        let valueFieldPtr = itemPtr.itemValueFieldPtr
+        
+        // Calculate the needed bytes for the entire table content
+        
+        let cspec = ColumnSpecification(fromPtr: valueFieldPtr, forColumn: column, endianness)!
+        
+        let columnFieldByteCountIncrease = bytes - cspec.fieldByteCount
+        let oldRowByteCount = _tableRowByteCount
+        let newRowByteCount = oldRowByteCount + columnFieldByteCountIncrease
+        let newTableContentByteCount = _tableRowCount * newRowByteCount
+        let necessaryItemByteCount = itemHeaderByteCount + _tableRowsOffset + newTableContentByteCount
+        
+        if _itemByteCount < necessaryItemByteCount {
+            let result = increaseItemByteCount(to: necessaryItemByteCount)
+            guard result == .success else { return result }
+        }
+        
+        
+        // Shift the column value fields to their new place
+        
+        let colOffset = Int(valueFieldPtr.tableColumnFieldOffset(for: column, endianness))
+        let colValueByteCount = Int(valueFieldPtr.tableColumnFieldByteCount(for: column, endianness))
+        let offsetOfFirstByteAfterIncreasedByteCount = colOffset + colValueByteCount
+        let bytesAfterIncrease = oldRowByteCount - offsetOfFirstByteAfterIncreasedByteCount
+        
+        if bytesAfterIncrease > 0 {
+            let lastRowPtr = valueFieldPtr.tableRowPtr(for: (_tableRowCount - 1), endianness)
+            let srcPtr = lastRowPtr.advanced(by: offsetOfFirstByteAfterIncreasedByteCount)
+            let dstPtr = srcPtr.advanced(by: _tableRowCount * columnFieldByteCountIncrease)
+            manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: bytesAfterIncrease, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
+        }
+        
+        if _tableRowCount > 1 {
+            for ri in (1 ..< _tableRowCount).reversed() {
+                let rowPtr = valueFieldPtr.tableRowPtr(for: ri, endianness)
+                let srcPtr = rowPtr.advanced(by: offsetOfFirstByteAfterIncreasedByteCount - oldRowByteCount)
+                let dstPtr = srcPtr.advanced(by: ri * columnFieldByteCountIncrease)
+                manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: oldRowByteCount, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
+            }
+        }
+        
+        // Update the column value byte count to the new value
+        valueFieldPtr.setTableColumnFieldByteCount(UInt32(colValueByteCount + columnFieldByteCountIncrease), for: column, endianness)
+        
+        // Update column value offsets
+        if (column + 1) < _tableColumnCount {
+            for ci in (column + 1) ..< _tableColumnCount {
+                let old = Int(valueFieldPtr.tableColumnFieldOffset(for: ci, endianness))
+                let new = old + columnFieldByteCountIncrease
+                valueFieldPtr.setTableColumnFieldOffset(UInt32(new), for: ci, endianness)
+            }
+        }
+        
+        // Update the row byte count
+        _tableRowByteCount = newRowByteCount
+        
+        return .success
+    }
+    
+    
+    /// Returns the total amount of bytes stored in the table content area. Includes filler data in the value fields. Excludes filler data in the item.
+    
+    internal var _tableContentByteCount: Int {
+        if _tableColumnCount == 0 { return tableColumnDescriptorBaseOffset }
+        return _tableRowsOffset + (_tableRowCount * _tableRowByteCount)
+    }
+    
+    
+    /// Returns the column index
+    
+    internal func _tableColumnIndex(for nfd: NameField) -> Int? {
+        
+        let valuePtr = itemPtr.itemValueFieldPtr
+        
+        for i in 0 ..< _tableColumnCount {
+            if nfd.crc != valuePtr.tableColumnNameCrc(for: i, endianness) { continue }
+            let offset = Int(valuePtr.tableColumnNameUtf8Offset(for: i, endianness))
+            if nfd.data.count != Int(valuePtr.advanced(by: offset).assumingMemoryBound(to: UInt8.self).pointee) { continue }
+            let data = Data(bytesNoCopy: valuePtr.advanced(by: offset + 1), count: nfd.data.count, deallocator: Data.Deallocator.none)
+            if data == nfd.data { return i }
+        }
+        
+        return nil
+    }
+    
+    
+    /// Returns the column index
+    
+    internal func _tableColumnIndex(for name: String?) -> Int? {
+        guard let nfd = NameField(name) else { return nil }
+        return _tableColumnIndex(for: nfd)
+    }
+    
+    
+    /// Returns the column index.
+    ///
+    /// - Note: Using the column index is faster than using the column name. However the column index may change due to other operations. Make sure no table-operation is used of which it is documented that it may change the column index. This documentation will be backwards compatible, i.e. if it is not documented now, it is safe to assume that the operation will never change the column index.
+    ///
+    /// - Parameter for: The NameFieldDescriptor of the column to return the index for.
+    ///
+    /// - Returns: The requested index or nil if there is no matching column.
+    
+    public func tableColumnIndex(for nfd: NameField?) -> Int? {
+        guard isTable else { return nil }
+        guard let nfd = nfd else { return nil }
+        return _tableColumnIndex(for: nfd)
+    }
+    
+    
+    /// Returns the column index.
+    ///
+    /// - Note: Using the column index is faster than using the column name. However the column index may change due to other operations. Make sure no table-operation is used of which it is documented that it may change the column index. This documentation will be backwards compatible, i.e. if it is not documented now, it is safe to assume that the operation will never change the column index.
+    ///
+    /// - Parameter for: The name of the column to return the index for.
+    ///
+    /// - Returns: The requested index or nil if there is no matching column.
+    
+    public func tableColumnIndex(for name: String) -> Int? {
+        guard isTable else { return nil }
+        return tableColumnIndex(for: name)
+    }
+    
+    
+    /// Execute the given closure on each column item at the requested row.
+    ///
+    /// - Parameters:
+    ///   - atRow: The row for which to execute the closure.
+    ///   - closure: The closure to execute for each column value. Note that the portal in the closure parameter is not registered with the active portals manager and thus should not be used/stored outside the closure. Also it is not allowed to make changes to the
+    
+    internal func forEachColumn(atRow index: Int, closure: (String, Portal) -> ()) {
+        
+        guard isTable else { return }
+        guard index >= 0 && index < _tableRowCount else { return }
+        
+        for ci in 0 ..< _tableColumnCount {
+            closure(_tableGetColumnName(for: ci), Portal(itemPtr: itemPtr, index: index, column: ci, manager: manager, endianness: endianness))
+        }
+    }
+    
+    
+    /// Execute the given closure for each row value for the given column or until the closure returns 'true'.
+    ///
+    /// The closure is not executed if the column cannot be found.
+    ///
+    /// - Parameters:
+    ///   - column: The name of the string that identifies the column value to be processed by the closure.
+    ///   - closure: The closure to execute on each row value for the requested column. Aborts when the closure returns 'true'. Note that the portal in the closure parameter is not registered with the active portals manager and thus should not be used/stored outside the closure.
+    
+    internal func forEachRowAbortOnTrue(column: String, closure: (Portal) -> (Bool)) {
+        
+        guard isTable else { return }
+        guard let ci = _tableColumnIndex(for: column) else { return }
+        
+        for ri in 0 ..< _tableRowCount {
+            if closure(Portal(itemPtr: itemPtr, index: ri, column: ci, manager: manager, endianness: endianness)) { break }
+        }
+    }
+
+    
+    internal func _tableGetColumnType(for column: Int) -> ItemType {
+        return ItemType(rawValue: itemPtr.itemValueFieldPtr.tableColumnType(for: column)) ?? ItemType.null
+    }
+
+}
+
 extension Portal {
     
     
@@ -148,8 +754,8 @@ extension Portal {
             guard let column = column else { return Portal.nullPortal }
             guard row >= 0, row < _tableRowCount else { return Portal.nullPortal }
             guard let columnIndex = _tableColumnIndex(for: column) else { return Portal.nullPortal }
-            if _tableGetColumnType(for: columnIndex)!.isContainer {
-                return manager.getActivePortal(for: _tableFieldPtr(row: row, column: columnIndex), index: nil, column: nil)
+            if _tableGetColumnType(for: columnIndex).isContainer {
+                return manager.getActivePortal(for: itemPtr.itemValueFieldPtr.tableFieldPtr(row: row, column: columnIndex, endianness), index: nil, column: nil)
             } else {
                 return manager.getActivePortal(for: itemPtr, index: row, column: columnIndex)
             }
@@ -172,8 +778,8 @@ extension Portal {
             guard isTable else { return Portal.nullPortal }
             guard row >= 0, row < _tableRowCount else { return Portal.nullPortal }
             guard let columnIndex = _tableColumnIndex(for: column) else { return Portal.nullPortal }
-            if _tableGetColumnType(for: columnIndex)!.isContainer {
-                return manager.getActivePortal(for: _tableFieldPtr(row: row, column: columnIndex), index: nil, column: nil)
+            if _tableGetColumnType(for: columnIndex).isContainer {
+                return manager.getActivePortal(for: itemPtr.itemValueFieldPtr.tableFieldPtr(row: row, column: columnIndex, endianness), index: nil, column: nil)
             } else {
                 return manager.getActivePortal(for: itemPtr, index: row, column: columnIndex)
             }
@@ -194,8 +800,8 @@ extension Portal {
             guard isTable else { return Portal.nullPortal }
             guard row >= 0, row < _tableRowCount else { return Portal.nullPortal }
             guard column >= 0, column < _tableColumnCount else { return Portal.nullPortal }
-            if _tableGetColumnType(for: column)!.isContainer {
-                return manager.getActivePortal(for: _tableFieldPtr(row: row, column: column), index: nil, column: nil)
+            if _tableGetColumnType(for: column).isContainer {
+                return manager.getActivePortal(for: itemPtr.itemValueFieldPtr.tableFieldPtr(row: row, column: column, endianness), index: nil, column: nil)
             } else {
                 return manager.getActivePortal(for: itemPtr, index: row, column: column)
             }
@@ -413,47 +1019,7 @@ extension Portal {
             }
         }
     }
-
     
-    /// A pointer to the row count
-    
-    internal var _tableRowCountPtr: UnsafeMutableRawPointer { return itemValueFieldPtr.advanced(by: tableRowCountOffset) }
-    
-    
-    /// A pointer to the column count
-    
-    internal var _tableColumnCountPtr: UnsafeMutableRawPointer { return itemValueFieldPtr.advanced(by: tableColumnCountOffset) }
-    
-    
-    /// A pointer to the rows offset
-    
-    internal var _tableRowsOffsetPtr: UnsafeMutableRawPointer { return itemValueFieldPtr.advanced(by: tableRowsOffsetOffset) }
-    
-    
-    /// A pointer to the row byte count
-    
-    internal var _tableRowByteCountPtr: UnsafeMutableRawPointer { return itemValueFieldPtr.advanced(by: tableRowByteCountOffset) }
-    
-    
-    /// A pointer to the base of the column descriptors
-    
-    internal var _tableColumnDescriptorBasePtr: UnsafeMutableRawPointer { return itemValueFieldPtr.advanced(by: tableColumnDescriptorBaseOffset) }
-    
-    
-    /// A pointer to the column descriptor for a column.
-    
-    internal func _tableColumnDescriptorPtr(for column: Int) -> UnsafeMutableRawPointer {
-        return _tableColumnDescriptorBasePtr.advanced(by: column * tableColumnDescriptorByteCount)
-    }
-    
-    
-    /// The number of rows in the table.
-    
-    internal var _tableRowCount: Int {
-        get { return Int(UInt32(fromPtr: _tableRowCountPtr, endianness)) }
-        set { UInt32(newValue).copyBytes(to: _tableRowCountPtr, endianness) }
-    }
-
     
     /// The number of rows in the table
     
@@ -461,30 +1027,6 @@ extension Portal {
         guard isValid else { return nil }
         guard isTable else { return nil }
         return _tableRowCount
-    }
-    
-    
-    /// The number of columns in the table.
-    
-    internal var _tableColumnCount: Int {
-        get { return Int(UInt32(fromPtr: _tableColumnCountPtr, endianness)) }
-        set { UInt32(newValue).copyBytes(to: _tableColumnCountPtr, endianness) }
-    }
-
-    
-    /// The offset from the start of the item value field to the first byte of the row content fields.
-    
-    internal var _tableRowsOffset: Int {
-        get { return Int(UInt32(fromPtr: _tableRowsOffsetPtr, endianness)) }
-        set { UInt32(newValue).copyBytes(to: _tableRowsOffsetPtr, endianness) }
-    }
-
-    
-    /// The number of bytes in a row. This is the raw number of bytes, including filler bytes.
-    
-    internal var _tableRowByteCount: Int {
-        get { return Int(UInt32(fromPtr: _tableRowByteCountPtr, endianness)) }
-        set { UInt32(newValue).copyBytes(to: _tableRowByteCountPtr, endianness) }
     }
     
     
@@ -497,377 +1039,6 @@ extension Portal {
     }
     
     
-    /// Returns the column name for a column.
-    
-    internal func _tableGetColumnName(for column: Int) -> String {
-        let nameUtf8Ptr = itemValueFieldPtr.advanced(by: _tableGetColumnNameUtf8Offset(for: column))
-        let nameCount = Int(UInt8(fromPtr: nameUtf8Ptr, endianness))
-        let utf8Data = Data(bytes: nameUtf8Ptr.advanced(by: 1), count: nameCount)
-        return (String(data: utf8Data, encoding: .utf8) ?? "")
-    }
-    
-    
-    /// Sets the column name for a column.
-    ///
-    /// Updates the column descriptors as well as the column name fields. May shift the entire content area of the table if the new name is larger as the old name.
-    
-    internal func _tableSetColumnName(_ value: String, for column: Int) -> Result {
-        
-        // Convert the name into a NFD
-        guard let nfd = NameField(value) else { return .error(.nameFieldError) }
-        
-        // Expand the name storage field when necessary
-        if (nfd.data.count + 1) > _tableGetColumnNameByteCount(for: column) {
-            let result = _tableIncreaseColumnNameByteCount(to: (nfd.data.count + 1), for: column)
-            guard result == .success else { return result }
-        }
-        
-        // Store the new name
-        let nameUtf8Ptr = itemValueFieldPtr.advanced(by: _tableGetColumnNameUtf8Offset(for: column))
-        UInt8(nfd.data.count).copyBytes(to: nameUtf8Ptr, endianness)
-        nfd.data.copyBytes(to: nameUtf8Ptr.advanced(by: 1), endianness)
-        
-        // Store the new crc
-        _tableSetColumnNameCrc(nfd.crc, for: column)
-        
-        return .success
-    }
-
-    
-    /// Returns the CRC for the given column.
-    
-    internal func _tableGetColumnNameCrc(for column: Int) -> UInt16 {
-        return UInt16(fromPtr: _tableColumnDescriptorPtr(for: column), endianness)
-    }
-    
-    
-    /// Sets the CRC of the column name to a new value.
-    
-    internal func _tableSetColumnNameCrc(_ value: UInt16, for column: Int) {
-        value.copyBytes(to: _tableColumnDescriptorPtr(for: column), endianness)
-    }
-    
-    
-    /// Returns the byte count for the column name field.
-    
-    internal func _tableGetColumnNameByteCount(for column: Int) -> Int {
-        return Int(UInt8(fromPtr: _tableColumnDescriptorPtr(for: column).advanced(by: tableColumnNameByteCountOffset), endianness))
-    }
-    
-    
-    /// Sets a new byte count for the column name field.
-    
-    internal func _tableSetColumnNameByteCount(_ value: UInt8, for column: Int) {
-        value.copyBytes(to: _tableColumnDescriptorPtr(for: column).advanced(by: tableColumnNameByteCountOffset), endianness)
-    }
-
-    
-    /// Returns the offset for the column name UTF8 field relative to the first byte of the item value field.
-    
-    internal func _tableGetColumnNameUtf8Offset(for column: Int) -> Int {
-        return Int(UInt32(fromPtr: _tableColumnDescriptorPtr(for: column).advanced(by: tableColumnNameUtf8CodeOffsetOffset), endianness))
-    }
-
-    
-    /// Sets a new offset for column name UTF8 field relative to the first byte of the item value field.
-
-    internal func _tableSetColumnNameUtf8Offset(_ value: Int, for column: Int) {
-        UInt32(value).copyBytes(to: _tableColumnDescriptorPtr(for: column).advanced(by: tableColumnNameUtf8CodeOffsetOffset), endianness)
-    }
-    
-    
-    /// Returns the item type of the value stored in the column.
-    
-    internal func _tableGetColumnType(for column: Int) -> ItemType? {
-        return ItemType(atPtr: _tableColumnDescriptorPtr(for: column).advanced(by: tableColumnFieldTypeOffset))
-    }
-    
-    
-    /// Sets a new item type for the value stored in the column.
-    
-    internal func _tableSetColumnType(_ value: ItemType, for column: Int) {
-        value.copyBytes(to: _tableColumnDescriptorPtr(for: column).advanced(by: tableColumnFieldTypeOffset))
-    }
-
-    
-    /// Returns the offset of the first byte of the location where the value for the column is stored, relative to the first byte of the row.
-    
-    internal func _tableGetColumnFieldOffset(for column: Int) -> Int {
-        return Int(UInt32(fromPtr: _tableColumnDescriptorPtr(for: column).advanced(by: tableColumnFieldOffsetOffset), endianness))
-    }
-    
-    
-    /// Sets a new value for the offset of the first byte of the column relative to the first byte of the row.
-    
-    internal func _tableSetColumnFieldOffset(_ value: Int, for column: Int) {
-        UInt32(value).copyBytes(to: _tableColumnDescriptorPtr(for: column).advanced(by: tableColumnFieldOffsetOffset), endianness)
-    }
-
-    
-    /// Returns the byte count that is reserved for the value in the column.
-    
-    internal func _tableGetColumnFieldByteCount(for column: Int) -> Int {
-        return Int(UInt32(fromPtr: _tableColumnDescriptorPtr(for: column).advanced(by: tableColumnFieldByteCountOffset), endianness))
-    }
-    
-    
-    /// Sets a new value in the column descriptor table for the number of bytes that can be stored in the column.
-    
-    internal func _tableSetColumnFieldByteCount(_ value: Int, for column: Int) {
-        UInt32(value).copyBytes(to: _tableColumnDescriptorPtr(for: column).advanced(by: tableColumnFieldByteCountOffset), endianness)
-    }
-    
-    
-    /// Returns a pointer to the first byte of the value in the row/column combination.
-    
-    internal func _tableFieldPtr(row: Int, column: Int) -> UnsafeMutableRawPointer {
-        let rowPtr = _tableGetRowPtr(row: row)
-        let columnOffset = _tableGetColumnFieldOffset(for: column)
-        return rowPtr.advanced(by: columnOffset)
-    }
-    
-    
-    /// Returns a pointer to the first byte of the first item in a row
-    
-    internal func _tableGetRowPtr(row: Int) -> UnsafeMutableRawPointer {
-        let rowOffset = row * _tableRowByteCount
-        return itemValueFieldPtr.advanced(by: _tableRowsOffset + rowOffset)
-    }
-    
-    
-    /// The used area in the value field
-    
-    internal var _tableValueFieldUsedByteCount: Int {
-        return _tableRowsOffset + _tableRowCount * _tableRowByteCount
-    }
-
-    
-    /// Returns a NFD for the column.
-    
-    internal func _tableColumnNameField(_ column: Int) -> NameField {
-        let crc = _tableGetColumnNameCrc(for: column)
-        let byteCount = _tableGetColumnNameByteCount(for: column)
-        let dataOffset = _tableGetColumnNameUtf8Offset(for: column)
-        let dataPtr = itemValueFieldPtr.advanced(by: dataOffset)
-        let dataCount = Int(UInt8(fromPtr: dataPtr, endianness))
-        let data = Data(bytes: dataPtr.advanced(by: 1), count: dataCount)
-        return NameField(data: data, crc: crc, byteCount: byteCount)
-    }
-    
-    
-    /// Increases the space available for storage of the column's name utf8-byte-code sequence (and count byte).
-    
-    internal func _tableIncreaseColumnNameByteCount(to bytes: Int, for column: Int) -> Result {
-        
-        let delta = bytes - _tableGetColumnNameByteCount(for: column)
-        let srcPtr = itemValueFieldPtr.advanced(by: _tableRowsOffset)
-        let dstPtr = srcPtr.advanced(by: delta)
-        let len = _tableContentByteCount
-
-        let bytesNeeded = len + delta
-        if (_itemByteCount - itemMinimumByteCount) < bytesNeeded {
-            let result = ensureValueFieldByteCount(of: bytesNeeded)
-            guard result == .success else { return result }
-        }
-        
-        // Move the table values up
-        manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
-        
-        // Rebuild the table and column description area
-        var cols: Array<ColumnSpecification> = []
-        for i in 0 ..< _tableColumnCount {
-            guard let colSpec = ColumnSpecification(fromPtr: itemValueFieldPtr, forColumn: i, endianness) else {
-                // Undo: Move the table back to its original place
-                manager.moveBlock(to: srcPtr, from: dstPtr, moveCount: len, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
-                return .error(.invalidTableColumnType)
-            }
-            cols.append(colSpec)
-        }
-        let nameField = NameField(data: cols[column].nameField.data, crc: cols[column].nameField.crc, byteCount: bytes)
-        cols[column].nameField = nameField
-        
-        tableWriteSpecification(valueFieldPtr: itemValueFieldPtr, &cols, endianness)
-
-        return .success
-    }
-    
-    
-    /// Makes sure the byte count for the column's value is sufficient to store the value.
-    
-    internal func _tableEnsureColumnValueByteCount(of bytes: Int, in column: Int) -> Result {
-
-        guard let cspec = ColumnSpecification(fromPtr: itemValueFieldPtr, forColumn: column, endianness) else { return .error(.invalidTableColumnType) }
-
-        if bytes > cspec.fieldByteCount {
-            let result = _tableIncreaseColumnValueByteCount(to: bytes.roundUpToNearestMultipleOf8(), for: column)
-            guard result == .success else { return result }
-        }
-        
-        return .success
-    }
-    
-    
-    /// Increases the value byte count for the column.
-    
-    internal func _tableIncreaseColumnValueByteCount(to bytes: Int, for column: Int) -> Result {
-        
-        let valueFieldPtr = itemValueFieldPtr
-        
-        // Calculate the needed bytes for the entire table content
-        
-        let cspec = ColumnSpecification(fromPtr: valueFieldPtr, forColumn: column, endianness)!
-        
-        let columnFieldByteCountIncrease = bytes - cspec.fieldByteCount
-        let oldRowByteCount = _tableRowByteCount
-        let newRowByteCount = oldRowByteCount + columnFieldByteCountIncrease
-        let newTableContentByteCount = _tableRowCount * newRowByteCount
-        let necessaryItemByteCount = itemMinimumByteCount + _tableRowsOffset + newTableContentByteCount
-        
-        if _itemByteCount < necessaryItemByteCount {
-            let result = increaseItemByteCount(to: necessaryItemByteCount)
-            guard result == .success else { return result }
-        }
-        
-        
-        // Shift the column value fields to their new place
-
-        let colOffset = _tableGetColumnFieldOffset(for: column)
-        let colValueByteCount = _tableGetColumnFieldByteCount(for: column)
-        let offsetOfFirstByteAfterIncreasedByteCount = colOffset + colValueByteCount
-        let bytesAfterIncrease = oldRowByteCount - offsetOfFirstByteAfterIncreasedByteCount
-        
-        if bytesAfterIncrease > 0 {
-            let lastRowPtr = _tableGetRowPtr(row: _tableRowCount - 1)
-            let srcPtr = lastRowPtr.advanced(by: offsetOfFirstByteAfterIncreasedByteCount)
-            let dstPtr = srcPtr.advanced(by: _tableRowCount * columnFieldByteCountIncrease)
-            manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: bytesAfterIncrease, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
-        }
-        
-        if _tableRowCount > 1 {
-            for ri in (1 ..< _tableRowCount).reversed() {
-                let rowPtr = _tableGetRowPtr(row: ri)
-                let srcPtr = rowPtr.advanced(by: offsetOfFirstByteAfterIncreasedByteCount - oldRowByteCount)
-                let dstPtr = srcPtr.advanced(by: ri * columnFieldByteCountIncrease)
-                manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: oldRowByteCount, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
-            }
-        }
-        
-        // Update the column value byte count to the new value
-        _tableSetColumnFieldByteCount(colValueByteCount + columnFieldByteCountIncrease, for: column)
-        
-        // Update column value offsets
-        if (column + 1) < _tableColumnCount {
-            for ci in (column + 1) ..< _tableColumnCount {
-                let old = _tableGetColumnFieldOffset(for: ci)
-                let new = old + columnFieldByteCountIncrease
-                _tableSetColumnFieldOffset(new, for: ci)
-            }
-        }
-        
-        // Update the row byte count
-        _tableRowByteCount = newRowByteCount
-        
-        return .success
-    }
-    
-    
-    /// Returns the total amount of bytes stored in the table content area. Includes filler data in the value fields. Excludes filler data in the item.
-    
-    internal var _tableContentByteCount: Int {
-        if _tableColumnCount == 0 { return tableColumnDescriptorBaseOffset }
-        return _tableRowsOffset + (_tableRowCount * _tableRowByteCount)
-    }
-    
-    
-    /// Returns the column index
-    
-    internal func _tableColumnIndex(for nfd: NameField) -> Int? {
-    
-        let valuePtr = itemValueFieldPtr
-        
-        for i in 0 ..< _tableColumnCount {
-            if nfd.crc != _tableGetColumnNameCrc(for: i) { continue }
-            let offset = _tableGetColumnNameUtf8Offset(for: i)
-            if nfd.data.count != Int(valuePtr.advanced(by: offset).assumingMemoryBound(to: UInt8.self).pointee) { continue }
-            let data = Data(bytesNoCopy: valuePtr.advanced(by: offset + 1), count: nfd.data.count, deallocator: Data.Deallocator.none)
-            if data == nfd.data { return i }
-        }
-        
-        return nil
-    }
-    
-    
-    /// Returns the column index
-    
-    internal func _tableColumnIndex(for name: String?) -> Int? {
-        guard let nfd = NameField(name) else { return nil }
-        return _tableColumnIndex(for: nfd)
-    }
-    
-    
-    /// Returns the column index.
-    ///
-    /// - Note: Using the column index is faster than using the column name. However the column index may change due to other operations. Make sure no table-operation is used of which it is documented that it may change the column index. This documentation will be backwards compatible, i.e. if it is not documented now, it is safe to assume that the operation will never change the column index.
-    ///
-    /// - Parameter for: The NameFieldDescriptor of the column to return the index for.
-    ///
-    /// - Returns: The requested index or nil if there is no matching column.
-    
-    public func tableColumnIndex(for nfd: NameField?) -> Int? {
-        guard isTable else { return nil }
-        guard let nfd = nfd else { return nil }
-        return _tableColumnIndex(for: nfd)
-    }
-    
-    
-    /// Returns the column index.
-    ///
-    /// - Note: Using the column index is faster than using the column name. However the column index may change due to other operations. Make sure no table-operation is used of which it is documented that it may change the column index. This documentation will be backwards compatible, i.e. if it is not documented now, it is safe to assume that the operation will never change the column index.
-    ///
-    /// - Parameter for: The name of the column to return the index for.
-    ///
-    /// - Returns: The requested index or nil if there is no matching column.
-
-    public func tableColumnIndex(for name: String) -> Int? {
-        guard isTable else { return nil }
-        return tableColumnIndex(for: name)
-    }
-    
-    
-    /// Execute the given closure on each column item at the requested row.
-    ///
-    /// - Parameters:
-    ///   - atRow: The row for which to execute the closure.
-    ///   - closure: The closure to execute for each column value. Note that the portal in the closure parameter is not registered with the active portals manager and thus should not be used/stored outside the closure. Also it is not allowed to make changes to the
-    
-    internal func forEachColumn(atRow index: Int, closure: (String, Portal) -> ()) {
-        
-        guard isTable else { return }
-        guard index >= 0 && index < _tableRowCount else { return }
-        
-        for ci in 0 ..< _tableColumnCount {
-            closure(_tableGetColumnName(for: ci), Portal(itemPtr: itemPtr, index: index, column: ci, manager: manager, endianness: endianness))
-        }
-    }
-    
-    
-    /// Execute the given closure for each row value for the given column or until the closure returns 'true'.
-    ///
-    /// The closure is not executed if the column cannot be found.
-    ///
-    /// - Parameters:
-    ///   - column: The name of the string that identifies the column value to be processed by the closure.
-    ///   - closure: The closure to execute on each row value for the requested column. Aborts when the closure returns 'true'. Note that the portal in the closure parameter is not registered with the active portals manager and thus should not be used/stored outside the closure.
-    
-    internal func forEachRowAbortOnTrue(column: String, closure: (Portal) -> (Bool)) {
-        
-        guard isTable else { return }
-        guard let ci = _tableColumnIndex(for: column) else { return }
-        
-        for ri in 0 ..< _tableRowCount {
-            if closure(Portal(itemPtr: itemPtr, index: ri, column: ci, manager: manager, endianness: endianness)) { break }
-        }
-    }
     
     
     /// Reset the table to an empty state.
@@ -877,7 +1048,7 @@ extension Portal {
     public func tableReset(clear: Bool = false) {
         guard isValid, isTable else { return }
         if clear {
-            _ = Darwin.memset(_tableGetRowPtr(row: 0), 0, _tableRowCount * _tableRowByteCount)
+            _ = Darwin.memset(itemPtr.itemValueFieldPtr.tableRowPtr(for: 0, endianness), 0, _tableRowCount * _tableRowByteCount)
         }
         _tableRowCount = 0
     }
@@ -923,14 +1094,14 @@ extension Portal {
         let necessaryValueFieldByteCount = _tableRowsOffset + ((_tableRowCount + amount) * _tableRowByteCount)
         
         if currentValueFieldByteCount < necessaryValueFieldByteCount {
-            let result = increaseItemByteCount(to: itemMinimumByteCount + _itemNameFieldByteCount + necessaryValueFieldByteCount)
+            let result = increaseItemByteCount(to: itemHeaderByteCount + _itemNameFieldByteCount + necessaryValueFieldByteCount)
             guard result == .success else { return result }
         }
         
 
         // Init the new area to zero.
         
-        let ptr = _tableFieldPtr(row: _tableRowCount, column: 0)
+        let ptr = itemPtr.itemValueFieldPtr.tableFieldPtr(row: _tableRowCount, column: 0, endianness)
         
         _ = Darwin.memset(ptr, 0, amount * _tableRowByteCount)
         
@@ -970,7 +1141,7 @@ extension Portal {
         guard index >= 0 else { return .error(.indexBelowLowerBound) }
         guard index < _tableRowCount else { return .error(.indexAboveHigherBound) }
         
-        let dstPtr = _tableFieldPtr(row: index, column: 0)
+        let dstPtr = itemPtr.itemValueFieldPtr.tableFieldPtr(row: index, column: 0, endianness)
         let srcPtr = dstPtr.advanced(by: _tableRowByteCount)
         let moveCount = (_tableRowCount - index - 1) * _tableRowByteCount
         let removeCount = _tableRowByteCount
@@ -1008,7 +1179,7 @@ extension Portal {
         var cols: Array<ColumnSpecification> = []
         for i in 0 ..< _tableColumnCount {
             if i != column {
-                guard let colSpec = ColumnSpecification(fromPtr: itemValueFieldPtr, forColumn: i, endianness) else {
+                guard let colSpec = ColumnSpecification(fromPtr: itemPtr.itemValueFieldPtr, forColumn: i, endianness) else {
                     return .error(.invalidTableColumnType)
                 }
                 cols.append(colSpec)
@@ -1018,11 +1189,11 @@ extension Portal {
         
         // Cached variables (before they are changed by rebuilding the table descriptor)
         
-        let valuePtr = itemValueFieldPtr
-        let valueByteCount = _tableGetColumnFieldByteCount(for: column)
+        let valuePtr = itemPtr.itemValueFieldPtr
+        let valueByteCount = Int(valuePtr.tableColumnFieldByteCount(for: column, endianness))
         
-        let firstByteToBeRemovedOffset = _tableGetColumnFieldOffset(for: column)
-        let bytesToBeRemoved = _tableGetColumnFieldByteCount(for: column)
+        let firstByteToBeRemovedOffset = Int(valuePtr.tableColumnFieldOffset(for: column, endianness))
+        let bytesToBeRemoved = Int(valuePtr.tableColumnFieldByteCount(for: column, endianness))
         let firstByteNotToRemoveOffset = firstByteToBeRemovedOffset + bytesToBeRemoved
 
         let oldRowByteCount = _tableRowByteCount
@@ -1040,7 +1211,7 @@ extension Portal {
         
         // Rewrite table specification
         
-        tableWriteSpecification(valueFieldPtr: itemValueFieldPtr, &cols, endianness)
+        tableWriteSpecification(valueFieldPtr: valuePtr, &cols, endianness)
         
         
         // Done if there is no data
@@ -1177,7 +1348,7 @@ extension Portal {
         
         var cols: Array<ColumnSpecification> = []
         for i in 0 ..< _tableColumnCount {
-            guard let spec = ColumnSpecification(fromPtr: itemValueFieldPtr, forColumn: i, endianness) else {
+            guard let spec = ColumnSpecification(fromPtr: itemPtr.itemValueFieldPtr, forColumn: i, endianness) else {
                     return .error(.invalidTableColumnType)
             }
             cols.append(spec)
@@ -1204,15 +1375,15 @@ extension Portal {
         
         // Create necessary space
         
-        let necessaryTableValueByteCount = rows * newRowByteCount + newRowsOffset
+        let necessaryTableValueFieldByteCount = rows * newRowByteCount + newRowsOffset
         
-        let result = ensureValueFieldByteCount(of: necessaryTableValueByteCount)
+        let result = increaseItemByteCount(to: itemHeaderByteCount + _itemNameFieldByteCount + necessaryTableValueFieldByteCount)
         guard result == .success else { return result }
         
         
         // Shift the data into its new space
         
-        let valuePtr = itemValueFieldPtr
+        let valuePtr = itemPtr.itemValueFieldPtr
         
         for i in (0 ..< rows).reversed() {
             let dstPtr = valuePtr.advanced(by: newRowsOffset + (i * newRowByteCount))
@@ -1223,7 +1394,7 @@ extension Portal {
         
         // Create the new table descriptor
         
-        tableWriteSpecification(valueFieldPtr: itemValueFieldPtr, &cols, endianness)
+        tableWriteSpecification(valueFieldPtr: valuePtr, &cols, endianness)
         
         
         // Set the default value
@@ -1241,7 +1412,7 @@ extension Portal {
             let empty = Data(count: colSpec.fieldByteCount)
             let ci = _tableColumnCount - 1
             for i in 0 ..< rows {
-                let ptr = _tableFieldPtr(row: i, column: ci)
+                let ptr = valuePtr.tableFieldPtr(row: i, column: ci, endianness)
                 empty.copyBytes(to: ptr, endianness)
             }
         }
@@ -1272,12 +1443,12 @@ extension Portal {
         let necessaryValueFieldByteCount = _tableRowsOffset + ((_tableRowCount + amount) * _tableRowByteCount)
         
         if currentValueFieldByteCount < necessaryValueFieldByteCount {
-            let result = increaseItemByteCount(to: itemMinimumByteCount + necessaryValueFieldByteCount)
+            let result = increaseItemByteCount(to: itemHeaderByteCount + necessaryValueFieldByteCount)
             guard result == .success else { return result }
         }
         
-        let srcPtr = _tableFieldPtr(row: index, column: 0)
-        let dstPtr = _tableFieldPtr(row: (index + amount), column: 0)
+        let srcPtr = itemPtr.itemValueFieldPtr.tableFieldPtr(row: index, column: 0, endianness)
+        let dstPtr = itemPtr.itemValueFieldPtr.tableFieldPtr(row: (index + amount), column: 0, endianness)
         let len = (_tableRowCount - index) * _tableRowByteCount
         
         manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: 0, updateMovedPortals: false, updateRemovedPortals: false)
@@ -1335,7 +1506,7 @@ extension Portal {
         
         guard source.root.itemType?.isContainer ?? false else { return .error(.dataInconsistency) }
         
-        guard _tableGetColumnType(for: column)?.isContainer ?? false else { return .error(.invalidTableColumnType) }
+        guard _tableGetColumnType(for: column).isContainer else { return .error(.invalidTableColumnType) }
         
         
         // Ensure that there is sufficient space
@@ -1347,7 +1518,7 @@ extension Portal {
         
         // Copy the container to the field
         
-        let ptr = _tableFieldPtr(row: row, column: column)
+        let ptr = itemPtr.itemValueFieldPtr.tableFieldPtr(row: row, column: column, endianness)
         
         _ = Darwin.memmove(ptr, source.bufferPtr, manager.count)
 
@@ -1493,9 +1664,10 @@ internal func buildTableItem(withNameField nameField: NameField?, columns: inout
         return total
     }()
 
-    let p = buildItem(ofType: .table, withNameField: nameField, atPtr: ptr, endianness)
-    p._itemByteCount += valueByteCount
-    
-    UInt32(0).copyBytes(to: p.valueFieldPtr.advanced(by: tableRowCountOffset), endianness)
-    tableWriteSpecification(valueFieldPtr: p.valueFieldPtr, &columns, endianness)
+    buildItem(ofType: .table, withNameField: nameField, atPtr: ptr, endianness)
+    let bc = Int(ptr.itemValueFieldPtr.itemByteCount(endianness)) + valueByteCount
+    ptr.itemValueFieldPtr.setItemByteCount(to: UInt32(bc), endianness)
+
+    ptr.itemValueFieldPtr.setTableRowCount(to: UInt32(0), endianness)
+    tableWriteSpecification(valueFieldPtr: ptr.itemValueFieldPtr, &columns, endianness)
 }

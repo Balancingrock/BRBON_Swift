@@ -57,47 +57,136 @@ fileprivate let crcBinaryByteCountOffset = crcBinaryCrcOffset + 4
 internal let crcBinaryDataOffset = crcBinaryByteCountOffset + 4
 
 
-extension Portal {
+// Add crcBinary access
+
+internal extension UnsafeMutableRawPointer {
+
     
-    internal var _crcBinaryCrcPtr: UnsafeMutableRawPointer { return valueFieldPtr.advanced(by: crcBinaryCrcOffset) }
-    internal var _crcBinaryByteCountPtr: UnsafeMutableRawPointer { return valueFieldPtr.advanced(by: crcBinaryByteCountOffset) }
-    internal var _crcBinaryDataPtr: UnsafeMutableRawPointer { return valueFieldPtr.advanced(by: crcBinaryDataOffset) }
+    /// Returns a pointer to the CRC value of a crcBinary item assuming self points at the first byte of the value.
     
+    fileprivate var crcBinaryCrcPtr: UnsafeMutableRawPointer { return self.advanced(by: crcBinaryCrcOffset) }
+
+
+    /// Returns a pointer to the Byte Count value of a crcBinary item assuming self points at the first byte of the value.
+
+    fileprivate var crcBinaryByteCountPtr: UnsafeMutableRawPointer { return self.advanced(by: crcBinaryByteCountOffset) }
+
+
+    /// Returns a pointer to the Data area of a crcBinary item assuming self points at the first byte of the value.
+
+    fileprivate var crcBinaryDataPtr: UnsafeMutableRawPointer { return self.advanced(by: crcBinaryDataOffset) }
+
     
-    internal var _crcBinaryCrc: UInt32 {
-        get { return UInt32(fromPtr: _crcBinaryCrcPtr, endianness) }
-        set { newValue.copyBytes(to: _crcBinaryCrcPtr, endianness) }
-    }
+    /// Returns the CRC value of a crcBinary item assuming self points at the first byte of the value.
     
-    internal var _crcBinaryByteCount: Int {
-        get { return Int(UInt32(fromPtr: _crcBinaryByteCountPtr, endianness)) }
-        set { UInt32(newValue).copyBytes(to: _crcBinaryByteCountPtr, endianness) }
-    }
-    
-    internal var _crcBinaryData: Data {
-        get { return Data(bytes: _crcBinaryDataPtr.assumingMemoryBound(to: UInt8.self), count: _crcBinaryByteCount) }
-        set {
-            let result = ensureValueFieldByteCount(of: crcBinaryDataOffset + newValue.count)
-            guard result == Result.success else { return }
-            _crcBinaryByteCount = newValue.count
-            newValue.copyBytes(to: _crcBinaryDataPtr.assumingMemoryBound(to: UInt8.self), count: _crcBinaryByteCount)
+    fileprivate func crcBinaryCrc(_ endianness: Endianness) -> UInt32 {
+        if endianness == machineEndianness {
+            return crcBinaryCrcPtr.assumingMemoryBound(to: UInt32.self).pointee
+        } else {
+            return crcBinaryCrcPtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped
         }
     }
     
-    internal var _crcBinary: BRCrcBinary {
-        get { return BRCrcBinary(data: _crcBinaryData, crc: _crcBinaryCrc) }
-        set {
-            _crcBinaryData = newValue.data
-            _crcBinaryByteCount = newValue.data.count
-            _crcBinaryCrc = newValue.crc
+    
+    /// Sets the CRC value of a crcBinary item assuming self points at the first byte of the value.
+
+    fileprivate func setCrcBinaryCrc(to value: UInt32, _ endianness: Endianness) {
+        if endianness == machineEndianness {
+            crcBinaryCrcPtr.storeBytes(of: value, as: UInt32.self)
+        } else {
+            crcBinaryCrcPtr.storeBytes(of: value.byteSwapped, as: UInt32.self)
         }
     }
     
-    internal var _crcBinaryValueFieldUsedByteCount: Int {
-        return crcBinaryDataOffset + _crcBinaryByteCount
+    
+    /// Returns the Byte Count of a crcBinary item assuming self points at the first byte of the value.
+
+    fileprivate func crcBinaryByteCount(_ endianness: Endianness) -> UInt32 {
+        if endianness == machineEndianness {
+            return crcBinaryByteCountPtr.assumingMemoryBound(to: UInt32.self).pointee
+        } else {
+            return crcBinaryByteCountPtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped
+        }
+    }
+    
+    
+    /// Sets the Byte Count of a crcBinary item assuming self points at the first byte of the value.
+
+    fileprivate func setCrcBinaryByteCount(to value: UInt32, _ endianness: Endianness) {
+        if endianness == machineEndianness {
+            crcBinaryByteCountPtr.storeBytes(of: value, as: UInt32.self)
+        } else {
+            crcBinaryByteCountPtr.storeBytes(of: value.byteSwapped, as: UInt32.self)
+        }
+    }
+    
+    
+    /// Returns the binary data of a crcBinary item assuming self points to the first byte of the value.
+    ///
+    /// Note that this will also read the crcBinaryByteCount.
+    
+    internal func crcBinaryData(_ endianness: Endianness) -> Data {
+        return Data(bytes: self.crcBinaryDataPtr, count: Int(self.crcBinaryByteCount(endianness)))
+    }
+
+    
+    /// Sets the binary data of a crcBinary item assuming self points to the first byte of the value.
+    ///
+    /// Note that this will also write the crcBinaryByteCount.
+
+    fileprivate func setCrcBinaryData(to value: Data, _ endianness: Endianness) {
+        value.copyBytes(to: self.crcBinaryDataPtr.assumingMemoryBound(to: UInt8.self), count: value.count)
+        self.setCrcBinaryByteCount(to: UInt32(value.count), endianness)
     }
 }
 
+
+// Item access
+
+internal extension Portal {
+    
+    
+    /// Access to the crcBinary value as a BRCrcBinary.
+    
+    internal var _crcBinaryData: Data {
+        get {
+            return _valuePtr.crcBinaryData(endianness)
+        }
+        set {
+            let result = ensureValueFieldByteCount(of: crcBinaryDataOffset + newValue.count)
+            guard result == .success else { return }
+            
+            _valuePtr.setCrcBinaryData(to: newValue, endianness)
+            _valuePtr.setCrcBinaryCrc(to: newValue.crc32(), endianness)
+        }
+    }
+
+    
+    /// Access to the crcBinary value as a BRCrcBinary.
+    
+    internal var _crcBinary: BRCrcBinary {
+        get {
+            return BRCrcBinary(data: _valuePtr.crcBinaryData(endianness), crc: _valuePtr.crcBinaryCrc(endianness))
+        }
+        set {
+            let result = ensureValueFieldByteCount(of: crcBinaryDataOffset + newValue.data.count)
+            guard result == .success else { return }
+            
+            _valuePtr.setCrcBinaryData(to: newValue.data, endianness)
+            _valuePtr.setCrcBinaryCrc(to: newValue.crc, endianness)
+        }
+    }
+    
+    
+    /// Returns the number of bytes actually used of the value field.
+    
+    internal var _crcBinaryValueFieldUsedByteCount: Int {
+        return crcBinaryDataOffset + Int(_valuePtr.crcBinaryByteCount(endianness))
+    }
+}
+
+
+// Item utils
 
 public extension Portal {
     
@@ -107,8 +196,8 @@ public extension Portal {
     public var isCrcBinary: Bool {
         guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.crcBinary }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.crcBinary.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.crcBinary.rawValue
+        if index != nil { return itemPtr.itemValueFieldPtr.arrayElementType == ItemType.crcBinary.rawValue }
+        return itemPtr.itemType == ItemType.crcBinary.rawValue
     }
     
     

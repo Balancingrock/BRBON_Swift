@@ -111,8 +111,8 @@ fileprivate class ActivePortals {
         if let column = portal.column, let index = portal.index {
             
             // Setup for remval of all portals in the content area
-            startAddress = portal._tableFieldPtr(row: index, column: column)
-            endAddress = startAddress.advanced(by: portal._tableGetColumnFieldByteCount(for: column))
+            startAddress = portal.itemPtr.itemValueFieldPtr.tableFieldPtr(row: index, column: column, portal.endianness)
+            endAddress = startAddress.advanced(by: Int(portal.itemPtr.itemValueFieldPtr.tableColumnFieldByteCount(for: column, portal.endianness)))
             
             // Remove the portal itself
             portal.isValid = false
@@ -158,10 +158,10 @@ fileprivate class ActivePortals {
                 dict.removeValue(forKey: key)
 
             } else {
-                /*
+                
                 if let column = portal.column, let index = portal.index {
                     
-                    let ptr = portal._tableFieldPtr(row: index, column: column)
+                    let ptr = portal.itemPtr.itemValueFieldPtr.tableFieldPtr(row: index, column: column, portal.endianness)
                     
                     if ptr >= atAndAbove && ptr < below {
                         portal.isValid = false
@@ -176,7 +176,7 @@ fileprivate class ActivePortals {
                         portal.isValid = false
                         dict.removeValue(forKey: key)
                     }
-                }*/
+                }
             }
         }
     }
@@ -308,11 +308,11 @@ public final class ItemManager {
                 
             case .array:
                 
-                newByteCount = max(itemMinimumByteCount + arrayElementBaseOffset + (root._arrayElementByteCount * ask), count)
+                newByteCount = max(itemHeaderByteCount + arrayElementBaseOffset + (root._arrayElementByteCount * ask), count)
                 
             case .table:
                 
-                newByteCount = max(itemMinimumByteCount + root._tableRowsOffset + (root._tableRowByteCount * ask), count)
+                newByteCount = max(itemHeaderByteCount + root._tableRowsOffset + (root._tableRowByteCount * ask), count)
             }
             
         } else {
@@ -352,7 +352,7 @@ public final class ItemManager {
     public static func createManager(withValue value: Coder, withNameField nameField: NameField? = nil, requestedValueFieldByteCount: Int = 0, endianness: Endianness = machineEndianness) -> ItemManager {
         
         // Determine the size of the buffer
-        let byteCount = itemMinimumByteCount + (nameField?.byteCount ?? 0) + max(value.minimumValueFieldByteCount, requestedValueFieldByteCount.roundUpToNearestMultipleOf8())
+        let byteCount = itemHeaderByteCount + (nameField?.byteCount ?? 0) + max(value.minimumValueFieldByteCount, requestedValueFieldByteCount.roundUpToNearestMultipleOf8())
         
         // Create the new item manager
         let im = ItemManager(requestedByteCount: byteCount, endianness: endianness)
@@ -381,7 +381,7 @@ public final class ItemManager {
         let neededElementByteCount = elementType.hasFlexibleLength ? elementByteCount : max(elementType.minimumElementByteCount, elementByteCount)
         
         // Determine the size of the buffer
-        let byteCount = itemMinimumByteCount + (nameField?.byteCount ?? 0) + arrayElementBaseOffset + (neededElementByteCount * elementCount).roundUpToNearestMultipleOf8()
+        let byteCount = itemHeaderByteCount + (nameField?.byteCount ?? 0) + arrayElementBaseOffset + (neededElementByteCount * elementCount).roundUpToNearestMultipleOf8()
         
         // Create the new item manager
         let im = ItemManager(requestedByteCount: byteCount, endianness: endianness)
@@ -733,7 +733,7 @@ public final class ItemManager {
         endianness: Endianness = machineEndianness
         ) -> ItemManager {
         
-        let newItemByteCount = itemMinimumByteCount + (nameField?.byteCount ?? 0) + dictionaryItemBaseOffset + valueFieldByteCount.roundUpToNearestMultipleOf8()
+        let newItemByteCount = itemHeaderByteCount + (nameField?.byteCount ?? 0) + dictionaryItemBaseOffset + valueFieldByteCount.roundUpToNearestMultipleOf8()
         
         let im = ItemManager(requestedByteCount: newItemByteCount, endianness: endianness)
         
@@ -760,7 +760,7 @@ public final class ItemManager {
         endianness: Endianness = machineEndianness
         ) -> ItemManager {
         
-        let newItemByteCount = itemMinimumByteCount + (nameField?.byteCount ?? 0) + sequenceItemBaseOffset + valueFieldByteCount.roundUpToNearestMultipleOf8()
+        let newItemByteCount = itemHeaderByteCount + (nameField?.byteCount ?? 0) + sequenceItemBaseOffset + valueFieldByteCount.roundUpToNearestMultipleOf8()
         
         let im = ItemManager(requestedByteCount: newItemByteCount, endianness: endianness)
         
@@ -793,7 +793,7 @@ public final class ItemManager {
         let descriptorByteCount = tableColumnDescriptorByteCount * columns.count
         let columnNamesByteCount: Int = columns.reduce(0) { $0 + $1.nameField.byteCount }
 
-        var newItemByteCount = itemMinimumByteCount + (nameField?.byteCount ?? 0)
+        var newItemByteCount = itemHeaderByteCount + (nameField?.byteCount ?? 0)
         newItemByteCount += tableColumnDescriptorBaseOffset
         newItemByteCount += descriptorByteCount + columnNamesByteCount
         newItemByteCount += initialRowsAllocated * rowByteCount

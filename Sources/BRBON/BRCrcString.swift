@@ -53,45 +53,111 @@ import BRUtils
 
 
 fileprivate let crcStringCrcOffset = 0
-fileprivate let crcStringByteCountOffset = crcStringCrcOffset + 4
-internal let crcStringUtf8CodeOffset = crcStringByteCountOffset + 4
+fileprivate let crcStringUtf8ByteCountOffset = crcStringCrcOffset + 4
+internal let crcStringUtf8CodeOffset = crcStringUtf8ByteCountOffset + 4
 
 
-extension Portal {
+// Pointer manipulations
+
+fileprivate extension UnsafeMutableRawPointer {
     
-    internal var _crcStringCrcPtr: UnsafeMutableRawPointer { return valueFieldPtr.advanced(by: crcStringCrcOffset) }
-    internal var _crcStringByteCountPtr: UnsafeMutableRawPointer { return valueFieldPtr.advanced(by: crcStringByteCountOffset) }
-    internal var _crcStringUtf8CodePtr: UnsafeMutableRawPointer { return valueFieldPtr.advanced(by: crcStringUtf8CodeOffset) }
     
-    internal var _crcStringCrc: UInt32 {
-        get { return UInt32(fromPtr: _crcStringCrcPtr, endianness) }
-        set { newValue.copyBytes(to: _crcStringCrcPtr, endianness) }
-    }
+    /// Returns a pointer to the CRC value of a crcString item assuming self points at the first byte of the value.
+
+    fileprivate var crcStringCrcPtr: UnsafeMutableRawPointer { return self.advanced(by: crcStringCrcOffset) }
+
+
+    /// Returns a pointer to the UTF8 Byte Count value of a crcString item assuming self points at the first byte of the value.
+
+    fileprivate var crcStringUtf8ByteCountPtr: UnsafeMutableRawPointer { return self.advanced(by: crcStringUtf8ByteCountOffset) }
+
+
+    /// Returns a pointer to the UTF8 Code area of a crcString item assuming self points at the first byte of the value.
+
+    fileprivate var crcStringUtf8CodePtr: UnsafeMutableRawPointer { return self.advanced(by: crcStringUtf8CodeOffset) }
     
-    internal var _crcStringByteCount: Int {
-        get { return Int(UInt32(fromPtr: _crcStringByteCountPtr, endianness)) }
-        set { UInt32(newValue).copyBytes(to: _crcStringByteCountPtr, endianness) }
-    }
     
-    internal var _crcStringUtf8Code: Data {
-        get {
-            return Data(bytes: _crcStringUtf8CodePtr.assumingMemoryBound(to: UInt8.self), count: _crcStringByteCount)
+    /// Returns the CRC value of a crcString item assuming self points at the first byte of the value.
+    
+    fileprivate func crcStringCrc(_ endianness: Endianness) -> UInt32 {
+        if endianness == machineEndianness {
+            return crcStringCrcPtr.assumingMemoryBound(to: UInt32.self).pointee
+        } else {
+            return crcStringCrcPtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped
         }
-        set {
-            let result = ensureValueFieldByteCount(of: crcStringUtf8CodeOffset + newValue.count)
-            guard result == .success else { return }
-            _crcStringCrc = newValue.crc32()
-            _crcStringByteCount = newValue.count
-            newValue.copyBytes(to: _crcStringUtf8CodePtr.assumingMemoryBound(to: UInt8.self), count: newValue.count)
+    }
+    
+    
+    /// Sets the CRC value of a crcString item assuming self points at the first byte of the value.
+    
+    fileprivate func setCrcStringCrc(to value: UInt32, _ endianness: Endianness) {
+        if endianness == machineEndianness {
+            crcStringCrcPtr.storeBytes(of: value, as: UInt32.self)
+        } else {
+            crcStringCrcPtr.storeBytes(of: value.byteSwapped, as: UInt32.self)
         }
     }
     
-    internal var _crcStringValueFieldUsedByteCount: Int {
-        return crcStringUtf8CodeOffset + _crcStringByteCount
+    
+    /// Returns the UTF8 Byte Count of a crcString item assuming self points at the first byte of the value.
+    
+    fileprivate func crcStringUtf8ByteCount(_ endianness: Endianness) -> UInt32 {
+        if endianness == machineEndianness {
+            return crcStringUtf8ByteCountPtr.assumingMemoryBound(to: UInt32.self).pointee
+        } else {
+            return crcStringUtf8ByteCountPtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped
+        }
+    }
+    
+    
+    /// Sets the UTF8 Byte Count of a crcString item assuming self points at the first byte of the value.
+    
+    fileprivate func setCrcStringUtf8ByteCount(to value: UInt32, _ endianness: Endianness) {
+        if endianness == machineEndianness {
+            crcStringUtf8ByteCountPtr.storeBytes(of: value, as: UInt32.self)
+        } else {
+            crcStringUtf8ByteCountPtr.storeBytes(of: value.byteSwapped, as: UInt32.self)
+        }
+    }
+    
+    
+    /// Returns the UTF8 data of a crcString item assuming self points to the first byte of the value.
+    ///
+    /// Note that this will also read the crcStringUtf8ByteCount.
+    
+    fileprivate func crcStringUtf8Code(_ endianness: Endianness) -> Data {
+        return Data(bytes: crcStringUtf8CodePtr, count: Int(self.crcStringUtf8ByteCount(endianness)))
+    }
+    
+    
+    /// Sets the UTF8 data of a crcString item assuming self points to the first byte of the value.
+    ///
+    /// Note that this will also write the crcStringUtf8ByteCount.
+    
+    fileprivate func setCrcStringUtf8Code(to value: Data, _ endianness: Endianness) {
+        value.copyBytes(to: crcStringUtf8CodePtr.assumingMemoryBound(to: UInt8.self), count: value.count)
+        setCrcStringUtf8ByteCount(to: UInt32(value.count), endianness)
     }
 }
 
-extension Portal {
+
+// Utility additions for the crcString
+
+internal extension Portal {
+    
+//    internal var _crcStringUtf8Code: Data {
+        
+//    }
+    
+    internal var _crcStringValueFieldUsedByteCount: Int {
+        return crcStringUtf8CodeOffset + Int(itemPtr.crcStringUtf8ByteCount(endianness))
+    }
+}
+
+
+// Public access for crcString
+
+public extension Portal {
     
     
     /// Returns true if the value accessable through this portal is a CrcString.
@@ -99,8 +165,8 @@ extension Portal {
     public var isCrcString: Bool {
         guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.crcString }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.crcString.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.crcString.rawValue
+        if index != nil { return itemPtr.itemValueFieldPtr.arrayElementType == ItemType.crcString.rawValue }
+        return itemPtr.itemType == ItemType.crcString.rawValue
     }
     
     
@@ -110,7 +176,7 @@ extension Portal {
     
     public var crcIsValid: Bool? {
         guard isCrcString else { return nil }
-        return _crcStringUtf8Code.crc32() == _crcStringCrc
+        return _valuePtr.crcStringUtf8Code(endianness).crc32() == itemPtr.crcStringCrc(endianness)
     }
     
     
@@ -124,8 +190,8 @@ extension Portal {
         get {
             guard isCrcString else { return nil }
             
-            let utf8Code = _crcStringUtf8Code
-            let crc = _crcStringCrc
+            let utf8Code = _valuePtr.crcStringUtf8Code(endianness)
+            let crc = _valuePtr.crcStringCrc(endianness)
             
             guard utf8Code.crc32() == crc else { return nil }
             
@@ -135,7 +201,10 @@ extension Portal {
             guard isCrcString else { return }
             guard let newValue = newValue else { return }
             
-            _crcStringUtf8Code = newValue.utf8Code
+            let result = ensureValueFieldByteCount(of: crcStringUtf8CodeOffset + newValue.utf8Code.count)
+            guard result == .success else { return }
+
+            _valuePtr.setCrcStringUtf8Code(to: newValue.utf8Code, endianness)
         }
     }
 
@@ -193,7 +262,7 @@ extension BRCrcString: Coder {
 
     public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         crc.copyBytes(to: ptr, endianness)
-        UInt32(utf8Code.count).copyBytes(to: ptr.advanced(by: crcStringByteCountOffset), endianness)
+        UInt32(utf8Code.count).copyBytes(to: ptr.advanced(by: crcStringUtf8ByteCountOffset), endianness)
         utf8Code.copyBytes(to: ptr.advanced(by: crcStringUtf8CodeOffset).assumingMemoryBound(to: UInt8.self), count: utf8Code.count)
     }
 }
@@ -205,7 +274,7 @@ extension BRCrcString {
     
     internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         crc = UInt32(fromPtr: fromPtr.advanced(by: crcStringCrcOffset), endianness)
-        let c = Int(UInt32(fromPtr: fromPtr.advanced(by: crcStringByteCountOffset), endianness))
+        let c = Int(UInt32(fromPtr: fromPtr.advanced(by: crcStringUtf8ByteCountOffset), endianness))
         utf8Code = Data(bytes: fromPtr.advanced(by: crcStringUtf8CodeOffset), count: c)
     }
 }

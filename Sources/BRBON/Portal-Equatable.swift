@@ -96,7 +96,7 @@ extension Portal: Equatable {
             // Do not test parent offset
             
             // Test count/value field (note that unused bytes must be zero!
-            guard UInt32(fromPtr: lhs.itemSmallValuePtr, lhs.endianness) == UInt32(fromPtr: rhs.itemSmallValuePtr, rhs.endianness) else { return false }
+            guard lhs._itemSmallValue(lhs.endianness) == rhs._itemSmallValue(rhs.endianness) else { return false }
             
             // Test name field (if present)
             if lhs._itemNameFieldByteCount != 0 {
@@ -203,80 +203,44 @@ extension Portal: Equatable {
                 
                 for ci in 0 ..< lhs._tableColumnCount {
                     
-                    let lnamecrc = lhs._tableGetColumnNameCrc(for: ci)
-                    let rnamecrc = rhs._tableGetColumnNameCrc(for: ci)
+                    let lnamecrc = lhs.itemPtr.itemValueFieldPtr.tableColumnNameCrc(for: ci, lhs.endianness)
+                    let rnamecrc = rhs.itemPtr.itemValueFieldPtr.tableColumnNameCrc(for: ci, rhs.endianness)
                     if lnamecrc != rnamecrc { return false }
                     
                     let lname = lhs._tableGetColumnName(for: ci)
                     let rname = rhs._tableGetColumnName(for: ci)
                     if lname != rname { return false }
                     
-                    guard let lType = lhs._tableGetColumnType(for: ci) else { return false }
-                    guard let rType = rhs._tableGetColumnType(for: ci) else { return false }
+                    let lType = lhs._tableGetColumnType(for: ci)
+                    let rType = rhs._tableGetColumnType(for: ci)
                     if lType != rType { return false }
                     
                     for ri in 0 ..< lhs._tableRowCount {
                         
                         switch lType {
                             
-                        case .null: break
-                            
-                        case .bool:
-                            let lbool = Bool(fromPtr: lhs._tableFieldPtr(row: ri, column: ci), lhs.endianness)
-                            let rbool = Bool(fromPtr: rhs._tableFieldPtr(row: ri, column: ci), rhs.endianness)
-                            if lbool != rbool { return false }
-                            
-                        case .int8, .uint8:
-                            if lhs._tableFieldPtr(row: ri, column: ci).assumingMemoryBound(to: UInt8.self).pointee
-                                != rhs._tableFieldPtr(row: ri, column: ci).assumingMemoryBound(to: UInt8.self).pointee { return false }
-                            
-                        case .int16, .uint16:
-                            if lhs._tableFieldPtr(row: ri, column: ci).assumingMemoryBound(to: UInt16.self).pointee
-                                != rhs._tableFieldPtr(row: ri, column: ci).assumingMemoryBound(to: UInt16.self).pointee { return false }
-                            
-                        case .int32, .uint32, .float32:
-                            if lhs._tableFieldPtr(row: ri, column: ci).assumingMemoryBound(to: UInt32.self).pointee
-                                != rhs._tableFieldPtr(row: ri, column: ci).assumingMemoryBound(to: UInt32.self).pointee { return false }
-                            
-                        case .int64, .uint64, .float64:
-                            if lhs._tableFieldPtr(row: ri, column: ci).assumingMemoryBound(to: UInt64.self).pointee
-                                != rhs._tableFieldPtr(row: ri, column: ci).assumingMemoryBound(to: UInt64.self).pointee { return false }
-                            
-                        case .uuid:
-                            if lhs._tableFieldPtr(row: ri, column: ci).assumingMemoryBound(to: UInt64.self).pointee
-                                != rhs._tableFieldPtr(row: ri, column: ci).assumingMemoryBound(to: UInt64.self).pointee { return false }
-                            if lhs._tableFieldPtr(row: ri, column: ci).advanced(by: 8).assumingMemoryBound(to: UInt64.self).pointee
-                                != rhs._tableFieldPtr(row: ri, column: ci).advanced(by: 8).assumingMemoryBound(to: UInt64.self).pointee { return false }
-                            
-                        case .color:
-                            if lhs.color != rhs.color { return false }
-                            
-                        case .font:
-                            if lhs.font != rhs.font { return false }
-                            
-                        case .string:
-                            let lstr = BRString(fromPtr: lhs._tableFieldPtr(row: ri, column: ci), lhs.endianness)
-                            let rstr = BRString(fromPtr: rhs._tableFieldPtr(row: ri, column: ci), rhs.endianness)
-                            if lstr != rstr { return false }
-                            
-                        case .crcString:
-                            let lstr = BRCrcString(fromPtr: lhs._tableFieldPtr(row: ri, column: ci), lhs.endianness)
-                            let rstr = BRCrcString(fromPtr: rhs._tableFieldPtr(row: ri, column: ci), rhs.endianness)
-                            if lstr != rstr { return false }
-                            
-                        case .binary:
-                            let lstr = Data(fromPtr: lhs._tableFieldPtr(row: ri, column: ci), lhs.endianness)
-                            let rstr = Data(fromPtr: rhs._tableFieldPtr(row: ri, column: ci), rhs.endianness)
-                            if lstr != rstr { return false }
-                            
-                        case .crcBinary:
-                            let lstr = BRCrcBinary(fromPtr: lhs._tableFieldPtr(row: ri, column: ci), lhs.endianness)
-                            let rstr = BRCrcBinary(fromPtr: rhs._tableFieldPtr(row: ri, column: ci), rhs.endianness)
-                            if lstr != rstr { return false }
-                            
+                        case .null: return false
+                        case .bool: if lhs.bool != rhs.bool { return false }
+                        case .int8: if lhs.int8 != rhs.int8 { return false }
+                        case .uint8: if lhs.uint8 != rhs.uint8 { return false }
+                        case .int16: if lhs.int16 != rhs.int16 { return false }
+                        case .uint16: if lhs.uint16 != rhs.uint16 { return false }
+                        case .int32: if lhs.int32 != rhs.int32 { return false }
+                        case .uint32: if lhs.uint32 != rhs.uint32 { return false }
+                        case .float32: if lhs.float32 != rhs.float32 { return false }
+                        case .int64: if lhs.int64 != rhs.int64 { return false }
+                        case .uint64: if lhs.uint64 != rhs.uint64 { return false }
+                        case .float64: if lhs.float64 != rhs.float64 { return false }
+                        case .uuid: if lhs.uuid != rhs.uuid { return false }
+                        case .color: if lhs.color != rhs.color { return false }
+                        case .font: if lhs.font != rhs.font { return false }
+                        case .string: if lhs.brString != rhs.brString { return false }
+                        case .crcString: if lhs.crcString != rhs.crcString { return false }
+                        case .binary: if lhs.binary != rhs.binary { return false }
+                        case .crcBinary: if lhs.crcBinary != rhs.crcBinary { return false }
                         case .array, .sequence, .dictionary, .table:
-                            let lportal = Portal(itemPtr: lhs._tableFieldPtr(row: ri, column: ci), manager: lhs.manager, endianness: lhs.endianness)
-                            let rportal = Portal(itemPtr: rhs._tableFieldPtr(row: ri, column: ci), manager: rhs.manager, endianness: rhs.endianness)
+                            let lportal = Portal(itemPtr: lhs.itemPtr.itemValueFieldPtr.tableFieldPtr(row: ri, column: ci, lhs.endianness), manager: lhs.manager, endianness: lhs.endianness)
+                            let rportal = Portal(itemPtr: rhs.itemPtr.itemValueFieldPtr.tableFieldPtr(row: ri, column: ci, rhs.endianness), manager: rhs.manager, endianness: rhs.endianness)
                             if lportal != rportal { return false }
                         }
                     }
@@ -290,12 +254,12 @@ extension Portal: Equatable {
             
             // The lhs and rhs are an array element or a table field.
             
-            let switchType: ItemType = (lhs.column == nil) ? lhs._arrayElementType! : lhs._tableGetColumnType(for: lhs.column!)!
+            let switchType: ItemType = (lhs.column == nil) ? lhs._arrayElementType! : lhs._tableGetColumnType(for: lhs.column!)
             
             // Test a single value
             switch switchType {
                 
-            case .null: return true
+            case .null: return false
             case .bool: return lhs.bool == rhs.bool
             case .int8: return lhs.int8 == rhs.int8
             case .int16: return lhs.int16 == rhs.int16

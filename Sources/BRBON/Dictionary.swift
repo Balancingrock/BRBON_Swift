@@ -56,161 +56,40 @@ internal let dictionaryItemCountOffset = dictionaryReservedOffset + 4
 internal let dictionaryItemBaseOffset = dictionaryItemCountOffset + 4
 
 
+extension UnsafeMutableRawPointer {
+    
+    internal var dictionaryItemCountPtr: UnsafeMutableRawPointer { return self.itemValueFieldPtr.advanced(by: dictionaryItemCountOffset) }
+    
+    internal var dictionaryItemBasePtr: UnsafeMutableRawPointer { return self.itemValueFieldPtr.advanced(by: dictionaryItemBaseOffset) }
+}
+
+
 extension Portal {
     
-    
-    internal var _dictionaryItemCountPtr: UnsafeMutableRawPointer { return itemValueFieldPtr.advanced(by: dictionaryItemCountOffset) }
-    
-    internal var _dictionaryItemBasePtr: UnsafeMutableRawPointer { return itemValueFieldPtr.advanced(by: dictionaryItemBaseOffset) }
-
     
     /// The number of items in the dictionary this portal refers to.
     
     internal var _dictionaryItemCount: Int {
-        get { return Int(UInt32(fromPtr: _dictionaryItemCountPtr, endianness)) }
-        set { UInt32(newValue).copyBytes(to: _dictionaryItemCountPtr, endianness) }
-    }
-    
-    
-    /// The total area used in the value field.
-    
-    internal var _dictionaryValueFieldUsedByteCount: Int {
-        var dictItemPtr = _dictionaryItemBasePtr
-        for _ in 0 ..< _dictionaryItemCount {
-            dictItemPtr = dictItemPtr.advanced(by: Int(UInt32(fromPtr: dictItemPtr.advanced(by: itemByteCountOffset), endianness)))
-        }
-        return itemValueFieldPtr.distance(to: dictItemPtr)
+        get { return Int(UInt32(fromPtr: itemPtr.dictionaryItemCountPtr, endianness)) }
+        set { UInt32(newValue).copyBytes(to: itemPtr.dictionaryItemCountPtr, endianness) }
     }
     
     
     /// Points to the first byte after the items in the referenced dictionary item
     
     internal var _dictionaryAfterLastItemPtr: UnsafeMutableRawPointer {
-        var ptr = _dictionaryItemBasePtr
-        var remainingItemsToSkip = _dictionaryItemCount
-        while remainingItemsToSkip > 0 {
-            ptr = ptr.advanced(by: Int(UInt32(fromPtr: ptr.advanced(by: itemByteCountOffset), endianness)))
-            remainingItemsToSkip -= 1
+        var ptr = itemPtr.dictionaryItemBasePtr
+        for _ in 0 ..< _dictionaryItemCount {
+            ptr = ptr.nextItemPtr(endianness)
         }
         return ptr
     }
     
     
-    /// Removes an item with the given name from the dictionary.
-    ///
-    /// - Parameter forName: The name of the item to remove.
-    ///
-    /// - Returns: 'success' or an error indicator (including 'itemNotFound').
+    /// The total area used in the value field.
     
-    internal func _dictionaryRemoveItem(withNameField nameField: NameField?) -> Result {
-        
-        let item = dictionaryFindItem(nameField)
-        
-        guard item.isValid else { return .error(.itemNotFound) }
-        
-        let itemStartPtr = item.itemPtr
-        let ibc = item._itemByteCount
-        let nextItemPtr = item.itemPtr.advanced(by: ibc)
-        let afterLastItemPtr = _dictionaryAfterLastItemPtr
-
-        assert(nextItemPtr <= afterLastItemPtr)
-        
-        // Last item does not need a block move
-        
-        if afterLastItemPtr == nextItemPtr {
-                
-            // Update the active portals list (remove deleted item)
-            
-            manager.removeActivePortals(atAndAbove: itemStartPtr, below: afterLastItemPtr)
-            
-            
-            // Zero the 'removed' bytes
-            
-            if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(itemStartPtr, 0, ibc) }
-
-        } else {
-                
-            // Move the items after the found item over the found item
-                
-            let len = nextItemPtr.distance(to: afterLastItemPtr)
-                
-            manager.moveBlock(to: itemStartPtr, from: nextItemPtr, moveCount: len, removeCount: ibc, updateMovedPortals: true, updateRemovedPortals: true)
-            
-            
-            // Zero the freed bytes
-            
-            if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(itemStartPtr.advanced(by: len), 0, ibc) }
-        }
-        
-        _dictionaryItemCount -= 1
-        
-        return .success
-    }
-
-    
-    internal func _dictionaryAddItem(_ value: Coder, withNameField nameField: NameField?) -> Result {
-        
-        guard let nameField = nameField else { return .error(.missingName) }
-        
-        let neededValueFieldByteCount = itemMinimumByteCount + nameField.byteCount + (value.itemType.usesSmallValue ? 0 : value.valueByteCount.roundUpToNearestMultipleOf8())
-        
-        let result = ensureValueFieldByteCount(of: usedValueFieldByteCount + neededValueFieldByteCount)
-        guard result == .success else { return result }
-        
-        let pOffset = manager.bufferPtr.distance(to: itemPtr)
-        
-        let p = buildItem(withValue: value, withNameField: nameField, atPtr: _dictionaryAfterLastItemPtr, endianness)
-        p._itemParentOffset = pOffset
-
-        _dictionaryItemCount += 1
-        
-        return .success
-    }
-    
-    
-    /// Add a new item to the dictionary.
-    ///
-    /// - Note: This operation does not check for name duplication!.
-    
-    internal func _dictionaryAddItem(_ value: ItemManager, withNameField nameField: NameField?) -> Result {
-        
-
-        // Make sure the new item has the appropriate name
-
-        if let nameField = nameField {
-            let result = value.root.updateItemName(to: nameField)
-            guard result == .success else { return result }
-        }
-        
-        guard value.root.hasName else { return .error(.missingName) }
-
-        
-        // The new value field byte count for the dictionary
-        
-        let neededValueFieldByteCount = usedValueFieldByteCount.roundUpToNearestMultipleOf8() + value.root._itemByteCount
-        
-        
-        // Increase the value field of the dictionary if necessary
-        
-        let result2 = ensureValueFieldByteCount(of: neededValueFieldByteCount)
-        guard result2 == .success else { return result2 }
-        
-        
-        // Copy the new item into place
-        
-        let pOffset = manager.bufferPtr.distance(to: itemPtr)
-        let dstPtr = _dictionaryAfterLastItemPtr
-        
-        _ = Darwin.memmove(_dictionaryAfterLastItemPtr, value.bufferPtr, value.root._itemByteCount)
-
-        UInt32(pOffset).copyBytes(to: dstPtr.advanced(by: itemParentOffsetOffset), endianness)
-        
-        
-        // Increase the item count
-        
-        _dictionaryItemCount += 1
-        
-        return .success
+    internal var _dictionaryValueFieldUsedByteCount: Int {
+        return itemPtr.itemValueFieldPtr.distance(to: _dictionaryAfterLastItemPtr)
     }
     
     
@@ -222,11 +101,11 @@ extension Portal {
     ///
     /// - Returns: The requested portal or the null portal.
     
-    internal func dictionaryFindItem(_ nameField: NameField?) -> Portal {
-        guard isDictionary else { return Portal.nullPortal }
-        guard let nameField = nameField else { return Portal.nullPortal }
+    internal func dictionaryFindItem(_ nameField: NameField?) -> Portal? {
+        guard isDictionary else { return nil }
+        guard let nameField = nameField else { return nil }
         var remainder = _dictionaryItemCount
-        var ptr = _dictionaryItemBasePtr
+        var ptr = itemPtr.dictionaryItemBasePtr
         while remainder > 0 {
             if UInt16(fromPtr: ptr.advanced(by: itemNameCrcOffset), endianness) == nameField.crc {
                 if ptr.advanced(by: itemNameUtf8ByteCountOffset).assumingMemoryBound(to: UInt8.self).pointee == UInt8(nameField.data.count) {
@@ -245,7 +124,7 @@ extension Portal {
             remainder -= 1
             ptr += Int(UInt32.init(fromPtr: ptr.advanced(by: itemByteCountOffset), endianness))
         }
-        return Portal.nullPortal
+        return nil
     }
 }
 
@@ -259,7 +138,7 @@ public extension Portal {
     ///
     /// The type of the value and of the referenced item must be the same. Use 'replaceItem' to change the type of the referenced item.
     ///
-    /// - Note: The portal 'self' will not be affected, portals referring to items in the content field will be invalidated.
+    /// - Note: This portal will not be affected, portals referring to items in the content field will be invalidated.
     ///
     /// - Parameters:
     ///   - value: The new value.
@@ -281,13 +160,30 @@ public extension Portal {
         guard isValid else { return .error(.portalInvalid) }
         guard isDictionary else { return .error(.operationNotSupported) }
         
-        let item = dictionaryFindItem(nameField)
+        if let item = dictionaryFindItem(nameField), item.isValid {
         
-        if item.isValid {
             guard item.itemType! == value.itemType else { return .error(.typeConflict) }
+
             return item._updateItemValue(value)
+
         } else {
-            return _dictionaryAddItem(value, withNameField: nameField)
+            
+            var neededValueFieldByteCount = usedValueFieldByteCount + itemHeaderByteCount + nameField.byteCount
+            if !value.itemType.usesSmallValue { neededValueFieldByteCount += value.valueByteCount.roundUpToNearestMultipleOf8() }
+            
+            let result = ensureValueFieldByteCount(of: neededValueFieldByteCount)
+            
+            guard result == .success else { return result }
+            
+            let pOffset = UInt32(manager.bufferPtr.distance(to: itemPtr))
+            let ptr = _dictionaryAfterLastItemPtr
+
+            buildItem(withValue: value, withNameField: nameField, atPtr: ptr, endianness)
+            ptr.setItemParentOffset(to: pOffset, endianness)
+            
+            _dictionaryItemCount += 1
+            
+            return .success
         }
     }
 
@@ -315,13 +211,50 @@ public extension Portal {
         guard isValid else { return .error(.portalInvalid) }
         guard isDictionary else { return .error(.operationNotSupported) }
 
-        let item = dictionaryFindItem(nameField)
+        if let item = dictionaryFindItem(nameField), item.isValid {
         
-        if item.isValid {
             guard item.itemType! == value.root.itemType else { return .error(.typeConflict) }
+
             return item._updateItemValue(value)
+
         } else {
-            return _dictionaryAddItem(value, withNameField: nameField)
+            
+            // Make sure the new item has the appropriate name
+            
+            if let nameField = nameField {
+                let result = value.root.updateItemName(to: nameField)
+                guard result == .success else { return result }
+            }
+            
+            guard value.root.hasName else { return .error(.missingName) }
+            
+            
+            // The new value field byte count for the dictionary
+            
+            let neededValueFieldByteCount = usedValueFieldByteCount.roundUpToNearestMultipleOf8() + value.root._itemByteCount
+            
+            
+            // Increase the value field of the dictionary if necessary
+            
+            let result2 = ensureValueFieldByteCount(of: neededValueFieldByteCount)
+            guard result2 == .success else { return result2 }
+            
+            
+            // Copy the new item into place
+            
+            let pOffset = manager.bufferPtr.distance(to: itemPtr)
+            let dstPtr = _dictionaryAfterLastItemPtr
+            
+            _ = Darwin.memmove(_dictionaryAfterLastItemPtr, value.bufferPtr, value.root._itemByteCount)
+            
+            UInt32(pOffset).copyBytes(to: dstPtr.advanced(by: itemParentOffsetOffset), endianness)
+            
+            
+            // Increase the item count
+            
+            _dictionaryItemCount += 1
+            
+            return .success
         }
     }
 
@@ -350,33 +283,31 @@ public extension Portal {
         guard isValid else { return .error(.portalInvalid) }
         guard isDictionary else { return .error(.operationNotSupported) }
         
-        let item = dictionaryFindItem(nameField)
+        guard let item = dictionaryFindItem(nameField) else { return .error(.itemNotFound) }
         
-        if item.isValid {
+        // Ensure sufficient storage
+        let result = item.ensureValueFieldByteCount(of: value.minimumValueFieldByteCount)
+        guard result == .success else { return result }
 
-            // Ensure sufficient storage
-            let result = item.ensureValueFieldByteCount(of: value.minimumValueFieldByteCount)
-            guard result == .success else { return result }
-
-            // Save the parameters that must be restored
-            let pOffset = item._itemParentOffset
-            let oldByteCount = item._itemByteCount
+        // Save the parameters that must be restored
+        let pOffset = item.itemPtr.itemParentOffset(endianness)
+        let oldByteCount = item.itemPtr.itemByteCount(endianness)
             
-            // Invalidate contained portals
-            manager.removeActivePortals(atAndAbove: item.itemPtr, below: item.itemPtr.advanced(by: item._itemByteCount))
+        // Invalidate contained portals
+        let ptr = item.itemPtr
+        manager.removeActivePortals(atAndAbove: ptr, below: ptr.advanced(by: Int(oldByteCount)))
             
-            // Create the new item
-            let p = buildItem(withValue: value, withNameField: nameField, atPtr: itemPtr, endianness)
+        // Zero the bytes if necessary
+        if ItemManager.startWithZeroedBuffers { Darwin.memset(ptr, 0, Int(oldByteCount)) }
             
-            // Restore the saved parameters
-            p._itemParentOffset = pOffset
-            p._itemByteCount = oldByteCount
+        // Create the new item
+        buildItem(withValue: value, withNameField: nameField, atPtr: ptr, endianness)
             
-            return .success
-
-        } else {
-            return .error(.itemNotFound)
-        }
+        // Restore the saved parameters
+        ptr.setItemParentOffset(to: pOffset, endianness)
+        ptr.setItemByteCount(to: oldByteCount, endianness)
+        
+        return .success
     }
     
     
@@ -404,32 +335,33 @@ public extension Portal {
         guard isValid else { return .error(.portalInvalid) }
         guard isDictionary else { return .error(.operationNotSupported) }
         
-        let item = dictionaryFindItem(nameField)
+        guard let item = dictionaryFindItem(nameField), item.isValid else { return .error(.itemNotFound) }
         
-        if item.isValid {
+        // Ensure sufficient storage
+        let result = item.ensureValueFieldByteCount(of: value.root._itemByteCount)
+        guard result == .success else { return result }
             
-            // Ensure sufficient storage
-            let result = item.ensureValueFieldByteCount(of: value.root._itemByteCount)
-            guard result == .success else { return result }
+        // Save the parameters that must be restored
+        let pOffset = item._itemParentOffset
+        let oldByteCount = item._itemByteCount
+        let ipooPtr = item.itemPtr.itemParentOffsetPtr
+        let ibcPtr = item.itemPtr.itemByteCountPtr
             
-            // Save the parameters that must be restored
-            let pOffset = item._itemParentOffset
-            let oldByteCount = item._itemByteCount
-            let ipooPtr = item.itemParentOffsetPtr
-            let ibcPtr = item.itemByteCountPtr
+        // Copy the new item
+        let newByteCount = value.root._itemByteCount
+        let ptr = item.itemPtr
+        manager.moveBlock(to: ptr, from: value.bufferPtr, moveCount: newByteCount, removeCount: oldByteCount, updateMovedPortals: false, updateRemovedPortals: true)
             
-            // Copy the new item
-            manager.moveBlock(to: item.itemPtr, from: value.bufferPtr, moveCount: value.root._itemByteCount, removeCount: item._itemByteCount, updateMovedPortals: false, updateRemovedPortals: true)
-            
-            // Restore the saved parameters
-            UInt32(pOffset).copyBytes(to: ipooPtr, endianness)
-            UInt32(oldByteCount).copyBytes(to: ibcPtr, endianness)
-            
-            return .success
-            
-        } else {
-            return .error(.itemNotFound)
+        // Zero unused bytes in the old item area (after the new item)
+        if ItemManager.startWithZeroedBuffers && (newByteCount < oldByteCount) {
+            Darwin.memset(ptr.advanced(by: newByteCount), 0, (oldByteCount - newByteCount))
         }
+            
+        // Restore the saved parameters
+        UInt32(pOffset).copyBytes(to: ipooPtr, endianness)
+        UInt32(oldByteCount).copyBytes(to: ibcPtr, endianness)
+            
+        return .success
     }
 
     
@@ -448,107 +380,145 @@ public extension Portal {
         
         guard isValid else { return .error(.portalInvalid) }
         guard isDictionary else { return .error(.operationNotSupported) }
-
-        return _dictionaryRemoveItem(withNameField: nameField)
+        
+        guard let item = dictionaryFindItem(nameField) else { return .error(.itemNotFound) }
+        
+        let itemStartPtr = item.itemPtr
+        let ibc = item._itemByteCount
+        let nextItemPtr = item.itemPtr.advanced(by: ibc)
+        let afterLastItemPtr = _dictionaryAfterLastItemPtr
+            
+        assert(nextItemPtr <= afterLastItemPtr)
+            
+        // Last item does not need a block move
+            
+        if afterLastItemPtr == nextItemPtr {
+                
+            // Update the active portals list (remove deleted item)
+                
+            manager.removeActivePortals(atAndAbove: itemStartPtr, below: afterLastItemPtr)
+                
+                
+            // Zero the 'removed' bytes
+            
+            if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(itemStartPtr, 0, ibc) }
+                
+        } else {
+                
+            // Move the items after the found item over the found item
+                
+            let len = nextItemPtr.distance(to: afterLastItemPtr)
+                
+            manager.moveBlock(to: itemStartPtr, from: nextItemPtr, moveCount: len, removeCount: ibc, updateMovedPortals: true, updateRemovedPortals: true)
+                
+                
+            // Zero the freed bytes
+                
+            if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(itemStartPtr.advanced(by: len), 0, ibc) }
+        }
+            
+        _dictionaryItemCount -= 1
+            
+        return .success
     }
 }
 
 public extension Portal {
     
-    public subscript(name: String) -> Portal { get { return dictionaryFindItem(NameField(name)) } }
+    public subscript(name: String) -> Portal { get { return dictionaryFindItem(NameField(name)) ?? Portal.nullPortal } }
     
     public subscript(name: String) -> Bool? {
-        get { return dictionaryFindItem(NameField(name)).bool }
+        get { return dictionaryFindItem(NameField(name))?.bool }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
     public subscript(name: String) -> Int8? {
-        get { return dictionaryFindItem(NameField(name)).int8 }
+        get { return dictionaryFindItem(NameField(name))?.int8 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
     public subscript(name: String) -> Int16? {
-        get { return dictionaryFindItem(NameField(name)).int16 }
+        get { return dictionaryFindItem(NameField(name))?.int16 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
     public subscript(name: String) -> Int32? {
-        get { return dictionaryFindItem(NameField(name)).int32 }
+        get { return dictionaryFindItem(NameField(name))?.int32 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
     public subscript(name: String) -> Int64? {
-        get { return dictionaryFindItem(NameField(name)).int64 }
+        get { return dictionaryFindItem(NameField(name))?.int64 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
     public subscript(name: String) -> UInt8? {
-        get { return dictionaryFindItem(NameField(name)).uint8 }
+        get { return dictionaryFindItem(NameField(name))?.uint8 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
     public subscript(name: String) -> UInt16? {
-        get { return dictionaryFindItem(NameField(name)).uint16 }
+        get { return dictionaryFindItem(NameField(name))?.uint16 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
     public subscript(name: String) -> UInt32? {
-        get { return dictionaryFindItem(NameField(name)).uint32 }
+        get { return dictionaryFindItem(NameField(name))?.uint32 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
     public subscript(name: String) -> UInt64? {
-        get { return dictionaryFindItem(NameField(name)).uint64 }
+        get { return dictionaryFindItem(NameField(name))?.uint64 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
     public subscript(name: String) -> Float32? {
-        get { return dictionaryFindItem(NameField(name)).float32 }
+        get { return dictionaryFindItem(NameField(name))?.float32 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
     public subscript(name: String) -> Float64? {
-        get { return dictionaryFindItem(NameField(name)).float64 }
+        get { return dictionaryFindItem(NameField(name))?.float64 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
     public subscript(name: String) -> String? {
-        get { return dictionaryFindItem(NameField(name)).string }
+        get { return dictionaryFindItem(NameField(name))?.string }
         set { updateItem(BRString(newValue), withNameField: NameField(name)) }
     }
     
     public subscript(name: String) -> BRString? {
-        get { return dictionaryFindItem(NameField(name)).brString }
+        get { return dictionaryFindItem(NameField(name))?.brString }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
     public subscript(name: String) -> BRCrcString? {
-        get { return dictionaryFindItem(NameField(name)).crcString }
+        get { return dictionaryFindItem(NameField(name))?.crcString }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
     public subscript(name: String) -> Data? {
-        get { return dictionaryFindItem(NameField(name)).binary }
+        get { return dictionaryFindItem(NameField(name))?.binary }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
     public subscript(name: String) -> BRCrcBinary? {
-        get { return dictionaryFindItem(NameField(name)).crcBinary }
+        get { return dictionaryFindItem(NameField(name))?.crcBinary }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
     public subscript(name: String) -> UUID? {
-        get { return dictionaryFindItem(NameField(name)).uuid }
+        get { return dictionaryFindItem(NameField(name))?.uuid }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
     public subscript(name: String) -> BRColor? {
-        get { return dictionaryFindItem(NameField(name)).color }
+        get { return dictionaryFindItem(NameField(name))?.color }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
     public subscript(name: String) -> BRFont? {
-        get { return dictionaryFindItem(NameField(name)).font }
+        get { return dictionaryFindItem(NameField(name))?.font }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
 }
@@ -561,10 +531,9 @@ public extension Portal {
 ///
 /// - Returns: An ephemeral portal. Do not retain this portal.
 
-internal func buildDictionaryItem(withNameField nameField: NameField?, valueByteCount: Int, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
-    let p = buildItem(ofType: .dictionary, withNameField: nameField, atPtr: ptr, endianness)
-    p._itemByteCount += dictionaryItemBaseOffset + valueByteCount.roundUpToNearestMultipleOf8()
-    p._dictionaryItemCount = 0
-    return p
+internal func buildDictionaryItem(withNameField nameField: NameField?, valueByteCount: Int, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+    buildItem(ofType: .dictionary, withNameField: nameField, atPtr: ptr, endianness)
+    ptr.setItemByteCount(to: UInt32(itemHeaderByteCount + (nameField?.byteCount ?? 0) + dictionaryItemBaseOffset + valueByteCount.roundUpToNearestMultipleOf8()), endianness)
+    UInt32(0).copyBytes(to: ptr.dictionaryItemCountPtr, endianness)
 }
 

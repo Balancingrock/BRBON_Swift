@@ -52,7 +52,7 @@ import Foundation
 import BRUtils
 
 
-// Extensions that allow a portal to test and access a Float32
+// Public item access
 
 public extension Portal {
     
@@ -62,8 +62,8 @@ public extension Portal {
     public var isFloat32: Bool {
         guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.float32 }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.float32.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.float32.rawValue
+        if index != nil { return itemPtr.itemValueFieldPtr.arrayElementType == ItemType.float32.rawValue }
+        return itemPtr.itemType == ItemType.float32.rawValue
     }
 
     
@@ -74,22 +74,12 @@ public extension Portal {
     public var float32: Float32? {
         get {
             guard isFloat32 else { return nil }
-            return Float32(fromPtr: valueFieldPtr, endianness)
+            return Float32(fromPtr: _valuePtr, endianness)
         }
         set {
             guard isFloat32 else { return }
-            newValue?.copyBytes(to: valueFieldPtr, endianness)
+            newValue?.copyBytes(to: _valuePtr, endianness)
         }
-    }
-    
-    
-    /// Add an Float32 to an Array.
-    ///
-    /// - Returns: .success or one of .portalInvalid, .operationNotSupported, .typeConflict
-    
-    @discardableResult
-    public func append(_ value: Float32) -> Result {
-        return appendClosure(for: value.itemType, with: value.valueByteCount) { value.copyBytes(to: _arrayElementPtr(for: _arrayElementCount), endianness) }
     }
 }
 

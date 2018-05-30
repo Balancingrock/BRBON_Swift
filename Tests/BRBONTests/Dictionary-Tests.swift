@@ -2162,7 +2162,130 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertEqual(dm.data, exp)
     }
     
-    func testPortals() {
+    func testPortalsUpdateItem() {
         
+        // Update does not invalidate the portal, but does invalidate the contents of the portal in the sub-item
+        //
+        ItemManager.startWithZeroedBuffers = true
+        
+        let dm = ItemManager.createDictionaryManager()
+        
+        XCTAssertEqual(dm.root.updateItem(UInt16(0x1616), withNameField: NameField("One")), .success)
+        XCTAssertEqual(dm.root.updateItem(UInt16(0x1717), withNameField: NameField("Two")), .success)
+        XCTAssertEqual(dm.root.updateItem(UInt16(0x1818), withNameField: NameField("Three")), .success)
+        
+        let portal1: Portal = dm.root["One"]
+        let portal2: Portal = dm.root["Two"]
+        let portal3: Portal = dm.root["Three"]
+        
+        XCTAssertTrue(portal1.isValid)
+        XCTAssertTrue(portal1.isUInt16)
+        XCTAssertEqual(portal1.uint16, UInt16(0x1616))
+
+        XCTAssertTrue(portal2.isValid)
+        XCTAssertTrue(portal2.isUInt16)
+        XCTAssertEqual(portal2.uint16, UInt16(0x1717))
+
+        XCTAssertTrue(portal3.isValid)
+        XCTAssertTrue(portal3.isUInt16)
+        XCTAssertEqual(portal3.uint16, UInt16(0x1818))
+
+        XCTAssertEqual(dm.root.updateItem(UInt16(0x6161), withNameField: NameField("Two")), .success)
+        
+        XCTAssertTrue(portal1.isValid)
+        XCTAssertTrue(portal1.isUInt16)
+        XCTAssertEqual(portal1.uint16, UInt16(0x1616))
+        
+        XCTAssertTrue(portal2.isValid)
+        XCTAssertTrue(portal2.isUInt16)
+        XCTAssertEqual(portal2.uint16, UInt16(0x6161))
+        
+        XCTAssertTrue(portal3.isValid)
+        XCTAssertTrue(portal3.isUInt16)
+        XCTAssertEqual(portal3.uint16, UInt16(0x1818))
+        
+        guard let arr = ItemManager.createArrayManager(values: [UInt8(0x11), UInt8(0x22)]) else { XCTFail(); return }
+        
+        XCTAssertEqual(dm.root.updateItem(arr, withNameField: NameField("Four")), .success)
+        
+        let portal4: Portal = dm.root["Four"]
+        let portal40: Portal = dm.root["Four"][0]
+        let portal41: Portal = dm.root["Four"][1]
+        
+        XCTAssertTrue(portal4.isValid)
+        XCTAssertTrue(portal40.isValid)
+        XCTAssertEqual(portal40.uint8, 0x11)
+        XCTAssertTrue(portal41.isValid)
+        XCTAssertEqual(portal41.uint8, 0x22)
+
+        guard let arr1 = ItemManager.createArrayManager(values: [true, true]) else { XCTFail(); return }
+        
+        XCTAssertEqual(dm.root.updateItem(arr1, withNameField: NameField("Four")), .success)
+
+        XCTAssertTrue(portal4.isValid)
+        XCTAssertFalse(portal40.isValid)
+        XCTAssertFalse(portal41.isValid)
+    }
+    
+    
+    func testPortalsReplaceItem() {
+        
+        ItemManager.startWithZeroedBuffers = true
+        
+        let dm = ItemManager.createDictionaryManager()
+        
+        XCTAssertEqual(dm.root.updateItem(UInt16(0x1616), withNameField: NameField("One")), .success)
+        XCTAssertEqual(dm.root.updateItem(UInt16(0x1717), withNameField: NameField("Two")), .success)
+        XCTAssertEqual(dm.root.updateItem(UInt16(0x1818), withNameField: NameField("Three")), .success)
+        
+        let portal1: Portal = dm.root["One"]
+        let portal2: Portal = dm.root["Two"]
+        let portal3: Portal = dm.root["Three"]
+        
+        XCTAssertTrue(portal1.isValid)
+        XCTAssertTrue(portal1.isUInt16)
+        XCTAssertEqual(portal1.uint16, UInt16(0x1616))
+        
+        XCTAssertTrue(portal2.isValid)
+        XCTAssertTrue(portal2.isUInt16)
+        XCTAssertEqual(portal2.uint16, UInt16(0x1717))
+        
+        XCTAssertTrue(portal3.isValid)
+        XCTAssertTrue(portal3.isUInt16)
+        XCTAssertEqual(portal3.uint16, UInt16(0x1818))
+        
+        XCTAssertEqual(dm.root.replaceItem(UInt16(0x6161), withNameField: NameField("Two")), .success)
+        
+        XCTAssertTrue(portal1.isValid)
+        XCTAssertTrue(portal1.isUInt16)
+        XCTAssertEqual(portal1.uint16, UInt16(0x1616))
+        
+        XCTAssertFalse(portal2.isValid)
+        
+        XCTAssertTrue(portal3.isValid)
+        XCTAssertTrue(portal3.isUInt16)
+        XCTAssertEqual(portal3.uint16, UInt16(0x1818))
+        
+        guard let arr = ItemManager.createArrayManager(values: [UInt8(0x11), UInt8(0x22)]) else { XCTFail(); return }
+        
+        XCTAssertEqual(dm.root.updateItem(arr, withNameField: NameField("Four")), .success)
+        
+        let portal4: Portal = dm.root["Four"]
+        let portal40: Portal = dm.root["Four"][0]
+        let portal41: Portal = dm.root["Four"][1]
+        
+        XCTAssertTrue(portal4.isValid)
+        XCTAssertTrue(portal40.isValid)
+        XCTAssertEqual(portal40.uint8, 0x11)
+        XCTAssertTrue(portal41.isValid)
+        XCTAssertEqual(portal41.uint8, 0x22)
+        
+        guard let arr1 = ItemManager.createArrayManager(values: [true, true]) else { XCTFail(); return }
+        
+        XCTAssertEqual(dm.root.replaceItem(arr1, withNameField: NameField("Four")), .success)
+        
+        XCTAssertFalse(portal4.isValid)
+        XCTAssertFalse(portal40.isValid)
+        XCTAssertFalse(portal41.isValid)
     }
 }

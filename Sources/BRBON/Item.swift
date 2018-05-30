@@ -61,123 +61,456 @@ internal let itemByteCountOffset = 4
 internal let itemParentOffsetOffset = 8
 internal let itemSmallValueOffset = 12
 
-internal let itemValueFieldOffset = 16
+internal let itemHeaderByteCount = 16
 
-internal let itemNameFieldOffset = itemValueFieldOffset
-internal let itemNameCrcOffset = itemNameFieldOffset + 0
-internal let itemNameUtf8ByteCountOffset = itemNameFieldOffset + 2
-internal let itemNameUtf8CodeOffset = itemNameFieldOffset + 3
+internal let itemNameCrcOffset = itemHeaderByteCount + 0
+internal let itemNameUtf8ByteCountOffset = itemHeaderByteCount + 2
+internal let itemNameUtf8CodeOffset = itemHeaderByteCount + 3
 
-internal let itemMinimumByteCount = 16
+
+// MARK: - Adding Item Header accessors
+
+internal extension UnsafeMutableRawPointer {
+    
+    
+    /// Returns a pointer to the item type assuming self points to the first byte of an item.
+    
+    internal var itemTypePtr: UnsafeMutableRawPointer {
+        return self.advanced(by: itemTypeOffset)
+    }
+
+    
+    /// Returns a pointer to the item options assuming self points to the first byte of an item.
+
+    internal var itemOptionsPtr: UnsafeMutableRawPointer {
+        return self.advanced(by: itemOptionsOffset)
+    }
+    
+    
+    /// Returns a pointer to the item flags assuming self points to the first byte of an item.
+
+    internal var itemFlagsPtr: UnsafeMutableRawPointer {
+        return self.advanced(by: itemFlagsOffset)
+    }
+    
+
+    /// Returns a pointer to the item name field count assuming self points to the first byte of an item.
+
+    internal var itemNameFieldByteCountPtr: UnsafeMutableRawPointer {
+        return self.advanced(by: itemNameFieldByteCountOffset)
+    }
+    
+    
+    /// Returns a pointer to the item byte count assuming self points to the first byte of an item.
+
+    internal var itemByteCountPtr: UnsafeMutableRawPointer {
+        return self.advanced(by: itemByteCountOffset)
+    }
+    
+    
+    /// Returns a pointer to the item parent offset assuming self points to the first byte of an item.
+
+    internal var itemParentOffsetPtr: UnsafeMutableRawPointer {
+        return self.advanced(by: itemParentOffsetOffset)
+    }
+    
+    
+    /// Returns a pointer to the item small value assuming self points to the first byte of an item.
+
+    internal var itemSmallValuePtr: UnsafeMutableRawPointer {
+        return self.advanced(by: itemSmallValueOffset)
+    }
+    
+    
+    /// The raw value of the item type, assuming self points to the first byte of an item.
+    
+    internal var itemType: UInt8 {
+        get {
+            return self.itemTypePtr.assumingMemoryBound(to: UInt8.self).pointee
+        }
+        set {
+            self.itemTypePtr.storeBytes(of: newValue, as: UInt8.self)
+        }
+    }
+    
+    
+    /// The raw value of the item options, assuming self points to the first byte of an item.
+
+    internal var itemOptions: UInt8 {
+        get {
+            return self.itemOptionsPtr.assumingMemoryBound(to: UInt8.self).pointee
+        }
+        set {
+            self.itemOptionsPtr.storeBytes(of: newValue, as: UInt8.self)
+        }
+    }
+
+    
+    /// The raw value of the item flags, assuming self points to the first byte of an item.
+
+    internal var itemFlags: UInt8 {
+        get {
+            return self.itemFlagsPtr.assumingMemoryBound(to: UInt8.self).pointee
+        }
+        set {
+            self.itemFlagsPtr.storeBytes(of: newValue, as: UInt8.self)
+        }
+    }
+    
+    
+    /// The name field byte count of an item, assuming self points to the first byte of an item.
+
+    internal var itemNameFieldByteCount: UInt8 {
+        get {
+            return self.itemNameFieldByteCountPtr.assumingMemoryBound(to: UInt8.self).pointee
+        }
+        set {
+            self.itemNameFieldByteCountPtr.storeBytes(of: UInt8(newValue), as: UInt8.self)
+        }
+    }
+    
+    
+    /// Returns the byte count of an item, assuming self points to the first byte of an item.
+
+    internal func itemByteCount(_ endianness: Endianness) -> UInt32 {
+        if endianness == machineEndianness {
+            return self.itemByteCountPtr.assumingMemoryBound(to: UInt32.self).pointee
+        } else {
+            return self.itemByteCountPtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped
+        }
+    }
+
+    
+    /// Sets the byte count of an item, assuming self points to the first byte of an item.
+
+    internal func setItemByteCount(to value: UInt32, _ endianness: Endianness) {
+        if endianness == machineEndianness {
+            self.itemByteCountPtr.storeBytes(of: value, as: UInt32.self)
+        } else {
+            self.itemByteCountPtr.storeBytes(of: value.byteSwapped, as: UInt32.self)
+        }
+    }
+    
+
+    /// Returns the parent offset of an item, assuming self points to the first byte of an item.
+
+    internal func itemParentOffset(_ endianness: Endianness) -> UInt32 {
+        if endianness == machineEndianness {
+            return self.itemParentOffsetPtr.assumingMemoryBound(to: UInt32.self).pointee
+        } else {
+            return self.itemParentOffsetPtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped
+        }
+    }
+    
+    
+    /// Sets the parent offset of an item, assuming self points to the first byte of an item.
+
+    internal func setItemParentOffset(to value: UInt32, _ endianness: Endianness) {
+        if endianness == machineEndianness {
+            self.itemParentOffsetPtr.storeBytes(of: value, as: UInt32.self)
+        } else {
+            self.itemParentOffsetPtr.storeBytes(of: value.byteSwapped, as: UInt32.self)
+        }
+    }
+
+    
+    /// Returns the small value of an item, assuming self points to the first byte of an item.
+
+    internal func itemSmallValue(_ endianness: Endianness) -> UInt32 {
+        if endianness == machineEndianness {
+            return self.itemSmallValuePtr.assumingMemoryBound(to: UInt32.self).pointee
+        } else {
+            return self.itemSmallValuePtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped
+        }
+    }
+    
+    
+    /// Sets the small value of an item, assuming self points to the first byte of an item.
+
+    internal func setItemSmallValue(to value: UInt32, _ endianness: Endianness) {
+        if endianness == machineEndianness {
+            self.itemSmallValuePtr.storeBytes(of: value, as: UInt32.self)
+        } else {
+            self.itemSmallValuePtr.storeBytes(of: value.byteSwapped, as: UInt32.self)
+        }
+    }
+
+    
+    /// Returns the small value of an item, assuming self points to the first byte of an item.
+
+    internal func itemSmallValue(_ endianness: Endianness) -> UInt16 {
+        if endianness == machineEndianness {
+            return self.itemSmallValuePtr.assumingMemoryBound(to: UInt16.self).pointee
+        } else {
+            return self.itemSmallValuePtr.assumingMemoryBound(to: UInt16.self).pointee.byteSwapped
+        }
+    }
+
+    
+    /// Sets the small value of an item, assuming self points to the first byte of an item.
+
+    internal func setItemSmallValue(to value: UInt16, _ endianness: Endianness) {
+        if endianness == machineEndianness {
+            self.itemSmallValuePtr.storeBytes(of: value, as: UInt16.self)
+        } else {
+            self.itemSmallValuePtr.storeBytes(of: value.byteSwapped, as: UInt16.self)
+        }
+    }
+
+    
+    /// Returns the small value of an item, assuming self points to the first byte of an item.
+
+    internal func itemSmallValue() -> UInt8 {
+        return self.itemSmallValuePtr.assumingMemoryBound(to: UInt8.self).pointee
+    }
+
+    
+    /// Sets the small value of an item, assuming self points to the first byte of an item.
+
+    internal func setItemSmallValue(to value: UInt8) {
+        self.itemSmallValuePtr.storeBytes(of: value, as: UInt8.self)
+    }
+}
+
+
+// MARK: - Adding Item Name accessors
+
+internal extension UnsafeMutableRawPointer {
+
+    
+    /// Returns a pointer to the name field of an item assuming self points to the first byte of an item.
+
+    internal var itemNameFieldPtr: UnsafeMutableRawPointer { return self.advanced(by: itemHeaderByteCount) }
+
+    
+    /// Returns a pointer to the CRC field in the name of an item assuming self points to the first byte of an item.
+
+    internal var itemNameCrcPtr: UnsafeMutableRawPointer { return self.advanced(by: itemNameCrcOffset) }
+    
+    
+    /// Returns a pointer to the UTF8 Byte Count in the name field of an item assuming self points to the first byte of an item.
+
+    internal var itemNameUtf8ByteCountPtr: UnsafeMutableRawPointer { return self.advanced(by: itemNameFieldByteCountOffset) }
+
+    
+    /// Returns a pointer to the start of the UTF8 Byte Code in the name field of an item assuming self points to the first byte of an item.
+
+    internal var itemNameUtf8CodePtr: UnsafeMutableRawPointer { return self.advanced(by: itemNameUtf8CodeOffset) }
+    
+    
+    /// Returns the CRC of the name of an item assuming self points to the first byte of an item.
+    
+    internal func itemNameCrc(_ endianness: Endianness) -> UInt16 {
+        if endianness == machineEndianness {
+            return self.itemNameCrcPtr.assumingMemoryBound(to: UInt16.self).pointee
+        } else {
+            return self.itemNameCrcPtr.assumingMemoryBound(to: UInt16.self).pointee.byteSwapped
+        }
+    }
+    
+    
+    /// Sets the CRC of the name of an item assuming self points to the first byte of the item.
+
+    internal func setItemNameCrc(to value: UInt16, _ endianness: Endianness) {
+        if endianness == machineEndianness {
+            self.itemNameCrcPtr.storeBytes(of: value, as: UInt16.self)
+        } else {
+            self.itemNameCrcPtr.storeBytes(of: value.byteSwapped, as: UInt16.self)
+        }
+    }
+    
+    
+    /// The UTF8 Byte Count of the name of an item assuming self points to the first byte of the item.
+
+    internal var itemNameUtf8ByteCount: UInt8 {
+        get {
+            return self.itemNameUtf8ByteCountPtr.assumingMemoryBound(to: UInt8.self).pointee
+        }
+        set {
+            self.itemNameUtf8ByteCountPtr.storeBytes(of: UInt8(newValue), as: UInt8.self)
+        }
+    }
+    
+    
+    /// The UTF8 Byte Code of the name of an item assuming self points to the first byte of the item.
+    ///
+    /// Note that this will also read from or write to 'itemNameUtf8ByteCount'.
+
+    internal var itemNameUtf8Code: Data {
+        get {
+            return Data(bytes: self.itemNameUtf8CodePtr, count: Int(self.itemNameUtf8ByteCount))
+        }
+        set {
+            newValue.copyBytes(to: self.itemNameUtf8CodePtr.assumingMemoryBound(to: UInt8.self), count: newValue.count)
+            self.itemNameUtf8ByteCount = UInt8(newValue.count)
+        }
+    }
+}
+
+
+// Adding item related utility functions
+
+extension UnsafeMutableRawPointer {
+
+    
+    /// Returns the byte count for the item header and item name
+    
+    internal var itemHeaderAndNameByteCount: Int {
+        return itemHeaderByteCount + Int(self.itemNameFieldByteCount)
+    }
+
+    
+    /// Returns a pointer to the first byte of the value field assuming self points to the first byte of the item.
+    
+    internal var itemValueFieldPtr: UnsafeMutableRawPointer {
+        return self.advanced(by: itemHeaderAndNameByteCount)
+    }
+    
+    
+    /// Returns a pointer to the first byte after this item assuming self points to the first byte of the item.
+    
+    internal func nextItemPtr(_ endianness: Endianness) -> UnsafeMutableRawPointer {
+        return self.advanced(by: Int(self.itemByteCount(endianness)))
+    }
+}
 
 
 // Item fields access
 
 extension Portal {
-    
-    internal var itemTypePtr: UnsafeMutableRawPointer { return itemPtr.advanced(by: itemTypeOffset) }
-    internal var itemOptionsPtr: UnsafeMutableRawPointer { return itemPtr.advanced(by: itemOptionsOffset) }
-    internal var itemFlagsPtr: UnsafeMutableRawPointer { return itemPtr.advanced(by: itemFlagsOffset) }
-    internal var itemNameFieldByteCountPtr: UnsafeMutableRawPointer { return itemPtr.advanced(by: itemNameFieldByteCountOffset) }
-    internal var itemByteCountPtr: UnsafeMutableRawPointer { return itemPtr.advanced(by: itemByteCountOffset) }
-    internal var itemParentOffsetPtr: UnsafeMutableRawPointer { return itemPtr.advanced(by: itemParentOffsetOffset) }
-    internal var itemSmallValuePtr: UnsafeMutableRawPointer { return itemPtr.advanced(by: itemSmallValueOffset) }
-    internal var _itemNameFieldPtr: UnsafeMutableRawPointer { return itemPtr.advanced(by: itemNameFieldOffset) }
-    internal var _itemNameCrcPtr: UnsafeMutableRawPointer { return itemPtr.advanced(by: itemNameCrcOffset) }
-    internal var _itemNameUtf8ByteCountPtr: UnsafeMutableRawPointer { return itemPtr.advanced(by: itemNameUtf8ByteCountOffset) }
-    internal var _itemNameUtf8CodePtr: UnsafeMutableRawPointer { return itemPtr.advanced(by: itemNameUtf8CodeOffset) }
-    
-    
-    /// Returns a pointer to the first byte of the value of the item.
-    ///
-    /// - Note: Self must point to the first byte of an item.
-    
-    internal var itemValueFieldPtr: UnsafeMutableRawPointer {
-        if itemType!.usesSmallValue {
-            return itemSmallValuePtr
-        } else {
-            if _itemNameFieldByteCount > 0 {
-                return itemPtr.advanced(by: itemValueFieldOffset + _itemNameFieldByteCount)
-            } else {
-                return itemPtr.advanced(by: itemValueFieldOffset)
-            }
-        }
-    }
 
     
+    /// The type of item this portal refers to.
+    
+    internal var _itemType: ItemType? {
+        get { return ItemType(rawValue: itemPtr.itemType) }
+        set { itemPtr.itemType = newValue?.rawValue ?? 0 }
+    }
+    
+    
     /// The options for the item this portal refers to.
-    ///
-    /// - Note: Assumes the portal is valid, if unsure, use 'options' instead.
     
     internal var _itemsOptions: ItemOptions? {
-        get { return ItemOptions.readValue(atPtr: itemOptionsPtr) }
-        set { newValue?.copyBytes(to: itemOptionsPtr) }
+        get { return ItemOptions(rawValue: itemPtr.itemOptions) }
+        set { itemPtr.itemOptions = newValue?.rawValue ?? 0 }
     }
     
 
     /// The flags for the item this portal refers to.
-    ///
-    /// - Note: Assumes the portal is valid, if unsure, use 'flags' instead.
     
     internal var _itemFlags: ItemFlags? {
-        get { return ItemFlags.readValue(atPtr: itemFlagsPtr) }
-        set { newValue?.copyBytes(to: itemFlagsPtr) }
+        get { return ItemFlags(rawValue: itemPtr.itemFlags) }
+        set { itemPtr.itemFlags = newValue?.rawValue ?? 0 }
     }
 
-    
-    /// The small value field accessor
-    
-    internal var _itemSmallValue: UInt32 {
-        get { return UInt32(fromPtr: itemSmallValuePtr, endianness) }
-        set { UInt32(newValue).copyBytes(to: itemSmallValuePtr, endianness) }
-    }
-    
     
     /// The byte count of the name field in the item this portal refers to.
     
     internal var _itemNameFieldByteCount: Int {
-        get { return Int(UInt8(fromPtr: itemNameFieldByteCountPtr, endianness)) }
-        set { UInt8(newValue).copyBytes(to: itemNameFieldByteCountPtr, endianness) }
+        get { return Int(itemPtr.itemNameFieldByteCount) }
+        set { itemPtr.itemNameFieldByteCount = UInt8(newValue) }
     }
-    
+
     
     /// The byte count of the item this portal refers to.
     
     internal var _itemByteCount: Int {
-        get { return Int(UInt32(fromPtr: itemByteCountPtr, endianness)) }
-        set { UInt32(newValue).copyBytes(to: itemByteCountPtr, endianness) }
+        get { return Int(itemPtr.itemByteCount(endianness)) }
+        set { itemPtr.setItemByteCount(to: UInt32(newValue), endianness) }
     }
-
+    
     
     /// The parent offset for the item this portal refers to.
     
     internal var _itemParentOffset: Int {
-        get { return Int(UInt32(fromPtr: itemParentOffsetPtr, endianness)) }
-        set { UInt32(newValue).copyBytes(to: itemParentOffsetPtr, endianness) }
+        get { return Int(itemPtr.itemParentOffset(endianness)) }
+        set { itemPtr.setItemParentOffset(to: UInt32(newValue), endianness) }
+    }
+
+    
+    /// The small value field accessor as a UInt32
+    
+    internal func _itemSmallValue(_ endianness: Endianness) -> UInt32 {
+        return itemPtr.itemSmallValue(endianness)
     }
     
+    
+    /// Set the small value field as a UInt32
+    
+    internal func _setItemSmallValue(to value: UInt32, _ endianness: Endianness) {
+        itemPtr.setItemSmallValue(to: value, endianness)
+    }
+
+    
+    /// The small value field accessor as a UInt16
+    
+//    internal func _itemSmallValue(_ endianness: Endianness) -> UInt16 {
+//        return itemPtr.itemSmallValue(endianness)
+//    }
+    
+    
+    /// Set the small value field as a UInt16
+    
+//    internal func _setItemSmallValue(to value: UInt16, _ endianness: Endianness) {
+//        itemPtr.setItemSmallValue(to: value, endianness)
+//    }
+
+    
+    /// The small value field accessor as a UInt8
+    
+//    internal func _itemSmallValue() -> UInt8 {
+//        return itemPtr.itemSmallValue()
+//    }
+    
+    
+    /// Set the small value field as a UInt8
+    
+//    internal func _setItemSmallValue(to value: UInt8) {
+//        itemPtr.setItemSmallValue(to: value)
+//    }
+}
+
+extension Portal {
+    
+    
+    /// Return a pointer to the value field
+    
+    internal var _itemValueFieldPtr: UnsafeMutableRawPointer {
+        return itemPtr.itemValueFieldPtr
+    }
+    
+    
+    /// Return a pointer to the first byte after the item of this portal
+    
+    internal var _nextItemPtr: UnsafeMutableRawPointer {
+        return itemPtr.nextItemPtr(endianness)
+    }
+}
+
+
+extension Portal {
     
     /// The crc16 of name of the item this portal refers to.
     
     internal var _itemNameCrc: UInt16 {
-        get { return UInt16(fromPtr: _itemNameCrcPtr, endianness) }
-        set { newValue.copyBytes(to: _itemNameCrcPtr, endianness) }
+        get { return itemPtr.itemNameCrc(endianness) }
+        set { itemPtr.setItemNameCrc(to: newValue, endianness) }
     }
     
     
     /// The number of used bytes in the data area of the name field of the item this portal refers to.
     
     internal var _itemNameUtf8CodeByteCount: Int {
-        get { return Int(UInt8(fromPtr: _itemNameUtf8ByteCountPtr, endianness)) }
-        set { UInt8(newValue).copyBytes(to: _itemNameUtf8ByteCountPtr, endianness) }
+        get { return Int(itemPtr.itemNameUtf8ByteCount) }
+        set { itemPtr.itemNameUtf8ByteCount = UInt8(newValue) }
     }
     
     
     /// A data struc with the bytes of the UTF8 code sequence used in the name field of the item this portal refers to.
     
     internal var _itemNameUtf8Code: Data {
-        get { return Data(bytes: _itemNameUtf8CodePtr, count: _itemNameUtf8CodeByteCount) }
-        set { newValue.withUnsafeBytes({ _itemNameUtf8CodePtr.copyMemory(from: $0, byteCount: newValue.count)}) }
+        get { return itemPtr.itemNameUtf8Code }
+        set { itemPtr.itemNameUtf8Code = newValue }
     }
 }
 
@@ -186,15 +519,10 @@ public extension Portal {
     
     
     /// The type of item this portal refers to.
-    ///
-    /// - Note: The type of the value and the type of the item may differ when the item is a container type.
     
     public internal(set) var itemType: ItemType? {
-        get {
-            guard isValid else { return nil }
-            return ItemType.readValue(atPtr: itemTypePtr)
-        }
-        set { newValue?.copyBytes(to: itemTypePtr) }
+        get { guard isValid else { return nil }; return _itemType }
+        set { guard isValid else { return }; _itemType = newValue }
     }
     
         
@@ -218,7 +546,7 @@ public extension Portal {
     
     public var hasName: Bool {
         guard isValid else { return false }
-        return _itemNameFieldByteCount != 0
+        return _itemNameFieldByteCount > 0
     }
     
     
@@ -250,19 +578,19 @@ public extension Portal {
             // If the name is larger, increase the item size and move the value field
             
             if nameField.byteCount > _itemNameFieldByteCount {
-                let ibc = itemMinimumByteCount + nameField.byteCount + usedValueFieldByteCount.roundUpToNearestMultipleOf8()
+                let ibc = itemHeaderByteCount + nameField.byteCount + usedValueFieldByteCount
                 if ibc > _itemByteCount {
                     let result = increaseItemByteCount(to: ibc)
                     guard result == .success else { return result }
                 }
-                let srcPtr = valueFieldPtr
-                let dstPtr = valueFieldPtr.advanced(by: (nameField.byteCount - _itemNameFieldByteCount))
+                let srcPtr = _itemValueFieldPtr
+                let dstPtr = _itemValueFieldPtr.advanced(by: (nameField.byteCount - _itemNameFieldByteCount))
                 let shiftSize = usedValueFieldByteCount
                 manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: shiftSize, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
                 _itemNameFieldByteCount = nameField.byteCount
             }
             if ItemManager.startWithZeroedBuffers {
-                _ = Darwin.memset(_itemNameFieldPtr, 0, _itemNameFieldByteCount)
+                _ = Darwin.memset(itemPtr.itemNameFieldPtr, 0, _itemNameFieldByteCount)
             }
             _itemNameCrc = nameField.crc
             _itemNameUtf8CodeByteCount = nameField.data.count
@@ -273,15 +601,15 @@ public extension Portal {
             // Remove the name field if present
             
             if _itemNameFieldByteCount > 0 {
-                let srcPtr = valueFieldPtr
-                let dstPtr = _itemNameFieldPtr
-                let shiftSize = valueFieldPtr.distance(to: itemPtr.advanced(by: _itemByteCount))
+                let srcPtr = _itemValueFieldPtr
+                let dstPtr = itemPtr.itemNameFieldPtr
+                let shiftSize = _itemValueFieldPtr.distance(to: itemPtr.advanced(by: _itemByteCount))
                 manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: shiftSize, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
                 _itemNameFieldByteCount = 0
                 
                 if ItemManager.startWithZeroedBuffers {
                     let zerosize = dstPtr.distance(to: srcPtr)
-                    let targetPtr = valueFieldPtr.advanced(by: shiftSize)
+                    let targetPtr = _itemValueFieldPtr.advanced(by: shiftSize)
                     _ = Darwin.memset(targetPtr, 0, zerosize)
                 }
             }
@@ -308,7 +636,7 @@ public extension Portal {
         
         if value.itemType.usesSmallValue {
         
-            value.copyBytes(to: itemSmallValuePtr, endianness)
+            value.copyBytes(to: itemPtr.itemSmallValuePtr, endianness)
         
         } else {
         
@@ -321,19 +649,19 @@ public extension Portal {
             
             // Invalidate portals
             
-            manager.removeActivePortals(atAndAbove: valueFieldPtr, below: itemPtr.advanced(by: _itemByteCount))
+            manager.removeActivePortals(atAndAbove: _itemValueFieldPtr, below: itemPtr.advanced(by: _itemByteCount))
             
             
             // Reset the value field to zero - when necessary
             
             if ItemManager.startWithZeroedBuffers {
-                _ = Darwin.memset(valueFieldPtr, 0, valueFieldPtr.distance(to: itemPtr.advanced(by: _itemByteCount)))
+                _ = Darwin.memset(_itemValueFieldPtr, 0, _itemValueFieldPtr.distance(to: itemPtr.advanced(by: _itemByteCount)))
             }
             
             
             // Set the new value
             
-            value.copyBytes(to: valueFieldPtr, endianness)
+            value.copyBytes(to: _itemValueFieldPtr, endianness)
         }
         
         return .success
@@ -358,7 +686,8 @@ public extension Portal {
         let oldByteCount = _itemByteCount
         let pOffset = _itemParentOffset
         
-        manager.removeActivePortals(atAndAbove: valueFieldPtr, below: itemPtr.advanced(by: _itemByteCount))
+        
+        manager.removeActivePortals(atAndAbove: _itemValueFieldPtr, below: itemPtr.advanced(by: _itemByteCount))
 
         if oldByteCount > newByteCount {
 
@@ -399,24 +728,24 @@ public extension Portal {
 ///   - withNameField: The namefield for the item. Optional.
 ///   - atPtr: The pointer at which to build the item structure.
 ///   - endianness: The endianness to be used while creating the item.
-///
-/// - Returns: An ephemeral portal. Do not retain this portal, use it only to complete the rest of the structure.
 
-internal func buildItem(ofType type: ItemType, withNameField nameField: NameField? = nil, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
+internal func buildItem(ofType type: ItemType, withNameField nameField: NameField? = nil, atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
     
-    let portal = Portal.init(itemPtr: ptr, endianness: endianness)
+    var ptr = atPtr
     
-    portal.itemType = type
-    portal.itemFlags = ItemFlags.none
-    portal.itemOptions = ItemOptions.none
-    portal._itemNameFieldByteCount = nameField?.byteCount ?? 0
-    portal._itemByteCount = itemMinimumByteCount + (nameField?.byteCount ?? 0)
-    portal._itemParentOffset = 0
-    portal._itemSmallValue = 0
+    ptr.itemType = type.rawValue
+    ptr.itemFlags = ItemFlags.none.rawValue
+    ptr.itemOptions = ItemOptions.none.rawValue
+    ptr.itemNameFieldByteCount = UInt8(nameField?.byteCount ?? 0)
+    ptr.setItemByteCount(to: UInt32(itemHeaderByteCount + (nameField?.byteCount ?? 0)), endianness)
+    ptr.setItemParentOffset(to: 0, endianness)
+    ptr.setItemSmallValue(to: UInt32(0), endianness)
     
-    nameField?.copyBytes(to: ptr.advanced(by: itemValueFieldOffset), endianness)
-    
-    return portal
+    if let nameField = nameField {
+        ptr.setItemNameCrc(to: nameField.crc, endianness)
+        ptr.itemNameUtf8ByteCount = UInt8(nameField.byteCount)
+        ptr.itemNameUtf8Code = nameField.data
+    }
 }
 
 
@@ -429,21 +758,17 @@ internal func buildItem(ofType type: ItemType, withNameField nameField: NameFiel
 ///   - withNameField: The namefield for the item. Optional.
 ///   - atPtr: The pointer at which to build the item structure.
 ///   - endianness: The endianness to be used while creating the item.
-///
-/// - Returns: An ephemeral portal. Do not retain this portal, use it only to complete the rest of the structure.
 
-internal func buildItem(withValue value: Coder, withNameField nameField: NameField? = nil, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
+internal func buildItem(withValue value: Coder, withNameField nameField: NameField? = nil, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
 
-    let p = buildItem(ofType: value.itemType, withNameField: nameField, atPtr: ptr, endianness)
+    buildItem(ofType: value.itemType, withNameField: nameField, atPtr: ptr, endianness)
 
     if value.itemType.usesSmallValue {
-        value.copyBytes(to: p.itemSmallValuePtr, endianness)
+        value.copyBytes(to: ptr.itemSmallValuePtr, endianness)
     } else {
-        value.copyBytes(to: p.itemValueFieldPtr, endianness)
-        p._itemByteCount += value.valueByteCount.roundUpToNearestMultipleOf8()
+        value.copyBytes(to: ptr.itemValueFieldPtr, endianness)
+        ptr.setItemByteCount(to: UInt32(itemHeaderByteCount + (nameField?.byteCount ?? 0) + value.valueByteCount.roundUpToNearestMultipleOf8()), endianness)
     }
-    
-    return p
 }
 
 

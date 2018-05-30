@@ -58,34 +58,82 @@ fileprivate let binaryByteCountOffset = 0
 internal let binaryDataOffset = binaryByteCountOffset + 4
 
 
-// Internal portal helpers
+// Pointer manipulations
 
-internal extension Portal {
-    
-    internal var _binaryByteCountPtr: UnsafeMutableRawPointer { return valueFieldPtr.advanced(by: binaryByteCountOffset) }
-    internal var _binaryDataPtr: UnsafeMutableRawPointer { return valueFieldPtr.advanced(by: binaryDataOffset) }
+fileprivate extension UnsafeMutableRawPointer {
     
     
-    internal var _binaryByteCount: Int {
-        get { return Int(UInt32(fromPtr: _binaryByteCountPtr, endianness)) }
-        set { UInt32(newValue).copyBytes(to: _binaryByteCountPtr, endianness) }
+    /// The pointer to the binary byte count assuming self points to the first byte of the value.
+
+    fileprivate var binaryByteCountPtr: UnsafeMutableRawPointer { return self.advanced(by: binaryByteCountOffset) }
+
+    
+    /// The pointer to the first byte assuming self points to the first byte of the value.
+
+    fileprivate var binaryDataPtr: UnsafeMutableRawPointer { return self.advanced(by: binaryDataOffset) }
+
+    
+    /// Returns the binary byte count assuming self points to the first byte of the value.
+
+    fileprivate func binaryByteCount(_ endianness: Endianness) -> UInt32 {
+        if endianness == machineEndianness {
+            return binaryByteCountPtr.assumingMemoryBound(to: UInt32.self).pointee
+        } else {
+            return binaryByteCountPtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped
+        }
     }
+
     
-    internal var _binaryData: Data {
-        get { return Data(bytes: _binaryDataPtr.assumingMemoryBound(to: UInt8.self), count: _binaryByteCount) }
-        set {
-            let result = ensureValueFieldByteCount(of: binaryDataOffset + newValue.count)
-            guard result == .success else { return }
-            _binaryByteCount = newValue.count
-            newValue.copyBytes(to: _binaryDataPtr.assumingMemoryBound(to: UInt8.self), count: newValue.count)
+    /// Sets the binary byte count assuming self points to the first byte of the value.
+
+    fileprivate func setBinaryByteCount(to value: UInt32, _ endianness: Endianness) {
+        if endianness == machineEndianness {
+            binaryByteCountPtr.storeBytes(of: value, as: UInt32.self)
+        } else {
+            binaryByteCountPtr.storeBytes(of: value.byteSwapped, as: UInt32.self)
         }
     }
     
-    internal var _binaryValueFieldUsedByteCount: Int { return binaryDataOffset + _binaryByteCount }
+    
+    /// Returns the binary data assuming self points to the first byte of the value.
+    ///
+    /// Also reads from 'binaryByteCount'
+
+    fileprivate func binaryData(_ endianness: Endianness) -> Data {
+        return Data(bytes: binaryDataPtr.assumingMemoryBound(to: UInt8.self), count: Int(binaryByteCount(endianness)))
+    }
+    
+    
+    /// Sets the binary data assuming self points to the first byte of the value.
+    ///
+    /// Also writes to 'setBinaryByteCount'
+
+    fileprivate func setBinaryData(to value: Data, _ endianness: Endianness) {
+        setBinaryByteCount(to: UInt32(value.count), endianness)
+        value.copyBytes(to: binaryDataPtr.assumingMemoryBound(to: UInt8.self), count: value.count)
+    }
 }
 
 
-// Public portal accessors for Font
+internal extension Portal {
+    
+    internal var _binaryData: Data {
+        
+        get { return _valuePtr.binaryData(endianness) }
+        
+        set {
+            let result = ensureValueFieldByteCount(of: binaryDataOffset + newValue.count)
+            guard result == .success else { return }
+            
+            _valuePtr.setBinaryData(to: newValue, endianness)
+        }
+    }
+    
+    internal var _binaryValueFieldUsedByteCount: Int { return binaryDataOffset + Int(itemPtr.binaryByteCount(endianness)) }
+}
+
+
+// Public portal accessors for binary
 
 public extension Portal {
     
@@ -95,8 +143,8 @@ public extension Portal {
     public var isBinary: Bool {
         guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.binary }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.binary.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.binary.rawValue
+        if index != nil { return itemPtr.itemValueFieldPtr.arrayElementType == ItemType.binary.rawValue }
+        return itemPtr.itemType == ItemType.binary.rawValue
     }
     
     
@@ -106,8 +154,8 @@ public extension Portal {
     
     public var binary: Data? {
         get {
-            if isBinary { return _binaryData }
-            if isCrcBinary { return _crcBinaryData }
+            if isBinary { return itemPtr.binaryData(endianness) }
+            if isCrcBinary { return itemPtr.crcBinaryData(endianness) }
             return nil
         }
         set {

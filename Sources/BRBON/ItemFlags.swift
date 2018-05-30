@@ -56,6 +56,10 @@ import BRUtils
 public enum ItemFlags: UInt8 {
     case none = 0
     
+    public init?(atPtr: UnsafeMutableRawPointer) {
+        self.init(rawValue: UInt8(fromPtr: atPtr, machineEndianness))
+    }
+
     internal func copyBytes(to ptr: UnsafeMutableRawPointer) {
         self.rawValue.copyBytes(to: ptr, machineEndianness)
     }

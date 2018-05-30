@@ -64,8 +64,8 @@ public extension Portal {
     public var isInt8: Bool {
         guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.int8 }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int8.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int8.rawValue
+        if index != nil { return itemPtr.itemValueFieldPtr.arrayElementType == ItemType.int8.rawValue }
+        return itemPtr.itemType == ItemType.int8.rawValue
     }
     
 
@@ -78,21 +78,12 @@ public extension Portal {
     public var int8: Int8? {
         get {
             guard isInt8 else { return nil }
-            return Int8(fromPtr: valueFieldPtr, endianness)
+            return Int8(fromPtr: _valuePtr, endianness)
         }
         set {
             guard isInt8 else { return }
-            newValue?.copyBytes(to: valueFieldPtr, endianness)
+            newValue?.copyBytes(to: _valuePtr, endianness)
         }
-    }
-    
-    /// Add an Int8 to an Array.
-    ///
-    /// - Returns: .success or one of .portalInvalid, .operationNotSupported, .typeConflict
-    
-    @discardableResult
-    public func append(_ value: Int8) -> Result {
-        return appendClosure(for: value.itemType, with: value.valueByteCount) { value.copyBytes(to: _arrayElementPtr(for: _arrayElementCount), endianness) }
     }
 }
 

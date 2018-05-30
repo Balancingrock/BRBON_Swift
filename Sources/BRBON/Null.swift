@@ -64,8 +64,8 @@ public extension Portal {
     public var isNull: Bool {
         guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.null }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.null.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.null.rawValue
+        if index != nil { return itemPtr.itemValueFieldPtr.arrayElementType == ItemType.null.rawValue }
+        return itemPtr.itemType == ItemType.null.rawValue
     }
 
     

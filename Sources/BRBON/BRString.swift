@@ -54,40 +54,89 @@ import BRUtils
 
 // Offset definitions
 
-fileprivate let stringByteCountOffset = 0
-internal let stringUtf8CodeOffset = stringByteCountOffset + 4
+fileprivate let stringUtf8ByteCountOffset = 0
+internal let stringUtf8CodeOffset = stringUtf8ByteCountOffset + 4
 
 
-// Internal portal helpers for BRString items
+// Pointer manipulations
+
+fileprivate extension UnsafeMutableRawPointer {
+    
+    
+    /// The pointer to the UTF8 byte count assuming self points to the first byte of the value.
+    
+    fileprivate var stringUtf8ByteCountPtr: UnsafeMutableRawPointer { return self.advanced(by: stringUtf8ByteCountOffset) }
+
+    
+    /// The pointer to the UTF8 code area assuming self points to the first byte of the value.
+
+    fileprivate var stringUtf8CodePtr: UnsafeMutableRawPointer { return self.advanced(by: stringUtf8CodeOffset) }
+    
+    
+    /// Returns the UTF8 byte count assuming self points to the first byte of the value.
+    
+    fileprivate func stringUtf8ByteCount(_ endianness: Endianness) -> UInt32 {
+        if endianness == machineEndianness {
+            return stringUtf8ByteCountPtr.assumingMemoryBound(to: UInt32.self).pointee
+        } else {
+            return stringUtf8ByteCountPtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped
+        }
+    }
+    
+    
+    /// Sets the UTF8 byte count assuming self points to the first byte of the value.
+
+    fileprivate func setStringUtf8ByteCount(to value: UInt32, _ endianness: Endianness) {
+        if endianness == machineEndianness {
+            stringUtf8ByteCountPtr.storeBytes(of: value, as: UInt32.self)
+        } else {
+            stringUtf8ByteCountPtr.storeBytes(of: value.byteSwapped, as: UInt32.self)
+        }
+    }
+    
+    
+    /// Returns the UTF8 code assuming self points to the first byte of the value.
+    ///
+    /// Note: Also reads 'stringUtf8ByteCount'
+
+    fileprivate func stringUtf8Code(_ endianness: Endianness) -> Data {
+        return Data(bytes: stringUtf8CodePtr, count: Int(stringUtf8ByteCount(endianness)))
+    }
+    
+    
+    /// Set the UTF8 code assuming self points to the first byte of the value.
+    ///
+    /// Note: Also writes 'stringUtf8ByteCount'
+    
+    fileprivate func setStringUtf8Code(to value: Data, _ endianness: Endianness) {
+        setStringUtf8ByteCount(to: UInt32(value.count), endianness)
+        value.copyBytes(to: stringUtf8CodePtr.assumingMemoryBound(to: UInt8.self), count: value.count)
+    }
+}
+
+
+// Item access
 
 internal extension Portal {
     
-    internal var _stringByteCountPtr: UnsafeMutableRawPointer { return valueFieldPtr.advanced(by: stringByteCountOffset) }
-    internal var _stringUtf8CodePtr: UnsafeMutableRawPointer { return valueFieldPtr.advanced(by: stringUtf8CodeOffset) }
-    
-    
-    internal var _stringByteCount: Int {
-        get { return Int(UInt32(fromPtr: _stringByteCountPtr, endianness)) }
-        set { UInt32(newValue).copyBytes(to: _stringByteCountPtr, endianness) }
-    }
     
     internal var _stringUtf8Code: Data {
         get {
-            return Data(bytes: _stringUtf8CodePtr.assumingMemoryBound(to: UInt8.self), count: _stringByteCount)
+            return _valuePtr.stringUtf8Code(endianness)
         }
         set {
             let result = ensureValueFieldByteCount(of: stringUtf8CodeOffset + newValue.count)
             guard result == .success else { return }
-            _stringByteCount = newValue.count
-            newValue.copyBytes(to: _stringUtf8CodePtr.assumingMemoryBound(to: UInt8.self), count: newValue.count)
+            
+            _valuePtr.setStringUtf8Code(to: newValue, endianness)
         }
     }
     
-    internal var _stringValueFieldUsedByteCount: Int { return stringUtf8CodeOffset + _stringByteCount }
+    internal var _stringValueFieldUsedByteCount: Int { return stringUtf8CodeOffset + Int(_valuePtr.stringUtf8ByteCount(endianness)) }
 }
 
 
-// Public portal access
+// Public item access
 
 extension Portal {
     
@@ -97,8 +146,8 @@ extension Portal {
     public var isString: Bool {
         guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.string }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.string.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.string.rawValue
+        if index != nil { return itemPtr.itemValueFieldPtr.arrayElementType == ItemType.string.rawValue }
+        return itemPtr.itemType == ItemType.string.rawValue
     }
     
     
@@ -109,7 +158,7 @@ extension Portal {
     public var brString: BRString? {
         get {
             guard isString else { return nil }
-            return BRString.init(fromPtr: valueFieldPtr, endianness)
+            return BRString.init(fromPtr: _itemValueFieldPtr, endianness)
         }
         set {
             guard isString else { return }
@@ -171,7 +220,7 @@ extension BRString: Coder {
     public var valueByteCount: Int { return stringUtf8CodeOffset + utf8Code.count }
     
     public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        UInt32(utf8Code.count).copyBytes(to: ptr.advanced(by: stringByteCountOffset), endianness)
+        UInt32(utf8Code.count).copyBytes(to: ptr.advanced(by: stringUtf8ByteCountOffset), endianness)
         utf8Code.copyBytes(to: ptr.advanced(by: stringUtf8CodeOffset).assumingMemoryBound(to: UInt8.self), count: utf8Code.count)
     }
 }
@@ -181,7 +230,7 @@ extension BRString: Coder {
 
 extension BRString {
     internal init?(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        let c = Int(UInt32(fromPtr: fromPtr.advanced(by: stringByteCountOffset), endianness))
+        let c = Int(UInt32(fromPtr: fromPtr.advanced(by: stringUtf8ByteCountOffset), endianness))
         utf8Code = Data(bytes: fromPtr.advanced(by: stringUtf8CodeOffset), count: c)
     }
 }

@@ -67,8 +67,8 @@ public extension Portal {
     public var isUuid: Bool {
         guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.uuid }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uuid.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uuid.rawValue
+        if index != nil { return itemPtr.itemValueFieldPtr.arrayElementType == ItemType.uuid.rawValue }
+        return itemPtr.itemType == ItemType.uuid.rawValue
     }
 
     
@@ -82,23 +82,13 @@ public extension Portal {
         get {
             guard isValid else { return nil }
             guard isUuid else { return nil }
-            return UUID(fromPtr: valueFieldPtr, endianness)
+            return UUID(fromPtr: _valuePtr, endianness)
         }
         set {
             guard isValid else { return }
             guard isUuid else { return }
-            newValue?.copyBytes(to: valueFieldPtr, endianness)
+            newValue?.copyBytes(to: _valuePtr, endianness)
         }
-    }
-
-
-    /// Add an UUID to an Array.
-    ///
-    /// - Returns: .success or one of .portalInvalid, .operationNotSupported, .typeConflict
-    
-    @discardableResult
-    public func append(_ value: UUID) -> Result {
-        return appendClosure(for: value.itemType, with: value.valueByteCount) { value.copyBytes(to: _arrayElementPtr(for: _arrayElementCount), endianness) }
     }
 }
 

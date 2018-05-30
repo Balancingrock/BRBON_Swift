@@ -64,8 +64,8 @@ public extension Portal {
     public var isUInt16: Bool {
         guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.uint16 }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint16.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.uint16.rawValue
+        if index != nil { return itemPtr.itemValueFieldPtr.arrayElementType == ItemType.uint16.rawValue }
+        return itemPtr.itemType == ItemType.uint16.rawValue
     }
 
     
@@ -79,23 +79,13 @@ public extension Portal {
         get {
             guard isValid else { return nil }
             guard isUInt16 else { return nil }
-            return UInt16(fromPtr: valueFieldPtr, endianness)
+            return UInt16(fromPtr: _valuePtr, endianness)
         }
         set {
             guard isValid else { return }
             guard isUInt16 else { return }
-            newValue?.copyBytes(to: valueFieldPtr, endianness)
+            newValue?.copyBytes(to: _valuePtr, endianness)
         }
-    }
-    
-    
-    /// Add an UInt16 to an Array.
-    ///
-    /// - Returns: .success or one of .portalInvalid, .operationNotSupported, .typeConflict
-
-    @discardableResult
-    public func append(_ value: UInt16) -> Result {
-        return appendClosure(for: value.itemType, with: value.valueByteCount) { value.copyBytes(to: _arrayElementPtr(for: _arrayElementCount), endianness) }
     }
 }
 

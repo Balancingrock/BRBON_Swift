@@ -63,33 +63,35 @@ internal let colorValueByteCount = colorAlphaOffset + 1
 
 // Internal portal helpers
 
-extension Portal {
-    
-    
-    internal var _colorRedPtr: UnsafeMutableRawPointer { return valueFieldPtr.advanced(by: colorRedOffset) }
-    internal var _colorGreenPtr: UnsafeMutableRawPointer { return valueFieldPtr.advanced(by: colorGreenOffset) }
-    internal var _colorBluePtr: UnsafeMutableRawPointer { return valueFieldPtr.advanced(by: colorBlueOffset) }
-    internal var _colorAlphaPtr: UnsafeMutableRawPointer { return valueFieldPtr.advanced(by: colorAlphaOffset) }
-    
+fileprivate extension UnsafeMutableRawPointer {
+
+    fileprivate var colorRedPtr: UnsafeMutableRawPointer { return self.advanced(by: colorRedOffset) }
+    fileprivate var colorGreenPtr: UnsafeMutableRawPointer { return self.advanced(by: colorGreenOffset) }
+    fileprivate var colorBluePtr: UnsafeMutableRawPointer { return self.advanced(by: colorBlueOffset) }
+    fileprivate var colorAlphaPtr: UnsafeMutableRawPointer { return self.advanced(by: colorAlphaOffset) }
+}
+
+
+internal extension Portal {
     
     internal var _colorRed: UInt8 {
-        get { return UInt8(fromPtr: _colorRedPtr, endianness) }
-        set { newValue.copyBytes(to: _colorRedPtr, endianness) }
+        get { return _valuePtr.colorRedPtr.assumingMemoryBound(to: UInt8.self).pointee }
+        set { _valuePtr.colorRedPtr.storeBytes(of: newValue, as: UInt8.self) }
     }
     
     internal var _colorGreen: UInt8 {
-        get { return UInt8(fromPtr: _colorGreenPtr, endianness) }
-        set { newValue.copyBytes(to: _colorGreenPtr, endianness) }
+        get { return _valuePtr.colorGreenPtr.assumingMemoryBound(to: UInt8.self).pointee }
+        set { _valuePtr.colorGreenPtr.storeBytes(of: newValue, as: UInt8.self) }
     }
-    
+
     internal var _colorBlue: UInt8 {
-        get { return UInt8(fromPtr: _colorBluePtr, endianness) }
-        set { newValue.copyBytes(to: _colorBluePtr, endianness) }
+        get { return _valuePtr.colorBluePtr.assumingMemoryBound(to: UInt8.self).pointee }
+        set { _valuePtr.colorBluePtr.storeBytes(of: newValue, as: UInt8.self) }
     }
-    
+
     internal var _colorAlpha: UInt8 {
-        get { return UInt8(fromPtr: _colorAlphaPtr, endianness) }
-        set { newValue.copyBytes(to: _colorAlphaPtr, endianness) }
+        get { return _valuePtr.colorAlphaPtr.assumingMemoryBound(to: UInt8.self).pointee }
+        set { _valuePtr.colorAlphaPtr.storeBytes(of: newValue, as: UInt8.self) }
     }
 }
 
@@ -106,8 +108,8 @@ public extension Portal {
     public var isColor: Bool {
         guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.color }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.color.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.color.rawValue
+        if index != nil { return itemPtr.arrayElementType == ItemType.color.rawValue }
+        return itemPtr.itemType == ItemType.color.rawValue
     }
     
     

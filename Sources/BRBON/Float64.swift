@@ -65,8 +65,8 @@ extension Portal {
     public var isFloat64: Bool {
         guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.float64 }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.float64.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.float64.rawValue
+        if index != nil { return itemPtr.itemValueFieldPtr.arrayElementType == ItemType.float64.rawValue }
+        return itemPtr.itemType == ItemType.float64.rawValue
     }
     
 
@@ -75,22 +75,12 @@ extension Portal {
     public var float64: Float64? {
         get {
             guard isFloat64 else { return nil }
-            return Float64(fromPtr: valueFieldPtr, endianness)
+            return Float64(fromPtr: _valuePtr, endianness)
         }
         set {
             guard isFloat64 else { return }
-            newValue?.copyBytes(to: valueFieldPtr, endianness)
+            newValue?.copyBytes(to: _valuePtr, endianness)
         }
-    }
-    
-    
-    /// Add a Float64 to an Array.
-    ///
-    /// - Returns: .success or one of .portalInvalid, .operationNotSupported, .typeConflict
-    
-    @discardableResult
-    public func append(_ value: Float64) -> Result {
-        return appendClosure(for: value.itemType, with: value.valueByteCount) { value.copyBytes(to: _arrayElementPtr(for: _arrayElementCount), endianness) }
     }
 }
 

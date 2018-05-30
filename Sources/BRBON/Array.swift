@@ -74,49 +74,102 @@ internal let arrayElementByteCountOffset = arrayElementCountOffset + 4
 internal let arrayElementBaseOffset = arrayElementByteCountOffset + 4
 
 
+// Pointer manipulations
+
+internal extension UnsafeMutableRawPointer {
+    
+    
+    /// A pointer to the element type assuming self points to the first byte of the value field.
+    
+    fileprivate var arrayElementTypePtr: UnsafeMutableRawPointer { return self.advanced(by: arrayElementTypeOffset) }
+    
+
+    /// A pointer to the element count assuming self points to the first byte of the value field.
+
+    fileprivate var arrayElementCountPtr: UnsafeMutableRawPointer { return self.advanced(by: arrayElementCountOffset) }
+    
+    
+    /// A pointer to the element byte count assuming self points to the first byte of the value field.
+
+    fileprivate var arrayElementByteCountPtr: UnsafeMutableRawPointer { return self.advanced(by: arrayElementByteCountOffset) }
+    
+    
+    /// A pointer to the first element assuming self points to the first byte of the value field.
+
+    fileprivate var arrayElementBasePtr: UnsafeMutableRawPointer { return self.advanced(by: arrayElementBaseOffset) }
+    
+    
+    /// The raw value of the element type assuming self points to the first byte of the value field.
+    
+    internal var arrayElementType: UInt8 {
+        get { return arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee }
+        set { arrayElementTypePtr.storeBytes(of: newValue, as: UInt8.self) }
+    }
+    
+    
+    /// Returns the number of elements assuming self points to the first byte of the value field.
+    
+    fileprivate func arrayElementCount(_ endianness: Endianness) -> UInt32 {
+        return UInt32(fromPtr: arrayElementCountPtr, endianness)
+    }
+
+    
+    /// Set the number of elements assuming self points to the first byte of the value field.
+
+    fileprivate func setArrayElementCount(to value: UInt32, _ endianness: Endianness) {
+        value.copyBytes(to: arrayElementCountPtr, endianness)
+    }
+    
+    
+    /// Returns the element byte count assuming self points to the first byte of the value field.
+
+    fileprivate func arrayElementByteCount(_ endianness: Endianness) -> UInt32 {
+        return UInt32(fromPtr: arrayElementByteCountPtr, endianness)
+    }
+
+    
+    /// Sets the element byte count assuming self points to the first byte of the value field.
+
+    fileprivate func setArrayElementByteCount(to value: UInt32, _ endianness: Endianness) {
+        value.copyBytes(to: arrayElementByteCountPtr, endianness)
+    }
+}
+
+
+// Item access
+
 extension Portal {
-    
 
-    internal var _arrayElementTypePtr: UnsafeMutableRawPointer { return itemValueFieldPtr.advanced(by: arrayElementTypeOffset) }
-
-    internal var _arrayElementCountPtr: UnsafeMutableRawPointer { return itemValueFieldPtr.advanced(by: arrayElementCountOffset) }
-    
-    internal var _arrayElementByteCountPtr: UnsafeMutableRawPointer { return itemValueFieldPtr.advanced(by: arrayElementByteCountOffset) }
-    
-    internal var _arrayElementBasePtr: UnsafeMutableRawPointer { return itemValueFieldPtr.advanced(by: arrayElementBaseOffset) }
-    
     
     /// The type of the element stored in the array this portal refers to.
     
     internal var _arrayElementType: ItemType? {
-        get { return ItemType.readValue(atPtr: _arrayElementTypePtr) }
-        set { newValue?.copyBytes(to: _arrayElementTypePtr) }
+        get { return ItemType(rawValue: _valuePtr.arrayElementType) }
+        set { _valuePtr.arrayElementType = newValue?.rawValue ?? 0 }
     }
     
 
     /// The number of elements in the array this portal refers to.
     
     internal var _arrayElementCount: Int {
-        get { return Int(UInt32(fromPtr: _arrayElementCountPtr, endianness)) }
-        set { UInt32(newValue).copyBytes(to: _arrayElementCountPtr, endianness) }
+        get { return Int(_valuePtr.arrayElementCount(endianness)) }
+        set { _valuePtr.setArrayElementCount(to: UInt32(newValue), endianness) }
     }
     
     
     /// The byte count of the elements in the array this portal refers to.
     
     internal var _arrayElementByteCount: Int {
-        get { return Int(UInt32(fromPtr: _arrayElementByteCountPtr, endianness)) }
-        set { UInt32(newValue).copyBytes(to: _arrayElementByteCountPtr, endianness) }
+        get { return Int(_valuePtr.arrayElementByteCount(endianness)) }
+        set { _valuePtr.setArrayElementByteCount(to: UInt32(newValue), endianness) }
     }
     
     
     /// The element pointer for a given index.
-    ///
-    /// - Note: No range check performed.
     
     internal func _arrayElementPtr(for index: Int) -> UnsafeMutableRawPointer {
         let elementOffset = index * _arrayElementByteCount
-        return _arrayElementBasePtr.advanced(by: elementOffset)
+        return _valuePtr.arrayElementBasePtr.advanced(by: elementOffset)
     }
 
     
@@ -125,7 +178,12 @@ extension Portal {
     internal var _arrayValueFieldUsedByteCount: Int {
         return arrayElementBaseOffset + _arrayElementCount * _arrayElementByteCount
     }
-    
+}
+
+
+// Helper functions
+
+extension Portal {
     
     /// Makes sure the element byte count is sufficient.
     ///
@@ -140,7 +198,7 @@ extension Portal {
 
         let necessaryElementByteCount: Int
         if value.itemType.isContainer {
-            necessaryElementByteCount = itemMinimumByteCount + value.minimumValueFieldByteCount
+            necessaryElementByteCount = itemHeaderByteCount + value.minimumValueFieldByteCount
         } else if value.itemType.hasFlexibleLength {
             necessaryElementByteCount = value.valueByteCount.roundUpToNearestMultipleOf8()
         } else {
@@ -184,7 +242,7 @@ extension Portal {
         
         // Check to see if the element byte count of the array must be increased.
         
-        let necessaryElementByteCount: Int = _arrayElementType!.isContainer ? itemMinimumByteCount + bytes : bytes
+        let necessaryElementByteCount: Int = _arrayElementType!.isContainer ? itemHeaderByteCount + bytes : bytes
         
         if necessaryElementByteCount > _arrayElementByteCount {
             
@@ -214,7 +272,7 @@ extension Portal {
     
     internal func _arrayIncreaseElementByteCount(to newByteCount: Int) {
         
-        let elementBasePtr = _arrayElementBasePtr
+        let elementBasePtr = _itemValueFieldPtr.arrayElementBasePtr
         let oldByteCount = _arrayElementByteCount
         
         for index in (0 ..< _arrayElementCount).reversed() {
@@ -261,8 +319,10 @@ extension Portal {
         
         // Remove the active portals for the items inside the element to be removed.
         
-        let eptr = _arrayElementPtr(for: index)
-        manager.removeActivePortals(atAndAbove: eptr, below: eptr.advanced(by: _arrayElementByteCount))
+        if _arrayElementType!.isContainer {
+            let eptr = _arrayElementPtr(for: index)
+            manager.removeActivePortals(atAndAbove: eptr, below: eptr.advanced(by: _arrayElementByteCount))
+        }
         
         
         // Shift the remaining elements into their new place
@@ -278,10 +338,12 @@ extension Portal {
             Darwin.memset(ptr, 0, _arrayElementByteCount)
         }
         
+        
         // The last index portal (if present) must be removed
         
         let lastPortal = manager.getActivePortal(for: itemPtr, index: (_arrayElementCount - 1), column: nil)
         manager.removeActivePortal(lastPortal)
+        
         
         // Decrease the number of elements
         
@@ -362,10 +424,14 @@ extension Portal {
         
         // Ensure that the new value can be added
         
-        if currentValueFieldByteCount - _arrayValueFieldUsedByteCount < byteCountPerElement {
-            let result = increaseItemByteCount(to: itemMinimumByteCount + arrayElementBaseOffset + ((_arrayElementCount + 1) * byteCountPerElement).roundUpToNearestMultipleOf8())
-            guard result == .success else { return result }
-        }
+        let neccesaryValueByteCount = arrayElementBaseOffset + _arrayElementByteCount * (_arrayElementCount + 1)
+        let result1 = ensureValueFieldByteCount(of: neccesaryValueByteCount)
+        guard result1 == .success else { return result }
+
+        //if currentValueFieldByteCount - _arrayValueFieldUsedByteCount < byteCountPerElement {
+            //let result = increaseItemByteCount(to: itemMinimumByteCount + _itemNameFieldByteCount + arrayElementBaseOffset + ((_arrayElementCount + 1) * byteCountPerElement).roundUpToNearestMultipleOf8())
+            //guard result == .success else { return result }
+        //}
         
         
         // The new value can be added
@@ -390,16 +456,22 @@ extension Portal {
 ///   - elementByteCount: The number of bytes used for each element in the array. It must be ensured that the byte count is large enough for the element type!
 ///   - elementCount:
 ///   - endianness: The endianness to be used while creating the item.
-///
-/// - Returns: An ephemeral portal. Do not retain this portal.
 
-internal func buildArrayItem(withNameField nameField: NameField?, elementType: ItemType, elementByteCount: Int, elementCount: Int, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
-    let p = buildItem(ofType: .array, withNameField: nameField, atPtr: ptr, endianness)
-    p._itemByteCount += arrayElementBaseOffset + (elementCount * elementByteCount).roundUpToNearestMultipleOf8()
-    p._arrayElementType = elementType
-    p._arrayElementByteCount = elementByteCount
-    p._arrayElementCount = 0
-    return p
+internal func buildArrayItem(withNameField nameField: NameField?, elementType: ItemType, elementByteCount: Int, elementCount: Int, atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+    
+    var ptr = atPtr
+    
+    buildItem(ofType: .array, withNameField: nameField, atPtr: ptr, endianness)
+    
+    var bc: Int = itemHeaderByteCount + (nameField?.byteCount ?? 0) + arrayElementBaseOffset
+    bc += Int(ptr.arrayElementCount(endianness) * ptr.arrayElementByteCount(endianness))
+    bc = bc.roundUpToNearestMultipleOf8()
+    
+    ptr.setItemByteCount(to: UInt32(bc), endianness)
+    
+    ptr.arrayElementType = elementType.rawValue
+    ptr.setArrayElementCount(to: 0, endianness)
+    ptr.setArrayElementByteCount(to: UInt32(elementByteCount), endianness)
 }
 
 

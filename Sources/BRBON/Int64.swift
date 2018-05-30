@@ -65,8 +65,8 @@ public extension Portal {
     public var isInt64: Bool {
         guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.int64 }
-        if index != nil { return _arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int64.rawValue }
-        return itemPtr.assumingMemoryBound(to: UInt8.self).pointee == ItemType.int64.rawValue
+        if index != nil { return itemPtr.itemValueFieldPtr.arrayElementType == ItemType.int64.rawValue }
+        return itemPtr.itemType == ItemType.int64.rawValue
     }
     
 
@@ -79,22 +79,12 @@ public extension Portal {
     public var int64: Int64? {
         get {
             guard isInt64 else { return nil }
-            return Int64(fromPtr: valueFieldPtr, endianness)
+            return Int64(fromPtr: _valuePtr, endianness)
         }
         set {
             guard isInt64 else { return }
-            newValue?.copyBytes(to: valueFieldPtr, endianness)
+            newValue?.copyBytes(to: _valuePtr, endianness)
         }
-    }
-    
-    
-    /// Add an Int64 to an Array.
-    ///
-    /// - Returns: .success or one of .portalInvalid, .operationNotSupported, .typeConflict
-    
-    @discardableResult
-    public func append(_ value: Int64) -> Result {
-        return appendClosure(for: value.itemType, with: value.valueByteCount) { value.copyBytes(to: _arrayElementPtr(for: _arrayElementCount), endianness) }
     }
 }
 

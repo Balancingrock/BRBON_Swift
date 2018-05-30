@@ -58,79 +58,88 @@ internal let sequenceItemCountOffset = sequenceReservedOffset + 4
 internal let sequenceItemBaseOffset = sequenceItemCountOffset + 4
 
 
-// Internal helpers
+fileprivate extension UnsafeMutableRawPointer {
+    
+    fileprivate var sequenceItemCountPtr: UnsafeMutableRawPointer { return self.advanced(by: sequenceItemCountOffset) }
+    
+    fileprivate var sequenceItemBasePtr: UnsafeMutableRawPointer { return self.advanced(by: sequenceItemBaseOffset) }
+
+    fileprivate func sequenceItemCount(_ endianness: Endianness) -> UInt32 {
+        if endianness == machineEndianness {
+            return sequenceItemCountPtr.assumingMemoryBound(to: UInt32.self).pointee
+        } else {
+            return sequenceItemCountPtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped
+        }
+    }
+    
+    fileprivate func setSequenceItemCount(to value: UInt32, _ endianness: Endianness) {
+        if endianness == machineEndianness {
+            sequenceItemCountPtr.storeBytes(of: value, as: UInt32.self)
+        } else {
+            sequenceItemCountPtr.storeBytes(of: value.byteSwapped, as: UInt32.self)
+        }
+    }
+}
+
+
+// Item access
 
 extension Portal {
-    
-    
-    internal var _sequenceItemCountPtr: UnsafeMutableRawPointer { return itemValueFieldPtr.advanced(by: sequenceItemCountOffset) }
-    
-    internal var _sequenceItemBasePtr: UnsafeMutableRawPointer { return itemValueFieldPtr.advanced(by: sequenceItemBaseOffset) }
     
     
     /// The number of items in the dictionary this portal refers to.
     
     internal var _sequenceItemCount: Int {
-        get { return Int(UInt32(fromPtr: _sequenceItemCountPtr, endianness)) }
-        set { UInt32(newValue).copyBytes(to: _sequenceItemCountPtr, endianness) }
+        get { return Int(_valuePtr.sequenceItemCount(endianness)) }
+        set { _valuePtr.setSequenceItemCount(to: UInt32(newValue), endianness) }
     }
     
     
     /// The total area used in the value field.
     
     internal var _sequenceValueFieldUsedByteCount: Int {
-        var seqItemPtr = _sequenceItemBasePtr
+        var seqItemPtr = itemPtr.sequenceItemBasePtr
         for _ in 0 ..< _sequenceItemCount {
-            seqItemPtr = seqItemPtr.advanced(by: Int(UInt32(fromPtr: seqItemPtr.advanced(by: itemByteCountOffset), endianness)))
+            seqItemPtr = seqItemPtr.nextItemPtr(endianness)
         }
-        return itemValueFieldPtr.distance(to: seqItemPtr)
+        return _itemValueFieldPtr.distance(to: seqItemPtr)
     }
     
     
-    /// Points to the first byte after the items in the referenced sequence item
+    /// Points to the first byte after the items in the referenced sequence item.
+    ///
+    /// This operation avoids the use of active portals. It is implemented by pointer manipulations.
+    ///
+    /// - Returns: A pointer to the first unused byte in the value field.
     
     internal var _sequenceAfterLastItemPtr: UnsafeMutableRawPointer {
-        var ptr = _sequenceItemBasePtr
+        var ptr = itemPtr.sequenceItemBasePtr
         var remainingItemsToSkip = _sequenceItemCount
         while remainingItemsToSkip > 0 {
-            ptr = ptr.advanced(by: Int(UInt32(fromPtr: ptr.advanced(by: itemByteCountOffset), endianness)))
+            ptr = ptr.nextItemPtr(endianness)
             remainingItemsToSkip -= 1
         }
         return ptr
     }
     
     
-    /// Execute the given closure for each element in the sequence or until false is returned.
+    /// Returns an active portal for the item at the specified index.
     ///
-    /// The closure is executed for the successive items in the sequence as long as 'false' is returned. The pointer into the closure is a pointer to the first byte of the itterated item. As soon as true is returned the itteration stops and the most recent itterated item pointer is returned as a portal.
-    /*
-    internal func _sequenceForEach(_ closure: (UnsafeMutableRawPointer) -> (Bool)) -> Portal? {
-        
-        guard _sequenceItemCount > 0 else { return nil }
-        
-        var ptr = _sequenceItemBasePtr
-        
-        for _ in 0 ... _sequenceItemCount {
-            if closure(ptr) { return Portal(itemPtr: ptr, endianness: endianness) }
-            ptr = ptr.advanced(by: Int(UInt32(fromPtr: ptr.advanced(by: itemByteCountOffset))))
-        }
-        
-        return nil
-    }*/
-    
-    
-    /// Returns the portal for the item at the specified index.
+    /// - Note: The index must be valid (Range: 0 ..< count).
+    ///
+    /// - Parameter at: The index of the requested item.
+    ///
+    /// - Returns an active portal that refers to the requested item.
     
     internal func _sequencePortalForItem(at index: Int) -> Portal {
         
-        var ptr = _sequenceItemBasePtr
+        var ptr = itemPtr.sequenceItemBasePtr
         var c = 0
         while c < index {
-            let bc = ptr.advanced(by: itemByteCountOffset).assumingMemoryBound(to: UInt32.self).pointee
-            ptr = ptr.advanced(by: Int(bc))
+            ptr = ptr.nextItemPtr(endianness)
             c += 1
         }
-        return Portal(itemPtr: ptr, manager: manager, endianness: endianness)
+        return manager.getActivePortal(for: ptr)
     }
     
     
@@ -145,7 +154,7 @@ extension Portal {
         let itm = _sequencePortalForItem(at: index)
         let aliPtr = _sequenceAfterLastItemPtr
         
-        let srcPtr = itm.itemPtr.advanced(by: itm._itemByteCount)
+        let srcPtr = itm.itemPtr.nextItemPtr(endianness)
         let dstPtr = itm.itemPtr
         let len = srcPtr.distance(to: aliPtr)
         
@@ -168,20 +177,20 @@ extension Portal {
     ///   - withNameField: The name field for the new value.
     ///
     /// - Returns: 'success' or an error indicator.
-    
+    /*
     internal func _sequenceAppendItem(_ value: Coder, withNameField nameField: NameField?) -> Result {
         
-        let neededItemByteCount = (currentValueFieldByteCount - usedValueFieldByteCount) + itemMinimumByteCount + (nameField?.byteCount ?? 0) + value.minimumValueFieldByteCount
+        let neededItemByteCount = _sequenceValueFieldUsedByteCount + itemMinimumByteCount + (nameField?.byteCount ?? 0) + value.minimumValueFieldByteCount
         let result = ensureValueFieldByteCount(of: neededItemByteCount)
         guard result == .success else { return result }
         
-        let p = buildItem(withValue: value, atPtr: _sequenceAfterLastItemPtr, endianness)
+        let p = buildItem(withValue: value, withNameField: nameField, atPtr: _sequenceAfterLastItemPtr, endianness)
         p._itemParentOffset = manager.bufferPtr.distance(to: itemPtr)
         
         _sequenceItemCount += 1
         
         return .success
-    }
+    }*/
     
     
     /// Inserts a new element.
@@ -198,10 +207,10 @@ extension Portal {
         
         // Ensure that there is enough space available
         
-        let newItemByteCount = itemMinimumByteCount + (nameField?.byteCount ?? 0) + value.minimumValueFieldByteCount
+        let newItemByteCount =  itemHeaderByteCount + (nameField?.byteCount ?? 0) + value.minimumValueFieldByteCount
         
         if currentValueFieldByteCount - usedValueFieldByteCount < newItemByteCount {
-            let result = increaseItemByteCount(to: itemMinimumByteCount + usedValueFieldByteCount + newItemByteCount)
+            let result = increaseItemByteCount(to: itemHeaderByteCount + usedValueFieldByteCount + newItemByteCount)
             guard result == .success else { return result }
         }
         
@@ -224,8 +233,8 @@ extension Portal {
         
         // Insert the new element
         
-        let p = buildItem(withValue: value, withNameField: nameField, atPtr: srcPtr, endianness)
-        p._itemParentOffset = manager.bufferPtr.distance(to: itemPtr)
+        buildItem(withValue: value, withNameField: nameField, atPtr: srcPtr, endianness)
+        srcPtr.setItemParentOffset(to: UInt32(manager.bufferPtr.distance(to: itemPtr)), endianness)
         
         
         _sequenceItemCount += 1
@@ -251,7 +260,7 @@ extension Portal {
         let newItemByteCount = value.root._itemByteCount
         
         if currentValueFieldByteCount - usedValueFieldByteCount < newItemByteCount {
-            let result = increaseItemByteCount(to: itemMinimumByteCount + usedValueFieldByteCount + newItemByteCount)
+            let result = increaseItemByteCount(to: itemHeaderByteCount + usedValueFieldByteCount + newItemByteCount)
             guard result == .success else { return result }
         }
         
@@ -284,6 +293,19 @@ extension Portal {
         return .success
     }
 
+    internal func _sequenceEnsureDataStorage(of bytes: Int) -> Result {
+        let necessaryValueFieldByteCount = sequenceItemBaseOffset + bytes
+        return _sequenceEnsureValueFieldByteCount(of: necessaryValueFieldByteCount)
+    }
+    
+    internal func _sequenceEnsureValueFieldByteCount(of bytes: Int) -> Result {
+        if bytes > currentValueFieldByteCount {
+            let necessaryItemByteCount = itemHeaderByteCount + _itemNameFieldByteCount + bytes
+            return increaseItemByteCount(to: necessaryItemByteCount)
+        } else {
+            return .success
+        }
+    }
     
     /// Updates an item in a sequence.
     ///
@@ -297,23 +319,10 @@ extension Portal {
         
         let item = _sequencePortalForItem(at: index)
         
-        guard item.itemType! == value.itemType else { return .error(.typeConflict) }
+        guard let it = item.itemType else { return .error(.illegalTypeFieldValue) }
+        guard it == value.itemType else { return .error(.typeConflict) }
         
-        
-        // Update
-        
-        if value.itemType.usesSmallValue {
-            value.copyBytes(to: item.itemSmallValuePtr, endianness)
-        } else {
-            let result = item.ensureValueFieldByteCount(of: value.valueByteCount.roundUpToNearestMultipleOf8())
-            guard result == .success else { return result }
-            if ItemManager.startWithZeroedBuffers {
-                _ = Darwin.memset(item.valueFieldPtr, 0, item.valueFieldPtr.distance(to: item.itemPtr.advanced(by: item._itemByteCount)))
-            }
-            value.copyBytes(to: item.valueFieldPtr, endianness)
-        }
-        
-        return .success
+        return item._updateItemValue(value)
     }
     
     
@@ -374,7 +383,7 @@ extension Portal {
     /// Replaces an item in a sequence.
     ///
     /// The item referenced by this portal is replaced by the new value. The byte count will be preserved as is, or enlarged as necessary. If there is an existing name it will be preserved.
-    
+    /*
     internal func _sequenceReplaceItem(_ value: Coder, atIndex index: Int) -> Result {
         
         let oldItem = _sequencePortalForItem(at: index)
@@ -409,7 +418,7 @@ extension Portal {
         manager.removeActivePortals(atAndAbove: oldItem.itemPtr, below: oldItem.itemPtr.advanced(by: oldItemByteCount))
         
         return .success
-    }
+    }*/
 }
 
 
@@ -419,6 +428,8 @@ public extension Portal {
     
     
     /// Inserts an item into a sequence.
+    ///
+    /// - Note: Does not invalidate existing portals.
     ///
     /// - Parameters:
     ///   - atIndex: The index of the location where to insert the new value.
@@ -435,6 +446,8 @@ public extension Portal {
     
     /// Inserts an item into a sequence.
     ///
+    /// - Note: Does not invalidate existing portals.
+    ///
     /// - Parameters:
     ///   - atIndex: The index of the location where to insert the new value.
     ///   - withValue: The value to insert.
@@ -450,6 +463,8 @@ public extension Portal {
 
     
     /// Inserts an item into a sequence.
+    ///
+    /// - Note: Does not invalidate existing portals.
     ///
     /// - Parameters:
     ///   - atIndex: The index of the location where to insert the new value.
@@ -472,6 +487,8 @@ public extension Portal {
     
     /// Inserts an item into a sequence.
     ///
+    /// - Note: Does not invalidate existing portals.
+    ///
     /// - Parameters:
     ///   - atIndex: The index of the location where to insert the new value.
     ///   - withValue: The value to insert.
@@ -486,6 +503,8 @@ public extension Portal {
     
     
     /// Inserts an item into a sequence.
+    ///
+    /// - Note: Does not invalidate existing portals.
     ///
     /// - Parameters:
     ///   - atIndex: The index of the location where to insert the new value.
@@ -502,6 +521,8 @@ public extension Portal {
     
     
     /// Inserts an item into a sequence.
+    ///
+    /// - Note: Does not invalidate existing portals.
     ///
     /// - Parameters:
     ///   - atIndex: The index of the location where to insert the new value.
@@ -524,6 +545,10 @@ public extension Portal {
     
     /// Updates an item in a sequence.
     ///
+    /// The type of the item cannot be changed, use 'replaceItem' to change the type as well as the item.
+    ///
+    /// - Note: Does not invalidate the portal of the item.
+    ///
     /// - Parameters:
     ///   - atIndex: The index of the item to update.
     ///   - withValue: The new value for the item. The type of the value and item must be the same. Use 'replaceItem' if the type of the item must be changed.
@@ -544,6 +569,8 @@ public extension Portal {
     
     /// Updates an item in a sequence with the contents of the ItemManager.
     ///
+    /// - Note: Does not invalidate the portal of the item but will invalidate portals to any child items.
+    ///
     /// - Parameters:
     ///   - atIndex: The index of the item to update.
     ///   - withValue: The new value for the item. The type of the value and item must be the same. Use 'replaceItem' if the type of the item must be changed.
@@ -562,29 +589,116 @@ public extension Portal {
     }
 
     
-    /// Replaces an item in a sequence.
+    /// Replaces an item in a sequence. The entire item will be replaced, including name and options.
     ///
-    /// - Note: If the present item has a name, the name will be retained for the new item.
+    /// - Note: Invalidates the portal of the replaced item and all child items.
     ///
     /// - Parameters:
     ///   - atIndex: The index of the item to update.
     ///   - withValue: The new value for the item. The type of the value and item may be different.
+    ///   - withNameField: The name field for the new item. (optional)
     ///
     /// - Returns: Either .success or an error indicator.
 
     @discardableResult
-    public func replaceItem(atIndex index: Int, withValue value: Coder, withNameField nameField: NameField?) -> Result {
+    public func replaceItem(atIndex index: Int, withValue value: Coder, withNameField nameField: NameField? = nil) -> Result {
         
         guard isValid else { return .error(.portalInvalid) }
         guard isSequence else { return .error(.operationNotSupported) }
         guard index >= 0 else { return .error(.indexBelowLowerBound) }
         guard index < count else { return .error(.indexAboveHigherBound) }
         
-        return _sequenceReplaceItem(value, atIndex: index)
+        let oldItem = _sequencePortalForItem(at: index)
+        let oldNameField = oldItem.itemNameField
+        
+        
+        // Make sure the item byte count is big enough
+        
+        let newItemByteCount = itemHeaderByteCount + (oldNameField?.byteCount ?? 0) + value.minimumValueFieldByteCount
+        let oldItemByteCount = oldItem._itemByteCount
+        
+        if newItemByteCount > oldItemByteCount {
+            let result = oldItem.increaseItemByteCount(to: newItemByteCount)
+            guard result == .success else { return result }
+        }
+        
+        
+        // Clear the old item
+        
+        if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(oldItem.itemPtr, 0, oldItemByteCount) }
+        
+        
+        // Write the new value as an item
+        
+        let ptr = oldItem.itemPtr
+        buildItem(withValue: value, withNameField: oldNameField, atPtr: ptr, endianness)
+        ptr.setItemParentOffset(to: UInt32(manager.bufferPtr.distance(to: itemPtr)), endianness)
+        ptr.setItemByteCount(to: UInt32(max(newItemByteCount, oldItemByteCount)), endianness)
+        
+        
+        // Remove the portal(s) related to the old content
+        
+        manager.removeActivePortals(atAndAbove: oldItem.itemPtr, below: oldItem.itemPtr.advanced(by: oldItemByteCount))
+        
+        return .success
+    }
+
+    
+    /// Replaces an item in a sequence. The entire item will be replaced, the new item does not need to be of the same type as the old item.
+    ///
+    /// - Note: Invalidates the portal of the replaced item and all child items.
+    ///
+    /// - Parameters:
+    ///   - atIndex: The index of the item to update. Must be in range 0 ..< count.
+    ///   - withValue: The item manager from which the data will be copied. The type of the value and item may be different.
+    ///   - withNameField: The name field for the new item. (optional)
+    ///
+    /// - Returns: Either .success or an error indicator.
+    
+    @discardableResult
+    public func replaceItem(atIndex index: Int, withValue value: ItemManager, withNameField nameField: NameField? = nil) -> Result {
+        
+        guard isValid else { return .error(.portalInvalid) }
+        guard isSequence else { return .error(.operationNotSupported) }
+        guard index >= 0 else { return .error(.indexBelowLowerBound) }
+        guard index < count else { return .error(.indexAboveHigherBound) }
+
+        
+        let oldItem = _sequencePortalForItem(at: index)
+        
+        
+        // Make sure the item byte count is big enough
+        
+        let newItemByteCount = value.root._itemByteCount - value.root._itemNameFieldByteCount + max(value.root._itemNameFieldByteCount, (nameField?.byteCount ?? 0))
+        let oldItemByteCount = oldItem._itemByteCount
+        
+        if newItemByteCount > oldItemByteCount {
+            let result = oldItem.increaseItemByteCount(to: newItemByteCount)
+            guard result == .success else { return result }
+        }
+        
+        
+        // Clear the old item
+        
+        if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(oldItem.itemPtr, 0, oldItemByteCount) }
+        
+        
+        // Write the new value as an item
+        
+        manager.moveBlock(to: oldItem.itemPtr, from: value.bufferPtr, moveCount: value.root._itemByteCount, removeCount: oldItem._itemByteCount, updateMovedPortals: false, updateRemovedPortals: true)
+        
+        let newItem = manager.getActivePortal(for: oldItem.itemPtr)
+        newItem._itemParentOffset = manager.bufferPtr.distance(to: itemPtr)
+        
+        if let nameField = nameField { newItem.itemNameField = nameField }
+        
+        return .success
     }
 
     
     /// Removes an item from a sequence.
+    ///
+    /// - Note: Invalidates the portal of the removed item and all child items.
     ///
     /// - Parameters:
     ///   - atIndex: The index of the item to update.
@@ -605,6 +719,8 @@ public extension Portal {
     
     /// Appends a new value to a sequence.
     ///
+    /// - Note: Does not invalidate existing portals.
+    ///
     /// - Parameters:
     ///   - value: The value to be added.
     ///
@@ -617,6 +733,8 @@ public extension Portal {
 
     
     /// Appends a new value to a sequence.
+    ///
+    /// - Note: Does not invalidate existing portals.
     ///
     /// - Parameters:
     ///   - value: The value to be added.
@@ -634,6 +752,8 @@ public extension Portal {
     
     /// Appends a new value to a sequence.
     ///
+    /// - Note: Does not invalidate existing portals.
+    ///
     /// - Parameters:
     ///   - value: The value to be added.
     ///   - withName: An optional name.
@@ -646,9 +766,90 @@ public extension Portal {
         guard isValid else { return .error(.portalInvalid) }
         guard isSequence else { return .error(.operationNotSupported) }
         
-        return _sequenceAppendItem(value, withNameField: nameField)
+        let neededItemByteCount = _sequenceValueFieldUsedByteCount + itemHeaderByteCount + (nameField?.byteCount ?? 0) + value.minimumValueFieldByteCount
+        let result = ensureValueFieldByteCount(of: neededItemByteCount)
+        guard result == .success else { return result }
+        
+        let startPtr = _sequenceAfterLastItemPtr
+        
+        buildItem(withValue: value, withNameField: nameField, atPtr: startPtr, endianness)
+        
+        startPtr.setItemParentOffset(to: UInt32(manager.bufferPtr.distance(to: itemPtr)), endianness)
+        
+        _sequenceItemCount += 1
+        
+        return .success
     }
+    
+    
+    /// Appends the contents of an item manager to a sequence.
+    ///
+    /// - Note: Does not invalidate existing portals.
+    ///
+    /// - Parameters:
+    ///   - value: The item manager of which the content will be added.
+    ///
+    /// - Returns: 'success' or an error indicator.
+    
+    @discardableResult
+    public func appendItem(_ value: ItemManager) -> Result {
+        return appendItem(value, withNameField: nil)
+    }
+    
+    
+    /// Appends the contents of an item manager to a sequence.
+    ///
+    /// - Note: Does not invalidate existing portals.
+    ///
+    /// - Parameters:
+    ///   - value: The item manager of which the content will be added.
+    ///   - withName: An optional name.
+    ///
+    /// - Returns: 'success' or an error indicator.
+    
+    @discardableResult
+    public func appendItem(_ value: ItemManager, withName name: String) -> Result {
+        
+        guard let nameField = NameField(name) else { return .error(.nameFieldError) }
+        return appendItem(value, withNameField: nameField)
+    }
+    
+    
+    /// Appends the contents of an item manager to a sequence.
+    ///
+    /// - Note: Does not invalidate existing portals.
+    ///
+    /// - Parameters:
+    ///   - value: The item manager of which the content will be added.
+    ///   - withNameField: An optional name field.
+    ///
+    /// - Returns: 'success' or an error indicator.
+    
+    @discardableResult
+    public func appendItem(_ value: ItemManager, withNameField nameField: NameField?) -> Result {
+        
+        guard isValid else { return .error(.portalInvalid) }
+        guard isSequence else { return .error(.operationNotSupported) }
+        
+        let neededItemByteCount =  _sequenceValueFieldUsedByteCount + value.root._itemByteCount
+        let result = ensureValueFieldByteCount(of: neededItemByteCount)
+        guard result == .success else { return result }
+        
+        let dstPtr = _sequenceAfterLastItemPtr
+        
+        manager.moveBlock(to: dstPtr, from: value.bufferPtr, moveCount: value.root._itemByteCount, removeCount: 0, updateMovedPortals: false, updateRemovedPortals: false)
 
+        UInt32(manager.bufferPtr.distance(to: itemPtr)).copyBytes(to: dstPtr.advanced(by: itemParentOffsetOffset), endianness)
+        
+        if let nameField = nameField {
+            let p = manager.getActivePortal(for: dstPtr)
+            p.itemNameField = nameField
+        }
+        
+        _sequenceItemCount += 1
+        
+        return .success
+    }
 }
 
 
@@ -657,14 +858,11 @@ public extension Portal {
 /// - Parameters:
 ///   - withName: The namefield for the item. Optional.
 ///   - endianness: The endianness to be used while creating the item.
-///
-/// - Returns: An ephemeral portal. Do not retain this portal.
 
-internal func buildSequenceItem(withNameField nameField: NameField?, valueByteCount: Int, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) -> Portal {
-    let p = buildItem(ofType: .sequence, withNameField: nameField, atPtr: ptr, endianness)
-    p._itemByteCount += sequenceItemBaseOffset + valueByteCount.roundUpToNearestMultipleOf8()
-    p._sequenceItemCount = 0
-    return p
+internal func buildSequenceItem(withNameField nameField: NameField?, valueByteCount: Int, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+    buildItem(ofType: .sequence, withNameField: nameField, atPtr: ptr, endianness)
+    ptr.setItemByteCount(to: UInt32(ptr.itemHeaderAndNameByteCount + sequenceItemBaseOffset + valueByteCount.roundUpToNearestMultipleOf8()), endianness)
+    ptr.setSequenceItemCount(to: 0, endianness)
 }
 
 
