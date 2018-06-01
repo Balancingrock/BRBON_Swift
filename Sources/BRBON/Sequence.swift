@@ -726,7 +726,22 @@ public extension Portal {
         guard index >= 0 else { return .error(.indexBelowLowerBound) }
         guard index < count else { return .error(.indexAboveHigherBound) }
 
-        return _sequenceRemoveItem(atIndex: index)
+        let itm = _sequencePortalForItem(at: index)
+        let aliPtr = _sequenceAfterLastItemPtr
+        
+        let srcPtr = itm.itemPtr.nextItemPtr(endianness)
+        let dstPtr = itm.itemPtr
+        let len = srcPtr.distance(to: aliPtr)
+        
+        manager.removeActivePortal(itm)
+        
+        if len > 0 {
+            manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
+        }
+        
+        _sequenceItemCount -= 1
+        
+        return .success
     }
     
     

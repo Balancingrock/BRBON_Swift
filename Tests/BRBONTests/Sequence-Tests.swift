@@ -253,5 +253,19 @@ class Sequence_Tests: XCTestCase {
         XCTAssertTrue(nameNull.isValid)
         XCTAssertTrue(nameNull.isNull)
 
+        
+        // Remove item
+        
+        let amPortal: Portal = sm.root[3]
+        XCTAssertTrue(amPortal.isValid)
+        
+        XCTAssertEqual(sm.root.removeItem(atIndex: 3), .success)
+        
+        XCTAssertFalse(amPortal.isValid)
+        
+        XCTAssertTrue(noNameNull.isValid)
+        XCTAssertTrue(noNameNull.isNull)
+        XCTAssertTrue(nameNull.isValid)
+        XCTAssertTrue(nameNull.isNull)
     }
 }
