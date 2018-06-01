@@ -98,7 +98,7 @@ extension Portal {
     /// The total area used in the value field.
     
     internal var _sequenceValueFieldUsedByteCount: Int {
-        var seqItemPtr = itemPtr.sequenceItemBasePtr
+        var seqItemPtr = itemPtr.itemValueFieldPtr.sequenceItemBasePtr
         for _ in 0 ..< _sequenceItemCount {
             seqItemPtr = seqItemPtr.nextItemPtr(endianness)
         }
@@ -113,11 +113,11 @@ extension Portal {
     /// - Returns: A pointer to the first unused byte in the value field.
     
     internal var _sequenceAfterLastItemPtr: UnsafeMutableRawPointer {
-        var ptr = itemPtr.sequenceItemBasePtr
-        var remainingItemsToSkip = _sequenceItemCount
-        while remainingItemsToSkip > 0 {
+        var ptr = itemPtr.itemValueFieldPtr.sequenceItemBasePtr
+        var itterations = _sequenceItemCount
+        while itterations > 0 {
             ptr = ptr.nextItemPtr(endianness)
-            remainingItemsToSkip -= 1
+            itterations -= 1
         }
         return ptr
     }
@@ -133,7 +133,7 @@ extension Portal {
     
     internal func _sequencePortalForItem(at index: Int) -> Portal {
         
-        var ptr = itemPtr.sequenceItemBasePtr
+        var ptr = itemPtr.itemValueFieldPtr.sequenceItemBasePtr
         var c = 0
         while c < index {
             ptr = ptr.nextItemPtr(endianness)
@@ -623,6 +623,11 @@ public extension Portal {
         }
         
         
+        // Remove the portal(s) related to the old content
+        
+        manager.removeActivePortals(atAndAbove: oldItem.itemPtr, below: oldItem.itemPtr.nextItemPtr(endianness))
+
+        
         // Clear the old item
         
         if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(oldItem.itemPtr, 0, oldItemByteCount) }
@@ -635,10 +640,6 @@ public extension Portal {
         ptr.setItemParentOffset(to: UInt32(manager.bufferPtr.distance(to: itemPtr)), endianness)
         ptr.setItemByteCount(to: UInt32(max(newItemByteCount, oldItemByteCount)), endianness)
         
-        
-        // Remove the portal(s) related to the old content
-        
-        manager.removeActivePortals(atAndAbove: oldItem.itemPtr, below: oldItem.itemPtr.advanced(by: oldItemByteCount))
         
         return .success
     }
@@ -678,19 +679,31 @@ public extension Portal {
         }
         
         
-        // Clear the old item
-        
-        if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(oldItem.itemPtr, 0, oldItemByteCount) }
-        
-        
         // Write the new value as an item
         
         manager.moveBlock(to: oldItem.itemPtr, from: value.bufferPtr, moveCount: value.root._itemByteCount, removeCount: oldItem._itemByteCount, updateMovedPortals: false, updateRemovedPortals: true)
+
+
+        // Clear the old item
+        
+        if ItemManager.startWithZeroedBuffers {
+            let zeroLength = oldItemByteCount - newItemByteCount
+            if zeroLength > 0 {
+                _ = Darwin.memset(oldItem.itemPtr.advanced(by: newItemByteCount), 0, zeroLength)
+            }
+        }
+        
+        
+        // Restore offset
         
         let newItem = manager.getActivePortal(for: oldItem.itemPtr)
         newItem._itemParentOffset = manager.bufferPtr.distance(to: itemPtr)
         
+        
+        // Set name
+        
         if let nameField = nameField { newItem.itemNameField = nameField }
+        
         
         return .success
     }
@@ -862,7 +875,7 @@ public extension Portal {
 internal func buildSequenceItem(withNameField nameField: NameField?, valueByteCount: Int, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
     buildItem(ofType: .sequence, withNameField: nameField, atPtr: ptr, endianness)
     ptr.setItemByteCount(to: UInt32(ptr.itemHeaderAndNameByteCount + sequenceItemBaseOffset + valueByteCount.roundUpToNearestMultipleOf8()), endianness)
-    ptr.setSequenceItemCount(to: 0, endianness)
+    ptr.itemValueFieldPtr.setSequenceItemCount(to: 0, endianness)
 }
 
 

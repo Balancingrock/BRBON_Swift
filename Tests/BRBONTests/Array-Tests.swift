@@ -37,9 +37,9 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(am.root.itemFlags, ItemFlags.none)
         XCTAssertEqual(am.root._itemNameFieldByteCount, 0)
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset)
         XCTAssertEqual(am.root._itemParentOffset, 0)
-        XCTAssertEqual(am.root._itemSmallValue, 0)
+        XCTAssertEqual(am.root._itemSmallValue(Endianness.little), 0)
         
         XCTAssertEqual(am.root.count, 0)
         XCTAssertEqual(am.root._arrayElementType, .bool)
@@ -69,9 +69,9 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(am.root.itemFlags, ItemFlags.none)
         XCTAssertEqual(am.root._itemNameFieldByteCount, 0)
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 8)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 8)
         XCTAssertEqual(am.root._itemParentOffset, 0)
-        XCTAssertEqual(am.root._itemSmallValue, 0)
+        XCTAssertEqual(am.root._itemSmallValue(Endianness.little), 0)
         
         XCTAssertEqual(am.root.count, 3)
         XCTAssertEqual(am.root._arrayElementType, .bool)
@@ -105,7 +105,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.createNewElements(amount: 5, value: true), Result.success)
 
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 16)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 16)
         XCTAssertEqual(am.root.count, 9)
         
         exp = Data(bytes: [
@@ -124,7 +124,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 16)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 16)
         XCTAssertEqual(am.root.count, 8)
         
         exp = Data(bytes: [
@@ -143,7 +143,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.insertElement(false, atIndex: 6), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 16)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 16)
         XCTAssertEqual(am.root.count, 9)
         
         exp = Data(bytes: [
@@ -172,9 +172,9 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(am.root.itemFlags, ItemFlags.none)
         XCTAssertEqual(am.root._itemNameFieldByteCount, 0)
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset)
         XCTAssertEqual(am.root._itemParentOffset, 0)
-        XCTAssertEqual(am.root._itemSmallValue, 0)
+        XCTAssertEqual(am.root._itemSmallValue(Endianness.little), 0)
         
         XCTAssertEqual(am.root.count, 0)
         XCTAssertEqual(am.root._arrayElementType, .int8)
@@ -204,9 +204,9 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(am.root.itemFlags, ItemFlags.none)
         XCTAssertEqual(am.root._itemNameFieldByteCount, 0)
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 8)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 8)
         XCTAssertEqual(am.root._itemParentOffset, 0)
-        XCTAssertEqual(am.root._itemSmallValue, 0)
+        XCTAssertEqual(am.root._itemSmallValue(Endianness.little), 0)
         
         XCTAssertEqual(am.root.count, 3)
         XCTAssertEqual(am.root._arrayElementType, .int8)
@@ -240,7 +240,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.createNewElements(amount: 5, value: Int8(5)), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 16)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 16)
         XCTAssertEqual(am.root.count, 9)
         
         exp = Data(bytes: [
@@ -259,7 +259,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 16)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 16)
         XCTAssertEqual(am.root.count, 8)
         
         exp = Data(bytes: [
@@ -278,7 +278,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.insertElement(Int8(0), atIndex: 6), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 16)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 16)
         XCTAssertEqual(am.root.count, 9)
         
         exp = Data(bytes: [
@@ -307,9 +307,9 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(am.root.itemFlags, ItemFlags.none)
         XCTAssertEqual(am.root._itemNameFieldByteCount, 0)
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset)
         XCTAssertEqual(am.root._itemParentOffset, 0)
-        XCTAssertEqual(am.root._itemSmallValue, 0)
+        XCTAssertEqual(am.root._itemSmallValue(Endianness.little), 0)
         
         XCTAssertEqual(am.root.count, 0)
         XCTAssertEqual(am.root._arrayElementType, .int16)
@@ -339,9 +339,9 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(am.root.itemFlags, ItemFlags.none)
         XCTAssertEqual(am.root._itemNameFieldByteCount, 0)
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 8)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 8)
         XCTAssertEqual(am.root._itemParentOffset, 0)
-        XCTAssertEqual(am.root._itemSmallValue, 0)
+        XCTAssertEqual(am.root._itemSmallValue(Endianness.little), 0)
         
         XCTAssertEqual(am.root.count, 3)
         XCTAssertEqual(am.root._arrayElementType, .int16)
@@ -375,7 +375,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.createNewElements(amount: 5, value: Int16(5)), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 24)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 24)
         XCTAssertEqual(am.root.count, 9)
         
         exp = Data(bytes: [
@@ -395,7 +395,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 24)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 24)
         XCTAssertEqual(am.root.count, 8)
         
         exp = Data(bytes: [
@@ -415,7 +415,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.insertElement(Int16(0), atIndex: 6), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 24)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 24)
         XCTAssertEqual(am.root.count, 9)
         
         exp = Data(bytes: [
@@ -445,9 +445,9 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(am.root.itemFlags, ItemFlags.none)
         XCTAssertEqual(am.root._itemNameFieldByteCount, 0)
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset)
         XCTAssertEqual(am.root._itemParentOffset, 0)
-        XCTAssertEqual(am.root._itemSmallValue, 0)
+        XCTAssertEqual(am.root._itemSmallValue(Endianness.little), 0)
         
         XCTAssertEqual(am.root.count, 0)
         XCTAssertEqual(am.root._arrayElementType, .int32)
@@ -477,9 +477,9 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(am.root.itemFlags, ItemFlags.none)
         XCTAssertEqual(am.root._itemNameFieldByteCount, 0)
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 16)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 16)
         XCTAssertEqual(am.root._itemParentOffset, 0)
-        XCTAssertEqual(am.root._itemSmallValue, 0)
+        XCTAssertEqual(am.root._itemSmallValue(Endianness.little), 0)
         
         XCTAssertEqual(am.root.count, 3)
         XCTAssertEqual(am.root._arrayElementType, .int32)
@@ -514,7 +514,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.createNewElements(amount: 5, value: Int32(5)), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 40)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 40)
         XCTAssertEqual(am.root.count, 9)
         
         exp = Data(bytes: [
@@ -536,7 +536,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 40)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 40)
         XCTAssertEqual(am.root.count, 8)
         
         exp = Data(bytes: [
@@ -558,7 +558,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.insertElement(Int32(0), atIndex: 6), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 40)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 40)
         XCTAssertEqual(am.root.count, 9)
         
         exp = Data(bytes: [
@@ -590,9 +590,9 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(am.root.itemFlags, ItemFlags.none)
         XCTAssertEqual(am.root._itemNameFieldByteCount, 0)
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset)
         XCTAssertEqual(am.root._itemParentOffset, 0)
-        XCTAssertEqual(am.root._itemSmallValue, 0)
+        XCTAssertEqual(am.root._itemSmallValue(Endianness.little), 0)
         
         XCTAssertEqual(am.root.count, 0)
         XCTAssertEqual(am.root._arrayElementType, .int64)
@@ -622,9 +622,9 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(am.root.itemFlags, ItemFlags.none)
         XCTAssertEqual(am.root._itemNameFieldByteCount, 0)
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 24)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 24)
         XCTAssertEqual(am.root._itemParentOffset, 0)
-        XCTAssertEqual(am.root._itemSmallValue, 0)
+        XCTAssertEqual(am.root._itemSmallValue(Endianness.little), 0)
         
         XCTAssertEqual(am.root.count, 3)
         XCTAssertEqual(am.root._arrayElementType, .int64)
@@ -660,7 +660,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.createNewElements(amount: 5, value: Int64(5)), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 72)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 72)
         XCTAssertEqual(am.root.count, 9)
         
         exp = Data(bytes: [
@@ -686,7 +686,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 72)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 72)
         XCTAssertEqual(am.root.count, 8)
         
         exp = Data(bytes: [
@@ -712,7 +712,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.insertElement(Int64(0), atIndex: 6), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 72)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 72)
         XCTAssertEqual(am.root.count, 9)
         
         exp = Data(bytes: [
@@ -748,9 +748,9 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(am.root.itemFlags, ItemFlags.none)
         XCTAssertEqual(am.root._itemNameFieldByteCount, 0)
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset)
         XCTAssertEqual(am.root._itemParentOffset, 0)
-        XCTAssertEqual(am.root._itemSmallValue, 0)
+        XCTAssertEqual(am.root._itemSmallValue(Endianness.little), 0)
         
         XCTAssertEqual(am.root.count, 0)
         XCTAssertEqual(am.root._arrayElementType, .uint8)
@@ -781,9 +781,9 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(am.root.itemFlags, ItemFlags.none)
         XCTAssertEqual(am.root._itemNameFieldByteCount, 0)
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 8)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 8)
         XCTAssertEqual(am.root._itemParentOffset, 0)
-        XCTAssertEqual(am.root._itemSmallValue, 0)
+        XCTAssertEqual(am.root._itemSmallValue(Endianness.little), 0)
         
         XCTAssertEqual(am.root.count, 3)
         XCTAssertEqual(am.root._arrayElementType, .uint8)
@@ -817,7 +817,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.createNewElements(amount: 5, value: UInt8(5)), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 16)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 16)
         XCTAssertEqual(am.root.count, 9)
         
         exp = Data(bytes: [
@@ -836,7 +836,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 16)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 16)
         XCTAssertEqual(am.root.count, 8)
         
         exp = Data(bytes: [
@@ -855,7 +855,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.insertElement(UInt8(0), atIndex: 6), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 16)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 16)
         XCTAssertEqual(am.root.count, 9)
         
         exp = Data(bytes: [
@@ -885,9 +885,9 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(am.root.itemFlags, ItemFlags.none)
         XCTAssertEqual(am.root._itemNameFieldByteCount, 0)
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset)
         XCTAssertEqual(am.root._itemParentOffset, 0)
-        XCTAssertEqual(am.root._itemSmallValue, 0)
+        XCTAssertEqual(am.root._itemSmallValue(Endianness.little), 0)
         
         XCTAssertEqual(am.root.count, 0)
         XCTAssertEqual(am.root._arrayElementType, .uint16)
@@ -917,9 +917,9 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(am.root.itemFlags, ItemFlags.none)
         XCTAssertEqual(am.root._itemNameFieldByteCount, 0)
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 8)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 8)
         XCTAssertEqual(am.root._itemParentOffset, 0)
-        XCTAssertEqual(am.root._itemSmallValue, 0)
+        XCTAssertEqual(am.root._itemSmallValue(Endianness.little), 0)
         
         XCTAssertEqual(am.root.count, 3)
         XCTAssertEqual(am.root._arrayElementType, .uint16)
@@ -953,7 +953,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.createNewElements(amount: 5, value: UInt16(5)), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 24)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 24)
         XCTAssertEqual(am.root.count, 9)
         
         exp = Data(bytes: [
@@ -973,7 +973,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 24)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 24)
         XCTAssertEqual(am.root.count, 8)
         
         exp = Data(bytes: [
@@ -993,7 +993,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.insertElement(UInt16(0), atIndex: 6), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 24)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 24)
         XCTAssertEqual(am.root.count, 9)
         
         exp = Data(bytes: [
@@ -1023,9 +1023,9 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(am.root.itemFlags, ItemFlags.none)
         XCTAssertEqual(am.root._itemNameFieldByteCount, 0)
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset)
         XCTAssertEqual(am.root._itemParentOffset, 0)
-        XCTAssertEqual(am.root._itemSmallValue, 0)
+        XCTAssertEqual(am.root._itemSmallValue(Endianness.little), 0)
         
         XCTAssertEqual(am.root.count, 0)
         XCTAssertEqual(am.root._arrayElementType, .uint32)
@@ -1055,9 +1055,9 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(am.root.itemFlags, ItemFlags.none)
         XCTAssertEqual(am.root._itemNameFieldByteCount, 0)
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 16)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 16)
         XCTAssertEqual(am.root._itemParentOffset, 0)
-        XCTAssertEqual(am.root._itemSmallValue, 0)
+        XCTAssertEqual(am.root._itemSmallValue(Endianness.little), 0)
         
         XCTAssertEqual(am.root.count, 3)
         XCTAssertEqual(am.root._arrayElementType, .uint32)
@@ -1092,7 +1092,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.createNewElements(amount: 5, value: UInt32(5)), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 40)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 40)
         XCTAssertEqual(am.root.count, 9)
         
         exp = Data(bytes: [
@@ -1114,7 +1114,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 40)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 40)
         XCTAssertEqual(am.root.count, 8)
         
         exp = Data(bytes: [
@@ -1136,7 +1136,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.insertElement(UInt32(0), atIndex: 6), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 40)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 40)
         XCTAssertEqual(am.root.count, 9)
         
         exp = Data(bytes: [
@@ -1168,9 +1168,9 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(am.root.itemFlags, ItemFlags.none)
         XCTAssertEqual(am.root._itemNameFieldByteCount, 0)
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset)
         XCTAssertEqual(am.root._itemParentOffset, 0)
-        XCTAssertEqual(am.root._itemSmallValue, 0)
+        XCTAssertEqual(am.root._itemSmallValue(Endianness.little), 0)
         
         XCTAssertEqual(am.root.count, 0)
         XCTAssertEqual(am.root._arrayElementType, .uint64)
@@ -1200,9 +1200,9 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(am.root.itemFlags, ItemFlags.none)
         XCTAssertEqual(am.root._itemNameFieldByteCount, 0)
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 24)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 24)
         XCTAssertEqual(am.root._itemParentOffset, 0)
-        XCTAssertEqual(am.root._itemSmallValue, 0)
+        XCTAssertEqual(am.root._itemSmallValue(Endianness.little), 0)
         
         XCTAssertEqual(am.root.count, 3)
         XCTAssertEqual(am.root._arrayElementType, .uint64)
@@ -1238,7 +1238,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.createNewElements(amount: 5, value: UInt64(5)), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 72)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 72)
         XCTAssertEqual(am.root.count, 9)
         
         exp = Data(bytes: [
@@ -1264,7 +1264,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 72)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 72)
         XCTAssertEqual(am.root.count, 8)
         
         exp = Data(bytes: [
@@ -1290,7 +1290,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.insertElement(UInt64(0), atIndex: 6), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 72)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 72)
         XCTAssertEqual(am.root.count, 9)
         
         exp = Data(bytes: [
@@ -1326,9 +1326,9 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(am.root.itemFlags, ItemFlags.none)
         XCTAssertEqual(am.root._itemNameFieldByteCount, 0)
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset)
         XCTAssertEqual(am.root._itemParentOffset, 0)
-        XCTAssertEqual(am.root._itemSmallValue, 0)
+        XCTAssertEqual(am.root._itemSmallValue(Endianness.little), 0)
         
         XCTAssertEqual(am.root.count, 0)
         XCTAssertEqual(am.root._arrayElementType, .string)
@@ -1358,9 +1358,9 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(am.root.itemFlags, ItemFlags.none)
         XCTAssertEqual(am.root._itemNameFieldByteCount, 0)
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 24)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 24)
         XCTAssertEqual(am.root._itemParentOffset, 0)
-        XCTAssertEqual(am.root._itemSmallValue, 0)
+        XCTAssertEqual(am.root._itemSmallValue(Endianness.little), 0)
         
         XCTAssertEqual(am.root.count, 3)
         XCTAssertEqual(am.root._arrayElementType, .string)
@@ -1411,7 +1411,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.createNewElements(amount: 5, value: BRString("55555")), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 144)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 144)
         XCTAssertEqual(am.root.count, 9)
         
         exp = Data(bytes: [
@@ -1437,7 +1437,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 144)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 144)
         XCTAssertEqual(am.root.count, 8)
         
         exp = Data(bytes: [
@@ -1463,7 +1463,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.insertElement(BRString("0000"), atIndex: 6), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 144)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 144)
         XCTAssertEqual(am.root.count, 9)
         
         exp = Data(bytes: [
@@ -1499,9 +1499,9 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(am.root.itemFlags, ItemFlags.none)
         XCTAssertEqual(am.root._itemNameFieldByteCount, 0)
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset)
         XCTAssertEqual(am.root._itemParentOffset, 0)
-        XCTAssertEqual(am.root._itemSmallValue, 0)
+        XCTAssertEqual(am.root._itemSmallValue(Endianness.little), 0)
         
         XCTAssertEqual(am.root.count, 0)
         XCTAssertEqual(am.root._arrayElementType, .binary)
@@ -1531,9 +1531,9 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(am.root.itemFlags, ItemFlags.none)
         XCTAssertEqual(am.root._itemNameFieldByteCount, 0)
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 24)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 24)
         XCTAssertEqual(am.root._itemParentOffset, 0)
-        XCTAssertEqual(am.root._itemSmallValue, 0)
+        XCTAssertEqual(am.root._itemSmallValue(Endianness.little), 0)
         
         XCTAssertEqual(am.root.count, 3)
         XCTAssertEqual(am.root._arrayElementType, .binary)
@@ -1584,7 +1584,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.createNewElements(amount: 5, value: Data(bytes: [0x51, 0x52])), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 144)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 144)
         XCTAssertEqual(am.root.count, 9)
         
         exp = Data(bytes: [
@@ -1610,7 +1610,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 144)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 144)
         XCTAssertEqual(am.root.count, 8)
         
         exp = Data(bytes: [
@@ -1636,7 +1636,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.insertElement(Data(bytes: [0x00, 0x00]), atIndex: 6), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 144)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 144)
         XCTAssertEqual(am.root.count, 9)
         
         exp = Data(bytes: [
@@ -1672,9 +1672,9 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(am.root.itemFlags, ItemFlags.none)
         XCTAssertEqual(am.root._itemNameFieldByteCount, 0)
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset)
         XCTAssertEqual(am.root._itemParentOffset, 0)
-        XCTAssertEqual(am.root._itemSmallValue, 0)
+        XCTAssertEqual(am.root._itemSmallValue(Endianness.little), 0)
         
         XCTAssertEqual(am.root.count, 0)
         XCTAssertEqual(am.root._arrayElementType, .uuid)
@@ -1715,7 +1715,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.createNewElements(amount: 3, value: UUID(uuidString: "22222222-3333-4444-5555-666666666666")), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 64)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 64)
         XCTAssertEqual(am.root.count, 4)
         
         exp = Data(bytes: [
@@ -1736,7 +1736,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 64)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 64)
         XCTAssertEqual(am.root.count, 3)
         
         exp = Data(bytes: [
@@ -1757,7 +1757,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.insertElement(UUID(uuidString: "00000000-0000-0000-0000-000000000000"), atIndex: 2), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 64)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 64)
         XCTAssertEqual(am.root.count, 4)
         
         exp = Data(bytes: [
@@ -1788,9 +1788,9 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(am.root.itemFlags, ItemFlags.none)
         XCTAssertEqual(am.root._itemNameFieldByteCount, 0)
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset)
         XCTAssertEqual(am.root._itemParentOffset, 0)
-        XCTAssertEqual(am.root._itemSmallValue, 0)
+        XCTAssertEqual(am.root._itemSmallValue(Endianness.little), 0)
         
         XCTAssertEqual(am.root.count, 0)
         XCTAssertEqual(am.root._arrayElementType, .font)
@@ -1830,7 +1830,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.createNewElements(amount: 3, value: BRFont(NSFont(name: "Helvetica", size: 11.0))), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 96)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 96)
         XCTAssertEqual(am.root.count, 4)
         
         exp = Data(bytes: [
@@ -1851,7 +1851,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 96)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 96)
         XCTAssertEqual(am.root.count, 3)
         
         exp = Data(bytes: [
@@ -1872,7 +1872,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.insertElement(BRFont(NSFont(name: "Courier", size: 12.0)), atIndex: 2), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 96)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 96)
         XCTAssertEqual(am.root.count, 4)
         
         exp = Data(bytes: [
@@ -1903,9 +1903,9 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(am.root.itemFlags, ItemFlags.none)
         XCTAssertEqual(am.root._itemNameFieldByteCount, 0)
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset)
         XCTAssertEqual(am.root._itemParentOffset, 0)
-        XCTAssertEqual(am.root._itemSmallValue, 0)
+        XCTAssertEqual(am.root._itemSmallValue(Endianness.little), 0)
         
         XCTAssertEqual(am.root.count, 0)
         XCTAssertEqual(am.root._arrayElementType, .color)
@@ -1945,7 +1945,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.createNewElements(amount: 3, value: BRColor(NSColor.blue)), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 4 * 4)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 4 * 4)
         XCTAssertEqual(am.root.count, 4)
         
         exp = Data(bytes: [
@@ -1966,7 +1966,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 4 * 4)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 4 * 4)
         XCTAssertEqual(am.root.count, 3)
         
         exp = Data(bytes: [
@@ -1987,7 +1987,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.insertElement(BRColor(NSColor.green), atIndex: 2), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 4 * 4)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 4 * 4)
         XCTAssertEqual(am.root.count, 4)
         
         exp = Data(bytes: [
@@ -2018,9 +2018,9 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(am.root.itemFlags, ItemFlags.none)
         XCTAssertEqual(am.root._itemNameFieldByteCount, 0)
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset)
         XCTAssertEqual(am.root._itemParentOffset, 0)
-        XCTAssertEqual(am.root._itemSmallValue, 0)
+        XCTAssertEqual(am.root._itemSmallValue(Endianness.little), 0)
         
         XCTAssertEqual(am.root.count, 0)
         XCTAssertEqual(am.root._arrayElementType, .crcString)
@@ -2062,7 +2062,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.createNewElements(amount: 3, value: BRCrcString("22")), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 4 * 16)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 4 * 16)
         XCTAssertEqual(am.root.count, 4)
         
         exp = Data(bytes: [
@@ -2084,7 +2084,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 4 * 16)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 4 * 16)
         XCTAssertEqual(am.root.count, 3)
         
         exp = Data(bytes: [
@@ -2106,7 +2106,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.insertElement(BRCrcString("333333333"), atIndex: 2), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 4 * 24)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 4 * 24)
         XCTAssertEqual(am.root.count, 4)
         
         exp = Data(bytes: [
@@ -2138,9 +2138,9 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(am.root.itemFlags, ItemFlags.none)
         XCTAssertEqual(am.root._itemNameFieldByteCount, 0)
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset)
         XCTAssertEqual(am.root._itemParentOffset, 0)
-        XCTAssertEqual(am.root._itemSmallValue, 0)
+        XCTAssertEqual(am.root._itemSmallValue(Endianness.little), 0)
         
         XCTAssertEqual(am.root.count, 0)
         XCTAssertEqual(am.root._arrayElementType, .crcBinary)
@@ -2182,7 +2182,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.createNewElements(amount: 3, value: BRCrcBinary(Data(bytes: [0x22, 0x22]))), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 4 * 16)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 4 * 16)
         XCTAssertEqual(am.root.count, 4)
         
         exp = Data(bytes: [
@@ -2204,7 +2204,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 4 * 16)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 4 * 16)
         XCTAssertEqual(am.root.count, 3)
         
         exp = Data(bytes: [
@@ -2226,7 +2226,7 @@ class Array_Tests: XCTestCase {
         
         XCTAssertEqual(am.root.insertElement(BRCrcBinary(Data(bytes: [0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33])), atIndex: 2), Result.success)
         
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset + 4 * 24)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 4 * 24)
         XCTAssertEqual(am.root.count, 4)
         
         exp = Data(bytes: [
@@ -2258,9 +2258,9 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(am.root.itemFlags, ItemFlags.none)
         XCTAssertEqual(am.root._itemNameFieldByteCount, 0)
-        XCTAssertEqual(am.root._itemByteCount, itemMinimumByteCount + arrayElementBaseOffset)
+        XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset)
         XCTAssertEqual(am.root._itemParentOffset, 0)
-        XCTAssertEqual(am.root._itemSmallValue, 0)
+        XCTAssertEqual(am.root._itemSmallValue(Endianness.little), 0)
         
         XCTAssertEqual(am.root.count, 0)
         XCTAssertEqual(am.root._arrayElementType, .array)

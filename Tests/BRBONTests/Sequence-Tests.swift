@@ -70,7 +70,7 @@ class Sequence_Tests: XCTestCase {
             0x01, 0x00, 0x00, 0x00,  0x10, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             ])
-        
+
         XCTAssertEqual(sm.data, exp)
         
         
@@ -253,6 +253,5 @@ class Sequence_Tests: XCTestCase {
         XCTAssertTrue(nameNull.isValid)
         XCTAssertTrue(nameNull.isNull)
 
-        
     }
 }

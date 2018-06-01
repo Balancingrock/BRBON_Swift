@@ -58,9 +58,45 @@ internal let dictionaryItemBaseOffset = dictionaryItemCountOffset + 4
 
 extension UnsafeMutableRawPointer {
     
-    internal var dictionaryItemCountPtr: UnsafeMutableRawPointer { return self.itemValueFieldPtr.advanced(by: dictionaryItemCountOffset) }
+    internal var dictionaryItemCountPtr: UnsafeMutableRawPointer { return self.advanced(by: dictionaryItemCountOffset) }
     
-    internal var dictionaryItemBasePtr: UnsafeMutableRawPointer { return self.itemValueFieldPtr.advanced(by: dictionaryItemBaseOffset) }
+    internal var dictionaryItemBasePtr: UnsafeMutableRawPointer { return self.advanced(by: dictionaryItemBaseOffset) }
+    
+    internal func dictionaryItemCount(_ endianness: Endianness) -> UInt32 {
+        if endianness == machineEndianness {
+            return dictionaryItemCountPtr.assumingMemoryBound(to: UInt32.self).pointee
+        } else {
+            return dictionaryItemCountPtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped
+        }
+    }
+    
+    internal func setDictionaryItemCount(to value: UInt32, _ endianness: Endianness) {
+        if endianness == machineEndianness {
+            dictionaryItemCountPtr.storeBytes(of: value, as: UInt32.self)
+        } else {
+            dictionaryItemCountPtr.storeBytes(of: value.byteSwapped, as: UInt32.self)
+        }
+    }
+    
+    internal func dictionaryItemCountIncrement(_ endianness: Endianness) {
+        if endianness == machineEndianness {
+            let value = dictionaryItemCountPtr.assumingMemoryBound(to: UInt32.self).pointee + 1
+            dictionaryItemCountPtr.storeBytes(of: value, as: UInt32.self)
+        } else {
+            let value = dictionaryItemCountPtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped + 1
+            dictionaryItemCountPtr.storeBytes(of: value.byteSwapped, as: UInt32.self)
+        }
+    }
+    
+    internal func dictionaryItemCountDecrement(_ endianness: Endianness) {
+        if endianness == machineEndianness {
+            let value = dictionaryItemCountPtr.assumingMemoryBound(to: UInt32.self).pointee - 1
+            dictionaryItemCountPtr.storeBytes(of: value, as: UInt32.self)
+        } else {
+            let value = dictionaryItemCountPtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped - 1
+            dictionaryItemCountPtr.storeBytes(of: value.byteSwapped, as: UInt32.self)
+        }
+    }
 }
 
 
@@ -70,17 +106,19 @@ extension Portal {
     /// The number of items in the dictionary this portal refers to.
     
     internal var _dictionaryItemCount: Int {
-        get { return Int(UInt32(fromPtr: itemPtr.dictionaryItemCountPtr, endianness)) }
-        set { UInt32(newValue).copyBytes(to: itemPtr.dictionaryItemCountPtr, endianness) }
+        get { return Int(itemPtr.itemValueFieldPtr.dictionaryItemCount(endianness)) }
+        set { itemPtr.itemValueFieldPtr.setDictionaryItemCount(to: UInt32(newValue), endianness) }
     }
     
     
     /// Points to the first byte after the items in the referenced dictionary item
     
     internal var _dictionaryAfterLastItemPtr: UnsafeMutableRawPointer {
-        var ptr = itemPtr.dictionaryItemBasePtr
-        for _ in 0 ..< _dictionaryItemCount {
+        var ptr = itemPtr.itemValueFieldPtr.dictionaryItemBasePtr
+        var itterations = _dictionaryItemCount
+        while itterations > 0  {
             ptr = ptr.nextItemPtr(endianness)
+            itterations -= 1
         }
         return ptr
     }
@@ -105,10 +143,10 @@ extension Portal {
         guard isDictionary else { return nil }
         guard let nameField = nameField else { return nil }
         var remainder = _dictionaryItemCount
-        var ptr = itemPtr.dictionaryItemBasePtr
+        var ptr = itemPtr.itemValueFieldPtr.dictionaryItemBasePtr
         while remainder > 0 {
-            if UInt16(fromPtr: ptr.advanced(by: itemNameCrcOffset), endianness) == nameField.crc {
-                if ptr.advanced(by: itemNameUtf8ByteCountOffset).assumingMemoryBound(to: UInt8.self).pointee == UInt8(nameField.data.count) {
+            if ptr.itemNameCrc(endianness) == nameField.crc {
+                if ptr.itemNameUtf8ByteCount == UInt8(nameField.data.count) {
                     var dataIsEqual = true
                     for i in 0 ..< nameField.data.count {
                         if ptr.advanced(by: itemNameUtf8CodeOffset + i).assumingMemoryBound(to: UInt8.self).pointee != nameField.data[i] {
@@ -122,7 +160,7 @@ extension Portal {
                 }
             }
             remainder -= 1
-            ptr += Int(UInt32.init(fromPtr: ptr.advanced(by: itemByteCountOffset), endianness))
+            ptr = ptr.nextItemPtr(endianness)
         }
         return nil
     }
@@ -160,6 +198,9 @@ public extension Portal {
         guard isValid else { return .error(.portalInvalid) }
         guard isDictionary else { return .error(.operationNotSupported) }
         
+        
+        // Update an exiting item
+        
         if let item = dictionaryFindItem(nameField), item.isValid {
         
             guard item.itemType! == value.itemType else { return .error(.typeConflict) }
@@ -167,6 +208,8 @@ public extension Portal {
             return item._updateItemValue(value)
 
         } else {
+        
+            // Or create a new item
             
             var neededValueFieldByteCount = usedValueFieldByteCount + itemHeaderByteCount + nameField.byteCount
             if !value.itemType.usesSmallValue { neededValueFieldByteCount += value.valueByteCount.roundUpToNearestMultipleOf8() }
@@ -181,7 +224,7 @@ public extension Portal {
             buildItem(withValue: value, withNameField: nameField, atPtr: ptr, endianness)
             ptr.setItemParentOffset(to: pOffset, endianness)
             
-            _dictionaryItemCount += 1
+            itemPtr.itemValueFieldPtr.dictionaryItemCountIncrement(endianness)
             
             return .success
         }
@@ -219,14 +262,12 @@ public extension Portal {
 
         } else {
             
-            // Make sure the new item has the appropriate name
             
-            if let nameField = nameField {
-                let result = value.root.updateItemName(to: nameField)
-                guard result == .success else { return result }
-            }
+            // Ensure a name is present
             
-            guard value.root.hasName else { return .error(.missingName) }
+            //if nameField == nil {
+            //    guard value.root.hasName else { return .error(.missingName) }
+            //}
             
             
             // The new value field byte count for the dictionary
@@ -245,15 +286,19 @@ public extension Portal {
             let pOffset = manager.bufferPtr.distance(to: itemPtr)
             let dstPtr = _dictionaryAfterLastItemPtr
             
-            _ = Darwin.memmove(_dictionaryAfterLastItemPtr, value.bufferPtr, value.root._itemByteCount)
+            _ = Darwin.memmove(dstPtr, value.bufferPtr, value.root._itemByteCount)
             
-            UInt32(pOffset).copyBytes(to: dstPtr.advanced(by: itemParentOffsetOffset), endianness)
-            
+            let p = manager.getActivePortal(for: dstPtr)
+            p._itemParentOffset = pOffset
+            if let nameField = nameField {
+                _ = p.updateItemName(to: nameField)
+            }
+
             
             // Increase the item count
             
-            _dictionaryItemCount += 1
-            
+            itemPtr.itemValueFieldPtr.dictionaryItemCountIncrement(endianness)
+
             return .success
         }
     }
@@ -416,9 +461,9 @@ public extension Portal {
                 
             if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(itemStartPtr.advanced(by: len), 0, ibc) }
         }
-            
-        _dictionaryItemCount -= 1
-            
+        
+        itemPtr.itemValueFieldPtr.dictionaryItemCountDecrement(endianness)
+
         return .success
     }
 }
@@ -534,6 +579,6 @@ public extension Portal {
 internal func buildDictionaryItem(withNameField nameField: NameField?, valueByteCount: Int, atPtr ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
     buildItem(ofType: .dictionary, withNameField: nameField, atPtr: ptr, endianness)
     ptr.setItemByteCount(to: UInt32(itemHeaderByteCount + (nameField?.byteCount ?? 0) + dictionaryItemBaseOffset + valueByteCount.roundUpToNearestMultipleOf8()), endianness)
-    UInt32(0).copyBytes(to: ptr.dictionaryItemCountPtr, endianness)
+    UInt32(0).copyBytes(to: ptr.itemValueFieldPtr.dictionaryItemCountPtr, endianness)
 }
 

@@ -133,6 +133,14 @@ internal extension UnsafeMutableRawPointer {
     fileprivate func setArrayElementByteCount(to value: UInt32, _ endianness: Endianness) {
         value.copyBytes(to: arrayElementByteCountPtr, endianness)
     }
+    
+    
+    /// Return the pointer to an array element
+    
+    internal func arrayElementPtr(for value: Int, _ endianness: Endianness) -> UnsafeMutableRawPointer {
+        let bc = Int(arrayElementByteCount(endianness))
+        return arrayElementBasePtr.advanced(by: value * bc)
+    }
 }
 
 
@@ -167,10 +175,10 @@ extension Portal {
     
     /// The element pointer for a given index.
     
-    internal func _arrayElementPtr(for index: Int) -> UnsafeMutableRawPointer {
-        let elementOffset = index * _arrayElementByteCount
-        return _valuePtr.arrayElementBasePtr.advanced(by: elementOffset)
-    }
+    //internal func _arrayElementPtr(for index: Int) -> UnsafeMutableRawPointer {
+    //    let elementOffset = index * _arrayElementByteCount
+    //    return _valuePtr.arrayElementBasePtr.advanced(by: elementOffset)
+    //}
 
     
     /// The total area used in the value field.
@@ -301,7 +309,7 @@ extension Portal {
     internal func _arrayPortalForElement(at index: Int) -> Portal {
         
         if _arrayElementType!.isContainer {
-            return manager.getActivePortal(for: _arrayElementPtr(for: index), index: nil, column: nil)
+            return manager.getActivePortal(for: itemPtr.itemValueFieldPtr.arrayElementPtr(for: index, endianness), index: nil, column: nil)
         } else {
             return manager.getActivePortal(for: itemPtr, index: index, column: nil)
         }
@@ -320,21 +328,21 @@ extension Portal {
         // Remove the active portals for the items inside the element to be removed.
         
         if _arrayElementType!.isContainer {
-            let eptr = _arrayElementPtr(for: index)
+            let eptr = itemPtr.itemValueFieldPtr.arrayElementPtr(for: index, endianness)
             manager.removeActivePortals(atAndAbove: eptr, below: eptr.advanced(by: _arrayElementByteCount))
         }
         
         
         // Shift the remaining elements into their new place
         
-        let srcPtr = _arrayElementPtr(for: index + 1)
-        let dstPtr = _arrayElementPtr(for: index)
+        let srcPtr = itemPtr.itemValueFieldPtr.arrayElementPtr(for: index + 1, endianness)
+        let dstPtr = itemPtr.itemValueFieldPtr.arrayElementPtr(for: index, endianness)
         let len = (_arrayElementCount - 1 - index) * _arrayElementByteCount
         
         manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
         
         if ItemManager.startWithZeroedBuffers {
-            let ptr = _arrayElementPtr(for: _arrayElementCount - 1)
+            let ptr = itemPtr.itemValueFieldPtr.arrayElementPtr(for: _arrayElementCount - 1, endianness)
             Darwin.memset(ptr, 0, _arrayElementByteCount)
         }
         
@@ -381,8 +389,8 @@ extension Portal {
         
         // Copy the existing elements upward
         
-        let dstPtr = _arrayElementPtr(for: index + 1)
-        let srcPtr = _arrayElementPtr(for: index)
+        let dstPtr = itemPtr.itemValueFieldPtr.arrayElementPtr(for: index + 1, endianness)
+        let srcPtr = itemPtr.itemValueFieldPtr.arrayElementPtr(for: index, endianness)
         let length = (_arrayElementCount - index) * _arrayElementByteCount
         manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: length, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
         
@@ -394,7 +402,7 @@ extension Portal {
         
         // Insert the new element
         
-        value.copyBytes(to: _arrayElementPtr(for: index), endianness)
+        value.copyBytes(to: itemPtr.itemValueFieldPtr.arrayElementPtr(for: index, endianness), endianness)
         
         
         // Increase the number of elements
@@ -459,19 +467,19 @@ extension Portal {
 
 internal func buildArrayItem(withNameField nameField: NameField?, elementType: ItemType, elementByteCount: Int, elementCount: Int, atPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
     
-    var ptr = atPtr
+    let ptr = atPtr
     
     buildItem(ofType: .array, withNameField: nameField, atPtr: ptr, endianness)
     
     var bc: Int = itemHeaderByteCount + (nameField?.byteCount ?? 0) + arrayElementBaseOffset
-    bc += Int(ptr.arrayElementCount(endianness) * ptr.arrayElementByteCount(endianness))
-    bc = bc.roundUpToNearestMultipleOf8()
+    bc += (elementCount * elementByteCount).roundUpToNearestMultipleOf8()
     
     ptr.setItemByteCount(to: UInt32(bc), endianness)
     
-    ptr.arrayElementType = elementType.rawValue
-    ptr.setArrayElementCount(to: 0, endianness)
-    ptr.setArrayElementByteCount(to: UInt32(elementByteCount), endianness)
+    var arrayPtr = ptr.itemValueFieldPtr
+    arrayPtr.arrayElementType = elementType.rawValue
+    arrayPtr.setArrayElementCount(to: 0, endianness)
+    arrayPtr.setArrayElementByteCount(to: UInt32(elementByteCount), endianness)
 }
 
 
@@ -496,7 +504,10 @@ extension Portal {
     @discardableResult
     public func appendElement(_ value: Coder?) -> Result {
         guard let value = value else { return .success }
-        return appendClosure(for: value.itemType, with: value.valueByteCount) { value.copyBytes(to: _arrayElementPtr(for: _arrayElementCount), endianness) }
+        return appendClosure(for: value.itemType, with: value.valueByteCount) {
+            value.copyBytes(to: itemPtr.itemValueFieldPtr.arrayElementPtr(for: _arrayElementCount, endianness), endianness)
+            
+        }
     }
     
     
@@ -594,7 +605,7 @@ extension Portal {
         
         // Initialize the area of the new elements to zero
         
-        _ = Darwin.memset(_arrayElementPtr(for: _arrayElementCount), 0, amount * _arrayElementByteCount)
+        _ = Darwin.memset(itemPtr.itemValueFieldPtr.arrayElementPtr(for: _arrayElementCount, endianness), 0, amount * _arrayElementByteCount)
         
         
         // Use the default value if provided
@@ -602,7 +613,7 @@ extension Portal {
         if let value = value {
             var loopCount = amount
             repeat {
-                value.copyBytes(to: _arrayElementPtr(for: _arrayElementCount + loopCount - 1), endianness)
+                value.copyBytes(to: itemPtr.itemValueFieldPtr.arrayElementPtr(for: _arrayElementCount + loopCount - 1, endianness), endianness)
                 loopCount -= 1
             } while loopCount > 0
         }
@@ -654,9 +665,9 @@ extension Portal {
         
         // Add the new item
         
-        _ = Darwin.memcpy(_arrayElementPtr(for: _arrayElementCount), itemManager.bufferPtr, itemManager.count)
+        _ = Darwin.memcpy(itemPtr.itemValueFieldPtr.arrayElementPtr(for: _arrayElementCount, endianness), itemManager.bufferPtr, itemManager.count)
         let parentOffset = manager!.bufferPtr.distance(to: itemPtr)
-        UInt32(parentOffset).copyBytes(to: _arrayElementPtr(for: _arrayElementCount).advanced(by: itemParentOffsetOffset), endianness)
+        UInt32(parentOffset).copyBytes(to: itemPtr.itemValueFieldPtr.arrayElementPtr(for: _arrayElementCount, endianness).advanced(by: itemParentOffsetOffset), endianness)
 
         _arrayElementCount += 1
         
@@ -709,7 +720,7 @@ extension Portal {
         let parentOffset = manager!.bufferPtr.distance(to: itemPtr)
         arr.forEach() {
             let srcPtr = $0.bufferPtr
-            let dstPtr = _arrayElementPtr(for: _arrayElementCount)
+            let dstPtr = itemPtr.itemValueFieldPtr.arrayElementPtr(for: _arrayElementCount, endianness)
             let length = $0.count
             _ = Darwin.memcpy(dstPtr, srcPtr, length)
             UInt32(parentOffset).copyBytes(to: dstPtr.advanced(by: itemParentOffsetOffset), endianness)
@@ -759,8 +770,8 @@ extension Portal {
         
         // Copy the existing elements upward
         
-        let dstPtr = _arrayElementPtr(for: index + 1)
-        let srcPtr = _arrayElementPtr(for: index)
+        let dstPtr = itemPtr.itemValueFieldPtr.arrayElementPtr(for: index + 1, endianness)
+        let srcPtr = itemPtr.itemValueFieldPtr.arrayElementPtr(for: index, endianness)
         let length = (_arrayElementCount - index) * _arrayElementByteCount
         manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: length, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
         
@@ -772,7 +783,7 @@ extension Portal {
         
         // Insert the new element
         
-        value.copyBytes(to: _arrayElementPtr(for: index).assumingMemoryBound(to: UInt8.self), count: value.count)
+        value.copyBytes(to: itemPtr.itemValueFieldPtr.arrayElementPtr(for: index, endianness).assumingMemoryBound(to: UInt8.self), count: value.count)
         
         
         // Increase the number of elements

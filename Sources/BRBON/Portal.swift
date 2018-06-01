@@ -174,7 +174,7 @@ public final class Portal {
     public var itemNameField: NameField? {
         get {
             guard _itemNameFieldByteCount > 0 else { return nil }
-            return NameField(fromPtr: itemPtr.itemNameFieldPtr, endianness)
+            return NameField(fromPtr: itemPtr.itemNameFieldPtr, withFieldCount: _itemNameFieldByteCount, endianness)
         }
         set { _ = updateItemName(to: newValue) }
     }
@@ -190,19 +190,19 @@ extension Portal {
     
     internal var _valuePtr: UnsafeMutableRawPointer {
         get {
-        if let index = index {
-            if let column = column {
-                return itemPtr.itemValueFieldPtr.tableFieldPtr(row: index, column: column, endianness)
+            if let index = index {
+                if let column = column {
+                    return itemPtr.itemValueFieldPtr.tableFieldPtr(row: index, column: column, endianness)
+                } else {
+                    return itemPtr.itemValueFieldPtr.arrayElementPtr(for: index, endianness)
+                }
             } else {
-                return _arrayElementPtr(for: index)
+                if itemType!.usesSmallValue {
+                    return itemPtr.itemSmallValuePtr
+                } else {
+                    return itemPtr.itemValueFieldPtr
+                }
             }
-        } else {
-            if itemType!.usesSmallValue {
-                return itemPtr.itemSmallValuePtr
-            } else {
-                return itemPtr.itemValueFieldPtr
-            }
-        }
         }
         set {} // Empty setter allows updating of the pointee
     }
@@ -323,14 +323,13 @@ extension Portal {
                 
                 // Increase the size of self, first copy all the items above this item out of reach
                 
-                let srcPtr = itemPtr.advanced(by: _itemByteCount)
+                let srcPtr = itemPtr.nextItemPtr(endianness)
                 let pastLastItemPtr = parent._dictionaryAfterLastItemPtr
-                if srcPtr != pastLastItemPtr {
+                let len = srcPtr.distance(to: pastLastItemPtr)
+                if len > 0 {
                     
                     // Items must be moved
-                    
-                    let len = pastLastItemPtr - srcPtr
-                    let dstPtr = srcPtr.advanced(by: newByteCount - _itemByteCount)
+                    let dstPtr = itemPtr.advanced(by: newByteCount)
                     
                     manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
 
@@ -363,7 +362,7 @@ extension Portal {
                 
                 // Increase the size of self, first copy all the items above this item out of reach
                 
-                let srcPtr = itemPtr.advanced(by: _itemByteCount)
+                let srcPtr = itemPtr.nextItemPtr(endianness)
                 let pastLastItemPtr = parent._sequenceAfterLastItemPtr
                 let len = srcPtr.distance(to: pastLastItemPtr)
                 if len > 0 {
@@ -372,6 +371,11 @@ extension Portal {
                     let dstPtr = itemPtr.advanced(by: newByteCount)
                     
                     manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: len, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
+                    
+                    
+                    // Set extra bytes in self conditionally to zero
+                    
+                    if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(srcPtr, 0, srcPtr.distance(to: dstPtr)) }
                 }
 
                 

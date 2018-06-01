@@ -279,8 +279,8 @@ extension Portal: Equatable {
             case .binary: return lhs.binary == rhs.binary
             case .crcBinary: return lhs.crcBinary == rhs.crcBinary
             case .array, .dictionary, .sequence, .table:
-                let lPortal = Portal(itemPtr: lhs._arrayElementPtr(for: lhs.index!), index: nil, manager: lhs.manager, endianness: lhs.endianness)
-                let rPortal = Portal(itemPtr: rhs._arrayElementPtr(for: rhs.index!), index: nil, manager: rhs.manager, endianness: rhs.endianness)
+                let lPortal = Portal(itemPtr: lhs._valuePtr.arrayElementPtr(for: lhs.index!, lhs.endianness), index: nil, manager: lhs.manager, endianness: lhs.endianness)
+                let rPortal = Portal(itemPtr: rhs._valuePtr.arrayElementPtr(for: rhs.index!, rhs.endianness), index: nil, manager: rhs.manager, endianness: rhs.endianness)
                 return lPortal == rPortal
             }
         }

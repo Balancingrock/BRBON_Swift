@@ -121,7 +121,7 @@ fileprivate class ActivePortals {
         } else if let index = portal.index {
             
             // Setup for removal of all portals in the content area
-            startAddress = portal._arrayElementPtr(for: index)
+            startAddress = portal._valuePtr.arrayElementPtr(for: index, portal.endianness)
             endAddress = startAddress.advanced(by: portal._arrayElementByteCount)
 
             // Remove the portal itself
@@ -151,7 +151,7 @@ fileprivate class ActivePortals {
     func removePortals(atAndAbove: UnsafeMutableRawPointer, below: UnsafeMutableRawPointer) {
         
         for (key, portal) in dict {
-            
+
             if portal.itemPtr >= atAndAbove && portal.itemPtr < below {
             
                 portal.isValid = false
@@ -159,24 +159,36 @@ fileprivate class ActivePortals {
 
             } else {
                 
-                if let column = portal.column, let index = portal.index {
+                if portal.index != nil {
                     
-                    let ptr = portal.itemPtr.itemValueFieldPtr.tableFieldPtr(row: index, column: column, portal.endianness)
+                    // table and array handling
                     
-                    if ptr >= atAndAbove && ptr < below {
-                        portal.isValid = false
-                        dict.removeValue(forKey: key)
-                    }
-                    
-                } else if let index = portal.index {
-                    
-                    let ptr = portal._arrayElementPtr(for: index)
+                    let ptr = portal._valuePtr
                     
                     if ptr >= atAndAbove && ptr < below {
                         portal.isValid = false
                         dict.removeValue(forKey: key)
                     }
                 }
+                /*
+                if let _ = portal.column, let _ = portal.index {
+                    
+                    let ptr = portal._valuePtr // itemPtr.itemValueFieldPtr.tableFieldPtr(row: index, column: column, portal.endianness)
+                    
+                    if ptr >= atAndAbove && ptr < below {
+                        portal.isValid = false
+                        dict.removeValue(forKey: key)
+                    }
+                
+                } else if portal.index != nil {
+                    
+                    let ptr = portal._valuePtr
+                    
+                    if ptr >= atAndAbove && ptr < below {
+                        portal.isValid = false
+                        dict.removeValue(forKey: key)
+                    }
+                }*/
             }
         }
     }
@@ -408,7 +420,7 @@ public final class ItemManager {
         let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .bool, elementByteCount: 1, elementCount: array.count, endianness: endianness)
     
         for (i, element) in array.enumerated() {
-            let eptr = im.root._arrayElementPtr(for: i)
+            let eptr = im.root._valuePtr.arrayElementPtr(for: i, endianness)
             element.copyBytes(to: eptr, endianness)
         }
         
@@ -430,7 +442,7 @@ public final class ItemManager {
         let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .uint8, elementByteCount: 1, elementCount: array.count, endianness: endianness)
         
         for (i, element) in array.enumerated() {
-            let eptr = im.root._arrayElementPtr(for: i)
+            let eptr = im.root._valuePtr.arrayElementPtr(for: i, endianness)
             element.copyBytes(to: eptr, endianness)
         }
         
@@ -452,7 +464,7 @@ public final class ItemManager {
         let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .uint16, elementByteCount: 2, elementCount: array.count, endianness: endianness)
 
         for (i, element) in array.enumerated() {
-            let eptr = im.root._arrayElementPtr(for: i)
+            let eptr = im.root._valuePtr.arrayElementPtr(for: i, endianness)
             element.copyBytes(to: eptr, endianness)
         }
         
@@ -474,7 +486,7 @@ public final class ItemManager {
         let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .uint32, elementByteCount: 4, elementCount: array.count, endianness: endianness)
 
         for (i, element) in array.enumerated() {
-            let eptr = im.root._arrayElementPtr(for: i)
+            let eptr = im.root._valuePtr.arrayElementPtr(for: i, endianness)
             element.copyBytes(to: eptr, endianness)
         }
         
@@ -496,7 +508,7 @@ public final class ItemManager {
         let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .uint64, elementByteCount: 8, elementCount: array.count, endianness: endianness)
 
         for (i, element) in array.enumerated() {
-            let eptr = im.root._arrayElementPtr(for: i)
+            let eptr = im.root._valuePtr.arrayElementPtr(for: i, endianness)
             element.copyBytes(to: eptr, endianness)
         }
         
@@ -518,7 +530,7 @@ public final class ItemManager {
         let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .int8, elementByteCount: 1, elementCount: array.count, endianness: endianness)
 
         for (i, element) in array.enumerated() {
-            let eptr = im.root._arrayElementPtr(for: i)
+            let eptr = im.root._valuePtr.arrayElementPtr(for: i, endianness)
             element.copyBytes(to: eptr, endianness)
         }
         
@@ -540,7 +552,7 @@ public final class ItemManager {
         let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .int16, elementByteCount: 2, elementCount: array.count, endianness: endianness)
 
         for (i, element) in array.enumerated() {
-            let eptr = im.root._arrayElementPtr(for: i)
+            let eptr = im.root._valuePtr.arrayElementPtr(for: i, endianness)
             element.copyBytes(to: eptr, endianness)
         }
         
@@ -562,7 +574,7 @@ public final class ItemManager {
         let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .int32, elementByteCount: 4, elementCount: array.count, endianness: endianness)
 
         for (i, element) in array.enumerated() {
-            let eptr = im.root._arrayElementPtr(for: i)
+            let eptr = im.root._valuePtr.arrayElementPtr(for: i, endianness)
             element.copyBytes(to: eptr, endianness)
         }
         
@@ -584,7 +596,7 @@ public final class ItemManager {
         let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .int64, elementByteCount: 8, elementCount: array.count, endianness: endianness)
 
         for (i, element) in array.enumerated() {
-            let eptr = im.root._arrayElementPtr(for: i)
+            let eptr = im.root._valuePtr.arrayElementPtr(for: i, endianness)
             element.copyBytes(to: eptr, endianness)
         }
         
@@ -606,7 +618,7 @@ public final class ItemManager {
         let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .float32, elementByteCount: 4, elementCount: array.count, endianness: endianness)
 
         for (i, element) in array.enumerated() {
-            let eptr = im.root._arrayElementPtr(for: i)
+            let eptr = im.root._valuePtr.arrayElementPtr(for: i, endianness)
             element.copyBytes(to: eptr, endianness)
         }
         
@@ -628,7 +640,7 @@ public final class ItemManager {
         let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .float64, elementByteCount: 8, elementCount: array.count, endianness: endianness)
 
         for (i, element) in array.enumerated() {
-            let eptr = im.root._arrayElementPtr(for: i)
+            let eptr = im.root._valuePtr.arrayElementPtr(for: i, endianness)
             element.copyBytes(to: eptr, endianness)
         }
         
@@ -653,7 +665,7 @@ public final class ItemManager {
         let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .binary, elementByteCount: maxByteCount, elementCount: array.count, endianness: endianness)
 
         for (i, element) in array.enumerated() {
-            let eptr = im.root._arrayElementPtr(for: i)
+            let eptr = im.root._valuePtr.arrayElementPtr(for: i, endianness)
             element.copyBytes(to: eptr, endianness)
         }
         
@@ -706,7 +718,7 @@ public final class ItemManager {
         
         array.forEach() {
             let srcPtr = $0.bufferPtr
-            let dstPtr = im.root._arrayElementPtr(for: im.root._arrayElementCount)
+            let dstPtr = im.root._valuePtr.arrayElementPtr(for: im.root._arrayElementCount, endianness)
             let length = $0.count
             _ = Darwin.memcpy(dstPtr, srcPtr, length)
             UInt32(0).copyBytes(to: dstPtr.advanced(by: itemParentOffsetOffset), endianness)

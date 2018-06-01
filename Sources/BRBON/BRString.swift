@@ -158,7 +158,7 @@ extension Portal {
     public var brString: BRString? {
         get {
             guard isString else { return nil }
-            return BRString.init(fromPtr: _itemValueFieldPtr, endianness)
+            return BRString.init(fromPtr: _valuePtr, endianness)
         }
         set {
             guard isString else { return }

@@ -290,7 +290,7 @@ internal extension UnsafeMutableRawPointer {
     
     /// Returns a pointer to the UTF8 Byte Count in the name field of an item assuming self points to the first byte of an item.
 
-    internal var itemNameUtf8ByteCountPtr: UnsafeMutableRawPointer { return self.advanced(by: itemNameFieldByteCountOffset) }
+    internal var itemNameUtf8ByteCountPtr: UnsafeMutableRawPointer { return self.advanced(by: itemNameUtf8ByteCountOffset) }
 
     
     /// Returns a pointer to the start of the UTF8 Byte Code in the name field of an item assuming self points to the first byte of an item.
@@ -743,7 +743,7 @@ internal func buildItem(ofType type: ItemType, withNameField nameField: NameFiel
     
     if let nameField = nameField {
         ptr.setItemNameCrc(to: nameField.crc, endianness)
-        ptr.itemNameUtf8ByteCount = UInt8(nameField.byteCount)
+        ptr.itemNameUtf8ByteCount = UInt8(nameField.data.count)
         ptr.itemNameUtf8Code = nameField.data
     }
 }

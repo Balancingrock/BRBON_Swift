@@ -154,8 +154,8 @@ public extension Portal {
     
     public var binary: Data? {
         get {
-            if isBinary { return itemPtr.binaryData(endianness) }
-            if isCrcBinary { return itemPtr.crcBinaryData(endianness) }
+            if isBinary { return _binaryData }
+            if isCrcBinary { return _crcBinaryData }
             return nil
         }
         set {

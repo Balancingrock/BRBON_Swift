@@ -108,7 +108,7 @@ public extension Portal {
     public var isColor: Bool {
         guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.color }
-        if index != nil { return itemPtr.arrayElementType == ItemType.color.rawValue }
+        if index != nil { return itemPtr.itemValueFieldPtr.arrayElementType == ItemType.color.rawValue }
         return itemPtr.itemType == ItemType.color.rawValue
     }
     

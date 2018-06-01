@@ -90,9 +90,9 @@ class Bool_Tests: XCTestCase {
         XCTAssertEqual(imt.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(imt.root.itemFlags, ItemFlags.none)
         XCTAssertEqual(imt.root._itemNameFieldByteCount, 0)
-        XCTAssertEqual(imt.root._itemByteCount, itemMinimumByteCount)
+        XCTAssertEqual(imt.root._itemByteCount, itemHeaderByteCount)
         XCTAssertEqual(imt.root._itemParentOffset, 0)
-        XCTAssertEqual(imt.root._itemSmallValue, 1)
+        XCTAssertEqual(imt.root._itemSmallValue(Endianness.little), 1)
         
         var data = imt.data // Data(bytesNoCopy: buffer.baseAddress!, count: 16, deallocator: Data.Deallocator.none)
         
@@ -114,9 +114,9 @@ class Bool_Tests: XCTestCase {
         XCTAssertEqual(imf.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(imf.root.itemFlags, ItemFlags.none)
         XCTAssertEqual(imf.root._itemNameFieldByteCount, 0)
-        XCTAssertEqual(imf.root._itemByteCount, itemMinimumByteCount)
+        XCTAssertEqual(imf.root._itemByteCount, itemHeaderByteCount)
         XCTAssertEqual(imf.root._itemParentOffset, 0)
-        XCTAssertEqual(imf.root._itemSmallValue, 0)
+        XCTAssertEqual(imf.root._itemSmallValue(Endianness.little), 0)
 
         data = imf.data // Data(bytesNoCopy: buffer.baseAddress!, count: 16, deallocator: Data.Deallocator.none)
         
