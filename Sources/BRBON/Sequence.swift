@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.0 - Code restructuring & simplification
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -168,29 +169,6 @@ extension Portal {
         
         return .success
     }
-    
-    
-    /// Adds a new value to the end of the sequence.
-    ///
-    /// - Parameters:
-    ///   - value: The value to be added to the sequence.
-    ///   - withNameField: The name field for the new value.
-    ///
-    /// - Returns: 'success' or an error indicator.
-    /*
-    internal func _sequenceAppendItem(_ value: Coder, withNameField nameField: NameField?) -> Result {
-        
-        let neededItemByteCount = _sequenceValueFieldUsedByteCount + itemMinimumByteCount + (nameField?.byteCount ?? 0) + value.minimumValueFieldByteCount
-        let result = ensureValueFieldByteCount(of: neededItemByteCount)
-        guard result == .success else { return result }
-        
-        let p = buildItem(withValue: value, withNameField: nameField, atPtr: _sequenceAfterLastItemPtr, endianness)
-        p._itemParentOffset = manager.bufferPtr.distance(to: itemPtr)
-        
-        _sequenceItemCount += 1
-        
-        return .success
-    }*/
     
     
     /// Inserts a new element.
@@ -378,47 +356,6 @@ extension Portal {
         
         return .success
     }
-
-    
-    /// Replaces an item in a sequence.
-    ///
-    /// The item referenced by this portal is replaced by the new value. The byte count will be preserved as is, or enlarged as necessary. If there is an existing name it will be preserved.
-    /*
-    internal func _sequenceReplaceItem(_ value: Coder, atIndex index: Int) -> Result {
-        
-        let oldItem = _sequencePortalForItem(at: index)
-        let oldNameField = oldItem.itemNameField
-        
-        
-        // Make sure the item byte count is big enough
-            
-        let newItemByteCount = itemMinimumByteCount + (oldNameField?.byteCount ?? 0) + value.minimumValueFieldByteCount
-        let oldItemByteCount = oldItem._itemByteCount
-        
-        if newItemByteCount > oldItemByteCount {
-            let result = oldItem.increaseItemByteCount(to: newItemByteCount)
-            guard result == .success else { return result }
-        }
-
-        
-        // Clear the old item
-        
-        if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(oldItem.itemPtr, 0, oldItemByteCount) }
-        
-        
-        // Write the new value as an item
-            
-        let newItem = buildItem(withValue: value, withNameField: oldNameField, atPtr: oldItem.itemPtr, endianness)
-        newItem._itemParentOffset = manager.bufferPtr.distance(to: itemPtr)
-        newItem._itemByteCount = max(newItemByteCount, oldItemByteCount)
-        
-        
-        // Remove the portal(s) related to the old content
-        
-        manager.removeActivePortals(atAndAbove: oldItem.itemPtr, below: oldItem.itemPtr.advanced(by: oldItemByteCount))
-        
-        return .success
-    }*/
 }
 
 

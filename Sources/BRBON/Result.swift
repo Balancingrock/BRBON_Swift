@@ -3,7 +3,7 @@
 //  File:       Results.swift
 //  Project:    BRBON
 //
-//  Version:    0.4.2
+//  Version:    0.7.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.0 - Code restructuring & simplification
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 

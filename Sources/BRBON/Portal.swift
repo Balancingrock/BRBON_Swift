@@ -44,8 +44,8 @@
 //
 // History
 //
-// 0.7.0 - Added type .color and .font
-//         Type change is no longer possible
+// 0.7.0 - Code restructuring & simplification
+//       - Added type .color and .font
 // 0.5.0 - Migration to Swift 4
 // 0.4.3 - Changed access levels for index and column
 // 0.4.2 - Added header & general review of access levels
@@ -571,105 +571,4 @@ extension Portal {
         if index != nil { return itemPtr.itemValueFieldPtr.arrayElementType == ItemType.table.rawValue }
         return itemPtr.itemType == ItemType.table.rawValue
     }
-    
-    
-    /// General purpose assignment assistance for small-value setters.
-    ///
-    /// Despite its name, the assignment may well be to a table element or column field. But there will be no calls made to ensure the size of the value field.
-    /*
-    private func assistSmallValueAssignment(_ newValue: Coder!) {
-        
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-        guard newValue.itemType == itemType else { fatalOrNull("Type change not allowed (from \(itemType!) to \(newValue.itemType))"); return }
-        
-        if index != nil {
-            
-            guard let newValue = newValue, newValue.itemType == valueType else {
-                fatalOrNull("Type change not allowed")
-                return
-            }
-                
-            newValue.storeValue(atPtr: valueFieldPtr, endianness)
-        
-        } else {
-            
-            if let newValue = newValue {
-                
-                newValue.storeValue(atPtr: itemValueFieldPtr, endianness)
-                
-            } else {
-                
-                removeChildItems()
-                _itemSmallValue = UInt32(0)
-            }
-        }
-    }
-
-    
-    /// General purpose assignment assistance for setters.
-    
-    internal func assistValueFieldAssignment(_ newValue: Coder?) {
-        
-        guard isValid else { fatalOrNull("Portal is no longer valid"); return }
-        
-        if let index = index {
-            
-            if let column = column {
-                
-                guard let newValue = newValue, newValue.itemType == valueType else {
-                    fatalOrNull("Column type change not allowed")
-                    return
-                }
-                
-                guard _tableEnsureColumnValueByteCount(of: newValue.valueByteCount, in: column) == .success else {
-                    fatalOrNull("Could not allocate additional memory")
-                    return
-                }
-                
-                newValue.storeValue(atPtr: _tableFieldPtr(row: index, column: column), endianness)
-                
-            } else {
-                
-                guard let newValue = newValue, newValue.itemType == valueType else {
-                    fatalOrNull("Element type change not allowed (is: \(String(describing: itemType)))")
-                    return
-                }
-                
-                guard _arrayEnsureElementByteCount(for: newValue) == .success else {
-                    fatalOrNull("Could not allocate additional memory")
-                    return
-                }
-                
-                newValue.storeValue(atPtr: _arrayElementPtr(for: index), endianness)
-            }
-        } else {
-            
-            if let newValue = newValue {
-                
-                let result = itemEnsureValueFieldByteCount(of: newValue.valueByteCount)
-                
-                guard result == .success else { fatalError(result.description) }
-                
-                newValue.storeValue(atPtr: itemValueFieldPtr, endianness)
-                
-            } else {
-                
-                removeChildItems()
-            }
-        }
-    }
-
-    
-    /// Changes the type of self to a null.
-    ///
-    /// If self is a container, all portals for the contained items and elements are removed from the active portal list.
-    
-    private func removeChildItems(_ removeSelf: Bool = false) {
-        if isArray || isDictionary || isSequence {
-            forEachAbortOnTrue({ $0.removeChildItems(true); return false })
-        }
-        if removeSelf {
-            manager.removeActivePortal(self)
-        }
-    }*/
 }

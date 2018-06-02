@@ -44,8 +44,8 @@
 //
 // History
 //
-// 0.7.0 - Added type .color and .font
-//         Type change is no longer possible
+// 0.7.0 - Code restructuring & simplification
+//       - Added type .color and .font
 // 0.5.0 - Migration to Swift 4
 // 0.4.3 - Changed access levels for index and column
 // 0.4.2 - Added header & general review of access levels

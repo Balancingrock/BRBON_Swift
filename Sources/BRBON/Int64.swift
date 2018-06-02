@@ -44,7 +44,7 @@
 //
 // History
 //
-// 0.7.0 - Code reorganization
+// 0.7.0 - Code restructuring & simplification
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -73,8 +73,6 @@ public extension Portal {
     /// Access the value through the portal as an Int64.
     ///
     /// - Note: Assignment of nil has no effect.
-    
-    /// Access the value through the portal as an Int64
     
     public var int64: Int64? {
         get {

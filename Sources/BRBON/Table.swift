@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.0 - Code restructuring & simplification
 // 0.5.0 - Fixed some bugs for the field assignments
 //         Migrates to Swift 4
 // 0.4.3 - Changed assignField from internal to public
@@ -420,7 +421,6 @@ extension UnsafeMutableRawPointer {
         let columnOffset = Int(tableColumnFieldOffset(for: column, endianness))
         return rowPtr.advanced(by: columnOffset)
     }
-    
 }
 
 
@@ -730,7 +730,6 @@ extension Portal {
     internal func _tableGetColumnType(for column: Int) -> ItemType {
         return ItemType(rawValue: itemPtr.itemValueFieldPtr.tableColumnType(for: column)) ?? ItemType.null
     }
-
 }
 
 extension Portal {

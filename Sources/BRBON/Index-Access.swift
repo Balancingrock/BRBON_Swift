@@ -3,7 +3,7 @@
 //  File:       Index-Access.swift
 //  Project:    BRBON
 //
-//  Version:    0.5.0
+//  Version:    0.7.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.0 - Code restructuring & simplification
 // 0.5.0 - Migration to Swift 4
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
@@ -197,94 +198,4 @@ public extension Portal {
         get { return self[index].color }
         set { self[index].color = newValue }
     }
-    /*
-    /// Removes an item.
-    ///
-    /// If the index is out of bounds the operation will fail. Notice that the itemByteCount of the array will not decrease.
-    ///
-    /// - Note: Only for array or sequence items.
-    ///
-    /// - Parameter index: The index of the element to remove.
-    ///
-    /// - Returns: success or an error indicator.
-
-    @discardableResult
-    public func removeItem(at index: Int) -> Result {
-        
-        
-        // Portal must be valid
-        
-        guard isValid else { return .error(.portalInvalid) }
-        
-        
-        // Index should be positive
-        
-        guard index >= 0 else { return .error(.indexBelowLowerBound) }
-
-        
-        // Implement for sequence
-        
-        if isSequence {
-        
-            
-            // Index must be lower than the number of items
-            
-            guard index < _sequenceItemCount else { return .error(.indexAboveHigherBound) }
-            
-            return _sequenceRemoveItem(atIndex: index)
-        }
-        
-        
-        // Not supported for other types
-        
-        return .error(.operationNotSupported)
-    }
-    
-    
-    /// Inserts a new element.
-    ///
-    /// - Note: Only for array and sequence items.
-    ///
-    /// - Parameters:
-    ///   - value: The value to be inserted. Note that adding a nil will be reported as success, but will not change an array nor a sequence.
-    ///   - atIndex: The index at which to insert the value.
-    ///   - withName: A name for the value, only used if the target is a sequence. Ignorded for arrays.
-    ///
-    /// - Returns: 'success' or an error indicator.
-
-    @discardableResult
-    public func insertItem(_ value: Coder?, atIndex index: Int, withName name: String? = nil) -> Result {
-        
-        
-        // Ignore nil's
-        
-        guard let value = value else { return .success }
-
-        
-        // The portal must be valid
-        
-        guard isValid else { return .error(.portalInvalid) }
-        
-        
-        // The index must be positive
-        
-        guard index >= 0 else { return .error(.indexBelowLowerBound) }
-
-        
-        // Implement for sequence
-        
-        if isSequence {
-            
-            // Index must be lower than the number of elements
-
-            guard index < _sequenceItemCount else { return .error(.indexAboveHigherBound) }
-
-            return _sequenceInsertItem(value, atIndex: index, withNameField: NameField(name))
-        }
-        
-        
-        // Not supported for other types        
-        
-        return .operationNotSupported
-    }*/
 }

@@ -44,7 +44,7 @@
 //
 // History
 //
-// 0.7.0 - Code reorganization and API simplification
+// 0.7.0 - Code restructuring & simplification
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 //
@@ -173,14 +173,6 @@ extension Portal {
         get { return Int(itemPtr.itemValueFieldPtr.arrayElementByteCount(endianness)) }
         set { itemPtr.itemValueFieldPtr.setArrayElementByteCount(to: UInt32(newValue), endianness) }
     }
-    
-    
-    /// The element pointer for a given index.
-    
-    //internal func _arrayElementPtr(for index: Int) -> UnsafeMutableRawPointer {
-    //    let elementOffset = index * _arrayElementByteCount
-    //    return _valuePtr.arrayElementBasePtr.advanced(by: elementOffset)
-    //}
 
     
     /// The total area used in the value field.
@@ -437,11 +429,6 @@ extension Portal {
         let neccesaryValueByteCount = arrayElementBaseOffset + _arrayElementByteCount * (_arrayElementCount + 1)
         let result1 = ensureValueFieldByteCount(of: neccesaryValueByteCount)
         guard result1 == .success else { return result }
-
-        //if currentValueFieldByteCount - _arrayValueFieldUsedByteCount < byteCountPerElement {
-            //let result = increaseItemByteCount(to: itemMinimumByteCount + _itemNameFieldByteCount + arrayElementBaseOffset + ((_arrayElementCount + 1) * byteCountPerElement).roundUpToNearestMultipleOf8())
-            //guard result == .success else { return result }
-        //}
         
         
         // The new value can be added

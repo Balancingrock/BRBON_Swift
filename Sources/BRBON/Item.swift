@@ -44,7 +44,7 @@
 //
 // History
 //
-// 0.7.0 - Moved some code around, file renamed.
+// 0.7.0 - Code restructuring & simplification
 // 0.5.0 - Migration to Swift 4
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
@@ -453,34 +453,6 @@ extension Portal {
     internal func _setItemSmallValue(to value: UInt32, _ endianness: Endianness) {
         itemPtr.setItemSmallValue(to: value, endianness)
     }
-
-    
-    /// The small value field accessor as a UInt16
-    
-//    internal func _itemSmallValue(_ endianness: Endianness) -> UInt16 {
-//        return itemPtr.itemSmallValue(endianness)
-//    }
-    
-    
-    /// Set the small value field as a UInt16
-    
-//    internal func _setItemSmallValue(to value: UInt16, _ endianness: Endianness) {
-//        itemPtr.setItemSmallValue(to: value, endianness)
-//    }
-
-    
-    /// The small value field accessor as a UInt8
-    
-//    internal func _itemSmallValue() -> UInt8 {
-//        return itemPtr.itemSmallValue()
-//    }
-    
-    
-    /// Set the small value field as a UInt8
-    
-//    internal func _setItemSmallValue(to value: UInt8) {
-//        itemPtr.setItemSmallValue(to: value)
-//    }
 }
 
 extension Portal {

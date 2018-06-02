@@ -44,7 +44,7 @@
 //
 // History
 //
-// 0.7.0 - File renamed from Data-Coder to Coder-Data
+// 0.7.0 - Code restructuring & simplification
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 

@@ -44,7 +44,7 @@
 //
 // History
 //
-// 0.7.0 - Code reorganization
+// 0.7.0 - Code restructuring & simplification
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 

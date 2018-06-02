@@ -45,9 +45,10 @@
 //
 // History
 //
-// 0.7.0  - Added Color and Font
-// 0.4.2  - Changed raw values and redone access levels
-// 0.1.0  - Initial version
+// 0.7.0 - Code restructuring & simplification
+//       - Added Color and Font
+// 0.4.2 - Changed raw values and redone access levels
+// 0.1.0 - Initial version
 // =====================================================================================================================
 
 import Foundation

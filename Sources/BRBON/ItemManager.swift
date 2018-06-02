@@ -44,7 +44,8 @@
 //
 // History
 //
-// 0.7.0 - Added .color and .font
+// 0.7.0 - Code restructuring & simplification
+//       - Added .color and .font
 // 0.5.0 - Migration to Swift 4
 //         Changed ActivePortal from struct to class to avoid concurrent memory access problem.
 // 0.4.3 - Added init:from:withMinimumBufferByteCount
@@ -170,25 +171,6 @@ fileprivate class ActivePortals {
                         dict.removeValue(forKey: key)
                     }
                 }
-                /*
-                if let _ = portal.column, let _ = portal.index {
-                    
-                    let ptr = portal._valuePtr // itemPtr.itemValueFieldPtr.tableFieldPtr(row: index, column: column, portal.endianness)
-                    
-                    if ptr >= atAndAbove && ptr < below {
-                        portal.isValid = false
-                        dict.removeValue(forKey: key)
-                    }
-                
-                } else if portal.index != nil {
-                    
-                    let ptr = portal._valuePtr
-                    
-                    if ptr >= atAndAbove && ptr < below {
-                        portal.isValid = false
-                        dict.removeValue(forKey: key)
-                    }
-                }*/
             }
         }
     }

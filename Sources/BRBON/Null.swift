@@ -44,7 +44,7 @@
 //
 // History
 //
-// 0.7.0 - Code reorganization
+// 0.7.0 - Code restructuring & simplification
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -79,9 +79,6 @@ public extension Portal {
         get { return isNull }
         set {}
     }
-    
-    
-    // Note: A Null cannot be appended to an Array.
 }
 
 

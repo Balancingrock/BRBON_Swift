@@ -44,7 +44,7 @@
 //
 // History
 //
-// 0.7.0 - Reorganization & Simplification.
+// 0.7.0 - Code restructuring & simplification
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
 
@@ -144,11 +144,7 @@ fileprivate extension UnsafeMutableRawPointer {
 // Utility additions for the crcString
 
 internal extension Portal {
-    
-//    internal var _crcStringUtf8Code: Data {
         
-//    }
-    
     internal var _crcStringValueFieldUsedByteCount: Int {
         return crcStringUtf8CodeOffset + Int(itemPtr.crcStringUtf8ByteCount(endianness))
     }

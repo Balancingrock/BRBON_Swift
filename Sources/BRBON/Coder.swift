@@ -3,7 +3,7 @@
 //  File:       Coder.swift
 //  Project:    BRBON
 //
-//  Version:    0.4.2
+//  Version:    0.7.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,8 +44,9 @@
 //
 // History
 //
-// 0.1.0  - Initial version
-// 0.4.2  - Updates due to new structure & API organization
+// 0.7.0 - Code restructuring & simplification
+// 0.4.2 - Updates due to new structure & API organization
+// 0.1.0 - Initial version
 // =====================================================================================================================
  
 import Foundation
