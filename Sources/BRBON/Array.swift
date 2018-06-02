@@ -152,24 +152,26 @@ extension Portal {
     /// The type of the element stored in the array this portal refers to.
     
     internal var _arrayElementType: ItemType? {
-        get { return ItemType(rawValue: _valuePtr.arrayElementType) }
-        set { _valuePtr.arrayElementType = newValue?.rawValue ?? 0 }
+        get { return ItemType(rawValue: itemPtr.itemValueFieldPtr.arrayElementType) }
+        set {
+            var ptr = itemPtr.itemValueFieldPtr
+            ptr.arrayElementType = newValue?.rawValue ?? 0 }
     }
     
 
     /// The number of elements in the array this portal refers to.
     
     internal var _arrayElementCount: Int {
-        get { return Int(_valuePtr.arrayElementCount(endianness)) }
-        set { _valuePtr.setArrayElementCount(to: UInt32(newValue), endianness) }
+        get { return Int(itemPtr.itemValueFieldPtr.arrayElementCount(endianness)) }
+        set { itemPtr.itemValueFieldPtr.setArrayElementCount(to: UInt32(newValue), endianness) }
     }
     
     
     /// The byte count of the elements in the array this portal refers to.
     
     internal var _arrayElementByteCount: Int {
-        get { return Int(_valuePtr.arrayElementByteCount(endianness)) }
-        set { _valuePtr.setArrayElementByteCount(to: UInt32(newValue), endianness) }
+        get { return Int(itemPtr.itemValueFieldPtr.arrayElementByteCount(endianness)) }
+        set { itemPtr.itemValueFieldPtr.setArrayElementByteCount(to: UInt32(newValue), endianness) }
     }
     
     

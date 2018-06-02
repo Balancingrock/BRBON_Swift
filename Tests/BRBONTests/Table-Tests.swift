@@ -26,8 +26,8 @@ class Table_Tests: XCTestCase {
         
         
         // Create empty table
-        
-        let tm = ItemManager(rootItemType: .table)
+        var columns: Array<ColumnSpecification> = []
+        let tm = ItemManager.createTableManager(columns: &columns, endianness: Endianness.little)
         
         
         // Basic portal properties
@@ -64,11 +64,11 @@ class Table_Tests: XCTestCase {
     
     func test_02_tableWith1Column_NoRows() {
         
-        let col = ColumnSpecification(type: .uint8, name: NameField("aa")!, byteCount: 1)
+        let col = ColumnSpecification(type: .uint8, nameField: NameField("aa")!, byteCount: 1)
         
-        let table = BrbonTable(columnSpecifications: [col])
+        var columns: Array<ColumnSpecification> = [col]
         
-        let tm = ItemManager(value: table) 
+        let tm = ItemManager.createTableManager(columns: &columns, initialRowsAllocated: 0, endianness: Endianness.little)
         
         
         // Basic portal properties
@@ -107,22 +107,22 @@ class Table_Tests: XCTestCase {
         
         XCTAssertEqual(tm.root._tableGetColumnName(for: 0), "aa")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 0), ItemType.uint8)
-        XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 0), 0x78E8)
-        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 0), 0)
-        XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 0), 8)
-        XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 0), 0x20)
-        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 0), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameCrc(for: 0, Endianness.little), 0x78E8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldOffset(for: 0, Endianness.little), 0)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameByteCount(for: 0), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameUtf8Offset(for: 0, Endianness.little), 0x20)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldByteCount(for: 0, Endianness.little), 8)
     }
     
     func createTableWith3Columns() -> ItemManager? {
         
-        let col1 = ColumnSpecification(type: .uint8, name: NameField("aa")!, byteCount: 1)
-        let col2 = ColumnSpecification(type: .int8, name: NameField("bb")!, byteCount: 1)
-        let col3 = ColumnSpecification(type: .string, name: NameField("cc")!, byteCount: 16)
+        let col1 = ColumnSpecification(type: .uint8, nameField: NameField("aa")!, byteCount: 1)
+        let col2 = ColumnSpecification(type: .int8, nameField: NameField("bb")!, byteCount: 1)
+        let col3 = ColumnSpecification(type: .string, nameField: NameField("cc")!, byteCount: 16)
         
-        let table = BrbonTable(columnSpecifications: [col1, col2, col3])
+        var columns = [col1, col2, col3]
         
-        return ItemManager(value: table)
+        return ItemManager.createTableManager(columns: &columns, initialRowsAllocated: 0, endianness: Endianness.little)
     }
     
     func test_03_tableWith3Columns_NoRows() {
@@ -166,40 +166,40 @@ class Table_Tests: XCTestCase {
         
         XCTAssertEqual(tm.root._tableGetColumnName(for: 0), "aa")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 0), ItemType.uint8)
-        XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 0), 0x78E8)
-        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 0), 0)
-        XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 0), 8)
-        XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 0), 0x40)
-        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 0), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameCrc(for: 0, Endianness.little), 0x78E8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldOffset(for: 0, Endianness.little), 0)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameByteCount(for: 0), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameUtf8Offset(for: 0, Endianness.little), 0x40)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldByteCount(for: 0, Endianness.little), 8)
 
         
         // Column 2 properties
         
         XCTAssertEqual(tm.root._tableGetColumnName(for: 1), "bb")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 1), ItemType.int8)
-        XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 1), 0x89A8)
-        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 1), 8)
-        XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 1), 8)
-        XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 1), 0x48)
-        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 1), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameCrc(for: 1, Endianness.little), 0x89A8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldOffset(for: 1, Endianness.little), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameByteCount(for: 1), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameUtf8Offset(for: 1, Endianness.little), 0x48)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldByteCount(for: 1, Endianness.little), 8)
 
         
         // Column 3 properties
         
         XCTAssertEqual(tm.root._tableGetColumnName(for: 2), "cc")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 2), ItemType.string)
-        XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 2), 0xD968)
-        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 2), 16)
-        XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 2), 8)
-        XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 2), 0x50)
-        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 2), 16)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameCrc(for: 2, Endianness.little), 0xD968)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldOffset(for: 2, Endianness.little), 16)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameByteCount(for: 2), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameUtf8Offset(for: 2, Endianness.little), 0x50)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldByteCount(for: 2, Endianness.little), 16)
     }
 
     func test_04_addColumn() {
         
         guard let tm = createTableWith3Columns() else { XCTFail(); return }
         
-        XCTAssertEqual(tm.root.addColumn(type: .int64, name: NameField("dd")!, byteCount: 8), Result.success)
+        XCTAssertEqual(tm.root.addColumn(type: .int64, nameField: NameField("dd")!, byteCount: 8), Result.success)
         
         // Basic portal properties
         
@@ -237,55 +237,52 @@ class Table_Tests: XCTestCase {
         
         XCTAssertEqual(tm.root._tableGetColumnName(for: 0), "aa")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 0), ItemType.uint8)
-        XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 0), 0x78E8)
-        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 0), 0)
-        XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 0), 8)
-        XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 0), 0x50)
-        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 0), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameCrc(for: 0, Endianness.little), 0x78E8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldOffset(for: 0, Endianness.little), 0)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameByteCount(for: 0), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameUtf8Offset(for: 0, Endianness.little), 0x50)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldByteCount(for: 0, Endianness.little), 8)
         
         
         // Column 2 properties
         
         XCTAssertEqual(tm.root._tableGetColumnName(for: 1), "bb")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 1), ItemType.int8)
-        XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 1), 0x89A8)
-        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 1), 8)
-        XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 1), 8)
-        XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 1), 0x58)
-        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 1), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameCrc(for: 1, Endianness.little), 0x89A8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldOffset(for: 1, Endianness.little), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameByteCount(for: 1), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameUtf8Offset(for: 1, Endianness.little), 0x58)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldByteCount(for: 1, Endianness.little), 8)
         
         
         // Column 3 properties
         
         XCTAssertEqual(tm.root._tableGetColumnName(for: 2), "cc")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 2), ItemType.string)
-        XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 2), 0xD968)
-        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 2), 16)
-        XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 2), 8)
-        XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 2), 0x60)
-        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 2), 16)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameCrc(for: 2, Endianness.little), 0xD968)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldOffset(for: 2, Endianness.little), 16)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameByteCount(for: 2), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameUtf8Offset(for: 2, Endianness.little), 0x60)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldByteCount(for: 2, Endianness.little), 16)
 
         
         // Column 4 properties
         
         XCTAssertEqual(tm.root._tableGetColumnName(for: 3), "dd")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 3), ItemType.int64)
-        XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 3), 0x2B2B)
-        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 3), 8+8+16)
-        XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 3), 8)
-        XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 3), 0x68)
-        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 3), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameCrc(for: 3, Endianness.little), 0x2B2B)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldOffset(for: 3, Endianness.little), 8+8+16)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameByteCount(for: 3), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameUtf8Offset(for: 3, Endianness.little), 0x68)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldByteCount(for: 3, Endianness.little), 8)
     }
     
     func test_05_removeColumn() {
         
         guard let tm = createTableWith3Columns() else { XCTFail(); return }
         
-        BRBON.allowFatalError = false
-        XCTAssertEqual(tm.root.removeColumn("ee"), Result.columnNotFound)
-        BRBON.allowFatalError = true
-        
-        XCTAssertEqual(tm.root.removeColumn("bb"), Result.success)
+        XCTAssertEqual(tm.root.removeColumn("ee"), .error(.columnNotFound))
+        XCTAssertEqual(tm.root.removeColumn("bb"), .success)
         
         
         // Basic portal properties
@@ -324,22 +321,22 @@ class Table_Tests: XCTestCase {
         
         XCTAssertEqual(tm.root._tableGetColumnName(for: 0), "aa")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 0), ItemType.uint8)
-        XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 0), 0x78E8)
-        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 0), 0)
-        XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 0), 8)
-        XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 0), 48)
-        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 0), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameCrc(for: 0, Endianness.little), 0x78E8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldOffset(for: 0, Endianness.little), 0)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameByteCount(for: 0), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameUtf8Offset(for: 0, Endianness.little), 48)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldByteCount(for: 0, Endianness.little), 8)
         
         
         // Column 2 properties
         
         XCTAssertEqual(tm.root._tableGetColumnName(for: 1), "cc")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 1), ItemType.string)
-        XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 1), 0xD968)
-        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 1), 8)
-        XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 1), 8)
-        XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 1), 56)
-        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 1), 16)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameCrc(for: 1, Endianness.little), 0xD968)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldOffset(for: 1, Endianness.little), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameByteCount(for: 1), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameUtf8Offset(for: 1, Endianness.little), 56)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldByteCount(for: 1, Endianness.little), 16)
     }
     
     func test_06_add1Row() {
@@ -385,11 +382,11 @@ class Table_Tests: XCTestCase {
         
         XCTAssertEqual(tm.root._tableGetColumnName(for: 0), "aa")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 0), ItemType.uint8)
-        XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 0), 0x78E8)
-        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 0), 0)
-        XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 0), 8)
-        XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 0), 0x40)
-        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 0), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameCrc(for: 0, Endianness.little), 0x78E8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldOffset(for: 0, Endianness.little), 0)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameByteCount(for: 0), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameUtf8Offset(for: 0, Endianness.little), 0x40)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldByteCount(for: 0, Endianness.little), 8)
         
         // Column 1 value
         
@@ -400,11 +397,11 @@ class Table_Tests: XCTestCase {
         
         XCTAssertEqual(tm.root._tableGetColumnName(for: 1), "bb")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 1), ItemType.int8)
-        XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 1), 0x89A8)
-        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 1), 8)
-        XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 1), 8)
-        XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 1), 0x48)
-        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 1), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameCrc(for: 1, Endianness.little), 0x89A8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldOffset(for: 1, Endianness.little), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameByteCount(for: 1), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameUtf8Offset(for: 1, Endianness.little), 0x48)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldByteCount(for: 1, Endianness.little), 8)
         
         // Column 2 value
         
@@ -415,11 +412,11 @@ class Table_Tests: XCTestCase {
         
         XCTAssertEqual(tm.root._tableGetColumnName(for: 2), "cc")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 2), ItemType.string)
-        XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 2), 0xD968)
-        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 2), 16)
-        XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 2), 8)
-        XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 2), 0x50)
-        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 2), 16)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameCrc(for: 2, Endianness.little), 0xD968)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldOffset(for: 2, Endianness.little), 16)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameByteCount(for: 2), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameUtf8Offset(for: 2, Endianness.little), 0x50)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldByteCount(for: 2, Endianness.little), 16)
 
         // Column 3 value
         
@@ -469,11 +466,11 @@ class Table_Tests: XCTestCase {
         
         XCTAssertEqual(tm.root._tableGetColumnName(for: 0), "aa")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 0), ItemType.uint8)
-        XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 0), 0x78E8)
-        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 0), 0)
-        XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 0), 8)
-        XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 0), 0x40)
-        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 0), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameCrc(for: 0, Endianness.little), 0x78E8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldOffset(for: 0, Endianness.little), 0)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameByteCount(for: 0), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameUtf8Offset(for: 0, Endianness.little), 0x40)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldByteCount(for: 0, Endianness.little), 8)
         
         // Column 1 value
         
@@ -486,11 +483,11 @@ class Table_Tests: XCTestCase {
         
         XCTAssertEqual(tm.root._tableGetColumnName(for: 1), "bb")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 1), ItemType.int8)
-        XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 1), 0x89A8)
-        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 1), 8)
-        XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 1), 8)
-        XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 1), 0x48)
-        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 1), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameCrc(for: 1, Endianness.little), 0x89A8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldOffset(for: 1, Endianness.little), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameByteCount(for: 1), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameUtf8Offset(for: 1, Endianness.little), 0x48)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldByteCount(for: 1, Endianness.little), 8)
         
         // Column 2 value
         
@@ -503,11 +500,11 @@ class Table_Tests: XCTestCase {
         
         XCTAssertEqual(tm.root._tableGetColumnName(for: 2), "cc")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 2), ItemType.string)
-        XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 2), 0xD968)
-        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 2), 16)
-        XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 2), 8)
-        XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 2), 0x50)
-        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 2), 16)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameCrc(for: 2, Endianness.little), 0xD968)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldOffset(for: 2, Endianness.little), 16)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameByteCount(for: 2), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameUtf8Offset(for: 2, Endianness.little), 0x50)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldByteCount(for: 2, Endianness.little), 16)
         
         // Column 3 value
         
@@ -559,11 +556,11 @@ class Table_Tests: XCTestCase {
         
         XCTAssertEqual(tm.root._tableGetColumnName(for: 0), "aa")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 0), ItemType.uint8)
-        XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 0), 0x78E8)
-        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 0), 0)
-        XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 0), 8)
-        XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 0), 0x40)
-        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 0), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameCrc(for: 0, Endianness.little), 0x78E8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldOffset(for: 0, Endianness.little), 0)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameByteCount(for: 0), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameUtf8Offset(for: 0, Endianness.little), 0x40)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldByteCount(for: 0, Endianness.little), 8)
         
         // Column 1 value
         
@@ -584,11 +581,11 @@ class Table_Tests: XCTestCase {
         
         XCTAssertEqual(tm.root._tableGetColumnName(for: 1), "bb")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 1), ItemType.int8)
-        XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 1), 0x89A8)
-        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 1), 8)
-        XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 1), 8)
-        XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 1), 0x48)
-        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 1), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameCrc(for: 1, Endianness.little), 0x89A8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldOffset(for: 1, Endianness.little), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameByteCount(for: 1), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameUtf8Offset(for: 1, Endianness.little), 0x48)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldByteCount(for: 1, Endianness.little), 8)
         
         // Column 2 value
         
@@ -609,11 +606,11 @@ class Table_Tests: XCTestCase {
         
         XCTAssertEqual(tm.root._tableGetColumnName(for: 2), "cc")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 2), ItemType.string)
-        XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 2), 0xD968)
-        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 2), 16)
-        XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 2), 8)
-        XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 2), 0x50)
-        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 2), 16)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameCrc(for: 2, Endianness.little), 0xD968)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldOffset(for: 2, Endianness.little), 16)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameByteCount(for: 2), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameUtf8Offset(for: 2, Endianness.little), 0x50)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldByteCount(for: 2, Endianness.little), 16)
         
         // Column 3 value
         
@@ -749,11 +746,11 @@ class Table_Tests: XCTestCase {
         
         XCTAssertEqual(tm.root._tableGetColumnName(for: 0), "aa")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 0), ItemType.uint8)
-        XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 0), 0x78E8)
-        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 0), 0)
-        XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 0), 8)
-        XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 0), 48)
-        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 0), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameCrc(for: 0, Endianness.little), 0x78E8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldOffset(for: 0, Endianness.little), 0)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameByteCount(for: 0), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameUtf8Offset(for: 0, Endianness.little), 48)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldByteCount(for: 0, Endianness.little), 8)
         
         // Column 1 values
         
@@ -766,11 +763,11 @@ class Table_Tests: XCTestCase {
         
         XCTAssertEqual(tm.root._tableGetColumnName(for: 1), "cc")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 1), ItemType.string)
-        XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 1), 0xD968)
-        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 1), 8)
-        XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 1), 8)
-        XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 1), 56)
-        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 1), 16)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameCrc(for: 1, Endianness.little), 0xD968)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldOffset(for: 1, Endianness.little), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameByteCount(for: 1), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameUtf8Offset(for: 1, Endianness.little), 56)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldByteCount(for: 1, Endianness.little), 16)
         
         // Column 2 values
         
@@ -796,11 +793,11 @@ class Table_Tests: XCTestCase {
         
         XCTAssertEqual(tm.root._tableGetColumnName(for: 0), "cc")
         XCTAssertEqual(tm.root._tableGetColumnType(for: 0), ItemType.string)
-        XCTAssertEqual(tm.root._tableGetColumnNameCrc(for: 0), 0xD968)
-        XCTAssertEqual(tm.root._tableGetColumnFieldOffset(for: 0), 0)
-        XCTAssertEqual(tm.root._tableGetColumnNameByteCount(for: 0), 8)
-        XCTAssertEqual(tm.root._tableGetColumnNameUtf8Offset(for: 0), 32)
-        XCTAssertEqual(tm.root._tableGetColumnFieldByteCount(for: 0), 16)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameCrc(for: 0, Endianness.little), 0xD968)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldOffset(for: 0, Endianness.little), 0)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameByteCount(for: 0), 8)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnNameUtf8Offset(for: 0, Endianness.little), 32)
+        XCTAssertEqual(tm.root.itemPtr.itemValueFieldPtr.tableColumnFieldByteCount(for: 0, Endianness.little), 16)
         
         // Column values
         
@@ -878,26 +875,28 @@ class Table_Tests: XCTestCase {
     
     func test_12_tableWithArray() {
         
+        ItemManager.startWithZeroedBuffers = true
+        
         func fieldInitialiser(_ portal: Portal) {
             switch portal.column! {
             case 0:
-                portal.createFieldArray(at: portal.index!, in: portal.column!, elementType: .int16, valueByteCount: 32)
+                portal.createFieldArray(at: portal.index!, in: portal.column!, elementType: .int16, elementByteCount: 32, elementCount: 0)
             case 1:
                 portal.int8 = 5
             default: XCTFail("Column index not supported")
             }
         }
         
-        let col1 = ColumnSpecification(type: .array, name: NameField("aa")!, byteCount: 32)
-        let col2 = ColumnSpecification(type: .int8, name: NameField("bb")!, byteCount: 1)
+        let col1 = ColumnSpecification(type: .array, nameField: NameField("aa")!, byteCount: 32)
+        let col2 = ColumnSpecification(type: .int8, nameField: NameField("bb")!, byteCount: 1)
+        
+        var columns = [col1, col2]
 
-        let im = ItemManager(rootItemType: .table)
-        
-        XCTAssertEqual(im.root.addColumns([col1, col2]), .success)
-        
+        let im = ItemManager.createTableManager(columns: &columns, initialRowsAllocated: 0, endianness: Endianness.little)
+            
         XCTAssertEqual(im.root.addRows(2, values: fieldInitialiser), .success)
         
-        XCTAssertEqual(im.root[1, "aa"].append(Int16(66)), .success)
+        XCTAssertEqual(im.root[1, "aa"].appendElement(Int16(66)), .success)
         
         XCTAssertEqual(im.root[1, "aa"].count, 1)
         
@@ -907,10 +906,10 @@ class Table_Tests: XCTestCase {
         // Grow the second array so it has to increase the byte count
         
         for _ in 1 ... 7 {
-            XCTAssertEqual(im.root[1, "aa"].append(Int16(0x77)), .success) // filling the available space
+            XCTAssertEqual(im.root[1, "aa"].appendElement(Int16(0x77)), .success) // filling the available space
         }
 
-        XCTAssertEqual(im.root[1, "aa"].append(Int16(0x77)), .success) // increases byte count
+        XCTAssertEqual(im.root[1, "aa"].appendElement(Int16(0x77)), .success) // increases byte count
 
         XCTAssertEqual(im.root[1, "aa"].count, 9)
         

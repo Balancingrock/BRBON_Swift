@@ -24,25 +24,20 @@ class ItemManager_Array_Tests2: XCTestCase {
 
     func testThreeArraysInArray() {
         
+        ItemManager.startWithZeroedBuffers = true
         
         // Create empty array manager
         
-        let am = ItemManager(rootItemType: .array, elementType: .array, elementValueByteCount: 32)
+        let am = ItemManager.createArrayManager(withNameField: nil, elementType: .array, elementByteCount: 32, elementCount: 0, endianness: Endianness.little)
         
         
         // Append three array's the middle one with strings
         
-        let arr1: Array<UInt32> = [UInt32(0x11111111), UInt32(0x22222222)]
-        let arr2: Array<String> = ["1111", "2222", "3333"]
-        let arr3: Array<UInt8>  = [UInt8(0x48), UInt8(0x49), UInt8(0x4A), UInt8(0x4B)]
+        guard let arr1 = ItemManager.createArrayManager(values: [UInt32(0x11111111), UInt32(0x22222222)]) else { XCTFail(); return }
+        guard let arr2 = ItemManager.createArrayManager(values: ["1111", "2222", "3333"]) else { XCTFail(); return }
+        guard let arr3 = ItemManager.createArrayManager(values: [UInt8(0x48), UInt8(0x49), UInt8(0x4A), UInt8(0x4B)]) else { XCTFail(); return }
         
-        let barr1 = BrbonArray(content: arr1, type: .uint32)
-        let barr2 = BrbonArray(content: arr2, type: .string)
-        let barr3 = BrbonArray(content: arr3, type: .uint8)
-        
-        XCTAssertEqual(am.root.append(barr1), .success)
-        XCTAssertEqual(am.root.append(barr2), .success)
-        XCTAssertEqual(am.root.append(barr3), .success)
+        XCTAssertEqual(am.root.appendElements([arr1, arr2, arr3]), .success)
         
         let exp = Data(bytes: [
             0x11, 0x00, 0x00, 0x00,  0xC8, 0x00, 0x00, 0x00,
@@ -94,11 +89,11 @@ class ItemManager_Array_Tests2: XCTestCase {
             XCTAssertTrue(p == am.root)
         }
         
-        let portal1 = am.root[0][1].portal
-        let portal2 = am.root[1][0].portal
-        let portal3 = am.root[1][1].portal
-        let portal4 = am.root[1][2].portal
-        let portal5 = am.root[2][2].portal
+        guard let portal1 = am.root[0][1].portal else { XCTFail(); return }
+        guard let portal2 = am.root[1][0].portal else { XCTFail(); return }
+        guard let portal3 = am.root[1][1].portal else { XCTFail(); return }
+        guard let portal4 = am.root[1][2].portal else { XCTFail(); return }
+        guard let portal5 = am.root[2][2].portal else { XCTFail(); return }
         
         XCTAssertEqual(portal1.uint32, 0x22222222)
         XCTAssertEqual(portal2.string, "1111")

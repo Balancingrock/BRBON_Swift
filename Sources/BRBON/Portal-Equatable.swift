@@ -164,9 +164,15 @@ extension Portal: Equatable {
                 
                 // Test the elements
                 for index in 0 ..< lhs._arrayElementCount {
-                    let lPortal = Portal(itemPtr: lhs.itemPtr, index: index, manager: lhs.manager, endianness: lhs.endianness)
-                    let rPortal = Portal(itemPtr: rhs.itemPtr, index: index, manager: rhs.manager, endianness: rhs.endianness)
-                    if lPortal != rPortal { return false }
+                    if lhs._arrayElementType!.isContainer {
+                        let lPortal = Portal(itemPtr: lhs.itemPtr.itemValueFieldPtr.arrayElementPtr(for: index, lhs.endianness), manager: lhs.manager, endianness: lhs.endianness)
+                        let rPortal = Portal(itemPtr: rhs.itemPtr.itemValueFieldPtr.arrayElementPtr(for: index, rhs.endianness), manager: rhs.manager, endianness: rhs.endianness)
+                        if lPortal != rPortal { return false }
+                    } else {
+                        let lPortal = Portal(itemPtr: lhs.itemPtr, index: index, manager: lhs.manager, endianness: lhs.endianness)
+                        let rPortal = Portal(itemPtr: rhs.itemPtr, index: index, manager: rhs.manager, endianness: rhs.endianness)
+                        if lPortal != rPortal { return false }
+                    }
                 }
                 
                 return true

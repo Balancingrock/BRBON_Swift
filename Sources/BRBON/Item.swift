@@ -191,6 +191,19 @@ internal extension UnsafeMutableRawPointer {
         }
     }
     
+    
+    /// Increment the bytecount with the given value (may be negative)
+    
+    internal func incrementItemByteCount(by value: Int, _ endianness: Endianness) {
+        if endianness == machineEndianness {
+            let c = Int(self.itemByteCountPtr.assumingMemoryBound(to: UInt32.self).pointee) + value
+            self.itemByteCountPtr.storeBytes(of: UInt32(c), as: UInt32.self)
+        } else {
+            let c = Int(self.itemByteCountPtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped) + value
+            self.itemByteCountPtr.storeBytes(of: UInt32(c).byteSwapped, as: UInt32.self)
+        }
+    }
+    
 
     /// Returns the parent offset of an item, assuming self points to the first byte of an item.
 

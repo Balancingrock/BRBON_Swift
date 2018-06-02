@@ -570,11 +570,9 @@ extension Portal {
     
     internal func _tableIncreaseColumnValueByteCount(to bytes: Int, for column: Int) -> Result {
         
-        let valueFieldPtr = itemPtr.itemValueFieldPtr
-        
         // Calculate the needed bytes for the entire table content
         
-        let cspec = ColumnSpecification(fromPtr: valueFieldPtr, forColumn: column, endianness)!
+        let cspec = ColumnSpecification(fromPtr: _itemValueFieldPtr, forColumn: column, endianness)!
         
         let columnFieldByteCountIncrease = bytes - cspec.fieldByteCount
         let oldRowByteCount = _tableRowByteCount
@@ -590,13 +588,13 @@ extension Portal {
         
         // Shift the column value fields to their new place
         
-        let colOffset = Int(valueFieldPtr.tableColumnFieldOffset(for: column, endianness))
-        let colValueByteCount = Int(valueFieldPtr.tableColumnFieldByteCount(for: column, endianness))
+        let colOffset = Int(_itemValueFieldPtr.tableColumnFieldOffset(for: column, endianness))
+        let colValueByteCount = Int(_itemValueFieldPtr.tableColumnFieldByteCount(for: column, endianness))
         let offsetOfFirstByteAfterIncreasedByteCount = colOffset + colValueByteCount
         let bytesAfterIncrease = oldRowByteCount - offsetOfFirstByteAfterIncreasedByteCount
         
         if bytesAfterIncrease > 0 {
-            let lastRowPtr = valueFieldPtr.tableRowPtr(for: (_tableRowCount - 1), endianness)
+            let lastRowPtr = _itemValueFieldPtr.tableRowPtr(for: (_tableRowCount - 1), endianness)
             let srcPtr = lastRowPtr.advanced(by: offsetOfFirstByteAfterIncreasedByteCount)
             let dstPtr = srcPtr.advanced(by: _tableRowCount * columnFieldByteCountIncrease)
             manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: bytesAfterIncrease, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
@@ -604,7 +602,7 @@ extension Portal {
         
         if _tableRowCount > 1 {
             for ri in (1 ..< _tableRowCount).reversed() {
-                let rowPtr = valueFieldPtr.tableRowPtr(for: ri, endianness)
+                let rowPtr = _itemValueFieldPtr.tableRowPtr(for: ri, endianness)
                 let srcPtr = rowPtr.advanced(by: offsetOfFirstByteAfterIncreasedByteCount - oldRowByteCount)
                 let dstPtr = srcPtr.advanced(by: ri * columnFieldByteCountIncrease)
                 manager.moveBlock(to: dstPtr, from: srcPtr, moveCount: oldRowByteCount, removeCount: 0, updateMovedPortals: true, updateRemovedPortals: false)
@@ -612,14 +610,14 @@ extension Portal {
         }
         
         // Update the column value byte count to the new value
-        valueFieldPtr.setTableColumnFieldByteCount(UInt32(colValueByteCount + columnFieldByteCountIncrease), for: column, endianness)
+        _itemValueFieldPtr.setTableColumnFieldByteCount(UInt32(colValueByteCount + columnFieldByteCountIncrease), for: column, endianness)
         
         // Update column value offsets
         if (column + 1) < _tableColumnCount {
             for ci in (column + 1) ..< _tableColumnCount {
-                let old = Int(valueFieldPtr.tableColumnFieldOffset(for: ci, endianness))
+                let old = Int(_itemValueFieldPtr.tableColumnFieldOffset(for: ci, endianness))
                 let new = old + columnFieldByteCountIncrease
-                valueFieldPtr.setTableColumnFieldOffset(UInt32(new), for: ci, endianness)
+                _itemValueFieldPtr.setTableColumnFieldOffset(UInt32(new), for: ci, endianness)
             }
         }
         
@@ -1511,7 +1509,7 @@ extension Portal {
         
         // Ensure that there is sufficient space
         
-        let result = _tableEnsureColumnValueByteCount(of: source.count, in: column)
+        let result = _tableEnsureColumnValueByteCount(of: source.root._itemByteCount, in: column)
         
         guard result == .success else { return result }
         
@@ -1520,7 +1518,7 @@ extension Portal {
         
         let ptr = itemPtr.itemValueFieldPtr.tableFieldPtr(row: row, column: column, endianness)
         
-        _ = Darwin.memmove(ptr, source.bufferPtr, manager.count)
+        _ = Darwin.memmove(ptr, source.bufferPtr, source.root._itemByteCount)
 
         
         // Adjust the parent offset
@@ -1665,8 +1663,7 @@ internal func buildTableItem(withNameField nameField: NameField?, columns: inout
     }()
 
     buildItem(ofType: .table, withNameField: nameField, atPtr: ptr, endianness)
-    let bc = Int(ptr.itemValueFieldPtr.itemByteCount(endianness)) + valueByteCount
-    ptr.itemValueFieldPtr.setItemByteCount(to: UInt32(bc), endianness)
+    ptr.incrementItemByteCount(by: valueByteCount, endianness)
 
     ptr.itemValueFieldPtr.setTableRowCount(to: UInt32(0), endianness)
     tableWriteSpecification(valueFieldPtr: ptr.itemValueFieldPtr, &columns, endianness)

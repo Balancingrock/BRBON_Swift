@@ -812,7 +812,9 @@ public final class ItemManager {
         
         let im = ItemManager(requestedByteCount: newItemByteCount, endianness: endianness)
         
-        _ = buildTableItem(withNameField: nameField, columns: &columns, initialRowsAllocated: initialRowsAllocated, atPtr: im.bufferPtr, endianness)
+        buildTableItem(withNameField: nameField, columns: &columns, initialRowsAllocated: initialRowsAllocated, atPtr: im.bufferPtr, endianness)
+        
+        im.root = im.getActivePortal(for: im.bufferPtr)
         
         return im
     }
@@ -837,6 +839,7 @@ public final class ItemManager {
     /// Portal management
     
     internal func getActivePortal(for ptr: UnsafeMutableRawPointer, index: Int? = nil, column: Int? = nil) -> Portal {
+        assert(ptr >= bufferPtr || ptr < bufferPtr.advanced(by: buffer.count), "Pointer points outside buffer area")
         return activePortals.getPortal(for: ptr, index: index, column: column, mgr: self)
     }
         

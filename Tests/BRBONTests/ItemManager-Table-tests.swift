@@ -7,13 +7,14 @@
 //
 
 import XCTest
+import BRUtils
 @testable import BRBON
 
 class ItemManager_Table_tests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        // Put setup code here. This method is called before the invocation of each test method in the class.
+        // Put setup code here. This me[]thod is called before the invocation of each test method in the class.
     }
     
     override func tearDown() {
@@ -27,7 +28,8 @@ class ItemManager_Table_tests: XCTestCase {
         
         // Create a table
         
-        let tm = ItemManager(rootItemType: .table)
+        var columns: Array<ColumnSpecification> = []
+        let tm = ItemManager.createTableManager(columns: &columns, endianness: Endianness.little)
         
         var exp = Data(bytes: [
             0x14, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
@@ -44,7 +46,7 @@ class ItemManager_Table_tests: XCTestCase {
         
         // Add a column
         
-        XCTAssertEqual(tm.root.addColumn(type: .bool, name: NameField("aa")!, byteCount: 1), .success)
+        XCTAssertEqual(tm.root.addColumn(type: .bool, nameField: NameField("aa")!, byteCount: 1), .success)
         
         exp = Data(bytes: [
             0x14, 0x00, 0x00, 0x00,  0x38, 0x00, 0x00, 0x00,
@@ -73,7 +75,7 @@ class ItemManager_Table_tests: XCTestCase {
         
         // Add a second column
         
-        XCTAssertEqual(tm.root.addColumn(type: .int64, name: NameField("bb")!, byteCount: 8), .success)
+        XCTAssertEqual(tm.root.addColumn(type: .int64, nameField: NameField("bb")!, byteCount: 8), .success)
 
         exp = Data(bytes: [
             0x14, 0x00, 0x00, 0x00,  0x50, 0x00, 0x00, 0x00,
@@ -110,7 +112,7 @@ class ItemManager_Table_tests: XCTestCase {
         
         // Add a third column
         
-        XCTAssertEqual(tm.root.addColumn(type: .uint16, name: NameField("cc")!, byteCount: 8), .success)
+        XCTAssertEqual(tm.root.addColumn(type: .uint16, nameField: NameField("cc")!, byteCount: 8), .success)
         
         exp = Data(bytes: [
             0x14, 0x00, 0x00, 0x00,  0x68, 0x00, 0x00, 0x00,
