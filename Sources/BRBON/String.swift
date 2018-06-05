@@ -134,7 +134,8 @@ internal extension Portal {
             return _valuePtr.stringUtf8Code(endianness)
         }
         set {
-            let result = ensureValueFieldByteCount(of: stringUtf8CodeOffset + newValue.count)
+            //let result = ensureValueFieldByteCount(of: stringUtf8CodeOffset + newValue.count)
+            let result = ensureStorageAtValuePtr(of: stringUtf8CodeOffset + newValue.count)
             guard result == .success else { return }
             
             _valuePtr.setStringUtf8Code(to: newValue, endianness)

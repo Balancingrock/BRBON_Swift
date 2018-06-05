@@ -627,9 +627,12 @@ public extension Portal {
         
             
             // Make sure the value field is big enough
-            
-            let result = ensureValueFieldByteCount(of: value.minimumValueFieldByteCount)
-            guard result == .success else { return result }
+            let necessaryValueFieldByteCount = value.minimumValueFieldByteCount
+            let necessaryItemByteCount = itemPtr.itemHeaderAndNameByteCount + necessaryValueFieldByteCount
+            if necessaryItemByteCount > _itemByteCount {
+                let result = increaseItemByteCount(to: necessaryItemByteCount)
+                guard result == .success else { return result }
+            }
             
             
             // Invalidate portals

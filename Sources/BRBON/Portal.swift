@@ -237,7 +237,7 @@ extension Portal {
     
     /// Ensures that the specified number of bytes can be stored at the value pointer.
     
-    internal func ensureValueFieldByteCount(of bytes: Int) -> Result {
+    internal func ensureStorageAtValuePtr(of bytes: Int) -> Result {
         if index == nil {
             if currentValueFieldByteCount < bytes {
                 return increaseItemByteCount(to: itemHeaderByteCount + _itemNameFieldByteCount + bytes)
@@ -247,7 +247,7 @@ extension Portal {
         } else if let column = column {
             return _tableEnsureColumnValueByteCount(of: bytes, in: column)
         } else {
-            return _arrayEnsureValueFieldByteCount(of: bytes)
+            return _arrayEnsureElementByteCount(of: bytes)
         }
     }
 

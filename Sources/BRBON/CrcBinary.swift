@@ -153,7 +153,8 @@ internal extension Portal {
             return _valuePtr.crcBinaryData(endianness)
         }
         set {
-            let result = ensureValueFieldByteCount(of: crcBinaryDataOffset + newValue.count)
+            //let result = ensureValueFieldByteCount(of: crcBinaryDataOffset + newValue.count)
+            let result = ensureStorageAtValuePtr(of: crcBinaryDataOffset + newValue.count)
             guard result == .success else { return }
             
             _valuePtr.setCrcBinaryData(to: newValue, endianness)
@@ -169,7 +170,8 @@ internal extension Portal {
             return BRCrcBinary(data: _valuePtr.crcBinaryData(endianness), crc: _valuePtr.crcBinaryCrc(endianness))
         }
         set {
-            let result = ensureValueFieldByteCount(of: crcBinaryDataOffset + newValue.data.count)
+            //let result = ensureValueFieldByteCount(of: crcBinaryDataOffset + newValue.data.count)
+            let result = ensureStorageAtValuePtr(of: crcBinaryDataOffset + newValue.data.count)
             guard result == .success else { return }
             
             _valuePtr.setCrcBinaryData(to: newValue.data, endianness)

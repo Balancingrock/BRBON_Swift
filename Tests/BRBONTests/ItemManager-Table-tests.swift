@@ -197,7 +197,6 @@ class ItemManager_Table_tests: XCTestCase {
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00
             ])
-        tm.data.printBytes()
 
         exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
             let p = tm.getActivePortal(for: UnsafeMutableRawPointer(mutating: ptr))

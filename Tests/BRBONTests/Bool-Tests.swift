@@ -126,7 +126,7 @@ class Bool_Tests: XCTestCase {
         XCTAssertEqual(im.root.itemName, "one")
 
         data = im.data // Data(bytesNoCopy: buffer.baseAddress!, count: 16, deallocator: Data.Deallocator.none)
-        data.printBytes()
+
         exp = Data(bytes: [
             0x02, 0x00, 0x00, 0x08, 0x18, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,

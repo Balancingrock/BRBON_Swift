@@ -125,7 +125,8 @@ internal extension Portal {
         get { return _valuePtr.binaryData(endianness) }
         
         set {
-            let result = ensureValueFieldByteCount(of: binaryDataOffset + newValue.count)
+            //let result = ensureValueFieldByteCount(of: binaryDataOffset + newValue.count)
+            let result = ensureStorageAtValuePtr(of: binaryDataOffset + newValue.count)
             guard result == .success else { return }
             
             _valuePtr.setBinaryData(to: newValue, endianness)

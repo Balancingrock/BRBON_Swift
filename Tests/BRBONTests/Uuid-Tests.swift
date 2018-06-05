@@ -45,7 +45,7 @@ class Uuid_Tests: XCTestCase {
         u.copyBytes(to: buffer.baseAddress!, Endianness.little)
         
         let data = Data(bytesNoCopy: buffer.baseAddress!, count: 16, deallocator: Data.Deallocator.none)
-        data.printBytes()
+
         let exp = Data(bytes: [0x01, 0x23, 0x45, 0x67, 0x12, 0x34, 0x12, 0x34, 0x12, 0x34, 0x12, 0x34, 0x56, 0x78, 0x90, 0x11])
         
         XCTAssertEqual(data, exp)

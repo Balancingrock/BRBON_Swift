@@ -182,7 +182,8 @@ extension Portal {
             guard newValue.count < 256 else { return }
             // ensure that the item size is large enough
             let newValueByteCount = fontFamilyNameUtf8CodeOffset + newValue.count + Int(_valuePtr.fontFontNameUtf8ByteCount)
-            let result = ensureValueFieldByteCount(of: newValueByteCount)
+            let result = ensureStorageAtValuePtr(of: newValueByteCount)
+            //let result = ensureValueFieldByteCount(of: newValueByteCount)
             guard result == .success else { return }
             // shift the name into its new place
             let sourceFontNamePtr = _valuePtr.fontFontNameUtf8CodePtr
@@ -207,7 +208,8 @@ extension Portal {
             guard newValue.count < 256 else { return }
             // ensure that the item size is large enough
             let newValueByteCount = fontFamilyNameUtf8CodeOffset + Int(_valuePtr.fontFamilyNameUtf8ByteCount) + newValue.count
-            let result = ensureValueFieldByteCount(of: newValueByteCount)
+            let result = ensureStorageAtValuePtr(of: newValueByteCount)
+//            let result = ensureValueFieldByteCount(of: newValueByteCount)
             guard result == .success else { return }
             // Copy the name to its place
             _valuePtr.fontFontNameUtf8Code = newValue

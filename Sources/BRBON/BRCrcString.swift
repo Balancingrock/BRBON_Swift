@@ -197,7 +197,8 @@ public extension Portal {
             guard isCrcString else { return }
             guard let newValue = newValue else { return }
             
-            let result = ensureValueFieldByteCount(of: crcStringUtf8CodeOffset + newValue.utf8Code.count)
+            //let result = ensureValueFieldByteCount(of: crcStringUtf8CodeOffset + newValue.utf8Code.count)
+            let result = ensureStorageAtValuePtr(of: crcStringUtf8CodeOffset + newValue.utf8Code.count)
             guard result == .success else { return }
 
             _valuePtr.setCrcStringUtf8Code(to: newValue.utf8Code, endianness)

@@ -210,15 +210,17 @@ public extension Portal {
 
         } else {
         
-            // Or create a new item
+            // Add a new item
             
-            var neededValueFieldByteCount = usedValueFieldByteCount + itemHeaderByteCount + nameField.byteCount
-            if !value.itemType.usesSmallValue { neededValueFieldByteCount += value.valueByteCount.roundUpToNearestMultipleOf8() }
+            let newItemByteCount = itemHeaderByteCount + nameField.byteCount + value.minimumValueFieldByteCount
+            let necessaryValueFieldByteCount = usedValueFieldByteCount + newItemByteCount
+            let necessaryItemByteCount = itemPtr.itemHeaderAndNameByteCount + necessaryValueFieldByteCount
             
-            let result = ensureValueFieldByteCount(of: neededValueFieldByteCount)
-            
-            guard result == .success else { return result }
-            
+            if necessaryItemByteCount > _itemByteCount {
+                let result = increaseItemByteCount(to: necessaryItemByteCount)
+                guard result == .success else { return result }
+            }
+                        
             let pOffset = UInt32(manager.bufferPtr.distance(to: itemPtr))
             let ptr = _dictionaryAfterLastItemPtr
 
@@ -287,16 +289,19 @@ public extension Portal {
 
         } else {
             
-            
-            // The new value field byte count for the dictionary
-            
-            let neededValueFieldByteCount = usedValueFieldByteCount.roundUpToNearestMultipleOf8() + value.root._itemByteCount
+            // Add a new item
             
             
-            // Increase the value field of the dictionary if necessary
+            // Make sure there is enough space
             
-            let result2 = ensureValueFieldByteCount(of: neededValueFieldByteCount)
-            guard result2 == .success else { return result2 }
+            let newItemByteCount = value.root._itemByteCount
+            let necessaryValueFieldByteCount = usedValueFieldByteCount + newItemByteCount
+            let necessaryItemByteCount = itemPtr.itemHeaderAndNameByteCount + necessaryValueFieldByteCount
+            
+            if necessaryItemByteCount > _itemByteCount {
+                let result = increaseItemByteCount(to: necessaryItemByteCount)
+                guard result == .success else { return result }
+            }
             
             
             // Copy the new item into place
@@ -370,8 +375,11 @@ public extension Portal {
         guard let item = dictionaryFindItem(nameField) else { return .error(.itemNotFound) }
         
         // Ensure sufficient storage
-        let result = item.ensureValueFieldByteCount(of: value.minimumValueFieldByteCount)
-        guard result == .success else { return result }
+        let newItemByteCount = itemHeaderByteCount + nameField.byteCount + value.minimumValueFieldByteCount
+        if newItemByteCount > item._itemByteCount {
+            let result = item.increaseItemByteCount(to: newItemByteCount)
+            guard result == .success else { return result }
+        }
 
         // Save the parameters that must be restored
         let pOffset = item.itemPtr.itemParentOffset(endianness)
@@ -444,9 +452,12 @@ public extension Portal {
         guard let item = dictionaryFindItem(nameField), item.isValid else { return .error(.itemNotFound) }
         
         // Ensure sufficient storage
-        let result = item.ensureValueFieldByteCount(of: value.root._itemByteCount)
-        guard result == .success else { return result }
-            
+        let newItemByteCount = value.root._itemByteCount - value.root._itemNameFieldByteCount + nameField.byteCount
+        if newItemByteCount > item._itemByteCount {
+            let result = item.increaseItemByteCount(to: newItemByteCount)
+            guard result == .success else { return result }
+        }
+        
         // Save the parameters that must be restored
         let pOffset = item._itemParentOffset
         let oldByteCount = item._itemByteCount
