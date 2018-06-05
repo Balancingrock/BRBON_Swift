@@ -57,24 +57,6 @@ class Bool_Tests: XCTestCase {
         XCTAssertEqual(buffer.baseAddress!.assumingMemoryBound(to: UInt8.self).pointee, 0)
     }
     
-    func testDecode() {
-        
-        // Create buffer with value
-        
-        let buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: 128, alignment: 8)
-        _ = Darwin.memset(buffer.baseAddress, 0, 128)
-        defer { buffer.deallocate() }
-
-        let f = Bool(fromPtr: buffer.baseAddress!, machineEndianness)
-        
-        XCTAssertFalse(f)
-        
-        buffer.baseAddress!.assumingMemoryBound(to: UInt8.self).pointee = 1
-        
-        let t = Bool(fromPtr: buffer.baseAddress!, machineEndianness)
-        
-        XCTAssertTrue(t)
-    }
     
     func testPortalPublic() {
         

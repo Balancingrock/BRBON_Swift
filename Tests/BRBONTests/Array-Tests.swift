@@ -44,13 +44,13 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.count, 0)
         XCTAssertEqual(am.root._arrayElementType, .bool)
         XCTAssertEqual(am.root._arrayElementCount, 0)
-        XCTAssertEqual(am.root._arrayElementByteCount, 1)
-        
+        XCTAssertEqual(am.root._arrayElementByteCount, 0)
+
         let exp = Data(bytes: [
             0x11, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
             ])
         
         XCTAssertEqual(exp, am.data)
@@ -62,7 +62,7 @@ class Array_Tests: XCTestCase {
 
         let brArr: Array<Bool> = [true, true, false]
         
-        guard let am = ItemManager.createArrayManager(values: brArr) else { XCTFail(); return }
+        let am = ItemManager.createArrayManager(values: brArr)
         
         XCTAssertTrue(am.root.isValid)
         XCTAssertEqual(am.root.itemType, .array)
@@ -179,13 +179,13 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.count, 0)
         XCTAssertEqual(am.root._arrayElementType, .int8)
         XCTAssertEqual(am.root._arrayElementCount, 0)
-        XCTAssertEqual(am.root._arrayElementByteCount, 1)
+        XCTAssertEqual(am.root._arrayElementByteCount, 0)
         
         let exp = Data(bytes: [
             0x11, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
             ])
         
         XCTAssertEqual(exp, am.data)
@@ -197,7 +197,7 @@ class Array_Tests: XCTestCase {
         
         let brArr: Array<Int8> = [1, 2, 3]
         
-        guard let am = ItemManager.createArrayManager(values: brArr) else { XCTFail(); return }
+        let am = ItemManager.createArrayManager(values: brArr)
         
         XCTAssertTrue(am.root.isValid)
         XCTAssertEqual(am.root.itemType, .array)
@@ -314,13 +314,13 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.count, 0)
         XCTAssertEqual(am.root._arrayElementType, .int16)
         XCTAssertEqual(am.root._arrayElementCount, 0)
-        XCTAssertEqual(am.root._arrayElementByteCount, 2)
+        XCTAssertEqual(am.root._arrayElementByteCount, 0)
         
         let exp = Data(bytes: [
             0x11, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
             ])
         
         XCTAssertEqual(exp, am.data)
@@ -332,7 +332,7 @@ class Array_Tests: XCTestCase {
         
         let brArr: Array<Int16> = [1, 2, 3]
         
-        guard let am = ItemManager.createArrayManager(values: brArr) else { XCTFail(); return }
+        let am = ItemManager.createArrayManager(values: brArr)
         
         XCTAssertTrue(am.root.isValid)
         XCTAssertEqual(am.root.itemType, .array)
@@ -452,13 +452,13 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.count, 0)
         XCTAssertEqual(am.root._arrayElementType, .int32)
         XCTAssertEqual(am.root._arrayElementCount, 0)
-        XCTAssertEqual(am.root._arrayElementByteCount, 4)
+        XCTAssertEqual(am.root._arrayElementByteCount, 0)
         
         let exp = Data(bytes: [
             0x11, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
             ])
         
         XCTAssertEqual(exp, am.data)
@@ -470,7 +470,7 @@ class Array_Tests: XCTestCase {
         
         let brArr: Array<Int32> = [1, 2, 3]
         
-        guard let am = ItemManager.createArrayManager(values: brArr) else { XCTFail(); return }
+        let am = ItemManager.createArrayManager(values: brArr)
         
         XCTAssertTrue(am.root.isValid)
         XCTAssertEqual(am.root.itemType, .array)
@@ -597,13 +597,13 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.count, 0)
         XCTAssertEqual(am.root._arrayElementType, .int64)
         XCTAssertEqual(am.root._arrayElementCount, 0)
-        XCTAssertEqual(am.root._arrayElementByteCount, 8)
+        XCTAssertEqual(am.root._arrayElementByteCount, 0)
         
         let exp = Data(bytes: [
             0x11, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
             ])
         
         XCTAssertEqual(exp, am.data)
@@ -615,7 +615,7 @@ class Array_Tests: XCTestCase {
         
         let brArr: Array<Int64> = [1, 2, 3]
         
-        guard let am = ItemManager.createArrayManager(values: brArr) else { XCTFail(); return }
+        let am = ItemManager.createArrayManager(values: brArr)
         
         XCTAssertTrue(am.root.isValid)
         XCTAssertEqual(am.root.itemType, .array)
@@ -774,7 +774,7 @@ class Array_Tests: XCTestCase {
         
         let brArr: Array<UInt8> = [1, 2, 3]
         
-        guard let am = ItemManager.createArrayManager(values: brArr) else { XCTFail(); return }
+        let am = ItemManager.createArrayManager(values: brArr)
         
         XCTAssertTrue(am.root.isValid)
         XCTAssertEqual(am.root.itemType, .array)
@@ -910,7 +910,7 @@ class Array_Tests: XCTestCase {
         
         let brArr: Array<UInt16> = [1, 2, 3]
         
-        guard let am = ItemManager.createArrayManager(values: brArr) else { XCTFail(); return }
+        let am = ItemManager.createArrayManager(values: brArr)
         
         XCTAssertTrue(am.root.isValid)
         XCTAssertEqual(am.root.itemType, .array)
@@ -1030,13 +1030,13 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.count, 0)
         XCTAssertEqual(am.root._arrayElementType, .uint32)
         XCTAssertEqual(am.root._arrayElementCount, 0)
-        XCTAssertEqual(am.root._arrayElementByteCount, 4)
+        XCTAssertEqual(am.root._arrayElementByteCount, 0)
         
         let exp = Data(bytes: [
             0x11, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
             ])
         
         XCTAssertEqual(exp, am.data)
@@ -1048,7 +1048,7 @@ class Array_Tests: XCTestCase {
         
         let brArr: Array<UInt32> = [1, 2, 3]
         
-        guard let am = ItemManager.createArrayManager(values: brArr) else { XCTFail(); return }
+        let am = ItemManager.createArrayManager(values: brArr)
         
         XCTAssertTrue(am.root.isValid)
         XCTAssertEqual(am.root.itemType, .array)
@@ -1175,13 +1175,13 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.count, 0)
         XCTAssertEqual(am.root._arrayElementType, .uint64)
         XCTAssertEqual(am.root._arrayElementCount, 0)
-        XCTAssertEqual(am.root._arrayElementByteCount, 8)
+        XCTAssertEqual(am.root._arrayElementByteCount, 0)
         
         let exp = Data(bytes: [
             0x11, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
             ])
         
         XCTAssertEqual(exp, am.data)
@@ -1193,7 +1193,7 @@ class Array_Tests: XCTestCase {
         
         let brArr: Array<UInt64> = [1, 2, 3]
         
-        guard let am = ItemManager.createArrayManager(values: brArr) else { XCTFail(); return }
+        let am = ItemManager.createArrayManager(values: brArr)
         
         XCTAssertTrue(am.root.isValid)
         XCTAssertEqual(am.root.itemType, .array)
@@ -1351,7 +1351,7 @@ class Array_Tests: XCTestCase {
         
         let brArr: Array<String> = ["1111", "22", "3333"]
         
-        guard let am = ItemManager.createArrayManager(values: brArr) else { XCTFail(); return }
+        let am = ItemManager.createArrayManager(values: brArr)
         
         XCTAssertTrue(am.root.isValid)
         XCTAssertEqual(am.root.itemType, .array)
@@ -1524,7 +1524,7 @@ class Array_Tests: XCTestCase {
         
         let brArr: Array<Data> = [Data(bytes: [0x11, 0x12, 0x13]), Data(bytes: [0x21, 0x22]), Data(bytes: [0x31, 0x32, 0x33, 0x34])]
         
-        guard let am = ItemManager.createArrayManager(values: brArr) else { XCTFail(); return }
+        let am = ItemManager.createArrayManager(values: brArr)
         
         XCTAssertTrue(am.root.isValid)
         XCTAssertEqual(am.root.itemType, .array)
@@ -1679,13 +1679,13 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.count, 0)
         XCTAssertEqual(am.root._arrayElementType, .uuid)
         XCTAssertEqual(am.root._arrayElementCount, 0)
-        XCTAssertEqual(am.root._arrayElementByteCount, 16)
+        XCTAssertEqual(am.root._arrayElementByteCount, 0)
         
         var exp = Data(bytes: [
             0x11, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x15, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
             ])
         
         XCTAssertEqual(exp, am.data)
@@ -1910,13 +1910,13 @@ class Array_Tests: XCTestCase {
         XCTAssertEqual(am.root.count, 0)
         XCTAssertEqual(am.root._arrayElementType, .color)
         XCTAssertEqual(am.root._arrayElementCount, 0)
-        XCTAssertEqual(am.root._arrayElementByteCount, 4)
+        XCTAssertEqual(am.root._arrayElementByteCount, 0)
         
         var exp = Data(bytes: [
             0x11, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x16, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
             ])
         
         XCTAssertEqual(exp, am.data)
@@ -2279,7 +2279,7 @@ class Array_Tests: XCTestCase {
         
         // Append a new element
         
-        guard let am1 = ItemManager.createArrayManager(values: [true, true, false, false]) else { XCTFail(); return }
+        let am1 = ItemManager.createArrayManager(values: [true, true, false, false])
         
         XCTAssertEqual(am.root.appendElement(am1), Result.success)
         
@@ -2307,9 +2307,9 @@ class Array_Tests: XCTestCase {
          XCTAssertEqual(exp, am.data)
         
         
-        guard let am2 = ItemManager.createArrayManager(values: [false, true, false, true]) else { XCTFail(); return }
-        guard let am3 = ItemManager.createArrayManager(values: [UInt32(1), UInt32(2), UInt32(3), UInt32(4)]) else { XCTFail(); return }
-        guard let am4 = ItemManager.createArrayManager(values: [Int8(0x12), Int8(0x23)]) else { XCTFail(); return }
+        let am2 = ItemManager.createArrayManager(values: [false, true, false, true])
+        let am3 = ItemManager.createArrayManager(values: [UInt32(1), UInt32(2), UInt32(3), UInt32(4)])
+        let am4 = ItemManager.createArrayManager(values: [Int8(0x12), Int8(0x23)])
 
         let arr: Array<ItemManager> = [am2, am3, am4]
         
@@ -2402,7 +2402,7 @@ class Array_Tests: XCTestCase {
         
         // Insert an element
         
-        guard let am5 = ItemManager.createArrayManager(values: [Int8(0x11), Int8(0x22)]) else { XCTFail(); return }
+        let am5 = ItemManager.createArrayManager(values: [Int8(0x11), Int8(0x22)])
 
         XCTAssertEqual(am.root.insertElement(am5, atIndex: 2), Result.success)
         
@@ -2494,7 +2494,7 @@ class Array_Tests: XCTestCase {
     
     func testArrayCoderPortals() {
         
-        guard let am = ItemManager.createArrayManager(values: [Int8(3), Int8(5), Int8(7)]) else { XCTFail(); return }
+        let am = ItemManager.createArrayManager(values: [Int8(3), Int8(5), Int8(7)])
         
         let portal0: Portal = am.root[0]
         let portal1: Portal = am.root[1]
@@ -2571,7 +2571,7 @@ class Array_Tests: XCTestCase {
         let am3 = ItemManager.createArrayManager(elementType: .int64, endianness: Endianness.little)
         let am4 = ItemManager.createArrayManager(elementType: .uint64, endianness: Endianness.little)
 
-        guard let am = ItemManager.createArrayManager(values: [am0, am1, am2]) else { XCTFail(); return }
+        let am = ItemManager.createArrayManager(values: [am0, am1, am2]) 
         
         let portal0: Portal = am.root[0]
         let portal1: Portal = am.root[1]

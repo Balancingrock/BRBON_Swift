@@ -52,7 +52,7 @@ import Foundation
 import BRUtils
 
 
-internal let uuidValueByteCount = 16
+fileprivate let uuidValueByteCount = 16
 
 
 // Extensions that allow a portal to test and access an UUID
@@ -82,7 +82,8 @@ public extension Portal {
         get {
             guard isValid else { return nil }
             guard isUuid else { return nil }
-            return UUID(fromPtr: _valuePtr, endianness)
+            let ptr = _valuePtr.bindMemory(to: uuid_t.self, capacity: 1)
+            return UUID(uuid: ptr.pointee)
         }
         set {
             guard isValid else { return }
@@ -103,17 +104,6 @@ extension UUID: Coder {
         
     public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         ptr.storeBytes(of: self.uuid, as: uuid_t.self)
-    }
-}
-
-
-// Add decoder
-
-extension UUID {
-    
-    internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        let ptr = fromPtr.bindMemory(to: uuid_t.self, capacity: 1)
-        self.init(uuid: ptr.pointee)
     }
 }
 

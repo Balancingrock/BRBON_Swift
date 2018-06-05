@@ -57,28 +57,26 @@ import BRUtils
 public extension Portal {
     
     
-    /// Assess if the portal is valid and refers to a Bool.
-    ///
     /// - Returns: True if the value accessable through this portal is a Bool. False if the portal is invalid or the value is not a Bool.
     
     public var isBool: Bool {
         guard isValid else { return false }
-        if let column = column { return _tableGetColumnType(for: column) == ItemType.bool }
-        if index != nil { return itemPtr.itemValueFieldPtr.arrayElementType == ItemType.bool.rawValue } // minor speed advantage over using _arrayElementType
+        if let column = column { return itemPtr.itemValueFieldPtr.tableColumnType(for: column) == ItemType.bool.rawValue }
+        if index != nil { return itemPtr.itemValueFieldPtr.arrayElementType == ItemType.bool.rawValue }
         return itemPtr.itemType == ItemType.bool.rawValue
     }
 
     
-    /// Access the value through the portal as a Bool.
+    /// The value of the bool accessible through this portal.
     ///
     /// - Note: Assigning a nil has no effect.
     ///
-    /// - Returns: The value of the bool if this portal is valid and refers to a Bool.
+    /// - Returns: The value of the bool if this portal is valid and refers to a Bool. Nil otherwise.
     
     public var bool: Bool? {
         get {
             guard isBool else { return nil }
-            return Bool(fromPtr: _valuePtr, endianness)
+            return Bool(!(0 == _valuePtr.assumingMemoryBound(to: UInt8.self).pointee))
         }
         set {
             guard isBool else { return }
@@ -104,14 +102,3 @@ extension Bool: Coder {
         }
     }
 }
-
-
-/// Decodes a bool
-
-extension Bool {
-    
-    internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        self.init(!(0 == fromPtr.assumingMemoryBound(to: UInt8.self).pointee))
-    }
-}
-

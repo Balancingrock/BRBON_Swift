@@ -45,21 +45,6 @@ class Int8_Tests: XCTestCase {
     }
     
     
-    func testDecoder() {
-        
-        let buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: 128, alignment: 8)
-        _ = Darwin.memset(buffer.baseAddress, 0, 128)
-        defer { buffer.deallocate() }
-        
-        let data = Data(bytes: [0x0B])
-        
-        data.copyBytes(to: (buffer.baseAddress?.assumingMemoryBound(to: UInt8.self))!, count: data.count)
-        
-        let i = Int8(fromPtr: buffer.baseAddress!, machineEndianness)
-        
-        XCTAssertEqual(i, Int8(11))
-    }
-    
     func testPortal() {
         
         ItemManager.startWithZeroedBuffers = true

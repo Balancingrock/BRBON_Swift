@@ -508,7 +508,7 @@ extension Portal {
         let byteCount = Int(itemPtr.itemValueFieldPtr.tableColumnNameCrc(for: column, endianness))
         let dataOffset = Int(itemPtr.itemValueFieldPtr.tableColumnNameUtf8Offset(for: column, endianness))
         let dataPtr = itemPtr.itemValueFieldPtr.advanced(by: dataOffset)
-        let dataCount = Int(UInt8(fromPtr: dataPtr, endianness))
+        let dataCount = Int(dataPtr.assumingMemoryBound(to: UInt8.self).pointee)
         let data = Data(bytes: dataPtr.advanced(by: 1), count: dataCount)
         return NameField(data: data, crc: crc, byteCount: byteCount)
     }
@@ -1549,7 +1549,7 @@ extension Portal {
         guard isValid else { return .error(.portalInvalid) }
         guard itemType == .table else { return .error(.operationNotSupported) }
         
-        let im = ItemManager.createArrayManager(elementType: elementType, elementByteCount: elementByteCount ?? 0, elementCount: elementCount, endianness: endianness)
+        let im = ItemManager.createArrayManager(withNameField: nil, elementType: elementType, elementByteCount: elementByteCount ?? 0, elementCount: elementCount, endianness: endianness)
         
         return assignField(at: row, in: column, fromManager: im)
     }

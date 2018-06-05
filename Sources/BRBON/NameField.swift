@@ -153,9 +153,14 @@ public struct NameField: Equatable, Hashable {
     }
 
     internal init(fromPtr: UnsafeMutableRawPointer, withFieldCount: Int, _ endianness: Endianness) {
-        let crc = UInt16(fromPtr: fromPtr, endianness)
-        let count = Int(UInt8(fromPtr: fromPtr.advanced(by: 2), endianness))
-        let data = Data(bytes: fromPtr.advanced(by: 3), count: count)
+        var crc: UInt16
+        if endianness == machineEndianness {
+            crc = fromPtr.assumingMemoryBound(to: UInt16.self).pointee
+        } else {
+            crc = fromPtr.assumingMemoryBound(to: UInt16.self).pointee.byteSwapped
+        }
+        let count = fromPtr.advanced(by: 2).assumingMemoryBound(to: UInt8.self).pointee
+        let data = Data(bytes: fromPtr.advanced(by: 3), count: Int(count))
         self.init(data: data, crc: crc, byteCount: withFieldCount)
     }
 }

@@ -92,6 +92,9 @@ extension String {
 
 extension Int {
     
+    
+    /// If self is not a multiple of 8 then round up to the nearest multiple of 8 and return that value.
+    
     internal func roundUpToNearestMultipleOf8() -> Int {
         var a = self
         while a % 8 > 0 { a += 1 }

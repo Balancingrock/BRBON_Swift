@@ -69,23 +69,6 @@ class BRString_Tests: XCTestCase {
     }
     
     
-    func testDecoder() {
-        
-        let buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: 128, alignment: 8)
-        _ = Darwin.memset(buffer.baseAddress, 0, 128)
-        defer { buffer.deallocate() }
-
-        let data = Data(bytes: [0x03, 0x00, 0x00, 0x00, 0x6f, 0x6e, 0x65])
-
-        data.copyBytes(to: (buffer.baseAddress?.assumingMemoryBound(to: UInt8.self))!, count: data.count)
-
-        guard let b = BRString(fromPtr: buffer.baseAddress!, machineEndianness) else { XCTFail(); return }
-        
-        XCTAssertEqual(b.utf8Code, Data(bytes: [0x6f, 0x6e, 0x65]))
-        XCTAssertEqual(b.string, "one")
-    }
-
-    
     func testPortalNoName() {
         
         ItemManager.startWithZeroedBuffers = true

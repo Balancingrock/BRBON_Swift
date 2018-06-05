@@ -78,7 +78,11 @@ public extension Portal {
     public var int32: Int32? {
         get {
             guard isInt32 else { return nil }
-            return Int32(fromPtr: _valuePtr, endianness)
+            if endianness == machineEndianness {
+                return _valuePtr.assumingMemoryBound(to: Int32.self).pointee
+            } else {
+                return _valuePtr.assumingMemoryBound(to: Int32.self).pointee.byteSwapped
+            }
         }
         set {
             guard isInt32 else { return }
@@ -104,20 +108,5 @@ extension Int32: Coder {
         }
     }
 }
-
-
-// Add decoder
-
-extension Int32 {
-    
-    internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        if endianness == machineEndianness {
-            self.init(fromPtr.assumingMemoryBound(to: Int32.self).pointee)
-        } else {
-            self.init(fromPtr.assumingMemoryBound(to: Int32.self).pointee.byteSwapped)
-        }
-    }
-}
-
 
 

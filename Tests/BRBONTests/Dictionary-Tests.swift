@@ -2203,7 +2203,7 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertTrue(portal3.isUInt16)
         XCTAssertEqual(portal3.uint16, UInt16(0x1818))
         
-        guard let arr = ItemManager.createArrayManager(values: [UInt8(0x11), UInt8(0x22)]) else { XCTFail(); return }
+        let arr = ItemManager.createArrayManager(values: [UInt8(0x11), UInt8(0x22)])
         
         XCTAssertEqual(dm.root.updateItem(arr, withNameField: NameField("Four")), .success)
         
@@ -2217,7 +2217,7 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertTrue(portal41.isValid)
         XCTAssertEqual(portal41.uint8, 0x22)
 
-        guard let arr1 = ItemManager.createArrayManager(values: [true, true]) else { XCTFail(); return }
+        let arr1 = ItemManager.createArrayManager(values: [true, true])
         
         XCTAssertEqual(dm.root.updateItem(arr1, withNameField: NameField("Four")), .success)
 
@@ -2265,7 +2265,7 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertTrue(portal3.isUInt16)
         XCTAssertEqual(portal3.uint16, UInt16(0x1818))
         
-        guard let arr = ItemManager.createArrayManager(values: [UInt8(0x11), UInt8(0x22)]) else { XCTFail(); return }
+        let arr = ItemManager.createArrayManager(values: [UInt8(0x11), UInt8(0x22)])
         
         XCTAssertEqual(dm.root.updateItem(arr, withNameField: NameField("Four")), .success)
         
@@ -2279,7 +2279,7 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertTrue(portal41.isValid)
         XCTAssertEqual(portal41.uint8, 0x22)
         
-        guard let arr1 = ItemManager.createArrayManager(values: [true, true]) else { XCTFail(); return }
+        let arr1 = ItemManager.createArrayManager(values: [true, true])
         
         XCTAssertEqual(dm.root.replaceItem(arr1, withNameField: NameField("Four")), .success)
         

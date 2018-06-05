@@ -53,12 +53,14 @@ import Foundation
 import BRUtils
 
 
-/// This protocol is used to encode types to a byte stream.
+/// This protocol is used to encode types to a series of bytes.
+///
+/// It should be adopted for leaf types, i.e. types that does not contain other BRBON types.
 
 public protocol Coder {
 
     
-    /// The type of item
+    /// The BRBON type of the item this value can be saved as.
     
     var itemType: ItemType { get }
     
@@ -68,19 +70,26 @@ public protocol Coder {
     var valueByteCount: Int { get }
     
     
-    /// The number of bytes necessary for the value field. (Zero if the smallValueField is used)
+    /// The minimum number of bytes of a value field necessary to encode self into.
+    ///
+    /// If the bytes are stored in the small-value field, 0 is returned. If not the first multiple of 8 above 'valueByteCount' is returned if 'valueByteCount' is not a multiple of 8.
+    ///
+    /// A default implementation is present that should be sufficient for all purposes.
     
     var minimumValueFieldByteCount: Int { get }
     
     
-    /// Stores the bytes of the value at the designated address.
+    /// Encodes self at the designated address such that self be be reconstitued from these bytes.
     ///
     /// - Parameters:
     ///   - to: The address where the first byte must be stored.
-    ///   - endianness: Specifies the endian ordering of the bytes. Only used when necessary.
+    ///   - endianness: Specifies the endian ordering of the bytes. Only used when storing values > 1 bytes.
     
     func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness)
 }
+
+
+// Default implementations
 
 extension Coder {
     

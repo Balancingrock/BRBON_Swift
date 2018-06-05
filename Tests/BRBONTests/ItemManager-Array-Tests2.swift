@@ -33,9 +33,9 @@ class ItemManager_Array_Tests2: XCTestCase {
         
         // Append three array's the middle one with strings
         
-        guard let arr1 = ItemManager.createArrayManager(values: [UInt32(0x11111111), UInt32(0x22222222)]) else { XCTFail(); return }
-        guard let arr2 = ItemManager.createArrayManager(values: ["1111", "2222", "3333"]) else { XCTFail(); return }
-        guard let arr3 = ItemManager.createArrayManager(values: [UInt8(0x48), UInt8(0x49), UInt8(0x4A), UInt8(0x4B)]) else { XCTFail(); return }
+        let arr1 = ItemManager.createArrayManager(values: [UInt32(0x11111111), UInt32(0x22222222)])
+        let arr2 = ItemManager.createArrayManager(values: ["1111", "2222", "3333"])
+        let arr3 = ItemManager.createArrayManager(values: [UInt8(0x48), UInt8(0x49), UInt8(0x4A), UInt8(0x4B)])
         
         XCTAssertEqual(am.root.appendElements([arr1, arr2, arr3]), .success)
         

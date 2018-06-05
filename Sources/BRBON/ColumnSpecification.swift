@@ -52,7 +52,7 @@ import Foundation
 import BRUtils
 
 
-/// The specification of a single column in the table.
+/// The specification for a single column in a table item.
 
 public struct ColumnSpecification {
 
@@ -62,7 +62,9 @@ public struct ColumnSpecification {
     internal let fieldType: ItemType
     
     
-    /// The byte count for the value in the column. If absent, it will be set to the default value (as defined for the type), rounded up to the nearest multiple of 8.
+    /// The byte count for the value to be stored in the column.
+    ///
+    /// If absent, it will be set to the default value (as defined by the 'minimumElementByteCount' in ItemType.swift), rounded up to the nearest multiple of 8.
     
     internal let fieldByteCount: Int
     
@@ -72,22 +74,22 @@ public struct ColumnSpecification {
     internal var nameField: NameField
     
     
-    /// The offset for the name in the value field, will be computed when storing to memory
+    /// The offset for the name in the value field, will be computed when creating a table.
     
     internal var nameOffset: Int = 0
     
     
-    /// The offset for the column value in a row, will be computed when storingto memory
+    /// The offset for the column value in a row, will be computed when creating a table.
     
     internal var fieldOffset: Int = 0
     
     
-    /// Creates a new column descriptor.
+    /// Create a new column descriptor.
     ///
     /// - Parameters:
     ///   - type: The type of value that will be stored in this column.
     ///   - nameField: The name field for the column.
-    ///   - byteCount: The initial byte count reserved for items in this column. Maximum byte count is Int32.max, minimum is the minimum byte count possible for the type. Will always be rounded up to a multiple of 8 bytes. (Note that 8 bytes is the minimum possible, even for booleans)
+    ///   - byteCount: The initial byte count reserved for the items in this column. Range 'minimumElementByteCount'...Int32.max. In the current implementation it will be rounded up -if necessary- to a multiple of 8, this may change in future versions.
     
     public init(
         type: ItemType,
@@ -99,25 +101,62 @@ public struct ColumnSpecification {
         self.fieldByteCount = byteCount.roundUpToNearestMultipleOf8()
     }
     
+    
+    /// Create a new column descriptor from a byte stream in a table.
+    ///
+    /// - Parameters:
+    ///   - fromPtr: A pointer to the base of the serialized column descriptor of a table structure.
+    ///   - forColumn: The index of the column to read the descriptor for.
+    ///   - endianness: The endianness used for the table.
+    
     internal init?(fromPtr: UnsafeMutableRawPointer, forColumn column: Int, _ endianness: Endianness) {
         
-        // Start of the column descriptor
+        
+        // Start of the descriptor for the requested column
+        
         let ptr = fromPtr.advanced(by: tableColumnDescriptorBaseOffset + column * tableColumnDescriptorByteCount)
         
-        // Get value type
+        
+        // Read the type of the value field
+        
         guard let type = ItemType(atPtr: ptr.advanced(by: tableColumnFieldTypeOffset)) else { return nil }
         self.fieldType = type
         
-        // Get value byte count
-        self.fieldByteCount = Int(UInt32(fromPtr: ptr.advanced(by: tableColumnFieldByteCountOffset), endianness))
         
-        // Get nfd
-        let nameCrc = UInt16(fromPtr: ptr.advanced(by: tableColumnNameCrcOffset), endianness)
-        let nameByteCount = Int(UInt8(fromPtr: ptr.advanced(by: tableColumnNameByteCountOffset), endianness))
-        let nameUtf8Offset = Int(UInt32(fromPtr: ptr.advanced(by: tableColumnNameUtf8CodeOffsetOffset), endianness))
-        let nameDataCount = Int(Int8(fromPtr: fromPtr.advanced(by: nameUtf8Offset), endianness))
-        let nameData = Data(bytes: fromPtr.advanced(by: nameUtf8Offset + 1), count: nameDataCount)
-        self.nameField = NameField(data: nameData, crc: nameCrc, byteCount: nameByteCount)
+        if endianness == machineEndianness {
+        
+            // Read the byte count of the value field
+            
+            self.fieldByteCount = Int(ptr.advanced(by: tableColumnFieldByteCountOffset).assumingMemoryBound(to: UInt32.self).pointee)
+            
+            
+            // Get the name field
+            
+            let nameCrc = ptr.advanced(by: tableColumnNameCrcOffset).assumingMemoryBound(to: UInt16.self).pointee
+            let nameByteCount = Int(ptr.advanced(by: tableColumnNameByteCountOffset).assumingMemoryBound(to: UInt8.self).pointee)
+            let nameUtf8Offset = Int(ptr.advanced(by: tableColumnNameUtf8CodeOffsetOffset).assumingMemoryBound(to: UInt32.self).pointee)
+            
+            let nameDataCount = Int(fromPtr.advanced(by: nameUtf8Offset).assumingMemoryBound(to: UInt8.self).pointee)
+            let nameData = Data(bytes: fromPtr.advanced(by: nameUtf8Offset + 1), count: nameDataCount)
+            self.nameField = NameField(data: nameData, crc: nameCrc, byteCount: nameByteCount)
+
+        } else {
+
+            // Read the byte count of the value field
+            
+            self.fieldByteCount = Int(ptr.advanced(by: tableColumnFieldByteCountOffset).assumingMemoryBound(to: UInt32.self).pointee.byteSwapped)
+
+            
+            // Get the name field
+            
+            let nameCrc = ptr.advanced(by: tableColumnNameCrcOffset).assumingMemoryBound(to: UInt16.self).pointee.byteSwapped
+            let nameByteCount = Int(ptr.advanced(by: tableColumnNameByteCountOffset).assumingMemoryBound(to: UInt8.self).pointee)
+            let nameUtf8Offset = Int(ptr.advanced(by: tableColumnNameUtf8CodeOffsetOffset).assumingMemoryBound(to: UInt32.self).pointee.byteSwapped)
+
+            let nameDataCount = Int(fromPtr.advanced(by: nameUtf8Offset).assumingMemoryBound(to: UInt8.self).pointee)
+            let nameData = Data(bytes: fromPtr.advanced(by: nameUtf8Offset + 1), count: nameDataCount)
+            self.nameField = NameField(data: nameData, crc: nameCrc, byteCount: nameByteCount)
+        }
     }
 }
 

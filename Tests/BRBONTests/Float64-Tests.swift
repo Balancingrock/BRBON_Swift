@@ -43,22 +43,7 @@ class Float64_Tests: XCTestCase {
         XCTAssertEqual(data, exp)
     }
     
-    
-    func testDecoder() {
         
-        let buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: 128, alignment: 8)
-        _ = Darwin.memset(buffer.baseAddress, 0, 128)
-        defer { buffer.deallocate() }
-        
-        let data = Data(bytes: [0xae, 0x47, 0xe1, 0x7a, 0x14, 0xae, 0xf3, 0x3f])
-        
-        data.copyBytes(to: (buffer.baseAddress?.assumingMemoryBound(to: UInt8.self))!, count: data.count)
-        
-        let f = Float64(fromPtr: buffer.baseAddress!, machineEndianness)
-        
-        XCTAssertEqual(f, Float64(1.23))
-    }
-    
     func testPortal() {
         
         ItemManager.startWithZeroedBuffers = true

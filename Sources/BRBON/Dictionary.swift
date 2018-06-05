@@ -234,6 +234,30 @@ public extension Portal {
     
     /// Updates the referenced item or adds a new item to a dictionary.
     ///
+    /// The type of the value and of the referenced item must be the same. Use 'replaceItem' to change the type of the referenced item.
+    ///
+    /// - Note: This portal will not be affected, portals referring to items in the content field will be invalidated.
+    ///
+    /// - Parameters:
+    ///   - value: The new value.
+    ///   - withName: The name of the item to update/add.
+    ///
+    /// - Returns:
+    ///   success: if the update was made.
+    ///
+    ///   noAction: if the value is nil.
+    ///
+    ///   error(code): if the update could not be made because of an error, the code details the kind of error.
+    
+    @discardableResult
+    public func updateItem(_ value: Coder?, withName name: String) -> Result {
+        guard let nameField = NameField(name) else { return .error(.nameFieldError) }
+        return updateItem(value, withNameField: nameField)
+    }
+
+    
+    /// Updates the referenced item or adds a new item to a dictionary.
+    ///
     /// If the referenced item has an active portal, that portal is unaffected. However any active portal to the content of the items will be invalidated.
     ///
     /// - Note: The type in value.root and in the referenced item must be the same. Use 'replaceItem' to change the type of the referenced item.
@@ -262,13 +286,6 @@ public extension Portal {
             return item._updateItemValue(value)
 
         } else {
-            
-            
-            // Ensure a name is present
-            
-            //if nameField == nil {
-            //    guard value.root.hasName else { return .error(.missingName) }
-            //}
             
             
             // The new value field byte count for the dictionary
@@ -302,6 +319,27 @@ public extension Portal {
 
             return .success
         }
+    }
+
+    
+    /// Updates the referenced item or adds a new item to a dictionary.
+    ///
+    /// If the referenced item has an active portal, that portal is unaffected. However any active portal to the content of the items will be invalidated.
+    ///
+    /// - Note: The type in value.root and in the referenced item must be the same. Use 'replaceItem' to change the type of the referenced item.
+    ///
+    /// - Note: If the name is nil, but the value.root has a name, then that name will be used.
+    ///
+    /// - Parameters:
+    ///   - value: The new value.
+    ///   - withName: The name of the item to update/add.
+    ///
+    /// - Returns: 'success' or an error indicator.
+    
+    @discardableResult
+    public func updateItem(_ value: ItemManager?, withName name: String) -> Result {
+        guard let nameField = NameField(name) else { return .error(.nameFieldError) }
+        return updateItem(value, withNameField: nameField)
     }
 
     
@@ -357,6 +395,28 @@ public extension Portal {
     }
     
     
+    /// Replaces an item with a new item. If the item is not yet present, the new value will be rejected.
+    ///
+    /// - Note: The portal of the replaced item will be invalidated, as will the portals to any item in the content area of the replaced item.
+    ///
+    /// - Parameters:
+    ///   - value: The new content for the item.
+    ///   - withName: The name for the item to be replaced (and the new item).
+    ///
+    /// - Returns:
+    ///   success: If the old item was replaced.
+    ///
+    ///   noAction: If the value is nil.
+    ///
+    ///   error(code): If an error prevented completion of the request, the code will detail the kind of error.
+    
+    @discardableResult
+    public func replaceItem(_ value: Coder?, withName name: String) -> Result {
+        guard let nameField = NameField(name) else { return .error(.nameFieldError) }
+        return replaceItem(value, withNameField: nameField)
+    }
+
+    
     /// Replaces an item with the contents from an item manager. If the item is not present, the new content will be rejected.
     ///
     /// - Note: The portal of the replaced item will be invalidated, as will the portals to any item in the content area of the replaced item.
@@ -408,6 +468,28 @@ public extension Portal {
         UInt32(oldByteCount).copyBytes(to: ibcPtr, endianness)
             
         return .success
+    }
+
+    
+    /// Replaces an item with the contents from an item manager. If the item is not present, the new content will be rejected.
+    ///
+    /// - Note: The portal of the replaced item will be invalidated, as will the portals to any item in the content area of the replaced item.
+    ///
+    /// - Parameters:
+    ///   - value: The new content for the item.
+    ///   - withName: The name for the item to be replaced (and the new item).
+    ///
+    /// - Returns:
+    ///   success: If the old item was replaced.
+    ///
+    ///   noAction: If either parameter was nil.
+    ///
+    ///   error(code): If an error prevented completion of the request, the code will detail the kind of error.
+    
+    @discardableResult
+    public func replaceItem(_ value: ItemManager?, withName name: String) -> Result {
+        guard let nameField = NameField(name) else { return .error(.nameFieldError) }
+        return replaceItem(value, withNameField: nameField)
     }
 
     
@@ -467,105 +549,217 @@ public extension Portal {
 
         return .success
     }
+    
+    
+    /// Removes an item with the given name from the dictionary or all the items with the given name from a sequence.
+    ///
+    /// Works only on dictionaries and sequences.
+    ///
+    /// - Parameter withName: The name of the item to remove.
+    ///
+    /// - Returns: 'success' or an error indicator (including 'itemNotFound').
+    
+    @discardableResult
+    public func removeItem(withName name: String) -> Result {
+        guard let nameField = NameField(name) else { return .error(.nameFieldError) }
+        return removeItem(withNameField: nameField)
+    }
 }
 
 public extension Portal {
     
     public subscript(name: String) -> Portal { get { return dictionaryFindItem(NameField(name)) ?? Portal.nullPortal } }
-    
+
+    public subscript(nameField: NameField) -> Portal { get { return dictionaryFindItem(nameField) ?? Portal.nullPortal } }
+
     public subscript(name: String) -> Bool? {
         get { return dictionaryFindItem(NameField(name))?.bool }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
-    
+
+    public subscript(nameField: NameField) -> Bool? {
+        get { return dictionaryFindItem(nameField)?.bool }
+        set { updateItem(newValue, withNameField: nameField) }
+    }
+
     public subscript(name: String) -> Int8? {
         get { return dictionaryFindItem(NameField(name))?.int8 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
+    public subscript(nameField: NameField) -> Int8? {
+        get { return dictionaryFindItem(nameField)?.int8 }
+        set { updateItem(newValue, withNameField: nameField) }
+    }
+
     public subscript(name: String) -> Int16? {
         get { return dictionaryFindItem(NameField(name))?.int16 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
+    public subscript(nameField: NameField) -> Int16? {
+        get { return dictionaryFindItem(nameField)?.int16 }
+        set { updateItem(newValue, withNameField: nameField) }
+    }
+
     public subscript(name: String) -> Int32? {
         get { return dictionaryFindItem(NameField(name))?.int32 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
+    public subscript(nameField: NameField) -> Int32? {
+        get { return dictionaryFindItem(nameField)?.int32 }
+        set { updateItem(newValue, withNameField: nameField) }
+    }
+
     public subscript(name: String) -> Int64? {
         get { return dictionaryFindItem(NameField(name))?.int64 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
+    public subscript(nameField: NameField) -> Int64? {
+        get { return dictionaryFindItem(nameField)?.int64 }
+        set { updateItem(newValue, withNameField: nameField) }
+    }
+
     public subscript(name: String) -> UInt8? {
         get { return dictionaryFindItem(NameField(name))?.uint8 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
+    public subscript(nameField: NameField) -> UInt8? {
+        get { return dictionaryFindItem(nameField)?.uint8 }
+        set { updateItem(newValue, withNameField: nameField) }
+    }
+
     public subscript(name: String) -> UInt16? {
         get { return dictionaryFindItem(NameField(name))?.uint16 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
+    public subscript(nameField: NameField) -> UInt16? {
+        get { return dictionaryFindItem(nameField)?.uint16 }
+        set { updateItem(newValue, withNameField: nameField) }
+    }
+
     public subscript(name: String) -> UInt32? {
         get { return dictionaryFindItem(NameField(name))?.uint32 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
+    public subscript(nameField: NameField) -> UInt32? {
+        get { return dictionaryFindItem(nameField)?.uint32 }
+        set { updateItem(newValue, withNameField: nameField) }
+    }
+
     public subscript(name: String) -> UInt64? {
         get { return dictionaryFindItem(NameField(name))?.uint64 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
+    public subscript(nameField: NameField) -> UInt64? {
+        get { return dictionaryFindItem(nameField)?.uint64 }
+        set { updateItem(newValue, withNameField: nameField) }
+    }
+
     public subscript(name: String) -> Float32? {
         get { return dictionaryFindItem(NameField(name))?.float32 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
+    public subscript(nameField: NameField) -> Float32? {
+        get { return dictionaryFindItem(nameField)?.float32 }
+        set { updateItem(newValue, withNameField: nameField) }
+    }
+
     public subscript(name: String) -> Float64? {
         get { return dictionaryFindItem(NameField(name))?.float64 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
+    public subscript(nameField: NameField) -> Float64? {
+        get { return dictionaryFindItem(nameField)?.float64 }
+        set { updateItem(newValue, withNameField: nameField) }
+    }
+
     public subscript(name: String) -> String? {
         get { return dictionaryFindItem(NameField(name))?.string }
         set { updateItem(BRString(newValue), withNameField: NameField(name)) }
     }
     
+    public subscript(nameField: NameField) -> String? {
+        get { return dictionaryFindItem(nameField)?.string }
+        set { updateItem(newValue, withNameField: nameField) }
+    }
+
     public subscript(name: String) -> BRString? {
         get { return dictionaryFindItem(NameField(name))?.brString }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
+    public subscript(nameField: NameField) -> BRString? {
+        get { return dictionaryFindItem(nameField)?.brString }
+        set { updateItem(newValue, withNameField: nameField) }
+    }
+
     public subscript(name: String) -> BRCrcString? {
         get { return dictionaryFindItem(NameField(name))?.crcString }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
+    public subscript(nameField: NameField) -> BRCrcString? {
+        get { return dictionaryFindItem(nameField)?.crcString }
+        set { updateItem(newValue, withNameField: nameField) }
+    }
+
     public subscript(name: String) -> Data? {
         get { return dictionaryFindItem(NameField(name))?.binary }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
+    public subscript(nameField: NameField) -> Data? {
+        get { return dictionaryFindItem(nameField)?.binary }
+        set { updateItem(newValue, withNameField: nameField) }
+    }
+
     public subscript(name: String) -> BRCrcBinary? {
         get { return dictionaryFindItem(NameField(name))?.crcBinary }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
+    public subscript(nameField: NameField) -> BRCrcBinary? {
+        get { return dictionaryFindItem(nameField)?.crcBinary }
+        set { updateItem(newValue, withNameField: nameField) }
+    }
+
     public subscript(name: String) -> UUID? {
         get { return dictionaryFindItem(NameField(name))?.uuid }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
+    public subscript(nameField: NameField) -> UUID? {
+        get { return dictionaryFindItem(nameField)?.uuid }
+        set { updateItem(newValue, withNameField: nameField) }
+    }
+
     public subscript(name: String) -> BRColor? {
         get { return dictionaryFindItem(NameField(name))?.color }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
+    public subscript(nameField: NameField) -> BRColor? {
+        get { return dictionaryFindItem(nameField)?.color }
+        set { updateItem(newValue, withNameField: nameField) }
+    }
+
     public subscript(name: String) -> BRFont? {
         get { return dictionaryFindItem(NameField(name))?.font }
         set { updateItem(newValue, withNameField: NameField(name)) }
+    }
+    
+    public subscript(nameField: NameField) -> BRFont? {
+        get { return dictionaryFindItem(nameField)?.font }
+        set { updateItem(newValue, withNameField: nameField) }
     }
 }
 

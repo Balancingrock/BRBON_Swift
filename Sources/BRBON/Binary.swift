@@ -55,7 +55,7 @@ import BRUtils
 // Offset definitions
 
 fileprivate let binaryByteCountOffset = 0
-internal let binaryDataOffset = binaryByteCountOffset + 4
+fileprivate let binaryDataOffset = binaryByteCountOffset + 4
 
 
 // Pointer manipulations
@@ -117,6 +117,9 @@ fileprivate extension UnsafeMutableRawPointer {
 
 internal extension Portal {
     
+    
+    /// The binary data referred to by this portal.
+    
     internal var _binaryData: Data {
         
         get { return _valuePtr.binaryData(endianness) }
@@ -128,6 +131,9 @@ internal extension Portal {
             _valuePtr.setBinaryData(to: newValue, endianness)
         }
     }
+    
+    
+    /// The number of bytes actually used for the value referenced by the portal.
     
     internal var _binaryValueFieldUsedByteCount: Int { return binaryDataOffset + Int(itemPtr.binaryByteCount(endianness)) }
 }
@@ -167,11 +173,6 @@ public extension Portal {
 }
 
 
-// Create a typealias for orthogonality
-
-public typealias BRBinary = Data
-
-
 // Adds the Coder protocol to Data
 
 extension Data: Coder {
@@ -181,18 +182,7 @@ extension Data: Coder {
     public var valueByteCount: Int { return binaryDataOffset + self.count }
     
     public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        UInt32(self.count).copyBytes(to: ptr.advanced(by: binaryByteCountOffset), endianness)
-        self.copyBytes(to: ptr.advanced(by: binaryDataOffset).assumingMemoryBound(to: UInt8.self), count: self.count)
-    }    
-}
-
-
-/// Add a decoder
-
-extension Data {
-    internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        let byteCount = Int(UInt32(fromPtr: fromPtr.advanced(by: binaryByteCountOffset), endianness))
-        self.init(Data(bytes: fromPtr.advanced(by: binaryDataOffset), count: byteCount))
+        ptr.setBinaryData(to: self, endianness)
     }
 }
 

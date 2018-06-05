@@ -52,7 +52,7 @@ import Foundation
 import BRUtils
 
 
-internal let int64ValueByteCount = 8
+fileprivate let int64ValueByteCount = 8
 
 
 // Extensions that allow a portal to test and access an UInt64
@@ -77,7 +77,11 @@ public extension Portal {
     public var int64: Int64? {
         get {
             guard isInt64 else { return nil }
-            return Int64(fromPtr: _valuePtr, endianness)
+            if endianness == machineEndianness {
+                return _valuePtr.assumingMemoryBound(to: Int64.self).pointee
+            } else {
+                return _valuePtr.assumingMemoryBound(to: Int64.self).pointee.byteSwapped
+            }
         }
         set {
             guard isInt64 else { return }
@@ -100,20 +104,6 @@ extension Int64: Coder {
             ptr.storeBytes(of: self, as: Int64.self)
         } else {
             ptr.storeBytes(of: self.byteSwapped, as: Int64.self)
-        }
-    }
-}
-
-
-/// Add decoding
-
-extension Int64 {
-    
-    internal init(fromPtr: UnsafeMutableRawPointer, count: Int = 0, _ endianness: Endianness) {
-        if endianness == machineEndianness {
-            self.init(fromPtr.assumingMemoryBound(to: Int64.self).pointee)
-        } else {
-            self.init(fromPtr.assumingMemoryBound(to: Int64.self).pointee.byteSwapped)
         }
     }
 }

@@ -78,7 +78,7 @@ public extension Portal {
     public var int8: Int8? {
         get {
             guard isInt8 else { return nil }
-            return Int8(fromPtr: _valuePtr, endianness)
+            return _valuePtr.assumingMemoryBound(to: Int8.self).pointee
         }
         set {
             guard isInt8 else { return }
@@ -100,17 +100,6 @@ extension Int8: Coder {
         ptr.storeBytes(of: self, as: Int8.self)
     }
 }
-
-
-// Add decoder
-
-extension Int8 {
-    
-    internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        self.init(fromPtr.assumingMemoryBound(to: Int8.self).pointee)
-    }
-}
-
 
 
 

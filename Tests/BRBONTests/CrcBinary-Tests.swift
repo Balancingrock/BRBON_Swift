@@ -49,22 +49,6 @@ class CrcBinary_Tests: XCTestCase {
     }
     
     
-    func testDecoder() {
-        
-        let buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: 128, alignment: 8)
-        _ = Darwin.memset(buffer.baseAddress, 0, 128)
-        defer { buffer.deallocate() }
-        
-        let data = Data(bytes: [0x1D, 0x80, 0xBC, 0x55, 0x03, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03])
-        
-        data.copyBytes(to: (buffer.baseAddress?.assumingMemoryBound(to: UInt8.self))!, count: data.count)
-        
-        let b = BRCrcBinary(fromPtr: buffer.baseAddress!, machineEndianness)
-        
-        XCTAssertEqual(b.data, Data(bytes: [0x01, 0x02, 0x03]))
-    }
-    
-    
     func testPortal() {
         
         ItemManager.startWithZeroedBuffers = true

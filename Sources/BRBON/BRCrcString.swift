@@ -54,7 +54,7 @@ import BRUtils
 
 fileprivate let crcStringCrcOffset = 0
 fileprivate let crcStringUtf8ByteCountOffset = crcStringCrcOffset + 4
-internal let crcStringUtf8CodeOffset = crcStringUtf8ByteCountOffset + 4
+fileprivate let crcStringUtf8CodeOffset = crcStringUtf8ByteCountOffset + 4
 
 
 // Pointer manipulations
@@ -212,12 +212,28 @@ public extension Portal {
 
 public struct BRCrcString {
     
+    
+    /// The UTF8 code of the string.
+    
     public let utf8Code: Data
+    
+    
+    /// The CRC32 value for the string.
+    
     public let crc: UInt32
+    
+    
+    /// True if the stored CRC32 and the CRC32 of the utf8Code are identical, false otherwise.
     
     public var crcIsValid: Bool { return utf8Code.crc32() == crc }
     
+    
+    /// The string value, but only if the CRC is valid.
+    
     public var string: String? { return crcIsValid ? String(data: utf8Code, encoding: .utf8) : nil }
+    
+    
+    /// Creates a new CrcString that will be valid initially.
     
     public init?(_ value: String?) {
         guard let data = value?.data(using: .utf8) else { return nil }
@@ -225,10 +241,8 @@ public struct BRCrcString {
         crc = utf8Code.crc32()
     }
 
-    public init(_ value: BRString) {
-        utf8Code = value.utf8Code
-        crc = utf8Code.crc32()
-    }
+    
+    /// Creates a new CrcString from the given values, the new CrcString may contain an invalid string.
     
     public init(utf8Code: Data, crc: UInt32) {
         self.utf8Code = utf8Code
@@ -257,22 +271,10 @@ extension BRCrcString: Coder {
     public var valueByteCount: Int { return utf8Code.count + crcStringUtf8CodeOffset }
 
     public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        crc.copyBytes(to: ptr, endianness)
-        UInt32(utf8Code.count).copyBytes(to: ptr.advanced(by: crcStringUtf8ByteCountOffset), endianness)
-        utf8Code.copyBytes(to: ptr.advanced(by: crcStringUtf8CodeOffset).assumingMemoryBound(to: UInt8.self), count: utf8Code.count)
+        ptr.setCrcStringCrc(to: crc, endianness)
+        ptr.setCrcStringUtf8Code(to: utf8Code, endianness)
     }
 }
 
-
-/// Add decoder
-
-extension BRCrcString {
-    
-    internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        crc = UInt32(fromPtr: fromPtr.advanced(by: crcStringCrcOffset), endianness)
-        let c = Int(UInt32(fromPtr: fromPtr.advanced(by: crcStringUtf8ByteCountOffset), endianness))
-        utf8Code = Data(bytes: fromPtr.advanced(by: crcStringUtf8CodeOffset), count: c)
-    }
-}
 
 

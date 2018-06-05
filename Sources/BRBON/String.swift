@@ -1,6 +1,6 @@
 // =====================================================================================================================
 //
-//  File:       BRString.swift
+//  File:       String.swift
 //  Project:    BRBON
 //
 //  Version:    0.7.0
@@ -47,6 +47,13 @@
 // 0.7.0 - Code restructuring & simplification
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
+//
+// This is a wrapper for a swift String.
+//
+// When storing strings in a BRBON structure repeated conversions to a Data struct are made. Using a BRString wrapper
+// limits the number of conversions to just one, thereby improving performance.
+//
+// =====================================================================================================================
 
 import Foundation
 import BRUtils
@@ -55,7 +62,7 @@ import BRUtils
 // Offset definitions
 
 fileprivate let stringUtf8ByteCountOffset = 0
-internal let stringUtf8CodeOffset = stringUtf8ByteCountOffset + 4
+fileprivate let stringUtf8CodeOffset = stringUtf8ByteCountOffset + 4
 
 
 // Pointer manipulations
@@ -74,7 +81,7 @@ fileprivate extension UnsafeMutableRawPointer {
     
     
     /// Returns the UTF8 byte count assuming self points to the first byte of the value.
-    
+
     fileprivate func stringUtf8ByteCount(_ endianness: Endianness) -> UInt32 {
         if endianness == machineEndianness {
             return stringUtf8ByteCountPtr.assumingMemoryBound(to: UInt32.self).pointee
@@ -120,6 +127,8 @@ fileprivate extension UnsafeMutableRawPointer {
 internal extension Portal {
     
     
+    /// - Returns: The UTF8 code of the value this portal refers to.
+    
     internal var _stringUtf8Code: Data {
         get {
             return _valuePtr.stringUtf8Code(endianness)
@@ -131,6 +140,9 @@ internal extension Portal {
             _valuePtr.setStringUtf8Code(to: newValue, endianness)
         }
     }
+    
+    
+    /// - Returns: The number of bytes actually used to store the referred value.
     
     internal var _stringValueFieldUsedByteCount: Int { return stringUtf8CodeOffset + Int(_valuePtr.stringUtf8ByteCount(endianness)) }
 }
@@ -153,12 +165,12 @@ extension Portal {
     
     /// Access the value through the portal as a BRString
     ///
-    /// - Note: Assigning a nil has no effect. If an error occurs when assigning, the setter will fail silently.
+    /// - Note: Assigning a nil has no effect.
 
     public var brString: BRString? {
         get {
             guard isString else { return nil }
-            return BRString.init(fromPtr: _valuePtr, endianness)
+            return BRString.init(_stringUtf8Code)
         }
         set {
             guard isString else { return }
@@ -186,17 +198,35 @@ extension Portal {
 }
 
 
-/// The BRString structure
+/// A wrapper for a swift String that stores the UTF8 byte code of a string.
+///
+/// When storing strings in a BRBON structure repeated conversions to a Data struct are made. Using a BRString wrapper limits the number of conversions to just one, thereby improving performance.
 
 public struct BRString {
     
+    
+    /// The UTF8 code of a string.
+    
     public let utf8Code: Data
     
+    
+    /// The string value of the UTF8 code.
+    
     public var string: String? { return String(data: utf8Code, encoding: .utf8) }
+    
+    
+    /// Create a new BRString if possible, only fails if the String cannot be converted into UTF8 code.
     
     public init?(_ str: String?) {
         guard let code = str?.data(using: .utf8) else { return nil }
         utf8Code = code
+    }
+    
+    
+    /// Create a new BRString from raw data.
+    
+    internal init(_ data: Data) {
+        utf8Code = data
     }
 }
 
@@ -220,18 +250,18 @@ extension BRString: Coder {
     public var valueByteCount: Int { return stringUtf8CodeOffset + utf8Code.count }
     
     public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        UInt32(utf8Code.count).copyBytes(to: ptr.advanced(by: stringUtf8ByteCountOffset), endianness)
-        utf8Code.copyBytes(to: ptr.advanced(by: stringUtf8CodeOffset).assumingMemoryBound(to: UInt8.self), count: utf8Code.count)
+        ptr.setStringUtf8Code(to: utf8Code, endianness)
     }
 }
 
-
-/// Adds decoder
-
-extension BRString {
-    internal init?(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        let c = Int(UInt32(fromPtr: fromPtr.advanced(by: stringUtf8ByteCountOffset), endianness))
-        utf8Code = Data(bytes: fromPtr.advanced(by: stringUtf8CodeOffset), count: c)
+extension String: Coder {
+    
+    public var itemType: ItemType { return ItemType.string }
+    
+    public var valueByteCount: Int { return stringUtf8CodeOffset + (self.data(using: .utf8)?.count ?? 0) }
+    
+    public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
+        let code = self.data(using: .utf8) ?? Data()
+        ptr.setStringUtf8Code(to: code, endianness)
     }
 }
-

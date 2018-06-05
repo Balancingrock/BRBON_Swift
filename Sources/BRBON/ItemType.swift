@@ -55,7 +55,7 @@ import Foundation
 import BRUtils
 
 
-/// The identifier that describes the actual value.
+/// The identifier that describes the type stored in an item.
 
 public enum ItemType: UInt8 {
     
@@ -175,6 +175,8 @@ public enum ItemType: UInt8 {
     case font           = 0x17
     
     
+    /// True if the value is stored in the small value field of an item.
+    
     internal var usesSmallValue: Bool {
         switch self {
         case .null, .bool, .int8, .int16, .int32, .uint8, .uint16, .uint32, .float32, .color: return true
@@ -183,6 +185,8 @@ public enum ItemType: UInt8 {
     }
     
     
+    /// True if the byte count of the value can change.
+    
     internal var hasFlexibleLength: Bool {
         switch self {
         case .null, .bool, .int8, .int16, .int32, .uint8, .uint16, .uint32, .float32, .int64, .uint64, .float64, .uuid, .color: return false
@@ -190,26 +194,8 @@ public enum ItemType: UInt8 {
         }
     }
     
-    internal var minimumElementByteCount: Int {
-        switch self {
-        case .null: return 0
-        case .bool, .int8, .uint8: return 1
-        case .int16, .uint16: return 2
-        case .int32, .uint32, .float32: return 4
-        case .int64, .uint64, .float64: return 8
-        case .uuid: return uuidValueByteCount
-        case .color: return colorValueByteCount
-        case .font: return fontFamilyNameUtf8CodeOffset
-        case .string: return stringUtf8CodeOffset
-        case .binary: return binaryDataOffset
-        case .crcString: return crcStringUtf8CodeOffset
-        case .crcBinary: return crcBinaryDataOffset
-        case .array: return arrayElementBaseOffset
-        case .dictionary: return dictionaryItemBaseOffset
-        case .sequence: return sequenceItemBaseOffset
-        case .table: return tableColumnDescriptorBaseOffset
-        }
-    }
+    
+    /// True if an item of this type can contain other items.
     
     internal var isContainer: Bool {
         switch self {
@@ -218,8 +204,11 @@ public enum ItemType: UInt8 {
         }
     }
     
+    
+    /// Create a new ItemType from memory content.
+    
     internal init?(atPtr: UnsafeMutableRawPointer) {
-        self.init(rawValue: UInt8(fromPtr: atPtr, machineEndianness))
+        self.init(rawValue: atPtr.assumingMemoryBound(to: UInt8.self).pointee)
     }
 }
 
@@ -233,7 +222,6 @@ extension ItemType {
     }
     
     internal static func readValue(atPtr: UnsafeMutableRawPointer) -> ItemType? {
-        let v = UInt8(fromPtr: atPtr, machineEndianness)
-        return ItemType(rawValue: v)
+        return ItemType(atPtr: atPtr)
     }
 }

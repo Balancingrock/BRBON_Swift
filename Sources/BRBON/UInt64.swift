@@ -78,7 +78,11 @@ public extension Portal {
         get {
             guard isValid else { return nil }
             guard isUInt64 else { return nil }
-            return UInt64(fromPtr: _valuePtr, endianness)
+            if endianness == machineEndianness {
+                return _valuePtr.assumingMemoryBound(to: UInt64.self).pointee
+            } else {
+                return _valuePtr.assumingMemoryBound(to: UInt64.self).pointee.byteSwapped
+            }
         }
         set {
             guard isValid else { return }
@@ -105,23 +109,6 @@ extension UInt64: Coder {
         }
     }
 }
-
-
-// Add a decoder
-
-extension UInt64 {
-    
-    internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        if endianness == machineEndianness {
-            self.init(fromPtr.assumingMemoryBound(to: UInt64.self).pointee)
-        } else {
-            self.init(fromPtr.assumingMemoryBound(to: UInt64.self).pointee.byteSwapped)
-        }
-    }
-}
-
-
-
 
 
 

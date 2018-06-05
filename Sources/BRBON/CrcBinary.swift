@@ -54,12 +54,12 @@ import BRUtils
 
 fileprivate let crcBinaryCrcOffset = 0
 fileprivate let crcBinaryByteCountOffset = crcBinaryCrcOffset + 4
-internal let crcBinaryDataOffset = crcBinaryByteCountOffset + 4
+fileprivate let crcBinaryDataOffset = crcBinaryByteCountOffset + 4
 
 
 // Add crcBinary access
 
-internal extension UnsafeMutableRawPointer {
+fileprivate extension UnsafeMutableRawPointer {
 
     
     /// Returns a pointer to the CRC value of a crcBinary item assuming self points at the first byte of the value.
@@ -125,7 +125,7 @@ internal extension UnsafeMutableRawPointer {
     ///
     /// Note that this will also read the crcBinaryByteCount.
     
-    internal func crcBinaryData(_ endianness: Endianness) -> Data {
+    fileprivate func crcBinaryData(_ endianness: Endianness) -> Data {
         return Data(bytes: self.crcBinaryDataPtr, count: Int(self.crcBinaryByteCount(endianness)))
     }
 
@@ -146,7 +146,7 @@ internal extension UnsafeMutableRawPointer {
 internal extension Portal {
     
     
-    /// Access to the crcBinary value as a BRCrcBinary.
+    /// Access to the crcBinary value as Data.
     
     internal var _crcBinaryData: Data {
         get {
@@ -201,6 +201,8 @@ public extension Portal {
     }
     
     
+    /// The BRCrcBinary referenced by this portal. Nil if the portal is invalid or does not refer to a CrcBinary.
+    
     public var crcBinary: BRCrcBinary? {
         get {
             guard isCrcBinary else { return nil }
@@ -215,21 +217,37 @@ public extension Portal {
 }
 
 
-/// Defines the BRCrcBinary.
+/// Associates a CRC32 with a Data object.
 
 public struct BRCrcBinary {
     
+    
+    /// The Data object for the CRC32
+    
     public let data: Data
+    
+    
+    /// The CRC32 for the data object
+    
     public let crc: UInt32
 
-    internal var crcIsValid: Bool { return data.crc32() == crc }
+    
+    /// True if the curretn value of the CRC32 and the calculated CRC32 of the data object are the same, false otherwise.
+    
+    public var isValid: Bool { return data.crc32() == crc }
 
+    
+    /// Create a new CrcBinary that contains a valid CRC
+    
     public init(_ data: Data) {
         self.data = data
         self.crc = data.crc32()
     }
     
-    public init(data: Data, crc: UInt32) {
+    
+    /// Create a new CrcBinary, but the CRC value may be invalid.
+    
+    internal init(data: Data, crc: UInt32) {
         self.data = data
         self.crc = crc
     }
@@ -256,20 +274,9 @@ extension BRCrcBinary: Coder {
     public var valueByteCount: Int { return crcBinaryDataOffset + data.count }
 
     public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        crc.copyBytes(to: ptr.advanced(by: crcBinaryCrcOffset), endianness)
-        UInt32(data.count).copyBytes(to: ptr.advanced(by: crcBinaryByteCountOffset), endianness)
-        data.copyBytes(to: ptr.advanced(by: crcBinaryDataOffset).assumingMemoryBound(to: UInt8.self), count: data.count)
+        ptr.setCrcBinaryCrc(to: crc, endianness)
+        ptr.setCrcBinaryData(to: data, endianness)
     }
 }
 
-
-/// Add a decoder
-
-extension BRCrcBinary {
-    internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        crc = UInt32(fromPtr: fromPtr.advanced(by: crcBinaryCrcOffset), endianness)
-        let byteCount = Int(UInt32(fromPtr: fromPtr.advanced(by: crcBinaryByteCountOffset), endianness))
-        data = Data(bytes: fromPtr.advanced(by: crcBinaryDataOffset), count: byteCount)
-    }
-}
 

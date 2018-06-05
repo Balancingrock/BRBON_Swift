@@ -43,22 +43,7 @@ class UInt16_Tests: XCTestCase {
         XCTAssertEqual(data, exp)
     }
     
-    
-    func testDecoder() {
         
-        let buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: 128, alignment: 8)
-        _ = Darwin.memset(buffer.baseAddress, 0, 128)
-        defer { buffer.deallocate() }
-        
-        let data = Data(bytes: [0x34, 0x12])
-        
-        data.copyBytes(to: (buffer.baseAddress?.assumingMemoryBound(to: UInt8.self))!, count: data.count)
-        
-        let i = UInt16(fromPtr: buffer.baseAddress!, machineEndianness)
-        
-        XCTAssertEqual(i, UInt16(0x1234))
-    }
-    
     func testPortal() {
         
         ItemManager.startWithZeroedBuffers = true

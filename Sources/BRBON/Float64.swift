@@ -52,7 +52,7 @@ import Foundation
 import BRUtils
 
 
-internal let float64ValueByteCount = 8
+fileprivate let float64ValueByteCount = 8
 
 
 // Extensions that allow a portal to test and access a Float64
@@ -75,7 +75,11 @@ extension Portal {
     public var float64: Float64? {
         get {
             guard isFloat64 else { return nil }
-            return Float64(fromPtr: _valuePtr, endianness)
+            if endianness == machineEndianness {
+                return Float64(bitPattern: _valuePtr.assumingMemoryBound(to: UInt64.self).pointee)
+            } else {
+                return Float64(bitPattern: _valuePtr.assumingMemoryBound(to: UInt64.self).pointee.byteSwapped)
+            }
         }
         set {
             guard isFloat64 else { return }
@@ -101,18 +105,4 @@ extension Float64: Coder {
         }
     }
 }
-
-
-// Add decoder
-
-extension Float64 {
-    internal init(fromPtr: UnsafeMutableRawPointer, count: Int = 0, _ endianness: Endianness) {
-        if endianness == machineEndianness {
-            self.init(bitPattern: fromPtr.assumingMemoryBound(to: UInt64.self).pointee)
-        } else {
-            self.init(bitPattern: fromPtr.assumingMemoryBound(to: UInt64.self).pointee.byteSwapped)
-        }
-    }
-}
-
 

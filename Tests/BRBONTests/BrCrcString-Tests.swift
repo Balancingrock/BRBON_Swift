@@ -71,25 +71,6 @@ class BrCrcString_Tests: XCTestCase {
     }
 
     
-    func testDecoder() {
-        
-        let buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: 128, alignment: 8)
-        _ = Darwin.memset(buffer.baseAddress, 0, 128)
-        defer { buffer.deallocate() }
-        
-        let data = Data(bytes: [0xf1, 0x86, 0x6c, 0x7a, 0x03, 0x00, 0x00, 0x00, 0x6f, 0x6e, 0x65])
-        
-        data.copyBytes(to: (buffer.baseAddress?.assumingMemoryBound(to: UInt8.self))!, count: data.count)
-        
-        let b = BRCrcString(fromPtr: buffer.baseAddress!, machineEndianness)
-        
-        XCTAssertEqual(b.string, "one")
-        XCTAssertEqual(b.utf8Code, "one".data(using: .utf8))
-        XCTAssertTrue(b.crcIsValid)
-        XCTAssertEqual(b.crc, UInt32(0x7A6C86F1)) // https://www.lammertbies.nl/comm/info/crc-calculation.html
-    }
-
-    
     func testPortalNoName() {
         
         ItemManager.startWithZeroedBuffers = true

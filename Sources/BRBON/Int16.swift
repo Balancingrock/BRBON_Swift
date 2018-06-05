@@ -78,7 +78,11 @@ public extension Portal {
     public var int16: Int16? {
         get {
             guard isInt16 else { return nil }
-            return Int16(fromPtr: _valuePtr, endianness)
+            if endianness == machineEndianness {
+                return _valuePtr.assumingMemoryBound(to: Int16.self).pointee
+            } else {
+                return _valuePtr.assumingMemoryBound(to: Int16.self).pointee.byteSwapped
+            }
         }
         set {
             guard isInt16 else { return }
@@ -104,21 +108,5 @@ extension Int16: Coder {
         }
     }
 }
-
-
-// Add the decoder
-
-extension Int16 {
-    internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        if endianness == machineEndianness {
-            self.init(fromPtr.assumingMemoryBound(to: Int16.self).pointee)
-        } else {
-            self.init(fromPtr.assumingMemoryBound(to: Int16.self).pointee.byteSwapped)
-        }
-    }
-}
-
-
-
 
 

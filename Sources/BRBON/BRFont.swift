@@ -58,7 +58,7 @@ import BRUtils
 fileprivate let fontPointSizeOffset = 0
 fileprivate let fontFamilyNameUtf8ByteCountOffset = fontPointSizeOffset + 4
 fileprivate let fontFontNameUtf8ByteCountOffset = fontFamilyNameUtf8ByteCountOffset + 1
-internal let fontFamilyNameUtf8CodeOffset = fontFontNameUtf8ByteCountOffset + 1
+fileprivate let fontFamilyNameUtf8CodeOffset = fontFontNameUtf8ByteCountOffset + 1
 
 
 // Internal portal helpers
@@ -91,6 +91,8 @@ fileprivate extension UnsafeMutableRawPointer {
     fileprivate var fontFontNameUtf8CodePtr: UnsafeMutableRawPointer { return self.advanced(by: fontFamilyNameUtf8CodeOffset + Int(fontFamilyNameUtf8ByteCount)) }
     
     
+    /// Returns the point size of a font item assuming self points at the first byte of the value.
+
     fileprivate func fontPointSize(_ endianness: Endianness) -> Float32 {
         if endianness == machineEndianness {
             return Float32(bitPattern: fontPointSizePtr.assumingMemoryBound(to: UInt32.self).pointee)
@@ -99,6 +101,9 @@ fileprivate extension UnsafeMutableRawPointer {
         }
     }
     
+    
+    /// Sets the point size of a font item assuming self points at the first byte of the value.
+
     fileprivate func setFontPointSize(to value: Float32, _ endianness: Endianness) {
         if endianness == machineEndianness {
             fontPointSizePtr.storeBytes(of: value.bitPattern, as: UInt32.self)
@@ -107,16 +112,29 @@ fileprivate extension UnsafeMutableRawPointer {
         }
     }
     
+    
+    /// The byte count of the font family name of a font item assuming self points at the first byte of the value.
+
     fileprivate var fontFamilyNameUtf8ByteCount: UInt8 {
         get { return fontFamilyNameUtf8ByteCountPtr.assumingMemoryBound(to: UInt8.self).pointee }
         set { fontFamilyNameUtf8ByteCountPtr.storeBytes(of: newValue, as: UInt8.self) }
     }
     
+
+    /// The byte count of the font name of a font item assuming self points at the first byte of the value.
+
     fileprivate var fontFontNameUtf8ByteCount: UInt8 {
         get { return fontFontNameUtf8ByteCountPtr.assumingMemoryBound(to: UInt8.self).pointee }
         set { fontFontNameUtf8ByteCountPtr.storeBytes(of: newValue, as: UInt8.self) }
     }
     
+    
+    /// The font family name UTF8 byte code of a font item assuming self points at the first byte of the value.
+    ///
+    /// Will also read cq write to the 'fontFamilyNameUtf8ByteCount'
+    ///
+    /// - Note: Can only be used if it is guaranteed that the UTF8 code field is large enough to contain the data.
+
     fileprivate var fontFamilyNameUtf8Code: Data {
         get {
             let bc = fontFamilyNameUtf8ByteCount
@@ -129,6 +147,13 @@ fileprivate extension UnsafeMutableRawPointer {
         }
     }
     
+    
+    /// The font name UTF8 byte code of a font item assuming self points at the first byte of the value.
+    ///
+    /// Will also read cq write to the 'fontFontNameUtf8ByteCount'
+    ///
+    /// - Note: Can only be used if it is guaranteed that the UTF8 code field is large enough to contain the data.
+
     fileprivate var fontFontNameUtf8Code: Data {
         get {
             let bc = fontFontNameUtf8ByteCount
@@ -144,6 +169,13 @@ fileprivate extension UnsafeMutableRawPointer {
 
 extension Portal {
     
+    
+    /// The font family name UTF8 byte code of a font item assuming self points at the first byte of the value.
+    ///
+    /// Will also read cq write to the 'fontFamilyNameUtf8ByteCount'
+    ///
+    /// - Note: On write, it will increase the storage area -when necessary- to ensure proper storage of the family and font name. THis may include shifting of the font name UTF8 byte code.
+
     internal var _fontFamilyNameUtf8Code: Data {
         get { return _valuePtr.fontFamilyNameUtf8Code }
         set {
@@ -162,6 +194,13 @@ extension Portal {
         }
     }
     
+    
+    /// The font name UTF8 byte code of a font item assuming self points at the first byte of the value.
+    ///
+    /// Will also read cq write to the 'fontFamilyNameUtf8ByteCount'
+    ///
+    /// - Note: On write, it will increase the storage area -when necessary- to ensure proper storage of the family and font name.
+
     internal var _fontFontNameUtf8Code: Data {
         get { return _valuePtr.fontFontNameUtf8Code }
         set {
@@ -174,6 +213,9 @@ extension Portal {
             _valuePtr.fontFontNameUtf8Code = newValue
         }
     }
+    
+    
+    /// Returns the actual number of bytes used to represent the font value referenced by this portal.
     
     internal var _fontValueFieldUsedByteCount: Int {
         return fontFamilyNameUtf8CodeOffset + Int(_valuePtr.fontFamilyNameUtf8ByteCount) + Int(_valuePtr.fontFontNameUtf8ByteCount)
@@ -282,12 +324,10 @@ extension BRFont: Coder {
     public var valueByteCount: Int { return fontFamilyNameUtf8CodeOffset + (familyNameUtf8Code?.count ?? 0) + fontNameUtf8Code.count }
 
     public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-    
-        pointSize.copyBytes(to: ptr.advanced(by: fontPointSizeOffset), endianness)
-        UInt8(familyNameUtf8Code?.count ?? 0).copyBytes(to: ptr.advanced(by: fontFamilyNameUtf8ByteCountOffset), endianness)
-        UInt8(fontNameUtf8Code.count).copyBytes(to: ptr.advanced(by: fontFontNameUtf8ByteCountOffset), endianness)
-        familyNameUtf8Code?.copyBytes(to: ptr.advanced(by: fontFamilyNameUtf8CodeOffset).assumingMemoryBound(to: UInt8.self), count: (familyNameUtf8Code?.count ?? 0))
-        fontNameUtf8Code.copyBytes(to: ptr.advanced(by: fontFamilyNameUtf8CodeOffset + (familyNameUtf8Code?.count ?? 0)).assumingMemoryBound(to: UInt8.self), count: fontNameUtf8Code.count)
+        var ptr = ptr
+        ptr.setFontPointSize(to: pointSize, endianness)
+        ptr.fontFamilyNameUtf8Code = familyNameUtf8Code ?? Data()
+        ptr.fontFontNameUtf8Code = fontNameUtf8Code
     }
 }
 

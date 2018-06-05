@@ -58,40 +58,99 @@ fileprivate let colorRedOffset = 0
 fileprivate let colorGreenOffset = colorRedOffset + 1
 fileprivate let colorBlueOffset = colorGreenOffset + 1
 fileprivate let colorAlphaOffset = colorBlueOffset + 1
-internal let colorValueByteCount = colorAlphaOffset + 1
+fileprivate let colorValueByteCount = colorAlphaOffset + 1
 
 
 // Internal portal helpers
 
 fileprivate extension UnsafeMutableRawPointer {
 
+    
+    /// A pointer to the value for the red color assuming self points to the first byte of the value field
+    
     fileprivate var colorRedPtr: UnsafeMutableRawPointer { return self.advanced(by: colorRedOffset) }
+
+
+    /// A pointer to the value for the green color assuming self points to the first byte of the value field
+
     fileprivate var colorGreenPtr: UnsafeMutableRawPointer { return self.advanced(by: colorGreenOffset) }
+
+
+    /// A pointer to the value for the blue color assuming self points to the first byte of the value field
+
     fileprivate var colorBluePtr: UnsafeMutableRawPointer { return self.advanced(by: colorBlueOffset) }
+
+
+    /// A pointer to the value for the alpha value assuming self points to the first byte of the value field
+
     fileprivate var colorAlphaPtr: UnsafeMutableRawPointer { return self.advanced(by: colorAlphaOffset) }
+    
+    
+    /// The red color weight assuming self points to the first byte of the value field
+    
+    fileprivate var colorRed: UInt8 {
+        get { return colorRedPtr.assumingMemoryBound(to: UInt8.self).pointee }
+        set { colorRedPtr.storeBytes(of: newValue, as: UInt8.self) }
+    }
+    
+    
+    /// The green color weight assuming self points to the first byte of the value field
+    
+    fileprivate var colorGreen: UInt8 {
+        get { return colorGreenPtr.assumingMemoryBound(to: UInt8.self).pointee }
+        set { colorGreenPtr.storeBytes(of: newValue, as: UInt8.self) }
+    }
+    
+    
+    /// The blue color weight assuming self points to the first byte of the value field
+    
+    fileprivate var colorBlue: UInt8 {
+        get { return colorBluePtr.assumingMemoryBound(to: UInt8.self).pointee }
+        set { colorBluePtr.storeBytes(of: newValue, as: UInt8.self) }
+    }
+    
+    
+    /// The alpha weight assuming self points to the first byte of the value field
+    
+    fileprivate var colorAlpha: UInt8 {
+        get { return colorAlphaPtr.assumingMemoryBound(to: UInt8.self).pointee }
+        set { colorAlphaPtr.storeBytes(of: newValue, as: UInt8.self) }
+    }
 }
 
 
 internal extension Portal {
     
-    internal var _colorRed: UInt8 {
-        get { return _valuePtr.colorRedPtr.assumingMemoryBound(to: UInt8.self).pointee }
-        set { _valuePtr.colorRedPtr.storeBytes(of: newValue, as: UInt8.self) }
-    }
     
-    internal var _colorGreen: UInt8 {
-        get { return _valuePtr.colorGreenPtr.assumingMemoryBound(to: UInt8.self).pointee }
-        set { _valuePtr.colorGreenPtr.storeBytes(of: newValue, as: UInt8.self) }
+    /// The weight of the red color.
+    
+    internal var _colorRed: UInt8 {
+        get { return _valuePtr.colorRed }
+        set { _valuePtr.colorRed = newValue }
     }
+
+    
+    /// The weight of the green color.
+
+    internal var _colorGreen: UInt8 {
+        get { return _valuePtr.colorGreen }
+        set { _valuePtr.colorGreen = newValue }
+    }
+
+    
+    /// The weight of the blue color.
 
     internal var _colorBlue: UInt8 {
-        get { return _valuePtr.colorBluePtr.assumingMemoryBound(to: UInt8.self).pointee }
-        set { _valuePtr.colorBluePtr.storeBytes(of: newValue, as: UInt8.self) }
+        get { return _valuePtr.colorBlue }
+        set { _valuePtr.colorBlue = newValue }
     }
 
+    
+    /// The weight of the alpha component.
+
     internal var _colorAlpha: UInt8 {
-        get { return _valuePtr.colorAlphaPtr.assumingMemoryBound(to: UInt8.self).pointee }
-        set { _valuePtr.colorAlphaPtr.storeBytes(of: newValue, as: UInt8.self) }
+        get { return _valuePtr.colorAlpha }
+        set { _valuePtr.colorAlpha = newValue }
     }
 }
 
@@ -118,16 +177,16 @@ public extension Portal {
     public var color: BRColor? {
         get {
             guard isColor else { return nil }
-            return BRColor(red: _colorRed, green: _colorGreen, blue: _colorBlue, alpha: _colorAlpha)
+            return BRColor(red: _valuePtr.colorRed, green: _valuePtr.colorGreen, blue: _valuePtr.colorBlue, alpha: _valuePtr.colorAlpha)
         }
         set {
             guard isColor else { return }
             guard let newValue = newValue else { return }
             
-            _colorRed = newValue.redComponent
-            _colorGreen = newValue.greenComponent
-            _colorBlue = newValue.blueComponent
-            _colorAlpha = newValue.alphaComponent
+            _valuePtr.colorRed = newValue.redComponent
+            _valuePtr.colorGreen = newValue.greenComponent
+            _valuePtr.colorBlue = newValue.blueComponent
+            _valuePtr.colorAlpha = newValue.alphaComponent
         }
     }
 }
@@ -187,10 +246,11 @@ extension BRColor: Coder {
     public var valueByteCount: Int { return colorValueByteCount }
     
     public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        redComponent.copyBytes(to: ptr.advanced(by: colorRedOffset), endianness)
-        greenComponent.copyBytes(to: ptr.advanced(by: colorGreenOffset), endianness)
-        blueComponent.copyBytes(to: ptr.advanced(by: colorBlueOffset), endianness)
-        alphaComponent.copyBytes(to: ptr.advanced(by: colorAlphaOffset), endianness)
+        var ptr = ptr
+        ptr.colorRed = redComponent
+        ptr.colorGreen = greenComponent
+        ptr.colorBlue = blueComponent
+        ptr.colorAlpha = alphaComponent
     }
 }
 

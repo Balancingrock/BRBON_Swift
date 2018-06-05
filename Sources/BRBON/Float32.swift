@@ -74,10 +74,15 @@ public extension Portal {
     public var float32: Float32? {
         get {
             guard isFloat32 else { return nil }
-            return Float32(fromPtr: _valuePtr, endianness)
+            if endianness == machineEndianness {
+                return Float32(bitPattern: _valuePtr.assumingMemoryBound(to: UInt32.self).pointee)
+            } else {
+                return Float32(bitPattern: _valuePtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped)
+            }
         }
         set {
             guard isFloat32 else { return }
+            
             newValue?.copyBytes(to: _valuePtr, endianness)
         }
     }
@@ -101,15 +106,3 @@ extension Float32: Coder {
     }
 }
 
-
-/// Add decoding
-
-extension Float32 {
-    internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        if endianness == machineEndianness {
-            self.init(bitPattern: fromPtr.assumingMemoryBound(to: UInt32.self).pointee)
-        } else {
-            self.init(bitPattern: fromPtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped)
-        }
-    }
-}

@@ -235,6 +235,8 @@ extension Portal {
     }
 
     
+    /// Ensures that the specified number of bytes can be stored at the value pointer.
+    
     internal func ensureValueFieldByteCount(of bytes: Int) -> Result {
         if index == nil {
             if currentValueFieldByteCount < bytes {

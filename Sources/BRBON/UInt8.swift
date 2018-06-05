@@ -79,7 +79,7 @@ public extension Portal {
         get {
             guard isValid else { return nil }
             guard isUInt8 else { return nil }
-            return UInt8(fromPtr: _valuePtr, endianness)
+            return _valuePtr.assumingMemoryBound(to: UInt8.self).pointee
         }
         set {
             guard isValid else { return }
@@ -100,16 +100,6 @@ extension UInt8: Coder {
     
     public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         ptr.storeBytes(of: self, as: UInt8.self)
-    }
-}
-
-
-// Adds a decoder
-
-extension UInt8 {
-    
-    internal init(fromPtr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        self.init(fromPtr.assumingMemoryBound(to: UInt8.self).pointee)
     }
 }
 

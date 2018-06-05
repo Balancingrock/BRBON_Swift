@@ -732,7 +732,7 @@ public extension Portal {
         guard isSequence else { return .error(.operationNotSupported) }
         
         let neededItemByteCount = _sequenceValueFieldUsedByteCount + itemHeaderByteCount + (nameField?.byteCount ?? 0) + value.minimumValueFieldByteCount
-        let result = ensureValueFieldByteCount(of: neededItemByteCount)
+        let result = _sequenceEnsureValueFieldByteCount(of: neededItemByteCount)
         guard result == .success else { return result }
         
         let startPtr = _sequenceAfterLastItemPtr
@@ -797,7 +797,7 @@ public extension Portal {
         guard isSequence else { return .error(.operationNotSupported) }
         
         let neededItemByteCount =  _sequenceValueFieldUsedByteCount + value.root._itemByteCount
-        let result = ensureValueFieldByteCount(of: neededItemByteCount)
+        let result = _sequenceEnsureValueFieldByteCount(of: neededItemByteCount)
         guard result == .success else { return result }
         
         let dstPtr = _sequenceAfterLastItemPtr

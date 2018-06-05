@@ -58,7 +58,7 @@ public enum ItemOptions: UInt8 {
     case none = 0
     
     public init?(atPtr: UnsafeMutableRawPointer) {
-        self.init(rawValue: UInt8(fromPtr: atPtr, machineEndianness))
+        self.init(rawValue: atPtr.assumingMemoryBound(to: UInt8.self).pointee)
     }
     
     internal func copyBytes(to ptr: UnsafeMutableRawPointer) {
@@ -66,7 +66,6 @@ public enum ItemOptions: UInt8 {
     }
     
     internal static func readValue(atPtr: UnsafeMutableRawPointer) -> ItemOptions? {
-        let v = UInt8(fromPtr: atPtr, machineEndianness)
-        return self.init(rawValue: v)
+        return self.init(atPtr: atPtr)
     }
 }

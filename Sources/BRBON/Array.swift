@@ -110,7 +110,11 @@ internal extension UnsafeMutableRawPointer {
     /// Returns the number of elements assuming self points to the first byte of the value field.
     
     fileprivate func arrayElementCount(_ endianness: Endianness) -> UInt32 {
-        return UInt32(fromPtr: arrayElementCountPtr, endianness)
+        if endianness == machineEndianness {
+            return arrayElementCountPtr.assumingMemoryBound(to: UInt32.self).pointee
+        } else {
+            return arrayElementCountPtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped
+        }
     }
 
     
@@ -124,7 +128,11 @@ internal extension UnsafeMutableRawPointer {
     /// Returns the element byte count assuming self points to the first byte of the value field.
 
     fileprivate func arrayElementByteCount(_ endianness: Endianness) -> UInt32 {
-        return UInt32(fromPtr: arrayElementByteCountPtr, endianness)
+        if endianness == machineEndianness {
+            return arrayElementByteCountPtr.assumingMemoryBound(to: UInt32.self).pointee
+        } else {
+            return arrayElementByteCountPtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped
+        }
     }
 
     
@@ -187,13 +195,13 @@ extension Portal {
 
 extension Portal {
     
-    /// Makes sure the element byte count is sufficient.
+    /// Makes sure the element byte count is sufficient to store the given value.
     ///
     /// - Parameter for: The Coder value that must be accomodated.
     ///
     /// - Returns: Success if the value can be allocated, an error identifier when not.
     
-    internal func _arrayEnsureElementByteCount(for value: Coder) -> Result {
+    fileprivate func _arrayEnsureElementByteCount(for value: Coder) -> Result {
         
         
         // Check to see if the element byte count of the array must be increased.
@@ -210,7 +218,14 @@ extension Portal {
         return _arrayEnsureElementByteCount(of: necessaryElementByteCount)
     }
     
-    internal func _arrayEnsureElementByteCount(of bytes: Int) -> Result {
+    
+    /// Make sure the elements can accomodate the requested number of bytes. This can result in the movement of
+    ///
+    /// - Parameter of: The number of bytes that the element must accomodate.
+    ///
+    /// - Returns: Success if the element can accomodate the bytes, an error identifier if not.
+    
+    fileprivate func _arrayEnsureElementByteCount(of bytes: Int) -> Result {
         
         
         // Check to see if the element byte count of the array must be increased.
@@ -238,6 +253,8 @@ extension Portal {
         return .success
     }
 
+    
+    /// Make sure the size of the value field matches or exceeds the requested number of bytes.
     
     internal func _arrayEnsureValueFieldByteCount(of bytes: Int) -> Result {
         
@@ -495,7 +512,6 @@ extension Portal {
         guard let value = value else { return .success }
         return appendClosure(for: value.itemType, with: value.valueByteCount) {
             value.copyBytes(to: itemPtr.itemValueFieldPtr.arrayElementPtr(for: _arrayElementCount, endianness), endianness)
-            
         }
     }
     
@@ -639,7 +655,7 @@ extension Portal {
         
         // Ensure that the maximum element size can be accomodated
         
-        let result = _arrayEnsureElementByteCount(of: itemManager.count)
+        let result = _arrayEnsureElementByteCount(of: itemManager.root._itemByteCount)
         guard result == .success else { return result }
         
         
@@ -654,7 +670,7 @@ extension Portal {
         
         // Add the new item
         
-        _ = Darwin.memcpy(itemPtr.itemValueFieldPtr.arrayElementPtr(for: _arrayElementCount, endianness), itemManager.bufferPtr, itemManager.count)
+        _ = Darwin.memcpy(itemPtr.itemValueFieldPtr.arrayElementPtr(for: _arrayElementCount, endianness), itemManager.bufferPtr, itemManager.root._itemByteCount)
         let parentOffset = manager!.bufferPtr.distance(to: itemPtr)
         UInt32(parentOffset).copyBytes(to: itemPtr.itemValueFieldPtr.arrayElementPtr(for: _arrayElementCount, endianness).advanced(by: itemParentOffsetOffset), endianness)
 
@@ -686,7 +702,7 @@ extension Portal {
         // Determine the largest new byte count of the elements
         
         var maxByteCount: Int = 0
-        arr.forEach({ maxByteCount = max($0.count, maxByteCount) })
+        arr.forEach({ maxByteCount = max($0.root._itemByteCount, maxByteCount) })
         
         
         // Ensure that the maximum element size can be accomodated
@@ -710,7 +726,7 @@ extension Portal {
         arr.forEach() {
             let srcPtr = $0.bufferPtr
             let dstPtr = itemPtr.itemValueFieldPtr.arrayElementPtr(for: _arrayElementCount, endianness)
-            let length = $0.count
+            let length = $0.root._itemByteCount
             _ = Darwin.memcpy(dstPtr, srcPtr, length)
             UInt32(parentOffset).copyBytes(to: dstPtr.advanced(by: itemParentOffsetOffset), endianness)
             _arrayElementCount += 1
