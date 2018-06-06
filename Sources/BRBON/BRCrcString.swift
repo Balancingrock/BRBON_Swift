@@ -205,7 +205,19 @@ public extension Portal {
         }
     }
 
-    // Accessing as a String is covered in BRString.swift    
+    // Accessing as a String is covered in BRString.swift
+    
+    
+    /// Accessing the CRC32 value only.
+    ///
+    /// Only for CrcString and CrcBinary.
+    
+    public var crc: UInt32? {
+        if !isValid { return nil }
+        if isCrcString { return _valuePtr.crcStringCrc(endianness) }
+        if isCrcBinary { return _valuePtr.crcBinaryCrc(endianness) }
+        return nil
+    }
 }
 
 

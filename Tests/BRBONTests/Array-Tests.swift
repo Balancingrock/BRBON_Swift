@@ -122,7 +122,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 16)
         XCTAssertEqual(am.root.count, 8)
@@ -257,7 +257,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 16)
         XCTAssertEqual(am.root.count, 8)
@@ -393,7 +393,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 24)
         XCTAssertEqual(am.root.count, 8)
@@ -534,7 +534,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 40)
         XCTAssertEqual(am.root.count, 8)
@@ -684,7 +684,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 72)
         XCTAssertEqual(am.root.count, 8)
@@ -834,7 +834,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 16)
         XCTAssertEqual(am.root.count, 8)
@@ -971,7 +971,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 24)
         XCTAssertEqual(am.root.count, 8)
@@ -1112,7 +1112,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 40)
         XCTAssertEqual(am.root.count, 8)
@@ -1262,7 +1262,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 72)
         XCTAssertEqual(am.root.count, 8)
@@ -1435,7 +1435,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 144)
         XCTAssertEqual(am.root.count, 8)
@@ -1608,7 +1608,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 144)
         XCTAssertEqual(am.root.count, 8)
@@ -1734,7 +1734,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 64)
         XCTAssertEqual(am.root.count, 3)
@@ -1849,7 +1849,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 96)
         XCTAssertEqual(am.root.count, 3)
@@ -1964,7 +1964,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 4 * 4)
         XCTAssertEqual(am.root.count, 3)
@@ -2082,7 +2082,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 4 * 16)
         XCTAssertEqual(am.root.count, 3)
@@ -2202,7 +2202,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 4 * 16)
         XCTAssertEqual(am.root.count, 3)
@@ -2358,7 +2358,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(at: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
         
         XCTAssertEqual(am.root.count, 3)
         
@@ -2531,7 +2531,7 @@ class Array_Tests: XCTestCase {
         
         // Removing an element removes a portal to the last element
         
-        XCTAssertEqual(am.root.removeElement(at: 0), .success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), .success)
         
         XCTAssertTrue(portal0.isValid)
         XCTAssertEqual(portal0.int8, Int8(5))
@@ -2615,7 +2615,7 @@ class Array_Tests: XCTestCase {
         
         // Removing an element with an item removes only the portal to that item
         
-        XCTAssertEqual(am.root.removeElement(at: 0), .success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), .success)
         
         XCTAssertFalse(portal0.isValid)
         
@@ -2690,7 +2690,7 @@ class Array_Tests: XCTestCase {
         
         // Check that removing a coder element from an item element will not invalidate the subsequent item element portals, but will affect the subsequent coder-portals.
         
-        XCTAssertEqual(portal1.removeElement(at: 0), .success)
+        XCTAssertEqual(portal1.removeElement(atIndex: 0), .success)
         
         XCTAssertTrue(portal2.isValid)
         XCTAssertTrue(portal2.isArray)

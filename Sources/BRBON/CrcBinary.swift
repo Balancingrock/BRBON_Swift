@@ -59,7 +59,7 @@ fileprivate let crcBinaryDataOffset = crcBinaryByteCountOffset + 4
 
 // Add crcBinary access
 
-fileprivate extension UnsafeMutableRawPointer {
+internal extension UnsafeMutableRawPointer {
 
     
     /// Returns a pointer to the CRC value of a crcBinary item assuming self points at the first byte of the value.
@@ -79,7 +79,7 @@ fileprivate extension UnsafeMutableRawPointer {
     
     /// Returns the CRC value of a crcBinary item assuming self points at the first byte of the value.
     
-    fileprivate func crcBinaryCrc(_ endianness: Endianness) -> UInt32 {
+    internal func crcBinaryCrc(_ endianness: Endianness) -> UInt32 {
         if endianness == machineEndianness {
             return crcBinaryCrcPtr.assumingMemoryBound(to: UInt32.self).pointee
         } else {

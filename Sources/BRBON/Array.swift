@@ -463,7 +463,7 @@ extension Portal {
     ///   error(code): If an error prevented the removal, the code details the kind of error.
     
     @discardableResult
-    public func removeElement(at index: Int) -> Result {
+    public func removeElement(atIndex index: Int) -> Result {
         
         guard isArray else { return .error(.portalInvalid) }
         guard index >= 0 else { return .error(.indexBelowLowerBound) }

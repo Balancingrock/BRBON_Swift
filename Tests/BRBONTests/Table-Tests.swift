@@ -837,7 +837,7 @@ class Table_Tests: XCTestCase {
         tm.root[1, "cc"] = "2222"
         tm.root[2, "cc"] = "3333"
         
-        XCTAssertEqual(tm.root.insertRows(at: 1), Result.success)
+        XCTAssertEqual(tm.root.insertRows(atIndex: 1), Result.success)
         
         
         // Table item properties
@@ -880,7 +880,7 @@ class Table_Tests: XCTestCase {
         func fieldInitialiser(_ portal: Portal) {
             switch portal.column! {
             case 0:
-                portal.createFieldArray(at: portal.index!, in: portal.column!, elementType: .int16, elementByteCount: 32, elementCount: 0)
+                portal.createFieldArray(atRow: portal.index!, inColumn: portal.column!, elementType: .int16, elementByteCount: 32, elementCount: 0)
             case 1:
                 portal.int8 = 5
             default: XCTFail("Column index not supported")

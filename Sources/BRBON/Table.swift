@@ -1029,7 +1029,7 @@ extension Portal {
     
     /// The byte count for a single row
     
-    public var rowByteCount: Int? {
+    internal var rowByteCount: Int? {
         guard isValid else { return nil }
         guard isTable else { return nil }
         return _tableRowByteCount
@@ -1423,11 +1423,11 @@ extension Portal {
     ///
     /// The content of the fields will be set to zero. After inserting the new row(s) a closure will be invoked for all new fields to allow a setup with default values.
     ///
-    /// - Parameter at: The index at which a new row will be inserted. The index must be an existing index otherwise an error is returned.
+    /// - Parameter atIndex: The index at which a new row will be inserted. The index must be an existing index otherwise an error is returned.
     ///
     /// - Returns: Success or an error indicator.
     
-    public func insertRows(at index: Int, amount: Int = 1, defaultValues closure: SetTableFieldDefaultValue? = nil) -> Result {
+    public func insertRows(atIndex index: Int, amount: Int = 1, defaultValues closure: SetTableFieldDefaultValue? = nil) -> Result {
         
         guard isValid else { return .error(.portalInvalid) }
         guard isTable else { return .error(.operationNotSupported) }
@@ -1488,7 +1488,7 @@ extension Portal {
     /// - Returns: Either .success or an error id.
     
     @discardableResult
-    public func assignField(at row: Int, in column: Int, fromManager source: ItemManager) -> Result {
+    public func assignField(atRow row: Int, inColumn column: Int, fromManager source: ItemManager) -> Result {
         
         guard isValid else { return .error(.portalInvalid) }
         guard itemType == .table else { return .error(.operationNotSupported) }
@@ -1535,8 +1535,8 @@ extension Portal {
     /// This operation uses assignField to create the requested table.
     ///
     /// - Parameters:
-    ///   - at: The row index of the field.
-    ///   - in: The column index of the field.
+    ///   - atRow: The row index of the field.
+    ///   - inColumn: The column index of the field.
     ///   - elementType: The type to be stored in the array.
     ///   - elementByteCount: The byte count for the array elements.
     ///   - valueByteCount: The initial byte count for the value field in the array.
@@ -1544,14 +1544,14 @@ extension Portal {
     /// - Returns: Either .success or an error indicator.
     
     @discardableResult
-    public func createFieldArray(at row: Int, in column: Int, elementType: ItemType, elementByteCount: Int? = nil, elementCount: Int) -> Result {
+    public func createFieldArray(atRow row: Int, inColumn column: Int, elementType: ItemType, elementByteCount: Int? = nil, elementCount: Int) -> Result {
         
         guard isValid else { return .error(.portalInvalid) }
         guard itemType == .table else { return .error(.operationNotSupported) }
         
         let im = ItemManager.createArrayManager(withNameField: nil, elementType: elementType, elementByteCount: elementByteCount ?? 0, elementCount: elementCount, endianness: endianness)
         
-        return assignField(at: row, in: column, fromManager: im)
+        return assignField(atRow: row, inColumn: column, fromManager: im)
     }
     
     
@@ -1567,14 +1567,14 @@ extension Portal {
     /// - Returns: Either .success or an error indicator.
 
     @discardableResult
-    public func createFieldSequence(at row: Int, in column: Int, valueByteCount: Int? = nil) -> Result {
+    public func createFieldSequence(atRow row: Int, inColumn column: Int, valueByteCount: Int? = nil) -> Result {
         
         guard isValid else { return .error(.portalInvalid) }
         guard itemType == .table else { return .error(.operationNotSupported) }
 
         let im = ItemManager.createSequenceManager(valueFieldByteCount: valueByteCount ?? 0, endianness: endianness)
         
-        return assignField(at: row, in: column, fromManager: im)
+        return assignField(atRow: row, inColumn: column, fromManager: im)
     }
     
     
@@ -1590,14 +1590,14 @@ extension Portal {
     /// - Returns: Either .success or an error indicator.
 
     @discardableResult
-    public func createFieldDictionary(at row: Int, in column: Int, valueByteCount: Int? = nil) -> Result {
+    public func createFieldDictionary(atRow row: Int, inColumn column: Int, valueByteCount: Int? = nil) -> Result {
         
         guard isValid else { return .error(.portalInvalid) }
         guard itemType == .table else { return .error(.operationNotSupported) }
         
         let im = ItemManager.createDictionaryManager(valueFieldByteCount: valueByteCount ?? 0, endianness: endianness)
         
-        return assignField(at: row, in: column, fromManager: im)
+        return assignField(atRow: row, inColumn: column, fromManager: im)
     }
     
     
@@ -1620,7 +1620,7 @@ extension Portal {
         
         let im = ItemManager.createTableManager(columns: &columnSpecifications, endianness: endianness)
         
-        return assignField(at: row, in: column, fromManager: im)
+        return assignField(atRow: row, inColumn: column, fromManager: im)
     }
 }
 
