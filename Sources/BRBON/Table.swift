@@ -3,7 +3,7 @@
 //  File:       Table.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.0
+//  Version:    0.7.2
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.2 - Added assignField:to
 // 0.7.0 - Code restructuring & simplification
 // 0.5.0 - Fixed some bugs for the field assignments
 //         Migrates to Swift 4
@@ -1503,7 +1504,7 @@ extension Portal {
         
         guard source.root.itemType?.isContainer ?? false else { return .error(.dataInconsistency) }
         
-        guard _tableGetColumnType(for: column).isContainer else { return .error(.invalidTableColumnType) }
+        guard _tableGetColumnType(for: column) == source.root.itemType else { return .error(.invalidTableColumnType) }
         
         
         // Ensure that there is sufficient space
@@ -1527,6 +1528,28 @@ extension Portal {
         UInt32(pOffset).copyBytes(to: ptr.advanced(by: itemParentOffsetOffset), endianness)
         
         return .success
+    }
+    
+    
+    /// Copies the content of an ItemManager to this table field.
+    ///
+    /// The table column type must be of the same type as the type in the item manager.
+    ///
+    /// - Parameters:
+    ///   - source: The manager with the root item to be copied.
+    ///
+    /// - Returns: Either .success or an error id.
+
+    @discardableResult
+    public func assignField(_ source: ItemManager) -> Result {
+        
+        guard isValid else { return .error(.portalInvalid) }
+        guard let index = index else { return .error(.missingIndex) }
+        guard let column = column else { return .error(.missingColumn) }
+        
+        let table = manager.getActivePortal(for: itemPtr)
+        
+        return table.assignField(atRow: index, inColumn: column, fromManager: source)
     }
     
     

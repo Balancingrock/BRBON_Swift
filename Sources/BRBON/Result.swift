@@ -3,7 +3,7 @@
 //  File:       Results.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.0
+//  Version:    0.7.2
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.2 - Added missingIndex and missingColumn
 // 0.7.0 - Code restructuring & simplification
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
@@ -82,6 +83,8 @@ public enum ErrorCode: Int, CustomStringConvertible {
     case noNameAllowed = 27
     case itemByteCountOutOfRange = 28
     case illegalTypeFieldValue = 29
+    case missingIndex = 30
+    case missingColumn = 31
     
     public var description: String {
         switch self {
@@ -112,6 +115,8 @@ public enum ErrorCode: Int, CustomStringConvertible {
         case .noNameAllowed: return "Name not allowed"
         case .itemByteCountOutOfRange: return "Item byte count out of range"
         case .illegalTypeFieldValue: return "Illegal type field value"
+        case .missingIndex: return "Missing index"
+        case .missingColumn: return "MIssing column"
         }
     }
 }
