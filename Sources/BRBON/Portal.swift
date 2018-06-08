@@ -3,7 +3,7 @@
 //  File:       Portal.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.0
+//  Version:    0.7.1
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.1 - Changed access level of index and column to public (necessary for table initializers)
 // 0.7.0 - Code restructuring & simplification
 //       - Added type .color and .font
 // 0.5.0 - Migration to Swift 4
@@ -74,12 +75,12 @@ public final class Portal {
     
     /// If the portal refers to an element of an array, or a row in a table, then this is the index of that element/row.
 
-    internal let index: Int?
+    public let index: Int?
     
     
     /// If the portal refers to a field of a table, this is the index of the column.
     
-    internal let column: Int?
+    public let column: Int?
 
     
     /// The endianness of the data and its surrounding structure.
