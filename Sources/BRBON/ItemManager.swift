@@ -3,7 +3,7 @@
 //  File:       ItemManager
 //  Project:    BRBON
 //
-//  Version:    0.7.0
+//  Version:    0.7.3
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.3 - Added init:from
 // 0.7.0 - Code restructuring & simplification
 //       - Added .color and .font
 // 0.5.0 - Migration to Swift 4
@@ -269,6 +270,21 @@ public final class ItemManager {
     
     fileprivate var activePortals: ActivePortals!
 
+    
+    /// Load an ItemManager from file
+    
+    public init?(from url: URL) {
+        
+        guard let data = try? Data.init(contentsOf: url) else { return nil }
+        
+        self.buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: data.count, alignment: 8)
+        self.buffer.copyBytes(from: data)
+        self.bufferPtr = buffer.baseAddress!
+        self.endianness = machineEndianness
+        self.activePortals = ActivePortals(manager: self)
+        self.root = getActivePortal(for: self.bufferPtr)
+    }
+    
 
     /// Creates a new ItemManager but does not create an initial item in the buffer.
     ///
