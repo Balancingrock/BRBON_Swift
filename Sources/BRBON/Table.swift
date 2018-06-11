@@ -44,7 +44,7 @@
 //
 // History
 //
-// 0.7.4 - Added itterateFields:ofRow
+// 0.7.4 - Added itterateFields:ofRow and itterateFields:ofColumn
 // 0.7.2 - Added assignField:to
 // 0.7.0 - Code restructuring & simplification
 // 0.5.0 - Fixed some bugs for the field assignments
@@ -1088,7 +1088,7 @@ extension Portal {
         guard isValid else { return .error(.portalInvalid) }
         guard isTable else { return .error(.operationNotSupported) }
         guard row >= 0 else { return .error(.indexBelowLowerBound) }
-        guard row >= count else { return .error(.indexAboveHigherBound) }
+        guard row >= _tableRowCount else { return .error(.indexAboveHigherBound) }
         guard _tableColumnCount > 0 else { return .error(.missingColumn) }
         
         for c in 0 ..< _tableColumnCount {
@@ -1099,6 +1099,31 @@ extension Portal {
         return .success
     }
     
+    
+    /// Itterate over all column-fields. Itteration continues as long as the closure returns 'true'.
+    ///
+    /// - Parameters:
+    ///   - ofColumn: The index of the column over which to itterate.
+    ///   - closure: The closure is executed for each column. Check the column member of the portal to find out which column field is provided. Return 'true' to continue column field itteration, 'false' to stop itteration. Itteration starts at column index 0 and counts up to the last column.
+    ///
+    /// - Returns: Success on completion, or an error message when it was not possible to itterate.
+    
+    @discardableResult
+    public func itterateFields(ofColumn column: Int, closure: (Portal) -> Bool) -> Result {
+        
+        guard isValid else { return .error(.portalInvalid) }
+        guard isTable else { return .error(.operationNotSupported) }
+        guard column >= 0 else { return .error(.indexBelowLowerBound) }
+        guard column >= _tableColumnCount else { return .error(.indexAboveHigherBound) }
+        
+        for r in 0 ..< _tableRowCount {
+            let p = manager.getActivePortal(for: itemPtr, index: r, column: column)
+            if !closure(p) { break }
+        }
+        
+        return .success
+    }
+
     
     /// Adds new rows to the table.
     ///
