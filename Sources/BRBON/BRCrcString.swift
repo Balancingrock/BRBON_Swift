@@ -3,7 +3,7 @@
 //  File:       BRCrcString.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.0
+//  Version:    0.7.5
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.5 - Added crcString to pointer operations
 // 0.7.0 - Code restructuring & simplification
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
@@ -59,7 +60,7 @@ fileprivate let crcStringUtf8CodeOffset = crcStringUtf8ByteCountOffset + 4
 
 // Pointer manipulations
 
-fileprivate extension UnsafeMutableRawPointer {
+internal extension UnsafeMutableRawPointer {
     
     
     /// Returns a pointer to the CRC value of a crcString item assuming self points at the first byte of the value.
@@ -137,6 +138,13 @@ fileprivate extension UnsafeMutableRawPointer {
     fileprivate func setCrcStringUtf8Code(to value: Data, _ endianness: Endianness) {
         value.copyBytes(to: crcStringUtf8CodePtr.assumingMemoryBound(to: UInt8.self), count: value.count)
         setCrcStringUtf8ByteCount(to: UInt32(value.count), endianness)
+    }
+    
+    
+    /// Returns the BrCrcString at the pointer
+    
+    internal func crcString(_ endianness: Endianness) -> BRCrcString  {
+        return BRCrcString.init(utf8Code: crcStringUtf8Code(endianness), crc: crcStringCrc(endianness))
     }
 }
 

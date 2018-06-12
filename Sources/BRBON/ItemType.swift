@@ -3,7 +3,7 @@
 //  File:       ItemType.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.0
+//  Version:    0.7.5
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -45,6 +45,7 @@
 //
 // History
 //
+// 0.7.5 - Added sameType:as
 // 0.7.0 - Code restructuring & simplification
 //       - Added Color and Font
 // 0.4.2 - Changed raw values and redone access levels
@@ -223,5 +224,35 @@ extension ItemType {
     
     internal static func readValue(atPtr: UnsafeMutableRawPointer) -> ItemType? {
         return ItemType(atPtr: atPtr)
+    }
+    
+    // When a new type is added, a new coder might be added as well. The purpose of this function is to ensure that the developper remembers itemType:for because that may need an update as well.
+    
+    internal func sameType(as coder: Coder) -> Bool {
+        switch self {
+        case .null: return (coder is Null)
+        case .bool: return (coder is Bool)
+        case .int8: return (coder is Int8)
+        case .int16: return (coder is Int16)
+        case .int32: return (coder is Int32)
+        case .int64: return (coder is Int64)
+        case .uint8: return (coder is UInt8)
+        case .uint16: return (coder is UInt16)
+        case .uint32: return (coder is UInt32)
+        case .uint64: return (coder is UInt64)
+        case .float32: return (coder is Float32)
+        case .float64: return (coder is Float64)
+        case .string: return (coder is BRString) || (coder is String)
+        case .binary: return (coder is Data)
+        case .crcString: return (coder is BRCrcString)
+        case .crcBinary: return (coder is BRCrcBinary)
+        case .uuid: return (coder is UUID)
+        case .font: return (coder is BRFont)
+        case .color: return (coder is BRColor)
+        case .array: return false
+        case .dictionary: return false
+        case .sequence: return false
+        case .table: return false
+        }
     }
 }

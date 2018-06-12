@@ -3,7 +3,7 @@
 //  File:       UUID.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.0
+//  Version:    0.7.5
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.5 - Added pointer operations with uuid operation.
 // 0.7.0 - Code restructuring & simplification
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
@@ -53,6 +54,14 @@ import BRUtils
 
 
 fileprivate let uuidValueByteCount = 16
+
+
+internal extension UnsafeMutableRawPointer {
+
+    internal var uuid: UUID {
+        return UUID(uuid: self.bindMemory(to: uuid_t.self, capacity: 1).pointee)
+    }
+}
 
 
 // Extensions that allow a portal to test and access an UUID
@@ -82,8 +91,7 @@ public extension Portal {
         get {
             guard isValid else { return nil }
             guard isUuid else { return nil }
-            let ptr = _valuePtr.bindMemory(to: uuid_t.self, capacity: 1)
-            return UUID(uuid: ptr.pointee)
+            return _valuePtr.uuid
         }
         set {
             guard isValid else { return }

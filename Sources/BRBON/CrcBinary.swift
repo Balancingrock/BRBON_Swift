@@ -3,7 +3,7 @@
 //  File:       Coder-CrcBinary.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.0
+//  Version:    0.7.5
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.5 - Added crcBinary to the pointer operations
 // 0.7.0 - Code restructuring & simplification
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
@@ -137,6 +138,13 @@ internal extension UnsafeMutableRawPointer {
     fileprivate func setCrcBinaryData(to value: Data, _ endianness: Endianness) {
         value.copyBytes(to: self.crcBinaryDataPtr.assumingMemoryBound(to: UInt8.self), count: value.count)
         self.setCrcBinaryByteCount(to: UInt32(value.count), endianness)
+    }
+    
+    
+    /// Returns a BRCrcBinary assuming self points to the first byte of the value
+    
+    internal func crcBinary(_ endianness: Endianness) -> BRCrcBinary {
+        return BRCrcBinary.init(data: crcBinaryData(endianness), crc: crcBinaryCrc(endianness))
     }
 }
 

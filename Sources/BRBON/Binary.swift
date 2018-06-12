@@ -3,7 +3,7 @@
 //  File:       Binary.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.0
+//  Version:    0.7.5
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.5 - Renamed binaryData to binary and made it internal instead of fileprivate
 // 0.7.0 - Code restructuring & simplification
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
@@ -60,7 +61,7 @@ fileprivate let binaryDataOffset = binaryByteCountOffset + 4
 
 // Pointer manipulations
 
-fileprivate extension UnsafeMutableRawPointer {
+internal extension UnsafeMutableRawPointer {
     
     
     /// The pointer to the binary byte count assuming self points to the first byte of the value.
@@ -99,7 +100,7 @@ fileprivate extension UnsafeMutableRawPointer {
     ///
     /// Also reads from 'binaryByteCount'
 
-    fileprivate func binaryData(_ endianness: Endianness) -> Data {
+    internal func binary(_ endianness: Endianness) -> Data {
         return Data(bytes: binaryDataPtr.assumingMemoryBound(to: UInt8.self), count: Int(binaryByteCount(endianness)))
     }
     
@@ -122,10 +123,9 @@ internal extension Portal {
     
     internal var _binaryData: Data {
         
-        get { return _valuePtr.binaryData(endianness) }
+        get { return _valuePtr.binary(endianness) }
         
         set {
-            //let result = ensureValueFieldByteCount(of: binaryDataOffset + newValue.count)
             let result = ensureStorageAtValuePtr(of: binaryDataOffset + newValue.count)
             guard result == .success else { return }
             

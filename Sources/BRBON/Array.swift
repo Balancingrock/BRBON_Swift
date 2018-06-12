@@ -3,7 +3,7 @@
 //  File:       Array.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.0
+//  Version:    0.7.5
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,8 @@
 //
 // History
 //
+// 0.7.5 - Added appendElements<T>:value<T> where T: Coder
+//         Added array getters.
 // 0.7.0 - Code restructuring & simplification
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
@@ -449,6 +451,77 @@ extension Portal {
     }
     
     
+    /// Appends an array of values to the end of an Array item.
+    ///
+    /// Portals: Appending elements does not invalidate portals.
+    ///
+    /// - Parameter values: The values to be appended.
+    ///
+    /// - Returns:
+    ///   success: When the values were appended (or when there were no values to append).
+    ///
+    ///   noAction: If the value was nil or a Null
+    ///
+    ///   error(code): If an error prevented the completion, de code details the kind of error.
+    
+    @discardableResult
+    public func appendElements<T>(_ values: Array<T>?) -> Result where T: Coder{
+        
+        guard let values = values else { return .success }
+        guard values.count > 0 else { return .success }
+        guard isArray else { return .error(.operationNotSupported) }
+        guard _arrayElementType!.sameType(as: (T.self as! Coder)) else { return .error(.typeConflict) }
+
+        
+        // Ensure that the element byte count is sufficient
+        
+        var maxElementByteCount: Int = 0
+        if _arrayElementType!.hasFlexibleLength {
+            values.forEach() { maxElementByteCount = max(maxElementByteCount, $0.valueByteCount) }
+            maxElementByteCount = maxElementByteCount.roundUpToNearestMultipleOf8()            
+        } else {
+            maxElementByteCount = values[0].valueByteCount
+        }
+        let result = _arrayEnsureElementByteCount(of: maxElementByteCount)
+        guard result == .success else { return result }
+        
+        
+        // Ensure that the item byte count is sufficient
+        
+        let neccesaryValueByteCount = arrayElementBaseOffset + (_arrayElementByteCount * (_arrayElementCount + 1))
+        let necessaryItemByteCount = itemPtr.itemHeaderAndNameByteCount + neccesaryValueByteCount
+        if necessaryItemByteCount > _itemByteCount {
+            let result = increaseItemByteCount(to: necessaryItemByteCount)
+            guard result == .success else { return result }
+        }
+        
+        
+        // Zero the new space if required
+        
+        if ItemManager.startWithZeroedBuffers {
+            let startPtr = itemPtr.itemValueFieldPtr.arrayElementPtr(for: _arrayElementCount, endianness)
+            let length = startPtr.distance(to: itemPtr.nextItemPtr(endianness))
+            Darwin.memset(startPtr, 0, length)
+        }
+        
+        
+        // The new values can be added
+        
+        var elementIndex = _arrayElementCount
+        for value in values {
+            value.copyBytes(to: itemPtr.itemValueFieldPtr.arrayElementPtr(for: elementIndex, endianness), endianness)
+            elementIndex += 1
+        }
+        
+        
+        // Increase child counter
+        
+        _arrayElementCount += values.count
+        
+        return .success
+    }
+
+    
     /// Removes an item from an Array item.
     ///
     /// This operation does not decrease the byte count of the Array item.
@@ -664,6 +737,15 @@ extension Portal {
         }
 
         
+        // Set the new space to zero if required
+        
+        if ItemManager.startWithZeroedBuffers {
+            let startPtr = itemPtr.itemValueFieldPtr.arrayElementPtr(for: _arrayElementCount, endianness)
+            let length = startPtr.distance(to: itemPtr.nextItemPtr(endianness))
+            Darwin.memset(startPtr, 0, length)
+        }
+        
+        
         // Add the new items
         
         let parentOffset = manager!.bufferPtr.distance(to: itemPtr)
@@ -754,6 +836,435 @@ extension Portal {
         
         return .success
     }
+    
+    
+    /// - Returns: The content of the array as an array of booleans. Returns nil if the portal is invalid, not an array, or when the element type is not a Bool.
+    ///
+    /// - Note: This operation is optimised for speed.
+    
+    public var arrayOfBool: Array<Bool>? {
+        
+        guard isArray else { return nil }
+        guard itemPtr.arrayElementType == ItemType.bool.rawValue else { return nil }
+        
+        var arr: Array<Bool> = []
+        
+        guard _arrayElementCount > 0 else { return arr }
+        
+        for i in 0 ..< _arrayElementCount {
+            let ptr = itemPtr.arrayElementPtr(for: i, endianness)
+            arr.append(ptr.assumingMemoryBound(to: UInt8.self).pointee == 1)
+        }
+        
+        return arr
+    }
+
+
+    /// - Returns: The content of the array as an array of Int8. Returns nil if the portal is invalid, not an array, or when the element type is not an Int8.
+    ///
+    /// - Note: This operation is optimised for speed.
+
+    public var arrayOfInt8: Array<Int8>? {
+        
+        guard isArray else { return nil }
+        guard itemPtr.arrayElementType == ItemType.int8.rawValue else { return nil }
+        
+        var arr: Array<Int8> = []
+        
+        guard _arrayElementCount > 0 else { return arr }
+        
+        for i in 0 ..< _arrayElementCount {
+            let ptr = itemPtr.arrayElementPtr(for: i, endianness)
+            arr.append(ptr.assumingMemoryBound(to: Int8.self).pointee)
+        }
+        
+        return arr
+    }
+
+
+    /// - Returns: The content of the array as an array of Int16. Returns nil if the portal is invalid, not an array, or when the element type is not an Int16.
+    ///
+    /// - Note: This operation is optimised for speed.
+
+    public var arrayOfInt16: Array<Int16>? {
+        
+        guard isArray else { return nil }
+        guard itemPtr.arrayElementType == ItemType.int16.rawValue else { return nil }
+        
+        var arr: Array<Int16> = []
+        
+        guard _arrayElementCount > 0 else { return arr }
+        
+        for i in 0 ..< _arrayElementCount {
+            let ptr = itemPtr.arrayElementPtr(for: i, endianness)
+            if endianness == machineEndianness {
+                arr.append(ptr.assumingMemoryBound(to: Int16.self).pointee)
+            } else {
+                arr.append(ptr.assumingMemoryBound(to: Int16.self).pointee.byteSwapped)
+            }
+        }
+        
+        return arr
+    }
+
+    
+    /// - Returns: The content of the array as an array of Int32. Returns nil if the portal is invalid, not an array, or when the element type is not an Int32.
+    ///
+    /// - Note: This operation is optimised for speed.
+
+    public var arrayOfInt32: Array<Int32>? {
+        
+        guard isArray else { return nil }
+        guard itemPtr.arrayElementType == ItemType.int32.rawValue else { return nil }
+        
+        var arr: Array<Int32> = []
+        
+        guard _arrayElementCount > 0 else { return arr }
+        
+        for i in 0 ..< _arrayElementCount {
+            let ptr = itemPtr.arrayElementPtr(for: i, endianness)
+            if endianness == machineEndianness {
+                arr.append(ptr.assumingMemoryBound(to: Int32.self).pointee)
+            } else {
+                arr.append(ptr.assumingMemoryBound(to: Int32.self).pointee.byteSwapped)
+            }
+        }
+        
+        return arr
+    }
+    
+    
+    /// - Returns: The content of the array as an array of Int64. Returns nil if the portal is invalid, not an array, or when the element type is not an Int64.
+    ///
+    /// - Note: This operation is optimised for speed.
+
+    public var arrayOfInt64: Array<Int64>? {
+        
+        guard isArray else { return nil }
+        guard itemPtr.arrayElementType == ItemType.int64.rawValue else { return nil }
+        
+        var arr: Array<Int64> = []
+        
+        guard _arrayElementCount > 0 else { return arr }
+        
+        for i in 0 ..< _arrayElementCount {
+            let ptr = itemPtr.arrayElementPtr(for: i, endianness)
+            if endianness == machineEndianness {
+                arr.append(ptr.assumingMemoryBound(to: Int64.self).pointee)
+            } else {
+                arr.append(ptr.assumingMemoryBound(to: Int64.self).pointee.byteSwapped)
+            }
+        }
+        
+        return arr
+    }
+    
+    
+    /// - Returns: The content of the array as an array of UInt8. Returns nil if the portal is invalid, not an array, or when the element type is not an UInt8.
+    ///
+    /// - Note: This operation is optimised for speed.
+
+    public var arrayOfUInt8: Array<UInt8>? {
+        
+        guard isArray else { return nil }
+        guard itemPtr.arrayElementType == ItemType.uint8.rawValue else { return nil }
+        
+        var arr: Array<UInt8> = []
+        
+        guard _arrayElementCount > 0 else { return arr }
+        
+        for i in 0 ..< _arrayElementCount {
+            let ptr = itemPtr.arrayElementPtr(for: i, endianness)
+            arr.append(ptr.assumingMemoryBound(to: UInt8.self).pointee)
+        }
+        
+        return arr
+    }
+    
+
+    /// - Returns: The content of the array as an array of UInt16. Returns nil if the portal is invalid, not an array, or when the element type is not an UInt16.
+    ///
+    /// - Note: This operation is optimised for speed.
+
+    public var arrayOfUInt16: Array<UInt16>? {
+        
+        guard isArray else { return nil }
+        guard itemPtr.arrayElementType == ItemType.uint16.rawValue else { return nil }
+        
+        var arr: Array<UInt16> = []
+        
+        guard _arrayElementCount > 0 else { return arr }
+        
+        for i in 0 ..< _arrayElementCount {
+            let ptr = itemPtr.arrayElementPtr(for: i, endianness)
+            if endianness == machineEndianness {
+                arr.append(ptr.assumingMemoryBound(to: UInt16.self).pointee)
+            } else {
+                arr.append(ptr.assumingMemoryBound(to: UInt16.self).pointee.byteSwapped)
+            }
+        }
+        
+        return arr
+    }
+    
+    
+    /// - Returns: The content of the array as an array of UInt32. Returns nil if the portal is invalid, not an array, or when the element type is not an UInt32.
+    ///
+    /// - Note: This operation is optimised for speed.
+
+    public var arrayOfUInt32: Array<UInt32>? {
+        
+        guard isArray else { return nil }
+        guard itemPtr.arrayElementType == ItemType.uint32.rawValue else { return nil }
+        
+        var arr: Array<UInt32> = []
+        
+        guard _arrayElementCount > 0 else { return arr }
+        
+        for i in 0 ..< _arrayElementCount {
+            let ptr = itemPtr.arrayElementPtr(for: i, endianness)
+            if endianness == machineEndianness {
+                arr.append(ptr.assumingMemoryBound(to: UInt32.self).pointee)
+            } else {
+                arr.append(ptr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped)
+            }
+        }
+        
+        return arr
+    }
+    
+    
+    /// - Returns: The content of the array as an array of UInt64. Returns nil if the portal is invalid, not an array, or when the element type is not an UInt4.
+    ///
+    /// - Note: This operation is optimised for speed.
+
+    public var arrayOfUInt64: Array<UInt64>? {
+        
+        guard isArray else { return nil }
+        guard itemPtr.arrayElementType == ItemType.uint64.rawValue else { return nil }
+        
+        var arr: Array<UInt64> = []
+        
+        guard _arrayElementCount > 0 else { return arr }
+        
+        for i in 0 ..< _arrayElementCount {
+            let ptr = itemPtr.arrayElementPtr(for: i, endianness)
+            if endianness == machineEndianness {
+                arr.append(ptr.assumingMemoryBound(to: UInt64.self).pointee)
+            } else {
+                arr.append(ptr.assumingMemoryBound(to: UInt64.self).pointee.byteSwapped)
+            }
+        }
+        
+        return arr
+    }
+
+    
+    /// - Returns: The content of the array as an array of Float32. Returns nil if the portal is invalid, not an array, or when the element type is not a Float32.
+    ///
+    /// - Note: This operation is optimised for speed.
+
+    public var arrayOfFloat32: Array<Float32>? {
+        
+        guard isArray else { return nil }
+        guard itemPtr.arrayElementType == ItemType.float32.rawValue else { return nil }
+        
+        var arr: Array<Float32> = []
+        
+        guard _arrayElementCount > 0 else { return arr }
+        
+        for i in 0 ..< _arrayElementCount {
+            let ptr = itemPtr.arrayElementPtr(for: i, endianness)
+            if endianness == machineEndianness {
+                arr.append(Float32(bitPattern: ptr.assumingMemoryBound(to: UInt32.self).pointee))
+            } else {
+                arr.append(Float32(bitPattern: ptr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped))
+            }
+        }
+        
+        return arr
+    }
+    
+    
+    /// - Returns: The content of the array as an array of Float64. Returns nil if the portal is invalid, not an array, or when the element type is not a Float64.
+    ///
+    /// - Note: This operation is optimised for speed.
+
+    public var arrayOfFloat64: Array<Float64>? {
+        
+        guard isArray else { return nil }
+        guard itemPtr.arrayElementType == ItemType.float64.rawValue else { return nil }
+        
+        var arr: Array<Float64> = []
+        
+        guard _arrayElementCount > 0 else { return arr }
+        
+        for i in 0 ..< _arrayElementCount {
+            let ptr = itemPtr.arrayElementPtr(for: i, endianness)
+            if endianness == machineEndianness {
+                arr.append(Float64(bitPattern: ptr.assumingMemoryBound(to: UInt64.self).pointee))
+            } else {
+                arr.append(Float64(bitPattern: ptr.assumingMemoryBound(to: UInt64.self).pointee.byteSwapped))
+            }
+        }
+        
+        return arr
+    }
+
+    
+    /// - Returns: The content of the array as an array of String. Returns nil if the portal is invalid, not an array, or when the element type is not an String.
+    ///
+    /// - Note: This operation is optimised for speed.
+
+    public var arrayOfString: Array<String>? {
+        
+        guard isArray else { return nil }
+        guard itemPtr.arrayElementType == ItemType.string.rawValue else { return nil }
+        
+        var arr: Array<String> = []
+        
+        guard _arrayElementCount > 0 else { return arr }
+        
+        for i in 0 ..< _arrayElementCount {
+            let ptr = itemPtr.arrayElementPtr(for: i, endianness)
+            arr.append(ptr.string(endianness) ?? "")
+        }
+        
+        return arr
+    }
+
+    
+    /// - Returns: The content of the array as an array of BRCrcString. Returns nil if the portal is invalid, not an array, or when the element type is not a crcString.
+    ///
+    /// - Note: This operation is optimised for speed.
+    
+    public var arrayOfCrcString: Array<BRCrcString>? {
+        
+        guard isArray else { return nil }
+        guard itemPtr.arrayElementType == ItemType.crcString.rawValue else { return nil }
+        
+        var arr: Array<BRCrcString> = []
+        
+        guard _arrayElementCount > 0 else { return arr }
+        
+        for i in 0 ..< _arrayElementCount {
+            let ptr = itemPtr.arrayElementPtr(for: i, endianness)
+            arr.append(ptr.crcString(endianness))
+        }
+        
+        return arr
+    }
+
+    
+    /// - Returns: The content of the array as an array of Data. Returns nil if the portal is invalid, not an array, or when the element type is not a binary.
+    ///
+    /// - Note: This operation is optimised for speed.
+    
+    public var arrayOfBinary: Array<Data>? {
+        
+        guard isArray else { return nil }
+        guard itemPtr.arrayElementType == ItemType.binary.rawValue else { return nil }
+        
+        var arr: Array<Data> = []
+        
+        guard _arrayElementCount > 0 else { return arr }
+        
+        for i in 0 ..< _arrayElementCount {
+            let ptr = itemPtr.arrayElementPtr(for: i, endianness)
+            arr.append(ptr.binary(endianness))
+        }
+        
+        return arr
+    }
+
+    
+    /// - Returns: The content of the array as an array of Data. Returns nil if the portal is invalid, not an array, or when the element type is not a binary.
+    ///
+    /// - Note: This operation is optimised for speed.
+    
+    public var arrayOfCrcBinary: Array<BRCrcBinary>? {
+        
+        guard isArray else { return nil }
+        guard itemPtr.arrayElementType == ItemType.crcBinary.rawValue else { return nil }
+        
+        var arr: Array<BRCrcBinary> = []
+        
+        guard _arrayElementCount > 0 else { return arr }
+        
+        for i in 0 ..< _arrayElementCount {
+            let ptr = itemPtr.arrayElementPtr(for: i, endianness)
+            arr.append(ptr.crcBinary(endianness))
+        }
+        
+        return arr
+    }
+
+    
+    /// - Returns: The content of the array as an array of BRFont. Returns nil if the portal is invalid, not an array, or when the element type is not a font.
+    ///
+    /// - Note: This operation is optimised for speed.
+    
+    public var arrayOfFont: Array<BRFont>? {
+        
+        guard isArray else { return nil }
+        guard itemPtr.arrayElementType == ItemType.font.rawValue else { return nil }
+        
+        var arr: Array<BRFont> = []
+        
+        guard _arrayElementCount > 0 else { return arr }
+        
+        for i in 0 ..< _arrayElementCount {
+            let ptr = itemPtr.arrayElementPtr(for: i, endianness)
+            arr.append(ptr.font(endianness))
+        }
+        
+        return arr
+    }
+
+    
+    /// - Returns: The content of the array as an array of BRColor. Returns nil if the portal is invalid, not an array, or when the element type is not a color.
+    ///
+    /// - Note: This operation is optimised for speed.
+    
+    public var arrayOfColor: Array<BRColor>? {
+        
+        guard isArray else { return nil }
+        guard itemPtr.arrayElementType == ItemType.color.rawValue else { return nil }
+        
+        var arr: Array<BRColor> = []
+        
+        guard _arrayElementCount > 0 else { return arr }
+        
+        for i in 0 ..< _arrayElementCount {
+            let ptr = itemPtr.arrayElementPtr(for: i, endianness)
+            arr.append(ptr.color)
+        }
+        
+        return arr
+    }
+
+    
+    /// - Returns: The content of the array as an array of UUID. Returns nil if the portal is invalid, not an array, or when the element type is not an uuid.
+    ///
+    /// - Note: This operation is optimised for speed.
+    
+    public var arrayOfUUID: Array<UUID>? {
+        
+        guard isArray else { return nil }
+        guard itemPtr.arrayElementType == ItemType.uuid.rawValue else { return nil }
+        
+        var arr: Array<UUID> = []
+        
+        guard _arrayElementCount > 0 else { return arr }
+        
+        for i in 0 ..< _arrayElementCount {
+            let ptr = itemPtr.arrayElementPtr(for: i, endianness)
+            arr.append(ptr.uuid)
+        }
+        
+        return arr
+    }
+
 }
 
 

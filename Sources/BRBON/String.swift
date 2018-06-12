@@ -3,7 +3,7 @@
 //  File:       String.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.0
+//  Version:    0.7.5
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.5 - Added string and brString to the pointer operations.
 // 0.7.0 - Code restructuring & simplification
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
@@ -67,7 +68,7 @@ fileprivate let stringUtf8CodeOffset = stringUtf8ByteCountOffset + 4
 
 // Pointer manipulations
 
-fileprivate extension UnsafeMutableRawPointer {
+internal extension UnsafeMutableRawPointer {
     
     
     /// The pointer to the UTF8 byte count assuming self points to the first byte of the value.
@@ -118,6 +119,15 @@ fileprivate extension UnsafeMutableRawPointer {
     fileprivate func setStringUtf8Code(to value: Data, _ endianness: Endianness) {
         setStringUtf8ByteCount(to: UInt32(value.count), endianness)
         value.copyBytes(to: stringUtf8CodePtr.assumingMemoryBound(to: UInt8.self), count: value.count)
+    }
+    
+    
+    internal func string(_ endianness: Endianness) -> String? {
+        return String(data: self.stringUtf8Code(endianness), encoding: .utf8)
+    }
+    
+    internal func brString(_ endianness: Endianness) -> BRString {
+        return BRString(self.stringUtf8Code(endianness))
     }
 }
 

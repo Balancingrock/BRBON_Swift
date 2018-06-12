@@ -3,7 +3,7 @@
 //  File:       BRColor.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.0
+//  Version:    0.7.5
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,7 +44,8 @@
 //
 // History
 //
-// 0.7.0  - Initial version
+// 0.7.5 - Added color to the pointer operations.
+// 0.7.0 - Initial version
 // =====================================================================================================================
 
 import Foundation
@@ -63,7 +64,7 @@ fileprivate let colorValueByteCount = colorAlphaOffset + 1
 
 // Internal portal helpers
 
-fileprivate extension UnsafeMutableRawPointer {
+internal extension UnsafeMutableRawPointer {
 
     
     /// A pointer to the value for the red color assuming self points to the first byte of the value field
@@ -115,6 +116,13 @@ fileprivate extension UnsafeMutableRawPointer {
     fileprivate var colorAlpha: UInt8 {
         get { return colorAlphaPtr.assumingMemoryBound(to: UInt8.self).pointee }
         set { colorAlphaPtr.storeBytes(of: newValue, as: UInt8.self) }
+    }
+    
+    
+    /// Returns the BRColor assuming self points to the first byte of the value field
+    
+    internal var color: BRColor {
+        return BRColor.init(red: colorRed, green: colorGreen, blue: colorBlue, alpha: colorAlpha)
     }
 }
 

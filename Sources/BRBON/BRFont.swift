@@ -3,7 +3,7 @@
 //  File:       BRFont.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.0
+//  Version:    0.7.5
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,7 +44,8 @@
 //
 // History
 //
-// 0.7.0  - Initial version
+// 0.7.5 - Added font to the pointer operations.
+// 0.7.0 - Initial version
 // =====================================================================================================================
 
 import Foundation
@@ -63,7 +64,7 @@ fileprivate let fontFamilyNameUtf8CodeOffset = fontFontNameUtf8ByteCountOffset +
 
 // Internal portal helpers
 
-fileprivate extension UnsafeMutableRawPointer {
+internal extension UnsafeMutableRawPointer {
     
     
     /// Returns a pointer to the font point size of a font item assuming self points at the first byte of the value.
@@ -164,6 +165,12 @@ fileprivate extension UnsafeMutableRawPointer {
             newValue.copyBytes(to: fontFontNameUtf8CodePtr.assumingMemoryBound(to: UInt8.self), count: newValue.count)
             fontFontNameUtf8ByteCount = UInt8(newValue.count)
         }
+    }
+    
+    
+    /// Returns the BRFont assuming self points at the first byte of the value.
+    internal func font(_ endianness: Endianness) -> BRFont {
+        return BRFont.init(familyNameUtf8Code: fontFontNameUtf8Code, fontNameUtf8Code: fontFontNameUtf8Code, pointSize: fontPointSize(endianness))
     }
 }
 
