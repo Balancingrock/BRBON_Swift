@@ -3,7 +3,7 @@
 //  File:       ItemManager
 //  Project:    BRBON
 //
-//  Version:    0.7.3
+//  Version:    0.7.7
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.7 - Bugfix: size of data and string elements in createArrayManager fixed
 // 0.7.3 - Added init:from
 // 0.7.0 - Code restructuring & simplification
 //       - Added .color and .font
@@ -969,10 +970,11 @@ public final class ItemManager {
             guard nameField != nil else { return nil }
         }
 
-        var maxByteCount = array.max(by: { $0.count > $1.count })?.count ?? 0
-        maxByteCount = maxByteCount.roundUpToNearestMultipleOf8()
+        let maxByteCount = array.max(by: { $0.count > $1.count })?.count ?? 0
         
-        let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .binary, elementByteCount: maxByteCount, elementCount: array.count, endianness: endianness)
+        let elementByteCount = (maxByteCount + 4).roundUpToNearestMultipleOf8()
+        
+        let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .binary, elementByteCount: elementByteCount, elementCount: array.count, endianness: endianness)
 
         for (i, element) in array.enumerated() {
             let eptr = im.root._valuePtr.arrayElementPtr(for: i, endianness)
