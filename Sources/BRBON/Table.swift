@@ -3,7 +3,7 @@
 //  File:       Table.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.4
+//  Version:    0.7.6
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.6 - Fixed index test for field itterations
 // 0.7.4 - Added itterateFields:ofRow and itterateFields:ofColumn
 // 0.7.2 - Added assignField:to
 // 0.7.0 - Code restructuring & simplification
@@ -1088,7 +1089,7 @@ extension Portal {
         guard isValid else { return .error(.portalInvalid) }
         guard isTable else { return .error(.operationNotSupported) }
         guard row >= 0 else { return .error(.indexBelowLowerBound) }
-        guard row >= _tableRowCount else { return .error(.indexAboveHigherBound) }
+        guard row < _tableRowCount else { return .error(.indexAboveHigherBound) }
         guard _tableColumnCount > 0 else { return .error(.missingColumn) }
         
         for c in 0 ..< _tableColumnCount {
@@ -1114,7 +1115,7 @@ extension Portal {
         guard isValid else { return .error(.portalInvalid) }
         guard isTable else { return .error(.operationNotSupported) }
         guard column >= 0 else { return .error(.indexBelowLowerBound) }
-        guard column >= _tableColumnCount else { return .error(.indexAboveHigherBound) }
+        guard column < _tableColumnCount else { return .error(.indexAboveHigherBound) }
         
         for r in 0 ..< _tableRowCount {
             let p = manager.getActivePortal(for: itemPtr, index: r, column: column)
