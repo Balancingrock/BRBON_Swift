@@ -2713,4 +2713,52 @@ class Array_Tests: XCTestCase {
         XCTAssertFalse(portal12.isValid)
     }
 
+    func testArrayOfString() {
+        
+        ItemManager.startWithZeroedBuffers = true
+        
+        
+        // Start an empty array
+        
+        let am = ItemManager.createArrayManager(elementType: .array, endianness: Endianness.little)
+        
+        let arr = ["one", "two"]
+        let arr2 = ["three", "four", "five", "six"]
+
+        XCTAssertEqual(am.root.appendElement(arr), .success)
+        XCTAssertEqual(am.root.appendElement(arr2), .success)
+        
+        XCTAssertEqual(am.root[0].arrayOfString, ["one", "two"])
+        XCTAssertEqual(am.root[1].arrayOfString, ["three", "four", "five", "six"])
+    }
+    
+    func testArrayOfBool() {
+        
+        ItemManager.startWithZeroedBuffers = true
+        
+        let am = ItemManager.createArrayManager(elementType: .array, endianness: Endianness.little)
+        
+        XCTAssertEqual(am.root.appendElement([true, false]), .success)
+        
+        XCTAssertTrue(am.root[0][0].bool!)
+        XCTAssertFalse(am.root[0][1].bool!)
+        
+        let arr = am.root[0].arrayOfBool!
+        
+        XCTAssertTrue(arr[0])
+        XCTAssertFalse(arr[1])
+        XCTAssertEqual(arr.count, 2)
+        
+        am.root[0].arrayOfBool = [false, true, true, false, true, true, false, true, true]
+        
+        XCTAssertFalse(am.root[0][0].bool!)
+        XCTAssertTrue(am.root[0][1].bool!)
+        XCTAssertTrue(am.root[0][2].bool!)
+        XCTAssertFalse(am.root[0][3].bool!)
+        XCTAssertTrue(am.root[0][4].bool!)
+        XCTAssertTrue(am.root[0][5].bool!)
+        XCTAssertFalse(am.root[0][6].bool!)
+        XCTAssertTrue(am.root[0][7].bool!)
+        XCTAssertTrue(am.root[0][8].bool!)
+    }
 }

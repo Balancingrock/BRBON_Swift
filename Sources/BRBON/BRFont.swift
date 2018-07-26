@@ -3,7 +3,7 @@
 //  File:       BRFont.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.5
+//  Version:    0.7.8
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.8 - Added nofValueBytesNecessary to BRFont
 // 0.7.5 - Added font to the pointer operations.
 // 0.7.0 - Initial version
 // =====================================================================================================================
@@ -274,6 +275,12 @@ public struct BRFont {
     public let familyNameUtf8Code: Data?
     public let fontNameUtf8Code: Data
     public let pointSize: Float32
+    
+    public var nofValueBytesNecessary: Int {
+        let familySize = familyNameUtf8Code?.count ?? 0
+        let fontSize = fontNameUtf8Code.count
+        return 4 + 1 + familySize + 1 + fontSize
+    }
     
     public var font: NSFont? {
         guard let name = String(data: fontNameUtf8Code, encoding: .utf8) else { return nil }

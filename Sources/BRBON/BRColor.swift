@@ -3,7 +3,7 @@
 //  File:       BRColor.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.5
+//  Version:    0.7.8
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.8 - Made colorValueByteCount internal
 // 0.7.5 - Added color to the pointer operations.
 // 0.7.0 - Initial version
 // =====================================================================================================================
@@ -59,7 +60,7 @@ fileprivate let colorRedOffset = 0
 fileprivate let colorGreenOffset = colorRedOffset + 1
 fileprivate let colorBlueOffset = colorGreenOffset + 1
 fileprivate let colorAlphaOffset = colorBlueOffset + 1
-fileprivate let colorValueByteCount = colorAlphaOffset + 1
+internal let colorValueByteCount = colorAlphaOffset + 1
 
 
 // Internal portal helpers

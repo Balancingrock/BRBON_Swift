@@ -3,7 +3,7 @@
 //  File:       ItemManager
 //  Project:    BRBON
 //
-//  Version:    0.7.7
+//  Version:    0.7.8
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,8 @@
 //
 // History
 //
+// 0.7.8 - Bugfix: createArrayManager would fail to identify the largest element
+//         Added createArrayManager operations for more Coder types.
 // 0.7.7 - Bugfix: size of data and string elements in createArrayManager fixed
 // 0.7.3 - Added init:from
 // 0.7.0 - Code restructuring & simplification
@@ -970,7 +972,7 @@ public final class ItemManager {
             guard nameField != nil else { return nil }
         }
 
-        let maxByteCount = array.max(by: { $0.count > $1.count })?.count ?? 0
+        let maxByteCount = array.max(by: { $1.count > $0.count })?.count ?? 0
         
         let elementByteCount = (maxByteCount + 4).roundUpToNearestMultipleOf8()
         
@@ -1008,6 +1010,54 @@ public final class ItemManager {
     ///   - endianness: The endianness to use for the data managed by the item manager (optional).
     ///
     /// - Returns: An ItemManager with a array as the root item, nil if the name could not be used in a NameField.
+    
+    public static func createArrayManager(withName name: String?, values array: Array<BRCrcBinary>, endianness: Endianness = machineEndianness) -> ItemManager? {
+        
+        var nameField: NameField?
+        
+        if name != nil {
+            nameField = NameField(name)
+            guard nameField != nil else { return nil }
+        }
+        
+        let maxByteCount = array.max(by: { $1.data.count > $0.data.count })?.data.count ?? 0
+        
+        let elementByteCount = (maxByteCount + 8).roundUpToNearestMultipleOf8()
+        
+        let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .crcBinary, elementByteCount: elementByteCount, elementCount: array.count, endianness: endianness)
+        
+        for (i, element) in array.enumerated() {
+            let eptr = im.root._valuePtr.arrayElementPtr(for: i, endianness)
+            element.copyBytes(to: eptr, endianness)
+        }
+        
+        im.root._arrayElementCount = array.count
+        
+        return im
+    }
+
+    
+    /// Create an Array item manager with the contents of the given array.
+    ///
+    /// - Parameters:
+    ///   - values: The values to include in the root item of the item manager.
+    ///   - endianness: The endianness to use for the data managed by the item manager (optional).
+    ///
+    /// - Returns: An ItemManager with a array as the root item, nil if the name could not be used in a NameField.
+    
+    public static func createArrayManager(values array: Array<BRCrcBinary>, endianness: Endianness = machineEndianness) -> ItemManager {
+        return ItemManager.createArrayManager(withName: nil, values: array, endianness: endianness)!
+    }
+
+    
+    /// Create an Array item manager with the contents of the given array.
+    ///
+    /// - Parameters:
+    ///   - withName: The name to be used for the root item (optional)
+    ///   - values: The values to include in the root item of the item manager.
+    ///   - endianness: The endianness to use for the data managed by the item manager (optional).
+    ///
+    /// - Returns: An ItemManager with a array as the root item, nil if the name could not be used in a NameField.
 
     public static func createArrayManager(withName name: String?, values array: Array<String>, endianness: Endianness = machineEndianness) -> ItemManager? {
 
@@ -1029,6 +1079,192 @@ public final class ItemManager {
     /// - Returns: An ItemManager with a array as the root item, nil if the name could not be used in a NameField.
     
     public static func createArrayManager(values array: Array<String>, endianness: Endianness = machineEndianness) -> ItemManager {
+        return ItemManager.createArrayManager(withName: nil, values: array, endianness: endianness)!
+    }
+
+    
+    /// Create an Array item manager with the contents of the given array.
+    ///
+    /// - Parameters:
+    ///   - withName: The name to be used for the root item (optional)
+    ///   - values: The values to include in the root item of the item manager.
+    ///   - endianness: The endianness to use for the data managed by the item manager (optional).
+    ///
+    /// - Returns: An ItemManager with a array as the root item, nil if the name could not be used in a NameField.
+    
+    public static func createArrayManager(withName name: String?, values array: Array<BRCrcString>, endianness: Endianness = machineEndianness) -> ItemManager? {
+        
+        var nameField: NameField?
+        
+        if name != nil {
+            nameField = NameField(name)
+            guard nameField != nil else { return nil }
+        }
+        
+        let maxByteCount = array.max(by: { $1.utf8Code.count > $0.utf8Code.count })?.utf8Code.count ?? 0
+        
+        let elementByteCount = (maxByteCount + 8).roundUpToNearestMultipleOf8()
+        
+        let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .crcString, elementByteCount: elementByteCount, elementCount: array.count, endianness: endianness)
+        
+        for (i, element) in array.enumerated() {
+            let eptr = im.root._valuePtr.arrayElementPtr(for: i, endianness)
+            element.copyBytes(to: eptr, endianness)
+        }
+        
+        im.root._arrayElementCount = array.count
+        
+        return im
+    }
+    
+    
+    /// Create an Array item manager with the contents of the given array.
+    ///
+    /// - Parameters:
+    ///   - values: The values to include in the root item of the item manager.
+    ///   - endianness: The endianness to use for the data managed by the item manager (optional).
+    ///
+    /// - Returns: An ItemManager with a array as the root item, nil if the name could not be used in a NameField.
+    
+    public static func createArrayManager(values array: Array<BRCrcString>, endianness: Endianness = machineEndianness) -> ItemManager {
+        return ItemManager.createArrayManager(withName: nil, values: array, endianness: endianness)!
+    }
+
+    
+    /// Create an Array item manager with the contents of the given array.
+    ///
+    /// - Parameters:
+    ///   - withName: The name to be used for the root item (optional)
+    ///   - values: The values to include in the root item of the item manager.
+    ///   - endianness: The endianness to use for the data managed by the item manager (optional).
+    ///
+    /// - Returns: An ItemManager with a array as the root item, nil if the name could not be used in a NameField.
+    
+    public static func createArrayManager(withName name: String?, values array: Array<UUID>, endianness: Endianness = machineEndianness) -> ItemManager? {
+        
+        var nameField: NameField?
+        
+        if name != nil {
+            nameField = NameField(name)
+            guard nameField != nil else { return nil }
+        }
+        
+        let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .uuid, elementByteCount: uuidValueByteCount, elementCount: array.count, endianness: endianness)
+        
+        for (i, element) in array.enumerated() {
+            let eptr = im.root._valuePtr.arrayElementPtr(for: i, endianness)
+            element.copyBytes(to: eptr, endianness)
+        }
+        
+        im.root._arrayElementCount = array.count
+        
+        return im
+    }
+    
+    
+    /// Create an Array item manager with the contents of the given array.
+    ///
+    /// - Parameters:
+    ///   - values: The values to include in the root item of the item manager.
+    ///   - endianness: The endianness to use for the data managed by the item manager (optional).
+    ///
+    /// - Returns: An ItemManager with a array as the root item, nil if the name could not be used in a NameField.
+    
+    public static func createArrayManager(values array: Array<UUID>, endianness: Endianness = machineEndianness) -> ItemManager {
+        return ItemManager.createArrayManager(withName: nil, values: array, endianness: endianness)!
+    }
+
+    
+    /// Create an Array item manager with the contents of the given array.
+    ///
+    /// - Parameters:
+    ///   - withName: The name to be used for the root item (optional)
+    ///   - values: The values to include in the root item of the item manager.
+    ///   - endianness: The endianness to use for the data managed by the item manager (optional).
+    ///
+    /// - Returns: An ItemManager with a array as the root item, nil if the name could not be used in a NameField.
+    
+    public static func createArrayManager(withName name: String?, values array: Array<NSColor>, endianness: Endianness = machineEndianness) -> ItemManager? {
+        
+        var nameField: NameField?
+        
+        if name != nil {
+            nameField = NameField(name)
+            guard nameField != nil else { return nil }
+        }
+        
+        let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .color, elementByteCount: colorValueByteCount, elementCount: array.count, endianness: endianness)
+        
+        for (i, element) in array.map({ BRColor($0) }).enumerated() {
+            let eptr = im.root._valuePtr.arrayElementPtr(for: i, endianness)
+            element.copyBytes(to: eptr, endianness)
+        }
+        
+        im.root._arrayElementCount = array.count
+        
+        return im
+    }
+    
+    
+    /// Create an Array item manager with the contents of the given array.
+    ///
+    /// - Parameters:
+    ///   - values: The values to include in the root item of the item manager.
+    ///   - endianness: The endianness to use for the data managed by the item manager (optional).
+    ///
+    /// - Returns: An ItemManager with a array as the root item, nil if the name could not be used in a NameField.
+    
+    public static func createArrayManager(values array: Array<NSColor>, endianness: Endianness = machineEndianness) -> ItemManager {
+        return ItemManager.createArrayManager(withName: nil, values: array, endianness: endianness)!
+    }
+
+    
+    /// Create an Array item manager with the contents of the given array.
+    ///
+    /// - Parameters:
+    ///   - withName: The name to be used for the root item (optional)
+    ///   - values: The values to include in the root item of the item manager.
+    ///   - endianness: The endianness to use for the data managed by the item manager (optional).
+    ///
+    /// - Returns: An ItemManager with a array as the root item, nil if the name could not be used in a NameField.
+    
+    public static func createArrayManager(withName name: String?, values array: Array<NSFont>, endianness: Endianness = machineEndianness) -> ItemManager? {
+        
+        var nameField: NameField?
+        
+        if name != nil {
+            nameField = NameField(name)
+            guard nameField != nil else { return nil }
+        }
+        
+        let fontArr = array.compactMap({ BRFont($0) })
+        
+        let maxByteCount = fontArr.max(by: { $1.nofValueBytesNecessary > $0.nofValueBytesNecessary })?.nofValueBytesNecessary ?? 0
+        
+        let elementByteCount = maxByteCount.roundUpToNearestMultipleOf8()
+
+        let im = ItemManager.createArrayManager(withNameField: nameField, elementType: .font, elementByteCount: elementByteCount, elementCount: array.count, endianness: endianness)
+        
+        for (i, element) in fontArr.enumerated() {
+            let eptr = im.root._valuePtr.arrayElementPtr(for: i, endianness)
+            element.copyBytes(to: eptr, endianness)
+        }
+        
+        im.root._arrayElementCount = array.count
+        
+        return im
+    }
+    
+    
+    /// Create an Array item manager with the contents of the given array.
+    ///
+    /// - Parameters:
+    ///   - values: The values to include in the root item of the item manager.
+    ///   - endianness: The endianness to use for the data managed by the item manager (optional).
+    ///
+    /// - Returns: An ItemManager with a array as the root item, nil if the name could not be used in a NameField.
+    
+    public static func createArrayManager(values array: Array<NSFont>, endianness: Endianness = machineEndianness) -> ItemManager {
         return ItemManager.createArrayManager(withName: nil, values: array, endianness: endianness)!
     }
 

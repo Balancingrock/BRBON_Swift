@@ -3,7 +3,7 @@
 //  File:       Portal.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.1
+//  Version:    0.7.8
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.8 - Added forEach
 // 0.7.1 - Changed access level of index and column to public (necessary for table initializers)
 // 0.7.0 - Code restructuring & simplification
 //       - Added type .color and .font
@@ -515,7 +516,45 @@ extension Portal {
                 aPtr = aPtr.advanced(by: portal._itemByteCount)
                 remainder -= 1
             }
-
+        }
+    }
+    
+    
+    /// Calls the closure for each element of self if self is an array, dictionary or sequence.
+    
+    public func forEach(_ closure: (Portal) -> Void) {
+        
+        if isArray {
+            
+            let nofChildren = _arrayElementCount
+            var index = 0
+            while index < nofChildren {
+                let portal = manager.getActivePortal(for: itemPtr, index: index, column: nil)
+                closure(portal)
+                index += 1
+            }
+            
+        } else if isDictionary {
+            
+            var aPtr = _itemValueFieldPtr.advanced(by: dictionaryItemBaseOffset)
+            var remainder = _dictionaryItemCount
+            while remainder > 0 {
+                let portal = manager.getActivePortal(for: aPtr)
+                closure(portal)
+                aPtr = aPtr.advanced(by: portal._itemByteCount)
+                remainder -= 1
+            }
+            
+        } else if isSequence {
+            
+            var aPtr = _itemValueFieldPtr.advanced(by: sequenceItemBaseOffset)
+            var remainder = _sequenceItemCount
+            while remainder > 0 {
+                let portal = manager.getActivePortal(for: aPtr)
+                closure(portal)
+                aPtr = aPtr.advanced(by: portal._itemByteCount)
+                remainder -= 1
+            }
         }
     }
 }
