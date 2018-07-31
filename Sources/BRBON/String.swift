@@ -3,7 +3,7 @@
 //  File:       String.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.5
+//  Version:    0.7.9
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.9 - Changed the handling of writing a nil (will now reset the string to zero length)
 // 0.7.5 - Added string and brString to the pointer operations.
 // 0.7.0 - Code restructuring & simplification
 // 0.4.2 - Added header & general review of access levels
@@ -62,8 +63,8 @@ import BRUtils
 
 // Offset definitions
 
-fileprivate let stringUtf8ByteCountOffset = 0
-fileprivate let stringUtf8CodeOffset = stringUtf8ByteCountOffset + 4
+internal let stringUtf8ByteCountOffset = 0
+internal let stringUtf8CodeOffset = stringUtf8ByteCountOffset + 4
 
 
 // Pointer manipulations
@@ -94,7 +95,7 @@ internal extension UnsafeMutableRawPointer {
     
     /// Sets the UTF8 byte count assuming self points to the first byte of the value.
 
-    fileprivate func setStringUtf8ByteCount(to value: UInt32, _ endianness: Endianness) {
+    internal func setStringUtf8ByteCount(to value: UInt32, _ endianness: Endianness) {
         if endianness == machineEndianness {
             stringUtf8ByteCountPtr.storeBytes(of: value, as: UInt32.self)
         } else {
@@ -107,7 +108,7 @@ internal extension UnsafeMutableRawPointer {
     ///
     /// Note: Also reads 'stringUtf8ByteCount'
 
-    fileprivate func stringUtf8Code(_ endianness: Endianness) -> Data {
+    internal func stringUtf8Code(_ endianness: Endianness) -> Data {
         return Data(bytes: stringUtf8CodePtr, count: Int(stringUtf8ByteCount(endianness)))
     }
     
@@ -116,7 +117,7 @@ internal extension UnsafeMutableRawPointer {
     ///
     /// Note: Also writes 'stringUtf8ByteCount'
     
-    fileprivate func setStringUtf8Code(to value: Data, _ endianness: Endianness) {
+    internal func setStringUtf8Code(to value: Data, _ endianness: Endianness) {
         setStringUtf8ByteCount(to: UInt32(value.count), endianness)
         value.copyBytes(to: stringUtf8CodePtr.assumingMemoryBound(to: UInt8.self), count: value.count)
     }
@@ -124,10 +125,6 @@ internal extension UnsafeMutableRawPointer {
     
     internal func string(_ endianness: Endianness) -> String? {
         return String(data: self.stringUtf8Code(endianness), encoding: .utf8)
-    }
-    
-    internal func brString(_ endianness: Endianness) -> BRString {
-        return BRString(self.stringUtf8Code(endianness))
     }
 }
 
@@ -164,8 +161,8 @@ internal extension Portal {
 extension Portal {
     
     
-    /// - Returns: True if the value accessable through this portal is a string.
-    
+    /// Returns true if the portal is valid and the value accessable through this portal is a string.
+
     public var isString: Bool {
         guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.string }
@@ -174,26 +171,13 @@ extension Portal {
     }
     
     
-    /// Access the value through the portal as a BRString
+    /// Convenience accessor for the String type. Will use either BRString or BRCrcString depending on the type of portal.
     ///
-    /// - Note: Assigning a nil has no effect.
-
-    public var brString: BRString? {
-        get {
-            guard isString else { return nil }
-            return BRString.init(_stringUtf8Code)
-        }
-        set {
-            guard isString else { return }
-            guard let newValue = newValue else { return }
-            _stringUtf8Code = newValue.utf8Code
-        }
-    }
-    
-    
-    /// Convenience accessor using String type. Note that a nil is returned if the portal is invalid, the portal does not refer to a String or a CrcString, or if the UTF8 data cannot be converted into a string, or if the CrcString CRC is wrong.
+    /// __Preconditions:__ If the portal is invalid or does not refer to a BRString or a BRCrcString, writing will be ineffective and reading will always return nil.
     ///
-    /// - Note: Assigning a nil has no effect.
+    /// __On Read:__ The data at the associated memory location will be interpreted as a BRString or BRCrcString and returned. Note that if the specification is invalid the result is unpredictable. If the portal refers to a BRCrcString and the CRC is wrong, a nil will be returned.
+    ///
+    /// __On Write:__ Writes the specification of a BRString or BRCrcString to the associated memory area. Writing a nil will result in erasure of existing string data (by setting the size of the string to zero).
     
     public var string: String? {
         get {
@@ -209,61 +193,7 @@ extension Portal {
 }
 
 
-/// A wrapper for a swift String that stores the UTF8 byte code of a string.
-///
-/// When storing strings in a BRBON structure repeated conversions to a Data struct are made. Using a BRString wrapper limits the number of conversions to just one, thereby improving performance.
-
-public struct BRString {
-    
-    
-    /// The UTF8 code of a string.
-    
-    public let utf8Code: Data
-    
-    
-    /// The string value of the UTF8 code.
-    
-    public var string: String? { return String(data: utf8Code, encoding: .utf8) }
-    
-    
-    /// Create a new BRString if possible, only fails if the String cannot be converted into UTF8 code.
-    
-    public init?(_ str: String?) {
-        guard let code = str?.data(using: .utf8) else { return nil }
-        utf8Code = code
-    }
-    
-    
-    /// Create a new BRString from raw data.
-    
-    internal init(_ data: Data) {
-        utf8Code = data
-    }
-}
-
-
-/// Add the equatable protocol
-
-extension BRString: Equatable {
-    
-    public static func == (lhs: BRString, rhs: BRString) -> Bool {
-        return lhs.utf8Code == rhs.utf8Code
-    }
-}
-
-
 /// Adds the Coder protocol
-
-extension BRString: Coder {
-    
-    public var itemType: ItemType { return ItemType.string }
-
-    public var valueByteCount: Int { return stringUtf8CodeOffset + utf8Code.count }
-    
-    public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
-        ptr.setStringUtf8Code(to: utf8Code, endianness)
-    }
-}
 
 extension String: Coder {
     

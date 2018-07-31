@@ -3,7 +3,7 @@
 //  File:       UInt32.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.0
+//  Version:    0.7.9
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.9 - Changed the way a nil is written (now written as 0)
 // 0.7.0 - Code restructuring & simplification
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
@@ -57,10 +58,8 @@ import BRUtils
 public extension Portal {
     
     
-    /// Assess if the portal is valid and refers to an UInt32.
-    ///
-    /// - Returns: True if the value accessable through this portal is an UInt32. False if the portal is invalid or the value is not an UInt32.
-    
+    /// Returns true if the portal is valid and the value accessable through this portal is an UInt32.
+
     public var isUInt32: Bool {
         guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.uint32 }
@@ -71,10 +70,12 @@ public extension Portal {
 
     /// Access the value through the portal as an UInt32.
     ///
-    /// - Note: Assigning a nil has no effect.
+    /// __Preconditions:__ If the portal is invalid or does not refer to an uint32, writing will be ineffective and reading will always return nil.
     ///
-    /// - Returns: The value of the UInt32 if this portal is valid and refers to an UInt32.
-    
+    /// __On read:__ Returns the value at the associated memory location interpreted as an uint32.
+    ///
+    /// __On write:__ Stores the uint32 value at the associated memory location. If a nil is written the data at the location will be set to 0.
+
     public var uint32: UInt32? {
         get {
             guard isValid else { return nil }
@@ -88,7 +89,7 @@ public extension Portal {
         set {
             guard isValid else { return }
             guard isUInt32 else { return }
-            newValue?.copyBytes(to: _valuePtr, endianness)
+            (newValue ?? 0).copyBytes(to: _valuePtr, endianness)
         }
     }
 }

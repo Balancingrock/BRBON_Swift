@@ -3,7 +3,7 @@
 //  File:       UUID.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.8
+//  Version:    0.7.9
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.9 - Changed the way a nil is written (now written as all 0)
 // 0.7.8 - Made uuidValueByteCount internal
 // 0.7.5 - Added pointer operations with uuid operation.
 // 0.7.0 - Code restructuring & simplification
@@ -70,9 +71,7 @@ internal extension UnsafeMutableRawPointer {
 public extension Portal {
     
     
-    /// Assess if the portal is valid and refers to an UUID.
-    ///
-    /// - Returns: True if the value accessable through this portal is an UUID. False if the portal is invalid or the value is not an UUID.
+    /// Returns true if the portal is valid and the value accessable through this portal is an UUID.
 
     public var isUuid: Bool {
         guard isValid else { return false }
@@ -84,9 +83,11 @@ public extension Portal {
     
     /// Access the value through the portal as an UUID.
     ///
-    /// - Note: Assigning a nil has no effect.
+    /// __Preconditions:__ If the portal is invalid or does not refer to an UUID, writing will be ineffective and reading will always return nil.
     ///
-    /// - Returns: The value of the UUID if this portal is valid and refers to an UUID.
+    /// __On read:__ Returns the value at the associated memory location interpreted as an UUID.
+    ///
+    /// __On write:__ Stores the UUID value at the associated memory location. If a nil is written the data at the location will be set to all 0.
 
     public var uuid: UUID? {
         get {
@@ -97,7 +98,7 @@ public extension Portal {
         set {
             guard isValid else { return }
             guard isUuid else { return }
-            newValue?.copyBytes(to: _valuePtr, endianness)
+            (newValue ?? UUID(uuid: uuid_t(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0))).copyBytes(to: _valuePtr, endianness)
         }
     }
 }

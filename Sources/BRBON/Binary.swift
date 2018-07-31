@@ -3,7 +3,7 @@
 //  File:       Binary.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.5
+//  Version:    0.7.9
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.9 - Changed handling of writing nil (will now set data size to zero)
 // 0.7.5 - Renamed binaryData to binary and made it internal instead of fileprivate
 // 0.7.0 - Code restructuring & simplification
 // 0.4.2 - Added header & general review of access levels
@@ -145,7 +146,7 @@ internal extension Portal {
 public extension Portal {
     
     
-    /// Returns true if the value accessable through this portal is a Binary.
+    /// Returns true if the portal is valid and refers to a Binary.
     
     public var isBinary: Bool {
         guard isValid else { return false }
@@ -155,10 +156,14 @@ public extension Portal {
     }
     
     
-    /// Access the value through the portal as a Binary.
+    /// Access the value through the portal as a binary.
     ///
-    /// - Note: Assigning a nil has no effect.
-    
+    /// __Preconditions:__ If the portal is invalid or does not refer to a binary or CrcBinary, writing will be ineffective and reading will always return nil.
+    ///
+    /// __On Read:__ The data at the associated memory location will be interpreted as a binary or CrcBinary and the content returned.
+    ///
+    /// __On Write:__ Writes the binary or CrcBinary to the associated memory area. Writing a nil will result in erasure of existing binary data (by setting the size of the data to zero).
+
     public var binary: Data? {
         get {
             if isBinary { return _binaryData }

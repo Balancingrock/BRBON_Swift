@@ -1,9 +1,9 @@
 // =====================================================================================================================
 //
-//  File:       Coder-CrcBinary.swift
+//  File:       BRCrcBinary.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.5
+//  Version:    0.7.9
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.9 - Renamed to BRCrcBinary
 // 0.7.5 - Added crcBinary to the pointer operations
 // 0.7.0 - Code restructuring & simplification
 // 0.4.2 - Added header & general review of access levels
@@ -161,7 +162,6 @@ internal extension Portal {
             return _valuePtr.crcBinaryData(endianness)
         }
         set {
-            //let result = ensureValueFieldByteCount(of: crcBinaryDataOffset + newValue.count)
             let result = ensureStorageAtValuePtr(of: crcBinaryDataOffset + newValue.count)
             guard result == .success else { return }
             
@@ -211,17 +211,27 @@ public extension Portal {
     }
     
     
-    /// The BRCrcBinary referenced by this portal. Nil if the portal is invalid or does not refer to a CrcBinary.
-    
+    /// Access the value through the portal as a BRCrcBinary
+    ///
+    /// __Preconditions:__ If the portal is invalid or does not refer to a crcBinary, writing will be ineffective and reading will always return nil.
+    ///
+    /// __On Read:__ It will interpret the data at the associated memory location as a BRCrcBinary specification and return it. Otherwise it will return nil. Note that if the BRCrcBinary specification was written as nil, it will read as 'empty'.
+    ///
+    /// __On Write:__ Writes the specification of the BRCrcBinary to the associated memory area. Writing a nil will result in erasure of existing  data (by setting the size and crc zero).
+
     public var crcBinary: BRCrcBinary? {
         get {
             guard isCrcBinary else { return nil }
             return _crcBinary
         }
         set {
-            guard let newValue = newValue else { return }
             guard isCrcBinary else { return }
-            _crcBinary = newValue
+            if let newValue = newValue {
+                _crcBinary = newValue
+            } else {
+                _valuePtr.setCrcBinaryCrc(to: 0, endianness)
+                _valuePtr.setCrcBinaryByteCount(to: 0, endianness)
+            }
         }
     }
 }

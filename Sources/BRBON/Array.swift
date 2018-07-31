@@ -3,7 +3,7 @@
 //  File:       Array.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.8
+//  Version:    0.7.9
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.9 - Removed normalizedPortal and fixed arrayOf... accessors.
 // 0.7.8 - Implemented arryOf.... accessor for arrays in elements or fields
 //         Added appendElement:Array<...> operations
 // 0.7.5 - Added appendElements<T>:value<T> where T: Coder
@@ -88,19 +89,19 @@ internal extension UnsafeMutableRawPointer {
     
     fileprivate var arrayElementTypePtr: UnsafeMutableRawPointer { return self.advanced(by: arrayElementTypeOffset) }
     
-
+    
     /// A pointer to the element count assuming self points to the first byte of the value field.
-
+    
     fileprivate var arrayElementCountPtr: UnsafeMutableRawPointer { return self.advanced(by: arrayElementCountOffset) }
     
     
     /// A pointer to the element byte count assuming self points to the first byte of the value field.
-
+    
     fileprivate var arrayElementByteCountPtr: UnsafeMutableRawPointer { return self.advanced(by: arrayElementByteCountOffset) }
     
     
     /// A pointer to the first element assuming self points to the first byte of the value field.
-
+    
     fileprivate var arrayElementBasePtr: UnsafeMutableRawPointer { return self.advanced(by: arrayElementBaseOffset) }
     
     
@@ -121,17 +122,17 @@ internal extension UnsafeMutableRawPointer {
             return arrayElementCountPtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped
         }
     }
-
+    
     
     /// Set the number of elements assuming self points to the first byte of the value field.
-
+    
     fileprivate func setArrayElementCount(to value: UInt32, _ endianness: Endianness) {
         value.copyBytes(to: arrayElementCountPtr, endianness)
     }
     
     
     /// Returns the element byte count assuming self points to the first byte of the value field.
-
+    
     fileprivate func arrayElementByteCount(_ endianness: Endianness) -> UInt32 {
         if endianness == machineEndianness {
             return arrayElementByteCountPtr.assumingMemoryBound(to: UInt32.self).pointee
@@ -139,10 +140,10 @@ internal extension UnsafeMutableRawPointer {
             return arrayElementByteCountPtr.assumingMemoryBound(to: UInt32.self).pointee.byteSwapped
         }
     }
-
+    
     
     /// Sets the element byte count assuming self points to the first byte of the value field.
-
+    
     fileprivate func setArrayElementByteCount(to value: UInt32, _ endianness: Endianness) {
         value.copyBytes(to: arrayElementByteCountPtr, endianness)
     }
@@ -160,7 +161,7 @@ internal extension UnsafeMutableRawPointer {
 // Item access
 
 extension Portal {
-
+    
     
     /// The type of the element stored in the array this portal refers to.
     
@@ -171,7 +172,7 @@ extension Portal {
             ptr.arrayElementType = newValue?.rawValue ?? 0 }
     }
     
-
+    
     /// The number of elements in the array this portal refers to.
     
     internal var _arrayElementCount: Int {
@@ -186,7 +187,7 @@ extension Portal {
         get { return Int(itemPtr.itemValueFieldPtr.arrayElementByteCount(endianness)) }
         set { itemPtr.itemValueFieldPtr.setArrayElementByteCount(to: UInt32(newValue), endianness) }
     }
-
+    
     
     /// The total area used in the value field.
     
@@ -228,7 +229,7 @@ extension Portal {
         
         return .success
     }
-
+    
     
     /// Increases the byte count of the array element.
     
@@ -254,7 +255,7 @@ extension Portal {
         _arrayElementByteCount = newByteCount
     }
     
-
+    
     /// Get an element from an array or an item from a sequence as a portal.
     ///
     /// - Parameter index: The index of the element to retrieve.
@@ -268,7 +269,7 @@ extension Portal {
             return manager.getActivePortal(for: itemPtr, index: index, column: nil)
         }
     }
-
+    
     
     /// Removes an item from an array.
     ///
@@ -314,7 +315,7 @@ extension Portal {
         
         return .success
     }
-
+    
     
     /// Inserts a new element.
     ///
@@ -368,24 +369,6 @@ extension Portal {
         
         
         return .success
-    }
-    
-    
-    /// - Returns: A portal for self if self refers to an array.
-    
-    fileprivate func normalizedArrayPortal() -> Portal? {
-        
-        if isArray, index == nil { return self }
-        
-        if isArray, let index = index, _arrayElementType == ItemType.array {
-            return manager.getActivePortal(for: itemPtr.arrayElementPtr(for: index, endianness))
-        }
-        
-        if isTable, let index = index, let column = column, _tableGetColumnType(for: column) == ItemType.array {
-            return manager.getActivePortal(for: itemPtr.tableFieldPtr(row: index, column: column, endianness))
-        }
-        
-        return nil
     }
 }
 
@@ -470,19 +453,19 @@ extension Portal {
         
         return .success
     }
-
+    
     public func appendElement(_ value: Array<Bool>?) -> Result {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
     }
-
+    
     public func appendElement(_ value: Array<Int8>?) -> Result {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
     }
-
+    
     public func appendElement(_ value: Array<Int16>?) -> Result {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
@@ -494,13 +477,13 @@ extension Portal {
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
     }
-
+    
     public func appendElement(_ value: Array<Int64>?) -> Result {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
     }
-
+    
     public func appendElement(_ value: Array<UInt8>?) -> Result {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
@@ -524,7 +507,7 @@ extension Portal {
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
     }
-
+    
     public func appendElement(_ value: Array<Float32>?) -> Result {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
@@ -536,25 +519,25 @@ extension Portal {
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
     }
-
+    
     public func appendElement(_ value: Array<String>?) -> Result {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
     }
-
+    
     public func appendElement(_ value: Array<Data>?) -> Result {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
     }
-
+    
     public func appendElement(_ value: Array<UUID>?) -> Result {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
     }
-
+    
     public func appendElement(_ value: Array<NSFont>?) -> Result {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
@@ -566,7 +549,7 @@ extension Portal {
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
     }
-
+    
     /// Appends an array of values to the end of an Array item.
     ///
     /// Portals: Appending elements does not invalidate portals.
@@ -587,14 +570,14 @@ extension Portal {
         guard values.count > 0 else { return .success }
         guard isArray else { return .error(.operationNotSupported) }
         guard _arrayElementType!.sameType(as: (T.self as! Coder)) else { return .error(.typeConflict) }
-
+        
         
         // Ensure that the element byte count is sufficient
         
         var maxElementByteCount: Int = 0
         if _arrayElementType!.hasFlexibleLength {
             values.forEach() { maxElementByteCount = max(maxElementByteCount, $0.valueByteCount) }
-            maxElementByteCount = maxElementByteCount.roundUpToNearestMultipleOf8()            
+            maxElementByteCount = maxElementByteCount.roundUpToNearestMultipleOf8()
         } else {
             maxElementByteCount = values[0].valueByteCount
         }
@@ -636,7 +619,7 @@ extension Portal {
         
         return .success
     }
-
+    
     
     /// Removes an item from an Array item.
     ///
@@ -657,10 +640,10 @@ extension Portal {
         guard isArray else { return .error(.portalInvalid) }
         guard index >= 0 else { return .error(.indexBelowLowerBound) }
         guard index < _arrayElementCount else { return .error(.indexAboveHigherBound) }
-            
+        
         return _arrayRemove(at: index)
     }
-
+    
     
     /// Inserts a new element into an Array item.
     ///
@@ -685,10 +668,10 @@ extension Portal {
         guard index >= 0 else { return .error(.indexBelowLowerBound) }
         guard index < _arrayElementCount else { return .error(.indexAboveHigherBound) }
         guard value.itemType == _arrayElementType else { return .error(.typeConflict) }
-            
+        
         return _arrayInsert(value, atIndex: index)
     }
-
+    
     
     /// Appends one or more new elements to the end of an array.
     ///
@@ -756,8 +739,8 @@ extension Portal {
         
         return .success
     }
-
-
+    
+    
     /// Append the contens of an item manager to the Array item.
     ///
     /// Note that the type of the item manager root item must be the same as the element type.
@@ -803,7 +786,7 @@ extension Portal {
         
         let parentOffset = manager!.bufferPtr.distance(to: itemPtr)
         UInt32(parentOffset).copyBytes(to: newElementPtr.advanced(by: itemParentOffsetOffset), endianness)
-
+        
         
         // Increase the number of elements
         
@@ -811,7 +794,7 @@ extension Portal {
         
         return .success
     }
-
+    
     
     /// Append the contens of an array of item managers to the Array item.
     ///
@@ -823,7 +806,7 @@ extension Portal {
     ///   success: If the content was appended.
     ///
     ///   error(code): If the append failed, the code will detail the kind of error.
-
+    
     @discardableResult
     public func appendElements(_ arr: Array<ItemManager>) -> Result {
         
@@ -851,7 +834,7 @@ extension Portal {
             let result = increaseItemByteCount(to: itemPtr.itemHeaderAndNameByteCount + necessaryValueFieldByteCount)
             guard result == .success else { return result }
         }
-
+        
         
         // Set the new space to zero if required
         
@@ -894,7 +877,7 @@ extension Portal {
     ///   noAction: If the value was nil or Null.
     ///
     ///   error(code): If an error prevented the insertion, the code details the kind of error.
-
+    
     @discardableResult
     public func insertElement(_ itemManager: ItemManager?, atIndex index: Int) -> Result {
         
@@ -918,7 +901,7 @@ extension Portal {
             let result = increaseItemByteCount(to: itemPtr.itemHeaderAndNameByteCount + necessaryValueFieldByteCount)
             guard result == .success else { return result }
         }
-
+        
         
         // Copy the existing elements upward
         
@@ -943,7 +926,7 @@ extension Portal {
         
         let parentOffset = manager!.bufferPtr.distance(to: itemPtr)
         UInt32(parentOffset).copyBytes(to: targetPtr.advanced(by: itemParentOffsetOffset), endianness)
-
+        
         
         // Increase the number of elements
         
@@ -962,165 +945,80 @@ extension Portal {
     
     public var arrayOfBool: Array<Bool>? {
         get {
-            guard let portal = normalizedArrayPortal(), portal._arrayElementType == ItemType.bool else { return nil }
-        
+            guard isArray, _arrayElementType == ItemType.bool else { return nil }
+            
             var arr: Array<Bool> = []
-            portal.forEach({ if let i = $0.bool { arr.append(i) } })
+            forEach({ if let i = $0.bool { arr.append(i) } })
             return arr
         }
         set {
             guard let newValue = newValue else { return }
             
-            if let column = column, let index = index {
-                
-                if itemPtr.tableColumnType(for: column) == ItemType.array.rawValue {
-                    // At this point it is unknown if there is data in the field or not.
-                    // Note that the byte-content may be random, thus no test on supposed content is possible.
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    assignField(atRow: index, inColumn: column, fromManager: am)
-                }
-                
-            } else if let index = index {
-                
-                if itemPtr.arrayElementType == ItemType.array.rawValue {
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    insertElement(am, atIndex: index)
-                }
-                
-            } else if isArray && _arrayElementType == .bool {
-                
-                // Replace content of self with new content
-                
-                _arrayElementCount = 0
-                newValue.forEach({ appendElement($0) })
-            }
+            _arrayElementCount = 0
+            newValue.forEach({ appendElement($0) })
         }
     }
-
-
+    
+    
     /// - Returns: The content of the array as an array of Int8. Returns nil if the portal is invalid, not an array, or when the element type is not an Int8.
     ///
     /// - Note: This operation is optimised for speed.
-
+    
     public var arrayOfInt8: Array<Int8>? {
         get {
-            guard let portal = normalizedArrayPortal(), portal._arrayElementType == ItemType.int8 else { return nil }
-        
+            guard isArray, _arrayElementType == ItemType.int8 else { return nil }
+            
             var arr: Array<Int8> = []
-            portal.forEach({ if let i = $0.int8 { arr.append(i) } })
+            forEach({ if let i = $0.int8 { arr.append(i) } })
             return arr
         }
         set {
             guard let newValue = newValue else { return }
             
-            if let column = column, let index = index {
-                
-                if itemPtr.tableColumnType(for: column) == ItemType.array.rawValue {
-                    // At this point it is unknown if there is data in the field or not.
-                    // Note that the byte-content may be random, thus no test on supposed content is possible.
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    assignField(atRow: index, inColumn: column, fromManager: am)
-                }
-                
-            } else if let index = index {
-                
-                if itemPtr.arrayElementType == ItemType.array.rawValue {
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    insertElement(am, atIndex: index)
-                }
-                
-            } else if isArray && _arrayElementType == .int8 {
-                
-                // Replace content of self with new content
-                
-                _arrayElementCount = 0
-                newValue.forEach({ appendElement($0) })
-            }
+            _arrayElementCount = 0
+            newValue.forEach({ appendElement($0) })
         }
-
     }
-
-
+    
+    
     /// - Returns: The content of the array as an array of Int16. Returns nil if the portal is invalid, not an array, or when the element type is not an Int16.
     ///
     /// - Note: This operation is optimised for speed.
-
+    
     public var arrayOfInt16: Array<Int16>? {
         get {
-            guard let portal = normalizedArrayPortal(), portal._arrayElementType == ItemType.int16 else { return nil }
-        
+            guard isArray, _arrayElementType == ItemType.int16 else { return nil }
+            
             var arr: Array<Int16> = []
-            portal.forEach({ if let i = $0.int16 { arr.append(i) } })
+            forEach({ if let i = $0.int16 { arr.append(i) } })
             return arr
         }
         set {
             guard let newValue = newValue else { return }
             
-            if let column = column, let index = index {
-                
-                if itemPtr.tableColumnType(for: column) == ItemType.array.rawValue {
-                    // At this point it is unknown if there is data in the field or not.
-                    // Note that the byte-content may be random, thus no test on supposed content is possible.
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    assignField(atRow: index, inColumn: column, fromManager: am)
-                }
-                
-            } else if let index = index {
-                
-                if itemPtr.arrayElementType == ItemType.array.rawValue {
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    insertElement(am, atIndex: index)
-                }
-                
-            } else if isArray && _arrayElementType == .int16 {
-                
-                // Replace content of self with new content
-                
-                _arrayElementCount = 0
-                newValue.forEach({ appendElement($0) })
-            }
+            _arrayElementCount = 0
+            newValue.forEach({ appendElement($0) })
         }
     }
-
+    
     
     /// - Returns: The content of the array as an array of Int32. Returns nil if the portal is invalid, not an array, or when the element type is not an Int32.
     ///
     /// - Note: This operation is optimised for speed.
-
+    
     public var arrayOfInt32: Array<Int32>? {
         get {
-            guard let portal = normalizedArrayPortal(), portal._arrayElementType == ItemType.int32 else { return nil }
-        
+            guard isArray, _arrayElementType == ItemType.int32 else { return nil }
+            
             var arr: Array<Int32> = []
-            portal.forEach({ if let i = $0.int32 { arr.append(i) } })
+            forEach({ if let i = $0.int32 { arr.append(i) } })
             return arr
         }
         set {
             guard let newValue = newValue else { return }
             
-            if let column = column, let index = index {
-                
-                if itemPtr.tableColumnType(for: column) == ItemType.array.rawValue {
-                    // At this point it is unknown if there is data in the field or not.
-                    // Note that the byte-content may be random, thus no test on supposed content is possible.
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    assignField(atRow: index, inColumn: column, fromManager: am)
-                }
-                
-            } else if let index = index {
-                
-                if itemPtr.arrayElementType == ItemType.array.rawValue {
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    insertElement(am, atIndex: index)
-                }
-                
-            } else if isArray && _arrayElementType == .int32 {
-                
-                // Replace content of self with new content
-                
-                _arrayElementCount = 0
-                newValue.forEach({ appendElement($0) })
-            }
+            _arrayElementCount = 0
+            newValue.forEach({ appendElement($0) })
         }
     }
     
@@ -1128,121 +1026,58 @@ extension Portal {
     /// - Returns: The content of the array as an array of Int64. Returns nil if the portal is invalid, not an array, or when the element type is not an Int64.
     ///
     /// - Note: This operation is optimised for speed.
-
+    
     public var arrayOfInt64: Array<Int64>? {
         get {
-            guard let portal = normalizedArrayPortal(), portal._arrayElementType == ItemType.int64 else { return nil }
-        
+            guard isArray, _arrayElementType == ItemType.int64 else { return nil }
+            
             var arr: Array<Int64> = []
-            portal.forEach({ if let i = $0.int64 { arr.append(i) } })
+            forEach({ if let i = $0.int64 { arr.append(i) } })
             return arr
         }
         set {
             guard let newValue = newValue else { return }
             
-            if let column = column, let index = index {
-                
-                if itemPtr.tableColumnType(for: column) == ItemType.array.rawValue {
-                    // At this point it is unknown if there is data in the field or not.
-                    // Note that the byte-content may be random, thus no test on supposed content is possible.
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    assignField(atRow: index, inColumn: column, fromManager: am)
-                }
-                
-            } else if let index = index {
-                
-                if itemPtr.arrayElementType == ItemType.array.rawValue {
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    insertElement(am, atIndex: index)
-                }
-                
-            } else if isArray && _arrayElementType == .int64 {
-                
-                // Replace content of self with new content
-                
-                _arrayElementCount = 0
-                newValue.forEach({ appendElement($0) })
-            }
+            _arrayElementCount = 0
+            newValue.forEach({ appendElement($0) })
         }
     }
     
     
     /// - Returns: The content of the array as an array of UInt8. Returns nil if the portal is invalid, not an array, or when the element type is not an UInt8.
-
+    
     public var arrayOfUInt8: Array<UInt8>? {
         get {
-            guard let portal = normalizedArrayPortal(), portal._arrayElementType == ItemType.uint8 else { return nil }
-        
+            guard isArray, _arrayElementType == ItemType.uint8 else { return nil }
+            
             var arr: Array<UInt8> = []
-            portal.forEach({ if let i = $0.uint8 { arr.append(i) } })
+            forEach({ if let i = $0.uint8 { arr.append(i) } })
             return arr
         }
         set {
             guard let newValue = newValue else { return }
             
-            if let column = column, let index = index {
-                
-                if itemPtr.tableColumnType(for: column) == ItemType.array.rawValue {
-                    // At this point it is unknown if there is data in the field or not.
-                    // Note that the byte-content may be random, thus no test on supposed content is possible.
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    assignField(atRow: index, inColumn: column, fromManager: am)
-                }
-                
-            } else if let index = index {
-                
-                if itemPtr.arrayElementType == ItemType.array.rawValue {
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    insertElement(am, atIndex: index)
-                }
-                
-            } else if isArray && _arrayElementType == .uint8 {
-                
-                // Replace content of self with new content
-                
-                _arrayElementCount = 0
-                newValue.forEach({ appendElement($0) })
-            }
+            _arrayElementCount = 0
+            newValue.forEach({ appendElement($0) })
         }
     }
     
-
+    
     /// - Returns: The content of the array as an array of UInt16. Returns nil if the portal is invalid, not an array, or when the element type is not an UInt16.
-
+    
     public var arrayOfUInt16: Array<UInt16>? {
         get {
-            guard let portal = normalizedArrayPortal(), portal._arrayElementType == ItemType.uint16 else { return nil }
-        
+            guard isArray, _arrayElementType == ItemType.uint16 else { return nil }
+            
             var arr: Array<UInt16> = []
-            portal.forEach({ if let i = $0.uint16 { arr.append(i) } })
+            forEach({ if let i = $0.uint16 { arr.append(i) } })
             return arr
         }
         set {
             guard let newValue = newValue else { return }
             
-            if let column = column, let index = index {
-                
-                if itemPtr.tableColumnType(for: column) == ItemType.array.rawValue {
-                    // At this point it is unknown if there is data in the field or not.
-                    // Note that the byte-content may be random, thus no test on supposed content is possible.
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    assignField(atRow: index, inColumn: column, fromManager: am)
-                }
-                
-            } else if let index = index {
-                
-                if itemPtr.arrayElementType == ItemType.array.rawValue {
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    insertElement(am, atIndex: index)
-                }
-                
-            } else if isArray && _arrayElementType == .uint16 {
-                
-                // Replace content of self with new content
-                
-                _arrayElementCount = 0
-                newValue.forEach({ appendElement($0) })
-            }
+            _arrayElementCount = 0
+            newValue.forEach({ appendElement($0) })
         }
     }
     
@@ -1250,448 +1085,211 @@ extension Portal {
     /// - Returns: The content of the array as an array of UInt32. Returns nil if the portal is invalid, not an array, or when the element type is not an UInt32.
     ///
     /// - Note: This operation is optimised for speed.
-
+    
     public var arrayOfUInt32: Array<UInt32>? {
         get {
-            guard let portal = normalizedArrayPortal(), portal._arrayElementType == ItemType.uint32 else { return nil }
-        
+            guard isArray, _arrayElementType == ItemType.uint32 else { return nil }
+            
             var arr: Array<UInt32> = []
-            portal.forEach({ if let i = $0.uint32 { arr.append(i) } })
+            forEach({ if let i = $0.uint32 { arr.append(i) } })
             return arr
         }
         set {
             guard let newValue = newValue else { return }
             
-            if let column = column, let index = index {
-                
-                if itemPtr.tableColumnType(for: column) == ItemType.array.rawValue {
-                    // At this point it is unknown if there is data in the field or not.
-                    // Note that the byte-content may be random, thus no test on supposed content is possible.
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    assignField(atRow: index, inColumn: column, fromManager: am)
-                }
-                
-            } else if let index = index {
-                
-                if itemPtr.arrayElementType == ItemType.array.rawValue {
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    insertElement(am, atIndex: index)
-                }
-                
-            } else if isArray && _arrayElementType == .uint32 {
-                
-                // Replace content of self with new content
-                
-                _arrayElementCount = 0
-                newValue.forEach({ appendElement($0) })
-            }
+            _arrayElementCount = 0
+            newValue.forEach({ appendElement($0) })
         }
     }
     
     
     /// - Returns: The content of the array as an array of UInt64. Returns nil if the portal is invalid, not an array, or when the element type is not an UInt4.
-
+    
     public var arrayOfUInt64: Array<UInt64>? {
         get {
-            guard let portal = normalizedArrayPortal(), portal._arrayElementType == ItemType.uint64 else { return nil }
-        
+            guard isArray, _arrayElementType == ItemType.uint64 else { return nil }
+            
             var arr: Array<UInt64> = []
-            portal.forEach({ if let i = $0.uint64 { arr.append(i) } })
+            forEach({ if let i = $0.uint64 { arr.append(i) } })
             return arr
         }
         set {
             guard let newValue = newValue else { return }
             
-            if let column = column, let index = index {
-                
-                if itemPtr.tableColumnType(for: column) == ItemType.array.rawValue {
-                    // At this point it is unknown if there is data in the field or not.
-                    // Note that the byte-content may be random, thus no test on supposed content is possible.
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    assignField(atRow: index, inColumn: column, fromManager: am)
-                }
-                
-            } else if let index = index {
-                
-                if itemPtr.arrayElementType == ItemType.array.rawValue {
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    insertElement(am, atIndex: index)
-                }
-                
-            } else if isArray && _arrayElementType == .uint64 {
-                
-                // Replace content of self with new content
-                
-                _arrayElementCount = 0
-                newValue.forEach({ appendElement($0) })
-            }
+            _arrayElementCount = 0
+            newValue.forEach({ appendElement($0) })
         }
     }
-
+    
     
     /// - Returns: The content of the array as an array of Float32. Returns nil if the portal is invalid, not an array, or when the element type is not a Float32.
-
+    
     public var arrayOfFloat32: Array<Float32>? {
         get {
-            guard let portal = normalizedArrayPortal(), portal._arrayElementType == ItemType.float32 else { return nil }
-        
+            guard isArray, _arrayElementType == ItemType.float32 else { return nil }
+            
             var arr: Array<Float32> = []
-            portal.forEach({ if let f = $0.float32 { arr.append(f) } })
+            forEach({ if let f = $0.float32 { arr.append(f) } })
             return arr
         }
         set {
             guard let newValue = newValue else { return }
             
-            if let column = column, let index = index {
-                
-                if itemPtr.tableColumnType(for: column) == ItemType.array.rawValue {
-                    // At this point it is unknown if there is data in the field or not.
-                    // Note that the byte-content may be random, thus no test on supposed content is possible.
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    assignField(atRow: index, inColumn: column, fromManager: am)
-                }
-                
-            } else if let index = index {
-                
-                if itemPtr.arrayElementType == ItemType.array.rawValue {
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    insertElement(am, atIndex: index)
-                }
-                
-            } else if isArray && _arrayElementType == .float32 {
-                
-                // Replace content of self with new content
-                
-                _arrayElementCount = 0
-                newValue.forEach({ appendElement($0) })
-            }
+            _arrayElementCount = 0
+            newValue.forEach({ appendElement($0) })
         }
     }
     
     
     /// - Returns: The content of the array as an array of Float64. Returns nil if the portal is invalid, not an array, or when the element type is not a Float64.
-
+    
     public var arrayOfFloat64: Array<Float64>? {
         get {
-            guard let portal = normalizedArrayPortal(), portal._arrayElementType == ItemType.float64 else { return nil }
-        
+            guard isArray, _arrayElementType == ItemType.float64 else { return nil }
+            
             var arr: Array<Float64> = []
-            portal.forEach({ if let f = $0.float64 { arr.append(f) } })
+            forEach({ if let f = $0.float64 { arr.append(f) } })
             return arr
         }
         set {
             guard let newValue = newValue else { return }
             
-            if let column = column, let index = index {
-                
-                if itemPtr.tableColumnType(for: column) == ItemType.array.rawValue {
-                    // At this point it is unknown if there is data in the field or not.
-                    // Note that the byte-content may be random, thus no test on supposed content is possible.
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    assignField(atRow: index, inColumn: column, fromManager: am)
-                }
-                
-            } else if let index = index {
-                
-                if itemPtr.arrayElementType == ItemType.array.rawValue {
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    insertElement(am, atIndex: index)
-                }
-                
-            } else if isArray && _arrayElementType == .float64 {
-                
-                // Replace content of self with new content
-                
-                _arrayElementCount = 0
-                newValue.forEach({ appendElement($0) })
-            }
+            _arrayElementCount = 0
+            newValue.forEach({ appendElement($0) })
         }
     }
-
-    
     
     
     /// - Returns: The content of the array as an array of Strings. Returns nil if the portal is invalid, not an array, or when the element type is not an String.
-
+    
     public var arrayOfString: Array<String>? {
         get {
-            guard let portal = normalizedArrayPortal(), portal._arrayElementType == ItemType.string else { return nil }
-        
+            guard isArray, _arrayElementType == ItemType.string else { return nil }
+            
             var arr: Array<String> = []
-            portal.forEach({ if let s = $0.string { arr.append(s) } })
+            forEach({ if let s = $0.string { arr.append(s) } })
             return arr
         }
         set {
             guard let newValue = newValue else { return }
             
-            if let column = column, let index = index {
-                
-                if itemPtr.tableColumnType(for: column) == ItemType.array.rawValue {
-                    // At this point it is unknown if there is data in the field or not.
-                    // Note that the byte-content may be random, thus no test on supposed content is possible.
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    assignField(atRow: index, inColumn: column, fromManager: am)
-                }
-                
-            } else if let index = index {
-                
-                if itemPtr.arrayElementType == ItemType.array.rawValue {
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    insertElement(am, atIndex: index)
-                }
-                
-            } else if isArray && _arrayElementType == .string {
-                
-                // Replace content of self with new content
-                
-                _arrayElementCount = 0
-                newValue.forEach({ appendElement($0) })
-            }
+            _arrayElementCount = 0
+            newValue.forEach({ appendElement($0) })
         }
     }
-
+    
     
     /// - Returns: The content of the array as an array of BRCrcString. Returns nil if the portal is invalid, not an array, or when the element type is not a crcString.
     
     public var arrayOfCrcString: Array<BRCrcString>? {
         get {
-            guard let portal = normalizedArrayPortal(), portal._arrayElementType == ItemType.crcString else { return nil }
-        
+            guard isArray, _arrayElementType == ItemType.crcString else { return nil }
+            
             var arr: Array<BRCrcString> = []
-            portal.forEach({ if let s = $0.crcString { arr.append(s) } })
+            forEach({ if let s = $0.crcString { arr.append(s) } })
             return arr
         }
         set {
             guard let newValue = newValue else { return }
             
-            if let column = column, let index = index {
-                
-                if itemPtr.tableColumnType(for: column) == ItemType.array.rawValue {
-                    // At this point it is unknown if there is data in the field or not.
-                    // Note that the byte-content may be random, thus no test on supposed content is possible.
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    assignField(atRow: index, inColumn: column, fromManager: am)
-                }
-                
-            } else if let index = index {
-                
-                if itemPtr.arrayElementType == ItemType.array.rawValue {
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    insertElement(am, atIndex: index)
-                }
-                
-            } else if isArray && _arrayElementType == .crcString {
-                
-                // Replace content of self with new content
-                
-                _arrayElementCount = 0
-                newValue.forEach({ appendElement($0) })
-            }
+            _arrayElementCount = 0
+            newValue.forEach({ appendElement($0) })
         }
     }
-
+    
     
     /// - Returns: The content of the array as an array of Data. Returns nil if the portal is invalid, not an array, or when the element type is not a binary.
     
     public var arrayOfBinary: Array<Data>? {
         get {
-            guard let portal = normalizedArrayPortal(), portal._arrayElementType == ItemType.binary else { return nil }
-
+            guard isArray, _arrayElementType == ItemType.binary else { return nil }
+            
             var arr: Array<Data> = []
-            portal.forEach({ if let d = $0.binary { arr.append(d) } })
+            forEach({ if let d = $0.binary { arr.append(d) } })
             return arr
         }
         set {
             guard let newValue = newValue else { return }
             
-            if let column = column, let index = index {
-                
-                if itemPtr.tableColumnType(for: column) == ItemType.array.rawValue {
-                    // At this point it is unknown if there is data in the field or not.
-                    // Note that the byte-content may be random, thus no test on supposed content is possible.
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    assignField(atRow: index, inColumn: column, fromManager: am)
-                }
-                
-            } else if let index = index {
-                
-                if itemPtr.arrayElementType == ItemType.array.rawValue {
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    insertElement(am, atIndex: index)
-                }
-                
-            } else if isArray && _arrayElementType == .binary {
-                
-                // Replace content of self with new content
-                
-                _arrayElementCount = 0
-                newValue.forEach({ appendElement($0) })
-            }
+            _arrayElementCount = 0
+            newValue.forEach({ appendElement($0) })
         }
     }
-
+    
     
     /// - Returns: The content of the array as an array of Data. Returns nil if the portal is invalid, not an array, or when the element type is not a binary.
     
     public var arrayOfCrcBinary: Array<BRCrcBinary>? {
         get {
-            guard let portal = normalizedArrayPortal(), portal._arrayElementType == ItemType.crcBinary else { return nil }
-        
+            guard isArray, _arrayElementType == ItemType.crcBinary else { return nil }
+            
             var arr: Array<BRCrcBinary> = []
-            portal.forEach({ if let b = $0.crcBinary { arr.append(b) } })
+            forEach({ if let b = $0.crcBinary { arr.append(b) } })
             return arr
         }
         set {
             guard let newValue = newValue else { return }
             
-            if let column = column, let index = index {
-                
-                if itemPtr.tableColumnType(for: column) == ItemType.array.rawValue {
-                    // At this point it is unknown if there is data in the field or not.
-                    // Note that the byte-content may be random, thus no test on supposed content is possible.
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    assignField(atRow: index, inColumn: column, fromManager: am)
-                }
-                
-            } else if let index = index {
-                
-                if itemPtr.arrayElementType == ItemType.array.rawValue {
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    insertElement(am, atIndex: index)
-                }
-                
-            } else if isArray && _arrayElementType == .crcBinary {
-                
-                // Replace content of self with new content
-                
-                _arrayElementCount = 0
-                newValue.forEach({ appendElement($0) })
-            }
+            _arrayElementCount = 0
+            newValue.forEach({ appendElement($0) })
         }
     }
-
+    
     
     /// - Returns: The content of the array as an array of BRFont. Returns nil if the portal is invalid, not an array, or when the element type is not a font.
     
     public var arrayOfFont: Array<NSFont>? {
         get {
-            guard let portal = normalizedArrayPortal(), portal._arrayElementType == ItemType.font else { return nil }
-        
+            guard isArray, _arrayElementType == ItemType.font else { return nil }
+            
             var arr: Array<NSFont> = []
-            portal.forEach({ if let font = $0.font?.font { arr.append(font) } })
+            forEach({ if let font = $0.font?.font { arr.append(font) } })
             return arr
         }
         set {
             guard let newValue = newValue else { return }
             
-            if let column = column, let index = index {
-                
-                if itemPtr.tableColumnType(for: column) == ItemType.array.rawValue {
-                    // At this point it is unknown if there is data in the field or not.
-                    // Note that the byte-content may be random, thus no test on supposed content is possible.
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    assignField(atRow: index, inColumn: column, fromManager: am)
-                }
-                
-            } else if let index = index {
-                
-                if itemPtr.arrayElementType == ItemType.array.rawValue {
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    insertElement(am, atIndex: index)
-                }
-                
-            } else if isArray && _arrayElementType == .font {
-                
-                // Replace content of self with new content
-                
-                _arrayElementCount = 0
-                newValue.forEach({ appendElement(BRFont($0)) })
-            }
+            _arrayElementCount = 0
+            newValue.forEach({ appendElement(BRFont($0)) })
         }
     }
-
+    
     
     /// - Returns: The content of the array as an array of BRColor. Returns nil if the portal is invalid, not an array, or when the element type is not a color.
     
     public var arrayOfColor: Array<NSColor>? {
         get {
-            guard let portal = normalizedArrayPortal(), portal._arrayElementType == ItemType.color else { return nil }
-        
+            guard isArray, _arrayElementType == ItemType.color else { return nil }
+            
             var arr: Array<NSColor> = []
-            portal.forEach({ if let color = $0.color { arr.append(color.color) } })
+            forEach({ if let color = $0.color { arr.append(color.color) } })
             return arr
         }
         set {
             guard let newValue = newValue else { return }
             
-            if let column = column, let index = index {
-                
-                if itemPtr.tableColumnType(for: column) == ItemType.array.rawValue {
-                    // At this point it is unknown if there is data in the field or not.
-                    // Note that the byte-content may be random, thus no test on supposed content is possible.
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    assignField(atRow: index, inColumn: column, fromManager: am)
-                }
-                
-            } else if let index = index {
-                
-                if itemPtr.arrayElementType == ItemType.array.rawValue {
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    insertElement(am, atIndex: index)
-                }
-                
-            } else if isArray && _arrayElementType == .color {
-                
-                // Replace content of self with new content
-                
-                _arrayElementCount = 0
-                newValue.forEach({ appendElement(BRColor($0)) })
-            }
+            _arrayElementCount = 0
+            newValue.forEach({ appendElement(BRColor($0)) })
         }
     }
-
+    
     
     /// - Returns: The content of the array as an array of UUID. Returns nil if the portal is invalid, not an array, or when the element type is not an uuid.
     
     public var arrayOfUUID: Array<UUID>? {
         get {
-            guard let portal = normalizedArrayPortal(), portal._arrayElementType == ItemType.uuid else { return nil }
-        
+            guard isArray, _arrayElementType == ItemType.uuid else { return nil }
+            
             var arr: Array<UUID> = []
-            portal.forEach({ if let uuid = $0.uuid { arr.append(uuid) } })
+            forEach({ if let uuid = $0.uuid { arr.append(uuid) } })
             return arr
         }
         set {
             guard let newValue = newValue else { return }
             
-            if let column = column, let index = index {
-                
-                if itemPtr.tableColumnType(for: column) == ItemType.array.rawValue {
-                    // At this point it is unknown if there is data in the field or not.
-                    // Note that the byte-content may be random, thus no test on supposed content is possible.
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    assignField(atRow: index, inColumn: column, fromManager: am)
-                }
-                
-            } else if let index = index {
-                
-                if itemPtr.arrayElementType == ItemType.array.rawValue {
-                    let am = ItemManager.createArrayManager(values: newValue)
-                    insertElement(am, atIndex: index)
-                }
-                
-            } else if isArray && _arrayElementType == .crcString {
-                
-                // Replace content of self with new content
-                
-                _arrayElementCount = 0
-                newValue.forEach({ appendElement($0) })
-            }
+            _arrayElementCount = 0
+            newValue.forEach({ appendElement($0) })
         }
     }
 }
-
-
-
-
 

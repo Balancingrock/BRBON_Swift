@@ -3,7 +3,7 @@
 //  File:       Bool.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.0
+//  Version:    0.7.9
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.9 - Changed handling of writing a nil (will now set the bool value to false)
 // 0.7.0 - Code restructuring & simplification
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
@@ -57,7 +58,7 @@ import BRUtils
 public extension Portal {
     
     
-    /// - Returns: True if the value accessable through this portal is a Bool. False if the portal is invalid or the value is not a Bool.
+    /// Returns true if the portal is valid and the value accessable through this portal is a bool.
     
     public var isBool: Bool {
         guard isValid else { return false }
@@ -65,13 +66,15 @@ public extension Portal {
         if index != nil { return itemPtr.itemValueFieldPtr.arrayElementType == ItemType.bool.rawValue }
         return itemPtr.itemType == ItemType.bool.rawValue
     }
-
+    
     
     /// The value of the bool accessible through this portal.
     ///
-    /// - Note: Assigning a nil has no effect.
+    /// __Preconditions:__ If the portal is invalid or does not refer to a bool, writing will be ineffective and reading will always return nil.
     ///
-    /// - Returns: The value of the bool if this portal is valid and refers to a Bool. Nil otherwise.
+    /// __On read:__ When the value at the associated memory location is zero, false is returned. True if the value is non-nil.
+    ///
+    /// __On write:__ If the value is false or nil, a zero will be written to the associated memory location. For true the value 1 is written.
     
     public var bool: Bool? {
         get {
@@ -80,7 +83,7 @@ public extension Portal {
         }
         set {
             guard isBool else { return }
-            newValue?.copyBytes(to: _valuePtr, endianness)
+            (newValue ?? false).copyBytes(to: _valuePtr, endianness)
         }
     }
 }
@@ -88,10 +91,10 @@ public extension Portal {
 
 /// Adds the Coder protocol to a Bool
 
-extension Bool: Coder {    
+extension Bool: Coder {
     
     public var itemType: ItemType { return ItemType.bool }
-
+    
     public var valueByteCount: Int { return 1 }
     
     public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {

@@ -3,7 +3,7 @@
 //  File:       Int8.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.0
+//  Version:    0.7.9
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.9 - Changed the way a nil is written (now written as 0)
 // 0.7.0 - Code restructuring & simplification
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
@@ -57,9 +58,7 @@ import BRUtils
 public extension Portal {
     
     
-    /// Assess if the portal is valid and refers to an Int8.
-    ///
-    /// - Returns: True if the value accessable through this portal is an Int8. False if the portal is invalid or the value is not an Int8.
+    /// Returns true if the portal is valid and the value accessable through this portal is an Int8.
 
     public var isInt8: Bool {
         guard isValid else { return false }
@@ -71,9 +70,11 @@ public extension Portal {
 
     /// Access the value through the portal as an Int8.
     ///
-    /// - Note: Assigning a nil has no effect.
+    /// __Preconditions:__ If the portal is invalid or does not refer to an int8, writing will be ineffective and reading will always return nil.
     ///
-    /// - Returns: The value of the Int8 if this portal is valid and refers to an Int8.
+    /// __On read:__ Returns the value at the associated memory location interpreted as an int8.
+    ///
+    /// __On write:__ Stores the int8 value at the associated memory location. If a nil is written the data at the location will be set to 0.
 
     public var int8: Int8? {
         get {
@@ -82,7 +83,7 @@ public extension Portal {
         }
         set {
             guard isInt8 else { return }
-            newValue?.copyBytes(to: _valuePtr, endianness)
+            (newValue ?? 0).copyBytes(to: _valuePtr, endianness)
         }
     }
 }

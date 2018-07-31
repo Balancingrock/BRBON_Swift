@@ -3,7 +3,7 @@
 //  File:       Float64.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.0
+//  Version:    0.7.9
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.9 - Changed the way a nil is written (now written as 0.0)
 // 0.7.0 - Code restructuring & simplification
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
@@ -60,7 +61,7 @@ fileprivate let float64ValueByteCount = 8
 extension Portal {
     
     
-    /// Returns true if the value accessable through this portal is a Float64.
+    /// Returns true if the portal is valid and the value accessable through this portal is a Float64.
     
     public var isFloat64: Bool {
         guard isValid else { return false }
@@ -71,7 +72,13 @@ extension Portal {
     
 
     /// Access the value through the portal as a Float64
-    
+    ///
+    /// __Preconditions:__ If the portal is invalid or does not refer to a float64, writing will be ineffective and reading will always return nil.
+    ///
+    /// __On read:__ Returns the value at the associated memory location interpreted as a float64.
+    ///
+    /// __On write:__ Stores the float64 value at the associated memory location. If a nil is written the data at the location will be set to 0.0.
+
     public var float64: Float64? {
         get {
             guard isFloat64 else { return nil }
@@ -83,7 +90,7 @@ extension Portal {
         }
         set {
             guard isFloat64 else { return }
-            newValue?.copyBytes(to: _valuePtr, endianness)
+            (newValue ?? 0.0).copyBytes(to: _valuePtr, endianness)
         }
     }
 }

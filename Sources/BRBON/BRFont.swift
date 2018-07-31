@@ -3,7 +3,7 @@
 //  File:       BRFont.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.8
+//  Version:    0.7.9
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.9 - Changed handling of nil data, on writing a nil to portal.font the existing data will be erased. When reading erased data a nil will be returned.
 // 0.7.8 - Added nofValueBytesNecessary to BRFont
 // 0.7.5 - Added font to the pointer operations.
 // 0.7.0 - Initial version
@@ -69,32 +70,32 @@ internal extension UnsafeMutableRawPointer {
     
     
     /// Returns a pointer to the font point size of a font item assuming self points at the first byte of the value.
-
+    
     fileprivate var fontPointSizePtr: UnsafeMutableRawPointer { return self.advanced(by: fontPointSizeOffset) }
     
-
+    
     /// Returns a pointer to the font family name utf8 byte count of a font item assuming self points at the first byte of the value.
-
+    
     fileprivate var fontFamilyNameUtf8ByteCountPtr: UnsafeMutableRawPointer { return self.advanced(by: fontFamilyNameUtf8ByteCountOffset) }
-
-
+    
+    
     /// Returns a pointer to the font name utf8 byte count of a font item assuming self points at the first byte of the value.
-
+    
     fileprivate var fontFontNameUtf8ByteCountPtr: UnsafeMutableRawPointer { return self.advanced(by: fontFontNameUtf8ByteCountOffset) }
     
     
     /// Returns a pointer to the first byte of a font family name utf8 code of a font item assuming self points at the first byte of the value.
-
+    
     fileprivate var fontFamilyNameUtf8CodePtr: UnsafeMutableRawPointer { return self.advanced(by: fontFamilyNameUtf8CodeOffset) }
-
-
+    
+    
     /// Returns a pointer to the first byte of a font name utf8 code of a font item assuming self points at the first byte of the value.
-
+    
     fileprivate var fontFontNameUtf8CodePtr: UnsafeMutableRawPointer { return self.advanced(by: fontFamilyNameUtf8CodeOffset + Int(fontFamilyNameUtf8ByteCount)) }
     
     
     /// Returns the point size of a font item assuming self points at the first byte of the value.
-
+    
     fileprivate func fontPointSize(_ endianness: Endianness) -> Float32 {
         if endianness == machineEndianness {
             return Float32(bitPattern: fontPointSizePtr.assumingMemoryBound(to: UInt32.self).pointee)
@@ -105,7 +106,7 @@ internal extension UnsafeMutableRawPointer {
     
     
     /// Sets the point size of a font item assuming self points at the first byte of the value.
-
+    
     fileprivate func setFontPointSize(to value: Float32, _ endianness: Endianness) {
         if endianness == machineEndianness {
             fontPointSizePtr.storeBytes(of: value.bitPattern, as: UInt32.self)
@@ -116,15 +117,15 @@ internal extension UnsafeMutableRawPointer {
     
     
     /// The byte count of the font family name of a font item assuming self points at the first byte of the value.
-
+    
     fileprivate var fontFamilyNameUtf8ByteCount: UInt8 {
         get { return fontFamilyNameUtf8ByteCountPtr.assumingMemoryBound(to: UInt8.self).pointee }
         set { fontFamilyNameUtf8ByteCountPtr.storeBytes(of: newValue, as: UInt8.self) }
     }
     
-
+    
     /// The byte count of the font name of a font item assuming self points at the first byte of the value.
-
+    
     fileprivate var fontFontNameUtf8ByteCount: UInt8 {
         get { return fontFontNameUtf8ByteCountPtr.assumingMemoryBound(to: UInt8.self).pointee }
         set { fontFontNameUtf8ByteCountPtr.storeBytes(of: newValue, as: UInt8.self) }
@@ -136,7 +137,7 @@ internal extension UnsafeMutableRawPointer {
     /// Will also read cq write to the 'fontFamilyNameUtf8ByteCount'
     ///
     /// - Note: Can only be used if it is guaranteed that the UTF8 code field is large enough to contain the data.
-
+    
     fileprivate var fontFamilyNameUtf8Code: Data {
         get {
             let bc = fontFamilyNameUtf8ByteCount
@@ -155,7 +156,7 @@ internal extension UnsafeMutableRawPointer {
     /// Will also read cq write to the 'fontFontNameUtf8ByteCount'
     ///
     /// - Note: Can only be used if it is guaranteed that the UTF8 code field is large enough to contain the data.
-
+    
     fileprivate var fontFontNameUtf8Code: Data {
         get {
             let bc = fontFontNameUtf8ByteCount
@@ -183,7 +184,7 @@ extension Portal {
     /// Will also read cq write to the 'fontFamilyNameUtf8ByteCount'
     ///
     /// - Note: On write, it will increase the storage area -when necessary- to ensure proper storage of the family and font name. THis may include shifting of the font name UTF8 byte code.
-
+    
     internal var _fontFamilyNameUtf8Code: Data {
         get { return _valuePtr.fontFamilyNameUtf8Code }
         set {
@@ -209,7 +210,7 @@ extension Portal {
     /// Will also read cq write to the 'fontFamilyNameUtf8ByteCount'
     ///
     /// - Note: On write, it will increase the storage area -when necessary- to ensure proper storage of the family and font name.
-
+    
     internal var _fontFontNameUtf8Code: Data {
         get { return _valuePtr.fontFontNameUtf8Code }
         set {
@@ -240,29 +241,41 @@ public extension Portal {
     /// Assess if the portal is valid and refers to a Font.
     ///
     /// - Returns: True if the value accessable through this portal is an Font. False if the portal is invalid or the value is not a Font.
-
+    
     public var isFont: Bool {
         guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.font }
         if index != nil { return itemPtr.itemValueFieldPtr.arrayElementType == ItemType.font.rawValue }
         return itemPtr.itemType == ItemType.font.rawValue
     }
-
+    
     
     /// Access the value through the portal as a Font
+    ///
+    /// __Preconditions:__ If the portal is invalid or does not refer to a font, writing will be ineffective and reading will always return nil.
+    ///
+    /// __On Read:__ If the size of the font name is not zero, it will interpret the data at the associated memory location as a BRFont specification and return it. Otherwise it will return nil. Note that if the BRFont specification is invalid the result is unpredictable.
+    ///
+    /// __On Write:__ Writes the specification of the BRFont to the associated memory area. Writing a nil will result in erasure of existing font data (by setting the size of the font name to zero).
     
     public var font: BRFont? {
         get {
             guard isFont else { return nil }
-            return BRFont(familyNameUtf8Code: _valuePtr.fontFamilyNameUtf8Code, fontNameUtf8Code: _valuePtr.fontFontNameUtf8Code, pointSize: _valuePtr.fontPointSize(endianness))
+            let font = BRFont(familyNameUtf8Code: _valuePtr.fontFamilyNameUtf8Code, fontNameUtf8Code: _valuePtr.fontFontNameUtf8Code, pointSize: _valuePtr.fontPointSize(endianness))
+            if font.fontNameUtf8Code.count == 0 { return nil }
+            return font
         }
         set {
             guard isFont else { return }
-            guard let newValue = newValue else { return }
-            
-            _valuePtr.setFontPointSize(to: newValue.pointSize, endianness)
-            _valuePtr.fontFamilyNameUtf8Code = newValue.familyNameUtf8Code ?? Data()
-            _valuePtr.fontFontNameUtf8Code = newValue.fontNameUtf8Code
+            if let newValue = newValue {
+                _valuePtr.setFontPointSize(to: newValue.pointSize, endianness)
+                _valuePtr.fontFamilyNameUtf8Code = newValue.familyNameUtf8Code ?? Data()
+                _valuePtr.fontFontNameUtf8Code = newValue.fontNameUtf8Code
+            } else {
+                _valuePtr.setFontPointSize(to: 0.0, endianness)
+                _valuePtr.fontFamilyNameUtf8Code = Data()
+                _valuePtr.fontFontNameUtf8Code = Data()
+            }
         }
     }
 }
@@ -335,9 +348,9 @@ extension BRFont: Equatable {
 extension BRFont: Coder {
     
     public var itemType: ItemType { return ItemType.font }
-
+    
     public var valueByteCount: Int { return fontFamilyNameUtf8CodeOffset + (familyNameUtf8Code?.count ?? 0) + fontNameUtf8Code.count }
-
+    
     public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         var ptr = ptr
         ptr.setFontPointSize(to: pointSize, endianness)

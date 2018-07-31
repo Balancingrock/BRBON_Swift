@@ -3,7 +3,7 @@
 //  File:       BRColor.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.8
+//  Version:    0.7.9
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.9 - Changed handling of writing nil to color (will now set all fields to zero)
 // 0.7.8 - Made colorValueByteCount internal
 // 0.7.5 - Added color to the pointer operations.
 // 0.7.0 - Initial version
@@ -169,9 +170,7 @@ internal extension Portal {
 public extension Portal {
     
     
-    /// Assess if the portal is valid and refers to a Color.
-    ///
-    /// - Returns: True if the value accessable through this portal is an Color. False if the portal is invalid or the value is not an Color.
+    /// Returns true if the portal is valid and the value accessable through this portal is a color.
 
     public var isColor: Bool {
         guard isValid else { return false }
@@ -181,8 +180,14 @@ public extension Portal {
     }
     
     
-    /// Access the value through this portal as a NSColor in the generic RGB colorspace.
-    
+    /// Access the value through the portal as a NSColor in the generic RGB colorspace.
+    ///
+    /// __Preconditions:__ If the portal is invalid or does not refer to an color, writing will be ineffective and reading will always return nil.
+    ///
+    /// __On read:__ Returns the BRColor specification read from the memory location associated with this portal.
+    ///
+    /// __On write:__ Stores the BRColor specification at the memory location associated with this portal. If a nil is written the data at the location will be set to 0, 0, 0, 0.
+
     public var color: BRColor? {
         get {
             guard isColor else { return nil }
@@ -190,12 +195,17 @@ public extension Portal {
         }
         set {
             guard isColor else { return }
-            guard let newValue = newValue else { return }
-            
-            _valuePtr.colorRed = newValue.redComponent
-            _valuePtr.colorGreen = newValue.greenComponent
-            _valuePtr.colorBlue = newValue.blueComponent
-            _valuePtr.colorAlpha = newValue.alphaComponent
+            if let newValue = newValue {
+                _valuePtr.colorRed = newValue.redComponent
+                _valuePtr.colorGreen = newValue.greenComponent
+                _valuePtr.colorBlue = newValue.blueComponent
+                _valuePtr.colorAlpha = newValue.alphaComponent
+            } else {
+                _valuePtr.colorRed = 0
+                _valuePtr.colorGreen = 0
+                _valuePtr.colorBlue = 0
+                _valuePtr.colorAlpha = 0
+            }
         }
     }
 }

@@ -3,7 +3,7 @@
 //  File:       Null.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.0
+//  Version:    0.7.9
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.9 - Minor comment updates.
 // 0.7.0 - Code restructuring & simplification
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
@@ -57,9 +58,7 @@ import BRUtils
 public extension Portal {
     
     
-    /// Assess if the portal is valid and refers to a Null.
-    ///
-    /// - Returns: True if the value accessable through this portal is a Null. False if the portal is invalid or the value is not a Null.
+    /// Returns true if the portal is valid and the value accessable through this portal is a null.
 
     public var isNull: Bool {
         guard isValid else { return false }
@@ -69,11 +68,11 @@ public extension Portal {
     }
 
     
-    /// Access the value through the portal as a Null. This operation is for orthogonality only, it is in effect the same operation as the isNull member.
+    /// Access the value through the portal as a Null. This operation is for orthogonality only.
     ///
-    /// - Note: Assigning has no effect.
+    /// __On Read:__ In effect the same operation as the isNull member.
     ///
-    /// - Returns: True if the value accessable through this portal is a Null. False if the portal is invalid or the value is not a Null.
+    /// __On Write:__ Assigning has no effect.
 
     public var null: Bool? {
         get { return isNull }

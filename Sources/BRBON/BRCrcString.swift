@@ -197,28 +197,35 @@ public extension Portal {
             let utf8Code = _valuePtr.crcStringUtf8Code(endianness)
             let crc = _valuePtr.crcStringCrc(endianness)
             
-            guard utf8Code.crc32() == crc else { return nil }
+            if utf8Code.count > 0 {
+                guard utf8Code.crc32() == crc else { return nil }
+            } else {
+                if crc != 0 { return nil }
+            }
             
             return BRCrcString(utf8Code: utf8Code, crc: crc)
         }
         set {
             guard isCrcString else { return }
-            guard let newValue = newValue else { return }
+            if let newValue = newValue {
             
-            //let result = ensureValueFieldByteCount(of: crcStringUtf8CodeOffset + newValue.utf8Code.count)
-            let result = ensureStorageAtValuePtr(of: crcStringUtf8CodeOffset + newValue.utf8Code.count)
-            guard result == .success else { return }
+                let result = ensureStorageAtValuePtr(of: crcStringUtf8CodeOffset + newValue.utf8Code.count)
+                guard result == .success else { return }
 
-            _valuePtr.setCrcStringUtf8Code(to: newValue.utf8Code, endianness)
+                _valuePtr.setCrcStringUtf8Code(to: newValue.utf8Code, endianness)
+                
+            } else {
+                
+                _valuePtr.setCrcStringUtf8ByteCount(to: 0, endianness)
+                _valuePtr.setCrcStringCrc(to: 0, endianness)
+            }
         }
     }
 
     // Accessing as a String is covered in BRString.swift
     
     
-    /// Accessing the CRC32 value only.
-    ///
-    /// Only for CrcString and CrcBinary.
+    /// Reading the CRC32 value from a BRCrcString or BRCrcBinary. Returns nil for all other portal types.
     
     public var crc: UInt32? {
         if !isValid { return nil }

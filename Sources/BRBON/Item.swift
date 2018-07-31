@@ -3,7 +3,7 @@
 //  File:       Item.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.0
+//  Version:    0.7.9
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.9 - Minor comments updates
 // 0.7.0 - Code restructuring & simplification
 // 0.5.0 - Migration to Swift 4
 // 0.4.2 - Added header & general review of access levels
@@ -458,14 +459,14 @@ extension Portal {
 extension Portal {
     
     
-    /// Return a pointer to the value field
+    /// Returns a pointer to the value field of this portal.
     
     internal var _itemValueFieldPtr: UnsafeMutableRawPointer {
         return itemPtr.itemValueFieldPtr
     }
     
     
-    /// Return a pointer to the first byte after the item of this portal
+    /// Returns a pointer to the first byte after the item of this portal.
     
     internal var _nextItemPtr: UnsafeMutableRawPointer {
         return itemPtr.nextItemPtr(endianness)
