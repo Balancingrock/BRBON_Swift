@@ -3,7 +3,7 @@
 //  File:       Table.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.6
+//  Version:    0.7.10
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.10 - Fixed itterate operations
 // 0.7.6 - Fixed index test for field itterations
 // 0.7.4 - Added itterateFields:ofRow and itterateFields:ofColumn
 // 0.7.2 - Added assignField:to
@@ -1075,6 +1076,17 @@ extension Portal {
     }
     
     
+    /// Signature of closure used to itterate over the fields of a table row column. Itteration starts at column 0. Itteration cab be aborted by returning 'false'.
+    ///
+    /// - Parameters:
+    ///   - portal: The portal for the column field. Note that for container fields a portal to that item will be presented, while non-container fields will use the portal to the original table with properly initialized index and field members.
+    ///   - column: The index of the column in the original table.
+    ///
+    /// - Returns: Return 'true' to keep itterating, return 'false' to stop itterating.
+    
+    public typealias ColumnItterator = (_ portal: Portal, _ column: Int) -> Bool
+    
+    
     /// Itterate over the column-fields in a row. Itteration continues as long as the closure returns 'true'.
     ///
     /// - Parameters:
@@ -1084,7 +1096,7 @@ extension Portal {
     /// - Returns: Success on completion, or an error message when it was not possible to itterate.
     
     @discardableResult
-    public func itterateFields(ofRow row: Int, closure: (Portal) -> Bool) -> Result {
+    public func itterateFields(ofRow row: Int, closure: ColumnItterator) -> Result {
         
         guard isValid else { return .error(.portalInvalid) }
         guard isTable else { return .error(.operationNotSupported) }
@@ -1093,12 +1105,26 @@ extension Portal {
         guard _tableColumnCount > 0 else { return .error(.missingColumn) }
         
         for c in 0 ..< _tableColumnCount {
-            let p = manager.getActivePortal(for: itemPtr, index: row, column: c)
-            if !closure(p) { break }
+            if let p = self[row, c].portal {
+                if !closure(p, c) { break }
+            } else {
+                assertionFailure("There should be a field portal")
+            }
         }
         
         return .success
     }
+    
+    
+    /// Signature of closure used to itterate over a column field of all table rows. Itteration starts at row 0. Itteration cab be aborted by returning 'false'.
+    ///
+    /// - Parameters:
+    ///   - portal: The portal for the field. Note that for container fields a portal to that item will be presented, while non-container fields will use the portal to the original table with properly initialized index and field members.
+    ///   - row: The index of the row in the original table.
+    ///
+    /// - Returns: Return 'true' to keep itterating, return 'false' to stop itterating.
+
+    public typealias RowItterator = (_ portal: Portal, _ row: Int) -> Bool
     
     
     /// Itterate over all column-fields. Itteration continues as long as the closure returns 'true'.
@@ -1110,7 +1136,7 @@ extension Portal {
     /// - Returns: Success on completion, or an error message when it was not possible to itterate.
     
     @discardableResult
-    public func itterateFields(ofColumn column: Int, closure: (Portal) -> Bool) -> Result {
+    public func itterateFields(ofColumn column: Int, closure: RowItterator) -> Result {
         
         guard isValid else { return .error(.portalInvalid) }
         guard isTable else { return .error(.operationNotSupported) }
@@ -1118,8 +1144,11 @@ extension Portal {
         guard column < _tableColumnCount else { return .error(.indexAboveHigherBound) }
         
         for r in 0 ..< _tableRowCount {
-            let p = manager.getActivePortal(for: itemPtr, index: r, column: column)
-            if !closure(p) { break }
+            if let p = self[r, column].portal {
+                if !closure(p, r) { break }
+            } else {
+                assertionFailure("There should be a field portal")
+            }
         }
         
         return .success
