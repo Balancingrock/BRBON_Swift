@@ -3,7 +3,7 @@
 //  File:       ItemManager
 //  Project:    BRBON
 //
-//  Version:    0.7.8
+//  Version:    0.7.11
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.11 - Added ItemManager.init(from: Data)
 // 0.7.8 - Bugfix: createArrayManager would fail to identify the largest element
 //         Added createArrayManager operations for more Coder types.
 // 0.7.7 - Bugfix: size of data and string elements in createArrayManager fixed
@@ -276,10 +277,15 @@ public final class ItemManager {
     
     /// Load an ItemManager from file
     
-    public init?(from url: URL) {
-        
+    public convenience init?(from url: URL) {
         guard let data = try? Data.init(contentsOf: url) else { return nil }
-        
+        self.init(from: data)
+    }
+    
+
+    /// Load an ItemManager from Data
+    
+    public init(from data: Data) {
         self.buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: data.count, alignment: 8)
         self.buffer.copyBytes(from: data)
         self.bufferPtr = buffer.baseAddress!
@@ -287,8 +293,8 @@ public final class ItemManager {
         self.activePortals = ActivePortals(manager: self)
         self.root = getActivePortal(for: self.bufferPtr)
     }
-    
 
+    
     /// Creates a new ItemManager but does not create an initial item in the buffer.
     ///
     /// - Note: This results in an incomplete item manager, be sure to create an initial item and set the root portal before using the manager.
