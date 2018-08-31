@@ -3,7 +3,7 @@
 //  File:       BRColor.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.9
+//  Version:    0.7.12
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -44,6 +44,7 @@
 //
 // History
 //
+// 0.7.12 - Added conversion to Generic RGB when creating a BRColor with a NSColor.
 // 0.7.9 - Changed handling of writing nil to color (will now set all fields to zero)
 // 0.7.8 - Made colorValueByteCount internal
 // 0.7.5 - Added color to the pointer operations.
@@ -225,13 +226,14 @@ public struct BRColor {
     
     /// Create a new BRColor, the color will be assumed to be in the generic RGB colorspace.
     ///
-    /// In other words: If the colorspace is not generic RGB, this information will be lost as upon extracting the color (type: NSColor) the generic RGB colorspace will be used.
+    /// In other words: If the colorspace is not generic RGB, this information will be lost as upon extracting the color information the generic RGB colorspace will be used.
     
     public init(_ color: NSColor) {
-        redComponent = UInt8(color.redComponent * 255)
-        greenComponent = UInt8(color.greenComponent * 255)
-        blueComponent = UInt8(color.blueComponent * 255)
-        alphaComponent = UInt8(color.alphaComponent * 255)
+        let genericRgbColor = color.usingColorSpace(NSColorSpace.genericRGB) ?? NSColor(genericGamma22White: 0, alpha: 1)
+        redComponent = UInt8(genericRgbColor.redComponent * 255)
+        greenComponent = UInt8(genericRgbColor.greenComponent * 255)
+        blueComponent = UInt8(genericRgbColor.blueComponent * 255)
+        alphaComponent = UInt8(genericRgbColor.alphaComponent * 255)
     }
     
     public init(red: UInt8, green: UInt8, blue: UInt8, alpha: UInt8) {
