@@ -78,7 +78,7 @@ class Bool_Tests: XCTestCase {
         
         var data = imt.data // Data(bytesNoCopy: buffer.baseAddress!, count: 16, deallocator: Data.Deallocator.none)
         
-        var exp = Data(bytes: [
+        var exp = Data([
             0x02, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00
             ])
@@ -102,7 +102,7 @@ class Bool_Tests: XCTestCase {
 
         data = imf.data // Data(bytesNoCopy: buffer.baseAddress!, count: 16, deallocator: Data.Deallocator.none)
         
-        exp = Data(bytes: [
+        exp = Data([
             0x02, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
             ])
@@ -127,7 +127,7 @@ class Bool_Tests: XCTestCase {
 
         data = im.data // Data(bytesNoCopy: buffer.baseAddress!, count: 16, deallocator: Data.Deallocator.none)
 
-        exp = Data(bytes: [
+        exp = Data([
             0x02, 0x00, 0x00, 0x08, 0x18, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
             0xdc, 0x56, 0x03, 0x6f, 0x6e, 0x65, 0x00, 0x00

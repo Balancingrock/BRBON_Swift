@@ -41,7 +41,7 @@ class Dictionary_Tests: XCTestCase {
         
         // Data structure
         
-        var exp = Data(bytes: [
+        var exp = Data([
             0x12, 0x00, 0x00, 0x00,  0x18, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00
@@ -56,7 +56,7 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertEqual(dm.root.count, 1)
         XCTAssertTrue(dm.root["null"].isNull)
         
-        exp = Data(bytes: [
+        exp = Data([
             0x12, 0x00, 0x00, 0x00,  0x30, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x01, 0x00, 0x00, 0x00,
@@ -76,7 +76,7 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertTrue(dm.root["bool"].isBool)
         XCTAssertEqual(dm.root["bool"], true)
 
-        exp = Data(bytes: [
+        exp = Data([
             0x12, 0x00, 0x00, 0x00,  0x48, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x02, 0x00, 0x00, 0x00,
@@ -104,7 +104,7 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertTrue(dm.root["int8"].isInt8)
         XCTAssertEqual(dm.root["int8"], Int8(0x12))
         
-        exp = Data(bytes: [
+        exp = Data([
             0x12, 0x00, 0x00, 0x00,  0x60, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x03, 0x00, 0x00, 0x00,
@@ -138,7 +138,7 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertTrue(dm.root["int16"].isInt16)
         XCTAssertEqual(dm.root["int16"], Int16(0x1234))
 
-        exp = Data(bytes: [
+        exp = Data([
             0x12, 0x00, 0x00, 0x00,  0x78, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x04, 0x00, 0x00, 0x00,
@@ -176,7 +176,7 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertTrue(dm.root["int32"].isInt32)
         XCTAssertEqual(dm.root["int32"], Int32(0x12345678))
 
-        exp = Data(bytes: [
+        exp = Data([
             0x12, 0x00, 0x00, 0x00,  0x90, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x05, 0x00, 0x00, 0x00,
@@ -221,7 +221,7 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertTrue(dm.root["int64"].isInt64)
         XCTAssertEqual(dm.root["int64"], Int64(0x1234567887654321))
 
-        exp = Data(bytes: [
+        exp = Data([
             0x12, 0x00, 0x00, 0x00,  0xB0, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x06, 0x00, 0x00, 0x00,
@@ -273,7 +273,7 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertTrue(dm.root["uint8"].isUInt8)
         XCTAssertEqual(dm.root["uint8"], UInt8(0x12))
         
-        exp = Data(bytes: [
+        exp = Data([
             0x12, 0x00, 0x00, 0x00,  0xC8, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x07, 0x00, 0x00, 0x00,
@@ -332,7 +332,7 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertTrue(dm.root["uint16"].isUInt16)
         XCTAssertEqual(dm.root["uint16"], UInt16(0x1234))
 
-        exp = Data(bytes: [
+        exp = Data([
             0x12, 0x00, 0x00, 0x00,  0xe8, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x08, 0x00, 0x00, 0x00,
@@ -397,7 +397,7 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertTrue(dm.root["uint32"].isUInt32)
         XCTAssertEqual(dm.root["uint32"], UInt32(0x12345678))
 
-        exp = Data(bytes: [
+        exp = Data([
             0x12, 0x00, 0x00, 0x00,  0x08, 0x01, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x09, 0x00, 0x00, 0x00,
@@ -469,7 +469,7 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertTrue(dm.root["uint64"].isUInt64)
         XCTAssertEqual(dm.root["uint64"], UInt64(0x1234567887654321))
 
-        exp = Data(bytes: [
+        exp = Data([
             0x12, 0x00, 0x00, 0x00,  0x30, 0x01, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x0A, 0x00, 0x00, 0x00,
@@ -549,7 +549,7 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertTrue(dm.root["float32"].isFloat32)
         XCTAssertEqual(dm.root["float32"], Float32(12))
         
-        exp = Data(bytes: [
+        exp = Data([
             0x12, 0x00, 0x00, 0x00,  0x50, 0x01, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x0B, 0x00, 0x00, 0x00,
@@ -637,7 +637,7 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertTrue(dm.root["float64"].isFloat64)
         XCTAssertEqual(dm.root["float64"], Float64(1.23))
 
-        exp = Data(bytes: [
+        exp = Data([
             0x12, 0x00, 0x00, 0x00,  0x78, 0x01, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x0c, 0x00, 0x00, 0x00,
@@ -733,7 +733,7 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertTrue(dm.root["string"].isString)
         XCTAssertEqual(dm.root["string"], "string")
         
-        exp = Data(bytes: [
+        exp = Data([
             0x12, 0x00, 0x00, 0x00,  0xa8, 0x01, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x0d, 0x00, 0x00, 0x00,
@@ -838,7 +838,7 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertTrue(dm.root["crcstring"].isCrcString)
         XCTAssertEqual(dm.root["crcstring"], "crcstring")
 
-        exp = Data(bytes: [
+        exp = Data([
             0x12, 0x00, 0x00, 0x00,  0xe0, 0x01, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x0e, 0x00, 0x00, 0x00,
@@ -920,7 +920,7 @@ class Dictionary_Tests: XCTestCase {
         
         // Add a Binary
         
-        XCTAssertEqual(dm.root.updateItem(Data(bytes: [0x11, 0x22, 0x33]), withNameField: NameField("binary")), .success)
+        XCTAssertEqual(dm.root.updateItem(Data([0x11, 0x22, 0x33]), withNameField: NameField("binary")), .success)
         XCTAssertEqual(dm.root.count, 15)
         XCTAssertTrue(dm.root["null"].isNull)
         XCTAssertTrue(dm.root["bool"].isBool)
@@ -950,9 +950,9 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertTrue(dm.root["crcstring"].isCrcString)
         XCTAssertEqual(dm.root["crcstring"], "crcstring")
         XCTAssertTrue(dm.root["binary"].isBinary)
-        XCTAssertEqual(dm.root["binary"], Data(bytes: [0x11, 0x22, 0x33]))
+        XCTAssertEqual(dm.root["binary"], Data([0x11, 0x22, 0x33]))
 
-        exp = Data(bytes: [
+        exp = Data([
             0x12, 0x00, 0x00, 0x00,  0x08, 0x02, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x0f, 0x00, 0x00, 0x00,
@@ -1041,7 +1041,7 @@ class Dictionary_Tests: XCTestCase {
         
         // Add a CrcBinary
         
-        XCTAssertEqual(dm.root.updateItem(BRCrcBinary(Data(bytes: [0x11, 0x22, 0x33])), withNameField: NameField("crcbinary")), .success)
+        XCTAssertEqual(dm.root.updateItem(BRCrcBinary(Data([0x11, 0x22, 0x33])), withNameField: NameField("crcbinary")), .success)
         XCTAssertEqual(dm.root.count, 16)
         XCTAssertTrue(dm.root["null"].isNull)
         XCTAssertTrue(dm.root["bool"].isBool)
@@ -1071,11 +1071,11 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertTrue(dm.root["crcstring"].isCrcString)
         XCTAssertEqual(dm.root["crcstring"], "crcstring")
         XCTAssertTrue(dm.root["binary"].isBinary)
-        XCTAssertEqual(dm.root["binary"], Data(bytes: [0x11, 0x22, 0x33]))
+        XCTAssertEqual(dm.root["binary"], Data([0x11, 0x22, 0x33]))
         XCTAssertTrue(dm.root["crcbinary"].isCrcBinary)
-        XCTAssertEqual(dm.root["crcbinary"], Data(bytes: [0x11, 0x22, 0x33]))
+        XCTAssertEqual(dm.root["crcbinary"], Data([0x11, 0x22, 0x33]))
 
-        exp = Data(bytes: [
+        exp = Data([
             0x12, 0x00, 0x00, 0x00,  0x38, 0x02, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x10, 0x00, 0x00, 0x00,
@@ -1203,15 +1203,15 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertTrue(dm.root["crcstring"].isCrcString)
         XCTAssertEqual(dm.root["crcstring"], "crcstring")
         XCTAssertTrue(dm.root["binary"].isBinary)
-        XCTAssertEqual(dm.root["binary"], Data(bytes: [0x11, 0x22, 0x33]))
+        XCTAssertEqual(dm.root["binary"], Data([0x11, 0x22, 0x33]))
         XCTAssertTrue(dm.root["crcbinary"].isCrcBinary)
-        XCTAssertEqual(dm.root["crcbinary"], Data(bytes: [0x11, 0x22, 0x33]))
+        XCTAssertEqual(dm.root["crcbinary"], Data([0x11, 0x22, 0x33]))
         XCTAssertTrue(dm.root["array"].isArray)
         XCTAssertTrue(dm.root["array"][0].bool!)
         XCTAssertTrue(dm.root["array"][1].bool!)
         XCTAssertFalse(dm.root["array"][2].bool!)
 
-        exp = Data(bytes: [
+        exp = Data([
             0x12, 0x00, 0x00, 0x00,  0x68, 0x02, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x11, 0x00, 0x00, 0x00,
@@ -1347,9 +1347,9 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertTrue(dm.root["crcstring"].isCrcString)
         XCTAssertEqual(dm.root["crcstring"], "crcstring")
         XCTAssertTrue(dm.root["binary"].isBinary)
-        XCTAssertEqual(dm.root["binary"], Data(bytes: [0x11, 0x22, 0x33]))
+        XCTAssertEqual(dm.root["binary"], Data([0x11, 0x22, 0x33]))
         XCTAssertTrue(dm.root["crcbinary"].isCrcBinary)
-        XCTAssertEqual(dm.root["crcbinary"], Data(bytes: [0x11, 0x22, 0x33]))
+        XCTAssertEqual(dm.root["crcbinary"], Data([0x11, 0x22, 0x33]))
         XCTAssertTrue(dm.root["array"].isArray)
         XCTAssertTrue(dm.root["array"][0].bool!)
         XCTAssertTrue(dm.root["array"][1].bool!)
@@ -1357,7 +1357,7 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertTrue(dm.root["dict"].isDictionary)
         XCTAssertTrue(dm.root["dict"]["null"].isNull)
         
-        exp = Data(bytes: [
+        exp = Data([
             0x12, 0x00, 0x00, 0x00,  0xa0, 0x02, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x12, 0x00, 0x00, 0x00,
@@ -1503,9 +1503,9 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertTrue(dm.root["crcstring"].isCrcString)
         XCTAssertEqual(dm.root["crcstring"], "crcstring")
         XCTAssertTrue(dm.root["binary"].isBinary)
-        XCTAssertEqual(dm.root["binary"], Data(bytes: [0x11, 0x22, 0x33]))
+        XCTAssertEqual(dm.root["binary"], Data([0x11, 0x22, 0x33]))
         XCTAssertTrue(dm.root["crcbinary"].isCrcBinary)
-        XCTAssertEqual(dm.root["crcbinary"], Data(bytes: [0x11, 0x22, 0x33]))
+        XCTAssertEqual(dm.root["crcbinary"], Data([0x11, 0x22, 0x33]))
         XCTAssertTrue(dm.root["array"].isArray)
         XCTAssertTrue(dm.root["array"][0].bool!)
         XCTAssertTrue(dm.root["array"][1].bool!)
@@ -1515,7 +1515,7 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertTrue(dm.root["uuid"].isUuid)
         XCTAssertEqual(dm.root["uuid"], u)
         
-        exp = Data(bytes: [
+        exp = Data([
             0x12, 0x00, 0x00, 0x00,  0xc8, 0x02, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x13, 0x00, 0x00, 0x00,
@@ -1664,9 +1664,9 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertTrue(dm.root["crcstring"].isCrcString)
         XCTAssertEqual(dm.root["crcstring"], "crcstring")
         XCTAssertTrue(dm.root["binary"].isBinary)
-        XCTAssertEqual(dm.root["binary"], Data(bytes: [0x11, 0x22, 0x33]))
+        XCTAssertEqual(dm.root["binary"], Data([0x11, 0x22, 0x33]))
         XCTAssertTrue(dm.root["crcbinary"].isCrcBinary)
-        XCTAssertEqual(dm.root["crcbinary"], Data(bytes: [0x11, 0x22, 0x33]))
+        XCTAssertEqual(dm.root["crcbinary"], Data([0x11, 0x22, 0x33]))
         XCTAssertTrue(dm.root["array"].isArray)
         XCTAssertTrue(dm.root["array"][0].bool!)
         XCTAssertTrue(dm.root["array"][1].bool!)
@@ -1678,7 +1678,7 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertTrue(dm.root["color"].isColor)
         XCTAssertEqual(dm.root["color"], c)
         
-        exp = Data(bytes: [
+        exp = Data([
             0x12, 0x00, 0x00, 0x00,  0xe0, 0x02, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x14, 0x00, 0x00, 0x00,
@@ -1831,9 +1831,9 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertTrue(dm.root["crcstring"].isCrcString)
         XCTAssertEqual(dm.root["crcstring"], "crcstring")
         XCTAssertTrue(dm.root["binary"].isBinary)
-        XCTAssertEqual(dm.root["binary"], Data(bytes: [0x11, 0x22, 0x33]))
+        XCTAssertEqual(dm.root["binary"], Data([0x11, 0x22, 0x33]))
         XCTAssertTrue(dm.root["crcbinary"].isCrcBinary)
-        XCTAssertEqual(dm.root["crcbinary"], Data(bytes: [0x11, 0x22, 0x33]))
+        XCTAssertEqual(dm.root["crcbinary"], Data([0x11, 0x22, 0x33]))
         XCTAssertTrue(dm.root["array"].isArray)
         XCTAssertTrue(dm.root["array"][0].bool!)
         XCTAssertTrue(dm.root["array"][1].bool!)
@@ -1847,7 +1847,7 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertTrue(dm.root["font"].isFont)
         XCTAssertEqual(dm.root["font"], f)
 
-        exp = Data(bytes: [
+        exp = Data([
             0x12, 0x00, 0x00, 0x00,  0x10, 0x03, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x15, 0x00, 0x00, 0x00,
@@ -1984,7 +1984,7 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertEqual(dm.root.updateItem(BRString("22222222")!, withNameField: NameField("22")), .success)
         XCTAssertEqual(dm.root.updateItem(BRString("33333333")!, withNameField: NameField("33")), .success)
         
-        var exp = Data(bytes: [
+        var exp = Data([
             0x12, 0x00, 0x00, 0x00,  0x90, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x03, 0x00, 0x00, 0x00,
@@ -2012,7 +2012,7 @@ class Dictionary_Tests: XCTestCase {
 
         XCTAssertEqual(dm.root.updateItem(BRString("4444444444444"), withNameField: NameField("22")), .success)
         
-        exp = Data(bytes: [
+        exp = Data([
             0x12, 0x00, 0x00, 0x00,  0x98, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x03, 0x00, 0x00, 0x00,
@@ -2041,7 +2041,7 @@ class Dictionary_Tests: XCTestCase {
 
         XCTAssertEqual(dm.root.updateItem(BRString("55"), withNameField: NameField("22")), .success)
 
-        exp = Data(bytes: [
+        exp = Data([
             0x12, 0x00, 0x00, 0x00,  0x98, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x03, 0x00, 0x00, 0x00,
@@ -2073,7 +2073,7 @@ class Dictionary_Tests: XCTestCase {
 
         XCTAssertEqual(dm.root.removeItem(withNameField: NameField("11")), .success)
         
-        exp = Data(bytes: [
+        exp = Data([
             0x12, 0x00, 0x00, 0x00,  0x98, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x02, 0x00, 0x00, 0x00,
@@ -2102,7 +2102,7 @@ class Dictionary_Tests: XCTestCase {
 
         XCTAssertEqual(dm.root.removeItem(withNameField: NameField("33")), .success)
         
-        exp = Data(bytes: [
+        exp = Data([
             0x12, 0x00, 0x00, 0x00,  0x98, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x01, 0x00, 0x00, 0x00,
@@ -2132,7 +2132,7 @@ class Dictionary_Tests: XCTestCase {
 
         XCTAssertEqual(dm.root.removeItem(withNameField: NameField("22")), .success)
         
-        exp = Data(bytes: [
+        exp = Data([
             0x12, 0x00, 0x00, 0x00,  0x98, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,

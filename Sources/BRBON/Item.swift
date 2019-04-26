@@ -3,13 +3,13 @@
 //  File:       Item.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.9
+//  Version:    0.8.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
 //  Git:        https://github.com/Balancingrock/BRBON
 //
-//  Copyright:  (c) 2018 Marinus van der Lugt, All rights reserved.
+//  Copyright:  (c) 2018-2019 Marinus van der Lugt, All rights reserved.
 //
 //  License:    Use or redistribute this code any way you like with the following two provision:
 //
@@ -20,8 +20,8 @@
 //
 //  I also ask you to please leave this header with the source code.
 //
-//  I strongly believe that voluntarism is the way for societies to function optimally. Thus I have choosen to leave it
-//  up to you to determine the price for this code. You pay me whatever you think this code is worth to you.
+//  I strongly believe that voluntarism is the way for societies to function optimally. So you can pay whatever you
+//  think our code is worth to you.
 //
 //   - You can send payment via paypal to: sales@balancingrock.nl
 //   - Or wire bitcoins to: 1GacSREBxPy1yskLMc9de2nofNv2SNdwqH
@@ -33,17 +33,13 @@
 //
 //  (It is always a good idea to check the website http://www.balancingrock.nl before payment)
 //
-//  For private and non-profit use the suggested price is the price of 1 good cup of coffee, say $4.
-//  For commercial use the suggested price is the price of 1 good meal, say $20.
-//
-//  You are however encouraged to pay more ;-)
-//
 //  Prices/Quotes for support, modifications or enhancements can be obtained from: rien@balancingrock.nl
 //
 // =====================================================================================================================
 //
 // History
 //
+// 0.8.0 - Migrated to Swift 5
 // 0.7.9 - Minor comments updates
 // 0.7.0 - Code restructuring & simplification
 // 0.5.0 - Migration to Swift 4
@@ -76,56 +72,56 @@ internal extension UnsafeMutableRawPointer {
     
     /// Returns a pointer to the item type assuming self points to the first byte of an item.
     
-    internal var itemTypePtr: UnsafeMutableRawPointer {
+    var itemTypePtr: UnsafeMutableRawPointer {
         return self.advanced(by: itemTypeOffset)
     }
 
     
     /// Returns a pointer to the item options assuming self points to the first byte of an item.
 
-    internal var itemOptionsPtr: UnsafeMutableRawPointer {
+    var itemOptionsPtr: UnsafeMutableRawPointer {
         return self.advanced(by: itemOptionsOffset)
     }
     
     
     /// Returns a pointer to the item flags assuming self points to the first byte of an item.
 
-    internal var itemFlagsPtr: UnsafeMutableRawPointer {
+    var itemFlagsPtr: UnsafeMutableRawPointer {
         return self.advanced(by: itemFlagsOffset)
     }
     
 
     /// Returns a pointer to the item name field count assuming self points to the first byte of an item.
 
-    internal var itemNameFieldByteCountPtr: UnsafeMutableRawPointer {
+    var itemNameFieldByteCountPtr: UnsafeMutableRawPointer {
         return self.advanced(by: itemNameFieldByteCountOffset)
     }
     
     
     /// Returns a pointer to the item byte count assuming self points to the first byte of an item.
 
-    internal var itemByteCountPtr: UnsafeMutableRawPointer {
+    var itemByteCountPtr: UnsafeMutableRawPointer {
         return self.advanced(by: itemByteCountOffset)
     }
     
     
     /// Returns a pointer to the item parent offset assuming self points to the first byte of an item.
 
-    internal var itemParentOffsetPtr: UnsafeMutableRawPointer {
+    var itemParentOffsetPtr: UnsafeMutableRawPointer {
         return self.advanced(by: itemParentOffsetOffset)
     }
     
     
     /// Returns a pointer to the item small value assuming self points to the first byte of an item.
 
-    internal var itemSmallValuePtr: UnsafeMutableRawPointer {
+    var itemSmallValuePtr: UnsafeMutableRawPointer {
         return self.advanced(by: itemSmallValueOffset)
     }
     
     
     /// The raw value of the item type, assuming self points to the first byte of an item.
     
-    internal var itemType: UInt8 {
+    var itemType: UInt8 {
         get {
             return self.itemTypePtr.assumingMemoryBound(to: UInt8.self).pointee
         }
@@ -137,7 +133,7 @@ internal extension UnsafeMutableRawPointer {
     
     /// The raw value of the item options, assuming self points to the first byte of an item.
 
-    internal var itemOptions: UInt8 {
+    var itemOptions: UInt8 {
         get {
             return self.itemOptionsPtr.assumingMemoryBound(to: UInt8.self).pointee
         }
@@ -149,7 +145,7 @@ internal extension UnsafeMutableRawPointer {
     
     /// The raw value of the item flags, assuming self points to the first byte of an item.
 
-    internal var itemFlags: UInt8 {
+    var itemFlags: UInt8 {
         get {
             return self.itemFlagsPtr.assumingMemoryBound(to: UInt8.self).pointee
         }
@@ -161,7 +157,7 @@ internal extension UnsafeMutableRawPointer {
     
     /// The name field byte count of an item, assuming self points to the first byte of an item.
 
-    internal var itemNameFieldByteCount: UInt8 {
+    var itemNameFieldByteCount: UInt8 {
         get {
             return self.itemNameFieldByteCountPtr.assumingMemoryBound(to: UInt8.self).pointee
         }
@@ -173,7 +169,7 @@ internal extension UnsafeMutableRawPointer {
     
     /// Returns the byte count of an item, assuming self points to the first byte of an item.
 
-    internal func itemByteCount(_ endianness: Endianness) -> UInt32 {
+    func itemByteCount(_ endianness: Endianness) -> UInt32 {
         if endianness == machineEndianness {
             return self.itemByteCountPtr.assumingMemoryBound(to: UInt32.self).pointee
         } else {
@@ -184,7 +180,7 @@ internal extension UnsafeMutableRawPointer {
     
     /// Sets the byte count of an item, assuming self points to the first byte of an item.
 
-    internal func setItemByteCount(to value: UInt32, _ endianness: Endianness) {
+    func setItemByteCount(to value: UInt32, _ endianness: Endianness) {
         if endianness == machineEndianness {
             self.itemByteCountPtr.storeBytes(of: value, as: UInt32.self)
         } else {
@@ -195,7 +191,7 @@ internal extension UnsafeMutableRawPointer {
     
     /// Increment the bytecount with the given value (may be negative)
     
-    internal func incrementItemByteCount(by value: Int, _ endianness: Endianness) {
+    func incrementItemByteCount(by value: Int, _ endianness: Endianness) {
         if endianness == machineEndianness {
             let c = Int(self.itemByteCountPtr.assumingMemoryBound(to: UInt32.self).pointee) + value
             self.itemByteCountPtr.storeBytes(of: UInt32(c), as: UInt32.self)
@@ -208,7 +204,7 @@ internal extension UnsafeMutableRawPointer {
 
     /// Returns the parent offset of an item, assuming self points to the first byte of an item.
 
-    internal func itemParentOffset(_ endianness: Endianness) -> UInt32 {
+    func itemParentOffset(_ endianness: Endianness) -> UInt32 {
         if endianness == machineEndianness {
             return self.itemParentOffsetPtr.assumingMemoryBound(to: UInt32.self).pointee
         } else {
@@ -219,7 +215,7 @@ internal extension UnsafeMutableRawPointer {
     
     /// Sets the parent offset of an item, assuming self points to the first byte of an item.
 
-    internal func setItemParentOffset(to value: UInt32, _ endianness: Endianness) {
+    func setItemParentOffset(to value: UInt32, _ endianness: Endianness) {
         if endianness == machineEndianness {
             self.itemParentOffsetPtr.storeBytes(of: value, as: UInt32.self)
         } else {
@@ -230,7 +226,7 @@ internal extension UnsafeMutableRawPointer {
     
     /// Returns the small value of an item, assuming self points to the first byte of an item.
 
-    internal func itemSmallValue(_ endianness: Endianness) -> UInt32 {
+    func itemSmallValue(_ endianness: Endianness) -> UInt32 {
         if endianness == machineEndianness {
             return self.itemSmallValuePtr.assumingMemoryBound(to: UInt32.self).pointee
         } else {
@@ -241,7 +237,7 @@ internal extension UnsafeMutableRawPointer {
     
     /// Sets the small value of an item, assuming self points to the first byte of an item.
 
-    internal func setItemSmallValue(to value: UInt32, _ endianness: Endianness) {
+    func setItemSmallValue(to value: UInt32, _ endianness: Endianness) {
         if endianness == machineEndianness {
             self.itemSmallValuePtr.storeBytes(of: value, as: UInt32.self)
         } else {
@@ -252,7 +248,7 @@ internal extension UnsafeMutableRawPointer {
     
     /// Returns the small value of an item, assuming self points to the first byte of an item.
 
-    internal func itemSmallValue(_ endianness: Endianness) -> UInt16 {
+    func itemSmallValue(_ endianness: Endianness) -> UInt16 {
         if endianness == machineEndianness {
             return self.itemSmallValuePtr.assumingMemoryBound(to: UInt16.self).pointee
         } else {
@@ -263,7 +259,7 @@ internal extension UnsafeMutableRawPointer {
     
     /// Sets the small value of an item, assuming self points to the first byte of an item.
 
-    internal func setItemSmallValue(to value: UInt16, _ endianness: Endianness) {
+    func setItemSmallValue(to value: UInt16, _ endianness: Endianness) {
         if endianness == machineEndianness {
             self.itemSmallValuePtr.storeBytes(of: value, as: UInt16.self)
         } else {
@@ -274,14 +270,14 @@ internal extension UnsafeMutableRawPointer {
     
     /// Returns the small value of an item, assuming self points to the first byte of an item.
 
-    internal func itemSmallValue() -> UInt8 {
+    func itemSmallValue() -> UInt8 {
         return self.itemSmallValuePtr.assumingMemoryBound(to: UInt8.self).pointee
     }
 
     
     /// Sets the small value of an item, assuming self points to the first byte of an item.
 
-    internal func setItemSmallValue(to value: UInt8) {
+    func setItemSmallValue(to value: UInt8) {
         self.itemSmallValuePtr.storeBytes(of: value, as: UInt8.self)
     }
 }
@@ -294,27 +290,27 @@ internal extension UnsafeMutableRawPointer {
     
     /// Returns a pointer to the name field of an item assuming self points to the first byte of an item.
 
-    internal var itemNameFieldPtr: UnsafeMutableRawPointer { return self.advanced(by: itemHeaderByteCount) }
+    var itemNameFieldPtr: UnsafeMutableRawPointer { return self.advanced(by: itemHeaderByteCount) }
 
     
     /// Returns a pointer to the CRC field in the name of an item assuming self points to the first byte of an item.
 
-    internal var itemNameCrcPtr: UnsafeMutableRawPointer { return self.advanced(by: itemNameCrcOffset) }
+    var itemNameCrcPtr: UnsafeMutableRawPointer { return self.advanced(by: itemNameCrcOffset) }
     
     
     /// Returns a pointer to the UTF8 Byte Count in the name field of an item assuming self points to the first byte of an item.
 
-    internal var itemNameUtf8ByteCountPtr: UnsafeMutableRawPointer { return self.advanced(by: itemNameUtf8ByteCountOffset) }
+    var itemNameUtf8ByteCountPtr: UnsafeMutableRawPointer { return self.advanced(by: itemNameUtf8ByteCountOffset) }
 
     
     /// Returns a pointer to the start of the UTF8 Byte Code in the name field of an item assuming self points to the first byte of an item.
 
-    internal var itemNameUtf8CodePtr: UnsafeMutableRawPointer { return self.advanced(by: itemNameUtf8CodeOffset) }
+    var itemNameUtf8CodePtr: UnsafeMutableRawPointer { return self.advanced(by: itemNameUtf8CodeOffset) }
     
     
     /// Returns the CRC of the name of an item assuming self points to the first byte of an item.
     
-    internal func itemNameCrc(_ endianness: Endianness) -> UInt16 {
+    func itemNameCrc(_ endianness: Endianness) -> UInt16 {
         if endianness == machineEndianness {
             return self.itemNameCrcPtr.assumingMemoryBound(to: UInt16.self).pointee
         } else {
@@ -325,7 +321,7 @@ internal extension UnsafeMutableRawPointer {
     
     /// Sets the CRC of the name of an item assuming self points to the first byte of the item.
 
-    internal func setItemNameCrc(to value: UInt16, _ endianness: Endianness) {
+    func setItemNameCrc(to value: UInt16, _ endianness: Endianness) {
         if endianness == machineEndianness {
             self.itemNameCrcPtr.storeBytes(of: value, as: UInt16.self)
         } else {
@@ -336,7 +332,7 @@ internal extension UnsafeMutableRawPointer {
     
     /// The UTF8 Byte Count of the name of an item assuming self points to the first byte of the item.
 
-    internal var itemNameUtf8ByteCount: UInt8 {
+    var itemNameUtf8ByteCount: UInt8 {
         get {
             return self.itemNameUtf8ByteCountPtr.assumingMemoryBound(to: UInt8.self).pointee
         }
@@ -350,7 +346,7 @@ internal extension UnsafeMutableRawPointer {
     ///
     /// Note that this will also read from or write to 'itemNameUtf8ByteCount'.
 
-    internal var itemNameUtf8Code: Data {
+    var itemNameUtf8Code: Data {
         get {
             return Data(bytes: self.itemNameUtf8CodePtr, count: Int(self.itemNameUtf8ByteCount))
         }
@@ -506,7 +502,7 @@ public extension Portal {
     
     /// The type of item this portal refers to.
     
-    public internal(set) var itemType: ItemType? {
+    internal(set) var itemType: ItemType? {
         get { guard isValid else { return nil }; return _itemType }
         set { guard isValid else { return }; _itemType = newValue }
     }
@@ -514,7 +510,7 @@ public extension Portal {
         
     /// The options for the item this portal refers to.
     
-    public var itemOptions: ItemOptions? {
+    var itemOptions: ItemOptions? {
         get { guard isValid else { return nil }; return _itemsOptions }
         set { guard isValid else { return }; _itemsOptions = newValue }
     }
@@ -522,7 +518,7 @@ public extension Portal {
     
     /// The flags for the item this portal refers to.
     
-    public var itemFlags: ItemFlags? {
+    var itemFlags: ItemFlags? {
         get { guard isValid else { return nil }; return _itemFlags }
         set { guard isValid else { return }; _itemFlags = newValue }
     }
@@ -530,7 +526,7 @@ public extension Portal {
     
     /// Returns true if the portal is valid and the item referred to has a name
     
-    public var hasName: Bool {
+    var hasName: Bool {
         guard isValid else { return false }
         return _itemNameFieldByteCount > 0
     }
@@ -542,7 +538,7 @@ public extension Portal {
     ///
     /// Nil if the item does not have a name. Empty if the conversion of UTF8 code to a string failed.
     
-    public var itemName: String? {
+    var itemName: String? {
         get {
             guard isValid else { return nil }
             if _itemNameFieldByteCount == 0 { return nil }
@@ -555,7 +551,7 @@ public extension Portal {
     ///
     /// Setting the name to nil will remove the name and the name-field from the item. Setting a smaller name will not reduce the size of the name-field however.
     
-    public func updateItemName(to nameField: NameField?) -> Result {
+    func updateItemName(to nameField: NameField?) -> Result {
         
         if let nameField = nameField {
         

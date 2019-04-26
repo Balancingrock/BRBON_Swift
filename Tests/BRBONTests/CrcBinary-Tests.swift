@@ -23,7 +23,7 @@ class CrcBinary_Tests: XCTestCase {
 
     func testCoder() {
         
-        var b = BRCrcBinary(Data(bytes: [0x01, 0x02, 0x03]))
+        var b = BRCrcBinary(Data([0x01, 0x02, 0x03]))
         
         XCTAssertEqual(b.itemType, .crcBinary)
         XCTAssertEqual(b.valueByteCount, 11)
@@ -43,7 +43,7 @@ class CrcBinary_Tests: XCTestCase {
         
         let data = Data(bytesNoCopy: buffer.baseAddress!, count: 11, deallocator: Data.Deallocator.none)
         
-        let exp = Data(bytes: [0x1D, 0x80, 0xBC, 0x55, 0x03, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03])
+        let exp = Data([0x1D, 0x80, 0xBC, 0x55, 0x03, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03])
         
         XCTAssertEqual(data, exp)
     }
@@ -56,7 +56,7 @@ class CrcBinary_Tests: XCTestCase {
         
         // Instance
         
-        let b = BRCrcBinary(Data(bytes: [0x01, 0x02, 0x03]))
+        let b = BRCrcBinary(Data([0x01, 0x02, 0x03]))
         
         let im = ItemManager.createManager(withValue: b)
         
@@ -70,7 +70,7 @@ class CrcBinary_Tests: XCTestCase {
         XCTAssertNil(im.root.itemNameField)
         
         XCTAssertTrue(im.root.isCrcBinary)
-        XCTAssertEqual(im.root.crcBinary, BRCrcBinary(Data(bytes: [0x01, 0x02, 0x03])))
+        XCTAssertEqual(im.root.crcBinary, BRCrcBinary(Data([0x01, 0x02, 0x03])))
         
         XCTAssertEqual(im.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(im.root.itemFlags, ItemFlags.none)
@@ -78,7 +78,7 @@ class CrcBinary_Tests: XCTestCase {
         
         // Buffer content
         
-        let exp = Data(bytes: [
+        let exp = Data([
             0x10, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x1D, 0x80, 0xBC, 0x55, 0x03, 0x00, 0x00, 0x00,

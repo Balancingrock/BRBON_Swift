@@ -415,11 +415,15 @@ A table consists of table fields arranged in columns and rows. Each field can co
 
 Note: Planned releases are for information only and subject to change without notice.
 
-#### 0.8.0 (Planned)
+#### 0.9.0 (Planned)
 
-- Bugfixes and API upgrades.
+- Bugfixes and API upgrades as they happen.
 
-#### 0.7.0 (Current)
+#### 0.8.0 (Current)
+
+- Migrated to Swift 5
+
+#### 0.7.0
 
 - Redesign of API (mostly streamlining)
 - Added new type RGBA and Font

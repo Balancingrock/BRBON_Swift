@@ -39,7 +39,7 @@ class UInt8_Tests: XCTestCase {
         
         let data = Data(bytesNoCopy: buffer.baseAddress!, count: 1, deallocator: Data.Deallocator.none)
         
-        let exp = Data(bytes: [0x0c])
+        let exp = Data([0x0c])
         
         XCTAssertEqual(data, exp)
     }
@@ -74,7 +74,7 @@ class UInt8_Tests: XCTestCase {
         
         // Buffer content
         
-        var exp = Data(bytes: [
+        var exp = Data([
             0x07, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x0c, 0x00, 0x00, 0x00
             ])
@@ -87,7 +87,7 @@ class UInt8_Tests: XCTestCase {
         im.root.uint8 = UInt8(11)
         XCTAssertEqual(im.root.uint8, UInt8(11))
         
-        exp = Data(bytes: [
+        exp = Data([
             0x07, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x0B, 0x00, 0x00, 0x00
             ])

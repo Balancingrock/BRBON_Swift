@@ -3,13 +3,13 @@
 //  File:       BRFont.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.9
+//  Version:    0.8.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
 //  Git:        https://github.com/Balancingrock/BRBON
 //
-//  Copyright:  (c) 2018 Marinus van der Lugt, All rights reserved.
+//  Copyright:  (c) 2018-2019 Marinus van der Lugt, All rights reserved.
 //
 //  License:    Use or redistribute this code any way you like with the following two provision:
 //
@@ -20,8 +20,8 @@
 //
 //  I also ask you to please leave this header with the source code.
 //
-//  I strongly believe that voluntarism is the way for societies to function optimally. Thus I have choosen to leave it
-//  up to you to determine the price for this code. You pay me whatever you think this code is worth to you.
+//  I strongly believe that voluntarism is the way for societies to function optimally. So you can pay whatever you
+//  think our code is worth to you.
 //
 //   - You can send payment via paypal to: sales@balancingrock.nl
 //   - Or wire bitcoins to: 1GacSREBxPy1yskLMc9de2nofNv2SNdwqH
@@ -33,17 +33,13 @@
 //
 //  (It is always a good idea to check the website http://www.balancingrock.nl before payment)
 //
-//  For private and non-profit use the suggested price is the price of 1 good cup of coffee, say $4.
-//  For commercial use the suggested price is the price of 1 good meal, say $20.
-//
-//  You are however encouraged to pay more ;-)
-//
 //  Prices/Quotes for support, modifications or enhancements can be obtained from: rien@balancingrock.nl
 //
 // =====================================================================================================================
 //
 // History
 //
+// 0.8.0 - Migration to Swift 5
 // 0.7.9 - Changed handling of nil data, on writing a nil to portal.font the existing data will be erased. When reading erased data a nil will be returned.
 // 0.7.8 - Added nofValueBytesNecessary to BRFont
 // 0.7.5 - Added font to the pointer operations.
@@ -171,7 +167,7 @@ internal extension UnsafeMutableRawPointer {
     
     
     /// Returns the BRFont assuming self points at the first byte of the value.
-    internal func font(_ endianness: Endianness) -> BRFont {
+    func font(_ endianness: Endianness) -> BRFont {
         return BRFont.init(familyNameUtf8Code: fontFontNameUtf8Code, fontNameUtf8Code: fontFontNameUtf8Code, pointSize: fontPointSize(endianness))
     }
 }
@@ -242,7 +238,7 @@ public extension Portal {
     ///
     /// - Returns: True if the value accessable through this portal is an Font. False if the portal is invalid or the value is not a Font.
     
-    public var isFont: Bool {
+    var isFont: Bool {
         guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.font }
         if index != nil { return itemPtr.itemValueFieldPtr.arrayElementType == ItemType.font.rawValue }
@@ -258,7 +254,7 @@ public extension Portal {
     ///
     /// __On Write:__ Writes the specification of the BRFont to the associated memory area. Writing a nil will result in erasure of existing font data (by setting the size of the font name to zero).
     
-    public var font: BRFont? {
+    var font: BRFont? {
         get {
             guard isFont else { return nil }
             let font = BRFont(familyNameUtf8Code: _valuePtr.fontFamilyNameUtf8Code, fontNameUtf8Code: _valuePtr.fontFontNameUtf8Code, pointSize: _valuePtr.fontPointSize(endianness))

@@ -3,13 +3,13 @@
 //  File:       NameField.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.0
+//  Version:    0.8.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
 //  Git:        https://github.com/Balancingrock/BRBON
 //
-//  Copyright:  (c) 2018 Marinus van der Lugt, All rights reserved.
+//  Copyright:  (c) 2018-2019 Marinus van der Lugt, All rights reserved.
 //
 //  License:    Use or redistribute this code any way you like with the following two provision:
 //
@@ -20,8 +20,8 @@
 //
 //  I also ask you to please leave this header with the source code.
 //
-//  I strongly believe that voluntarism is the way for societies to function optimally. Thus I have choosen to leave it
-//  up to you to determine the price for this code. You pay me whatever you think this code is worth to you.
+//  I strongly believe that voluntarism is the way for societies to function optimally. So you can pay whatever you
+//  think our code is worth to you.
 //
 //   - You can send payment via paypal to: sales@balancingrock.nl
 //   - Or wire bitcoins to: 1GacSREBxPy1yskLMc9de2nofNv2SNdwqH
@@ -33,17 +33,13 @@
 //
 //  (It is always a good idea to check the website http://www.balancingrock.nl before payment)
 //
-//  For private and non-profit use the suggested price is the price of 1 good cup of coffee, say $4.
-//  For commercial use the suggested price is the price of 1 good meal, say $20.
-//
-//  You are however encouraged to pay more ;-)
-//
 //  Prices/Quotes for support, modifications or enhancements can be obtained from: rien@balancingrock.nl
 //
 // =====================================================================================================================
 //
 // History
 //
+// 0.8.0 - Migration to Swift 5
 // 0.7.0 - Code restructuring & simplification
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
@@ -78,14 +74,16 @@ public struct NameField: Equatable, Hashable {
     internal let byteCount: Int
     
     
-    /// A hash allows a namefield to be used as a directory key
-    
-    public internal(set) var hashValue: Int
-    
-    
     /// Reonstructs the string that was used to create this namefield
     
     public var string: String { return String(data: data, encoding: .utf8)! }
+    
+    
+    /// The hashable protocol
+    
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(data)
+    }
     
     
     /// Create a new NameField.
@@ -128,7 +126,6 @@ public struct NameField: Equatable, Hashable {
         
         self.data = nameData
         self.crc = nameData.crc16()
-        self.hashValue = data.hashValue
         self.byteCount = fixedByteCount ?? (nameData.count + 3).roundUpToNearestMultipleOf8()
     }
     
@@ -136,7 +133,6 @@ public struct NameField: Equatable, Hashable {
         self.data = data
         self.crc = crc
         self.byteCount = byteCount
-        self.hashValue = data.hashValue
     }
     
     

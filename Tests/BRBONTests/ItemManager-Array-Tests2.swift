@@ -39,7 +39,7 @@ class ItemManager_Array_Tests2: XCTestCase {
         
         XCTAssertEqual(am.root.appendElements([arr1, arr2, arr3]), .success)
         
-        let exp = Data(bytes: [
+        let exp = Data([
             0x11, 0x00, 0x00, 0x00,  0xC8, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             
@@ -84,8 +84,8 @@ class ItemManager_Array_Tests2: XCTestCase {
             
             ])
         
-        exp.withUnsafeBytes() { (ptr: UnsafePointer<UInt8>) -> () in
-            let p = am.getActivePortal(for: UnsafeMutableRawPointer(mutating: ptr))
+        exp.withUnsafeBytes() { (ptr: UnsafeRawBufferPointer) -> () in
+            let p = am.getActivePortal(for: UnsafeMutableRawPointer(mutating: ptr.baseAddress!))
             XCTAssertTrue(p == am.root)
         }
         

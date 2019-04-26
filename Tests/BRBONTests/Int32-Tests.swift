@@ -38,7 +38,7 @@ class Int32_Tests: XCTestCase {
         
         let data = Data(bytesNoCopy: buffer.baseAddress!, count: 4, deallocator: Data.Deallocator.none)
         
-        let exp = Data(bytes: [0x78, 0x56, 0x34, 0x12])
+        let exp = Data([0x78, 0x56, 0x34, 0x12])
         
         XCTAssertEqual(data, exp)
     }
@@ -73,7 +73,7 @@ class Int32_Tests: XCTestCase {
         
         // Buffer content
         
-        var exp = Data(bytes: [
+        var exp = Data([
             0x05, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x78, 0x56, 0x34, 0x12
             ])
@@ -86,7 +86,7 @@ class Int32_Tests: XCTestCase {
         im.root.int32 = Int32(0x11112222)
         XCTAssertEqual(im.root.int32, Int32(0x11112222))
         
-        exp = Data(bytes: [
+        exp = Data([
             0x05, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x22, 0x22, 0x11, 0x11
             ])

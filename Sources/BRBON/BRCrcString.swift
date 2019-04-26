@@ -3,13 +3,13 @@
 //  File:       BRCrcString.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.5
+//  Version:    0.8.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
 //  Git:        https://github.com/Balancingrock/BRBON
 //
-//  Copyright:  (c) 2018 Marinus van der Lugt, All rights reserved.
+//  Copyright:  (c) 2018-2019 Marinus van der Lugt, All rights reserved.
 //
 //  License:    Use or redistribute this code any way you like with the following two provision:
 //
@@ -20,8 +20,8 @@
 //
 //  I also ask you to please leave this header with the source code.
 //
-//  I strongly believe that voluntarism is the way for societies to function optimally. Thus I have choosen to leave it
-//  up to you to determine the price for this code. You pay me whatever you think this code is worth to you.
+//  I strongly believe that voluntarism is the way for societies to function optimally. So you can pay whatever you
+//  think our code is worth to you.
 //
 //   - You can send payment via paypal to: sales@balancingrock.nl
 //   - Or wire bitcoins to: 1GacSREBxPy1yskLMc9de2nofNv2SNdwqH
@@ -33,17 +33,13 @@
 //
 //  (It is always a good idea to check the website http://www.balancingrock.nl before payment)
 //
-//  For private and non-profit use the suggested price is the price of 1 good cup of coffee, say $4.
-//  For commercial use the suggested price is the price of 1 good meal, say $20.
-//
-//  You are however encouraged to pay more ;-)
-//
 //  Prices/Quotes for support, modifications or enhancements can be obtained from: rien@balancingrock.nl
 //
 // =====================================================================================================================
 //
 // History
 //
+// 0.8.0 - Migration to Swift 5
 // 0.7.5 - Added crcString to pointer operations
 // 0.7.0 - Code restructuring & simplification
 // 0.4.2 - Added header & general review of access levels
@@ -143,7 +139,7 @@ internal extension UnsafeMutableRawPointer {
     
     /// Returns the BrCrcString at the pointer
     
-    internal func crcString(_ endianness: Endianness) -> BRCrcString  {
+    func crcString(_ endianness: Endianness) -> BRCrcString  {
         return BRCrcString.init(utf8Code: crcStringUtf8Code(endianness), crc: crcStringCrc(endianness))
     }
 }
@@ -153,7 +149,7 @@ internal extension UnsafeMutableRawPointer {
 
 internal extension Portal {
         
-    internal var _crcStringValueFieldUsedByteCount: Int {
+    var _crcStringValueFieldUsedByteCount: Int {
         return crcStringUtf8CodeOffset + Int(itemPtr.crcStringUtf8ByteCount(endianness))
     }
 }
@@ -166,7 +162,7 @@ public extension Portal {
     
     /// Returns true if the value accessable through this portal is a CrcString.
     
-    public var isCrcString: Bool {
+    var isCrcString: Bool {
         guard isValid else { return false }
         if let column = column { return _tableGetColumnType(for: column) == ItemType.crcString }
         if index != nil { return itemPtr.itemValueFieldPtr.arrayElementType == ItemType.crcString.rawValue }
@@ -178,7 +174,7 @@ public extension Portal {
     ///
     /// - Returns: True if the stored CRC value and the calculated CRC value of the string byte code are the same. False if not. Nil if the portal is invalid or does not refer to a CrcString.
     
-    public var crcIsValid: Bool? {
+    var crcIsValid: Bool? {
         guard isCrcString else { return nil }
         return _valuePtr.crcStringUtf8Code(endianness).crc32() == itemPtr.crcStringCrc(endianness)
     }
@@ -190,7 +186,7 @@ public extension Portal {
     ///
     /// - Note: Returns nil if the CRC value was wrong.
     
-    public var crcString: BRCrcString? {
+    var crcString: BRCrcString? {
         get {
             guard isCrcString else { return nil }
             
@@ -227,7 +223,7 @@ public extension Portal {
     
     /// Reading the CRC32 value from a BRCrcString or BRCrcBinary. Returns nil for all other portal types.
     
-    public var crc: UInt32? {
+    var crc: UInt32? {
         if !isValid { return nil }
         if isCrcString { return _valuePtr.crcStringCrc(endianness) }
         if isCrcBinary { return _valuePtr.crcBinaryCrc(endianness) }

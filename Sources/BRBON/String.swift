@@ -3,13 +3,13 @@
 //  File:       String.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.9
+//  Version:    0.8.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
 //  Git:        https://github.com/Balancingrock/BRBON
 //
-//  Copyright:  (c) 2018 Marinus van der Lugt, All rights reserved.
+//  Copyright:  (c) 2018-2019 Marinus van der Lugt, All rights reserved.
 //
 //  License:    Use or redistribute this code any way you like with the following two provision:
 //
@@ -20,8 +20,8 @@
 //
 //  I also ask you to please leave this header with the source code.
 //
-//  I strongly believe that voluntarism is the way for societies to function optimally. Thus I have choosen to leave it
-//  up to you to determine the price for this code. You pay me whatever you think this code is worth to you.
+//  I strongly believe that voluntarism is the way for societies to function optimally. So you can pay whatever you
+//  think our code is worth to you.
 //
 //   - You can send payment via paypal to: sales@balancingrock.nl
 //   - Or wire bitcoins to: 1GacSREBxPy1yskLMc9de2nofNv2SNdwqH
@@ -33,17 +33,13 @@
 //
 //  (It is always a good idea to check the website http://www.balancingrock.nl before payment)
 //
-//  For private and non-profit use the suggested price is the price of 1 good cup of coffee, say $4.
-//  For commercial use the suggested price is the price of 1 good meal, say $20.
-//
-//  You are however encouraged to pay more ;-)
-//
 //  Prices/Quotes for support, modifications or enhancements can be obtained from: rien@balancingrock.nl
 //
 // =====================================================================================================================
 //
 // History
 //
+// 0.8.0 - Migration to Swift 5
 // 0.7.9 - Changed the handling of writing a nil (will now reset the string to zero length)
 // 0.7.5 - Added string and brString to the pointer operations.
 // 0.7.0 - Code restructuring & simplification
@@ -95,7 +91,7 @@ internal extension UnsafeMutableRawPointer {
     
     /// Sets the UTF8 byte count assuming self points to the first byte of the value.
 
-    internal func setStringUtf8ByteCount(to value: UInt32, _ endianness: Endianness) {
+    func setStringUtf8ByteCount(to value: UInt32, _ endianness: Endianness) {
         if endianness == machineEndianness {
             stringUtf8ByteCountPtr.storeBytes(of: value, as: UInt32.self)
         } else {
@@ -108,7 +104,7 @@ internal extension UnsafeMutableRawPointer {
     ///
     /// Note: Also reads 'stringUtf8ByteCount'
 
-    internal func stringUtf8Code(_ endianness: Endianness) -> Data {
+    func stringUtf8Code(_ endianness: Endianness) -> Data {
         return Data(bytes: stringUtf8CodePtr, count: Int(stringUtf8ByteCount(endianness)))
     }
     
@@ -117,13 +113,13 @@ internal extension UnsafeMutableRawPointer {
     ///
     /// Note: Also writes 'stringUtf8ByteCount'
     
-    internal func setStringUtf8Code(to value: Data, _ endianness: Endianness) {
+    func setStringUtf8Code(to value: Data, _ endianness: Endianness) {
         setStringUtf8ByteCount(to: UInt32(value.count), endianness)
         value.copyBytes(to: stringUtf8CodePtr.assumingMemoryBound(to: UInt8.self), count: value.count)
     }
     
     
-    internal func string(_ endianness: Endianness) -> String? {
+    func string(_ endianness: Endianness) -> String? {
         return String(data: self.stringUtf8Code(endianness), encoding: .utf8)
     }
 }
@@ -136,7 +132,7 @@ internal extension Portal {
     
     /// - Returns: The UTF8 code of the value this portal refers to.
     
-    internal var _stringUtf8Code: Data {
+    var _stringUtf8Code: Data {
         get {
             return _valuePtr.stringUtf8Code(endianness)
         }
@@ -152,7 +148,7 @@ internal extension Portal {
     
     /// - Returns: The number of bytes actually used to store the referred value.
     
-    internal var _stringValueFieldUsedByteCount: Int { return stringUtf8CodeOffset + Int(_valuePtr.stringUtf8ByteCount(endianness)) }
+    var _stringValueFieldUsedByteCount: Int { return stringUtf8CodeOffset + Int(_valuePtr.stringUtf8ByteCount(endianness)) }
 }
 
 

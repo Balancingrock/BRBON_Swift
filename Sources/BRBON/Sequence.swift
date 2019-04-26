@@ -3,13 +3,13 @@
 //  File:       Sequence.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.0
+//  Version:    0.8.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
 //  Git:        https://github.com/Balancingrock/BRBON
 //
-//  Copyright:  (c) 2018 Marinus van der Lugt, All rights reserved.
+//  Copyright:  (c) 2018-2019 Marinus van der Lugt, All rights reserved.
 //
 //  License:    Use or redistribute this code any way you like with the following two provision:
 //
@@ -20,8 +20,8 @@
 //
 //  I also ask you to please leave this header with the source code.
 //
-//  I strongly believe that voluntarism is the way for societies to function optimally. Thus I have choosen to leave it
-//  up to you to determine the price for this code. You pay me whatever you think this code is worth to you.
+//  I strongly believe that voluntarism is the way for societies to function optimally. So you can pay whatever you
+//  think our code is worth to you.
 //
 //   - You can send payment via paypal to: sales@balancingrock.nl
 //   - Or wire bitcoins to: 1GacSREBxPy1yskLMc9de2nofNv2SNdwqH
@@ -33,17 +33,13 @@
 //
 //  (It is always a good idea to check the website http://www.balancingrock.nl before payment)
 //
-//  For private and non-profit use the suggested price is the price of 1 good cup of coffee, say $4.
-//  For commercial use the suggested price is the price of 1 good meal, say $20.
-//
-//  You are however encouraged to pay more ;-)
-//
 //  Prices/Quotes for support, modifications or enhancements can be obtained from: rien@balancingrock.nl
 //
 // =====================================================================================================================
 //
 // History
 //
+// 0.8.0 - Migration to Swift 5
 // 0.7.0 - Code restructuring & simplification
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
@@ -61,11 +57,11 @@ internal let sequenceItemBaseOffset = sequenceItemCountOffset + 4
 
 fileprivate extension UnsafeMutableRawPointer {
     
-    fileprivate var sequenceItemCountPtr: UnsafeMutableRawPointer { return self.advanced(by: sequenceItemCountOffset) }
+    var sequenceItemCountPtr: UnsafeMutableRawPointer { return self.advanced(by: sequenceItemCountOffset) }
     
-    fileprivate var sequenceItemBasePtr: UnsafeMutableRawPointer { return self.advanced(by: sequenceItemBaseOffset) }
+    var sequenceItemBasePtr: UnsafeMutableRawPointer { return self.advanced(by: sequenceItemBaseOffset) }
 
-    fileprivate func sequenceItemCount(_ endianness: Endianness) -> UInt32 {
+    func sequenceItemCount(_ endianness: Endianness) -> UInt32 {
         if endianness == machineEndianness {
             return sequenceItemCountPtr.assumingMemoryBound(to: UInt32.self).pointee
         } else {
@@ -73,7 +69,7 @@ fileprivate extension UnsafeMutableRawPointer {
         }
     }
     
-    fileprivate func setSequenceItemCount(to value: UInt32, _ endianness: Endianness) {
+    func setSequenceItemCount(to value: UInt32, _ endianness: Endianness) {
         if endianness == machineEndianness {
             sequenceItemCountPtr.storeBytes(of: value, as: UInt32.self)
         } else {
@@ -376,7 +372,7 @@ public extension Portal {
     /// - Returns: Either .success or an error indicator.
     
     @discardableResult
-    public func insertItem(atIndex index: Int, withValue value: Coder) -> Result {
+    func insertItem(atIndex index: Int, withValue value: Coder) -> Result {
         return insertItem(atIndex: index, withValue: value, withNameField: nil)
     }
 
@@ -393,7 +389,7 @@ public extension Portal {
     /// - Returns: Either .success or an error indicator.
     
     @discardableResult
-    public func insertItem(atIndex index: Int, withValue value: Coder, withName name: String) -> Result {
+    func insertItem(atIndex index: Int, withValue value: Coder, withName name: String) -> Result {
         guard let nameField = NameField(name) else { return .error(.nameFieldError) }
         return insertItem(atIndex: index, withValue: value, withNameField: nameField)
     }
@@ -411,7 +407,7 @@ public extension Portal {
     /// - Returns: Either .success or an error indicator.
     
     @discardableResult
-    public func insertItem(atIndex index: Int, withValue value: Coder, withNameField nameField: NameField?) -> Result {
+    func insertItem(atIndex index: Int, withValue value: Coder, withNameField nameField: NameField?) -> Result {
         
         guard isValid else { return .error(.portalInvalid) }
         guard isSequence else { return .error(.operationNotSupported) }
@@ -434,7 +430,7 @@ public extension Portal {
     /// - Returns: Either .success or an error indicator.
     
     @discardableResult
-    public func insertItem(atIndex index: Int, withValue value: ItemManager) -> Result {
+    func insertItem(atIndex index: Int, withValue value: ItemManager) -> Result {
         return insertItem(atIndex: index, withValue: value, withNameField: nil)
     }
     
@@ -451,7 +447,7 @@ public extension Portal {
     /// - Returns: Either .success or an error indicator.
     
     @discardableResult
-    public func insertItem(atIndex index: Int, withValue value: ItemManager, withName name: String) -> Result {
+    func insertItem(atIndex index: Int, withValue value: ItemManager, withName name: String) -> Result {
         guard let nameField = NameField(name) else { return .error(.nameFieldError) }
         return insertItem(atIndex: index, withValue: value, withNameField: nameField)
     }
@@ -469,7 +465,7 @@ public extension Portal {
     /// - Returns: Either .success or an error indicator.
     
     @discardableResult
-    public func insertItem(atIndex index: Int, withValue value: ItemManager, withNameField nameField: NameField?) -> Result {
+    func insertItem(atIndex index: Int, withValue value: ItemManager, withNameField nameField: NameField?) -> Result {
         
         guard isValid else { return .error(.portalInvalid) }
         guard isSequence else { return .error(.operationNotSupported) }
@@ -493,7 +489,7 @@ public extension Portal {
     /// - Returns: Either .success or an error indicator.
 
     @discardableResult
-    public func updateItem(atIndex index: Int, withValue value: Coder) -> Result {
+    func updateItem(atIndex index: Int, withValue value: Coder) -> Result {
         
         guard isValid else { return .error(.portalInvalid) }
         guard isSequence else { return .error(.operationNotSupported) }
@@ -515,7 +511,7 @@ public extension Portal {
     /// - Returns: Either .success or an error indicator.
     
     @discardableResult
-    public func updateItem(atIndex index: Int, withValue value: ItemManager) -> Result {
+    func updateItem(atIndex index: Int, withValue value: ItemManager) -> Result {
         
         guard isValid else { return .error(.portalInvalid) }
         guard isSequence else { return .error(.operationNotSupported) }
@@ -538,7 +534,7 @@ public extension Portal {
     /// - Returns: Either .success or an error indicator.
 
     @discardableResult
-    public func replaceItem(atIndex index: Int, withValue value: Coder, withNameField nameField: NameField? = nil) -> Result {
+    func replaceItem(atIndex index: Int, withValue value: Coder, withNameField nameField: NameField? = nil) -> Result {
         
         guard isValid else { return .error(.portalInvalid) }
         guard isSequence else { return .error(.operationNotSupported) }
@@ -594,7 +590,7 @@ public extension Portal {
     /// - Returns: Either .success or an error indicator.
     
     @discardableResult
-    public func replaceItem(atIndex index: Int, withValue value: ItemManager, withNameField nameField: NameField? = nil) -> Result {
+    func replaceItem(atIndex index: Int, withValue value: ItemManager, withNameField nameField: NameField? = nil) -> Result {
         
         guard isValid else { return .error(.portalInvalid) }
         guard isSequence else { return .error(.operationNotSupported) }
@@ -656,7 +652,7 @@ public extension Portal {
     /// - Returns: Either .success or an error indicator.
 
     @discardableResult
-    public func removeItem(atIndex index: Int) -> Result {
+    func removeItem(atIndex index: Int) -> Result {
         
         guard isValid else { return .error(.portalInvalid) }
         guard isSequence else { return .error(.operationNotSupported) }
@@ -692,7 +688,7 @@ public extension Portal {
     /// - Returns: 'success' or an error indicator.
     
     @discardableResult
-    public func appendItem(_ value: Coder) -> Result {
+    func appendItem(_ value: Coder) -> Result {
         return appendItem(value, withNameField: nil)
     }
 
@@ -708,7 +704,7 @@ public extension Portal {
     /// - Returns: 'success' or an error indicator.
     
     @discardableResult
-    public func appendItem(_ value: Coder, withName name: String) -> Result {
+    func appendItem(_ value: Coder, withName name: String) -> Result {
         
         guard let nameField = NameField(name) else { return .error(.nameFieldError) }
         return appendItem(value, withNameField: nameField)
@@ -726,7 +722,7 @@ public extension Portal {
     /// - Returns: 'success' or an error indicator.
     
     @discardableResult
-    public func appendItem(_ value: Coder, withNameField nameField: NameField?) -> Result {
+    func appendItem(_ value: Coder, withNameField nameField: NameField?) -> Result {
         
         guard isValid else { return .error(.portalInvalid) }
         guard isSequence else { return .error(.operationNotSupported) }
@@ -757,7 +753,7 @@ public extension Portal {
     /// - Returns: 'success' or an error indicator.
     
     @discardableResult
-    public func appendItem(_ value: ItemManager) -> Result {
+    func appendItem(_ value: ItemManager) -> Result {
         return appendItem(value, withNameField: nil)
     }
     
@@ -773,7 +769,7 @@ public extension Portal {
     /// - Returns: 'success' or an error indicator.
     
     @discardableResult
-    public func appendItem(_ value: ItemManager, withName name: String) -> Result {
+    func appendItem(_ value: ItemManager, withName name: String) -> Result {
         
         guard let nameField = NameField(name) else { return .error(.nameFieldError) }
         return appendItem(value, withNameField: nameField)
@@ -791,7 +787,7 @@ public extension Portal {
     /// - Returns: 'success' or an error indicator.
     
     @discardableResult
-    public func appendItem(_ value: ItemManager, withNameField nameField: NameField?) -> Result {
+    func appendItem(_ value: ItemManager, withNameField nameField: NameField?) -> Result {
         
         guard isValid else { return .error(.portalInvalid) }
         guard isSequence else { return .error(.operationNotSupported) }

@@ -3,13 +3,13 @@
 //  File:       Index-Access.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.0
+//  Version:    0.8.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
 //  Git:        https://github.com/Balancingrock/BRBON
 //
-//  Copyright:  (c) 2018 Marinus van der Lugt, All rights reserved.
+//  Copyright:  (c) 2018-2019 Marinus van der Lugt, All rights reserved.
 //
 //  License:    Use or redistribute this code any way you like with the following two provision:
 //
@@ -20,8 +20,8 @@
 //
 //  I also ask you to please leave this header with the source code.
 //
-//  I strongly believe that voluntarism is the way for societies to function optimally. Thus I have choosen to leave it
-//  up to you to determine the price for this code. You pay me whatever you think this code is worth to you.
+//  I strongly believe that voluntarism is the way for societies to function optimally. So you can pay whatever you
+//  think our code is worth to you.
 //
 //   - You can send payment via paypal to: sales@balancingrock.nl
 //   - Or wire bitcoins to: 1GacSREBxPy1yskLMc9de2nofNv2SNdwqH
@@ -33,17 +33,13 @@
 //
 //  (It is always a good idea to check the website http://www.balancingrock.nl before payment)
 //
-//  For private and non-profit use the suggested price is the price of 1 good cup of coffee, say $4.
-//  For commercial use the suggested price is the price of 1 good meal, say $20.
-//
-//  You are however encouraged to pay more ;-)
-//
 //  Prices/Quotes for support, modifications or enhancements can be obtained from: rien@balancingrock.nl
 //
 // =====================================================================================================================
 //
 // History
 //
+// 0.8.0 - Migration to Swift 5
 // 0.7.0 - Code restructuring & simplification
 // 0.5.0 - Migration to Swift 4
 // 0.4.2 - Added header & general review of access levels
@@ -58,7 +54,7 @@ import BRUtils
 public extension Portal {
 
     
-    public subscript(index: Int) -> Portal {
+    subscript(index: Int) -> Portal {
         get {
             
             
@@ -104,97 +100,97 @@ public extension Portal {
         }
     }
 
-    public subscript(index: Int) -> Bool? {
+    subscript(index: Int) -> Bool? {
         get { return self[index].bool }
         set { self[index].bool = newValue }
     }
     
-    public subscript(index: Int) -> Int8? {
+    subscript(index: Int) -> Int8? {
         get { return self[index].int8 }
         set { self[index].int8 = newValue }
     }
     
-    public subscript(index: Int) -> Int16? {
+    subscript(index: Int) -> Int16? {
         get { return self[index].int16 }
         set { self[index].int16 = newValue }
     }
     
-    public subscript(index: Int) -> Int32? {
+    subscript(index: Int) -> Int32? {
         get { return self[index].int32 }
         set { self[index].int32 = newValue }
     }
     
-    public subscript(index: Int) -> Int64? {
+    subscript(index: Int) -> Int64? {
         get { return self[index].int64 }
         set { self[index].int64 = newValue }
     }
     
-    public subscript(index: Int) -> UInt8? {
+    subscript(index: Int) -> UInt8? {
         get { return self[index].uint8 }
         set { self[index].uint8 = newValue }
     }
     
-    public subscript(index: Int) -> UInt16? {
+    subscript(index: Int) -> UInt16? {
         get { return self[index].uint16 }
         set { self[index].uint16 = newValue }
     }
     
-    public subscript(index: Int) -> UInt32? {
+    subscript(index: Int) -> UInt32? {
         get { return self[index].uint32 }
         set { self[index].uint32 = newValue }
     }
     
-    public subscript(index: Int) -> UInt64? {
+    subscript(index: Int) -> UInt64? {
         get { return self[index].uint64 }
         set { self[index].uint64 = newValue }
     }
     
-    public subscript(index: Int) -> Float32? {
+    subscript(index: Int) -> Float32? {
         get { return self[index].float32 }
         set { self[index].float32 = newValue }
     }
     
-    public subscript(index: Int) -> Float64? {
+    subscript(index: Int) -> Float64? {
         get { return self[index].float64 }
         set { self[index].float64 = newValue }
     }
     
-    public subscript(index: Int) -> String? {
+    subscript(index: Int) -> String? {
         get { return self[index].string }
         set { self[index].string = newValue }
     }
     
-    public subscript(index: Int) -> BRString? {
+    subscript(index: Int) -> BRString? {
         get { return self[index].brString }
         set { self[index].brString = newValue }
     }
 
-    public subscript(index: Int) -> BRCrcString? {
+    subscript(index: Int) -> BRCrcString? {
         get { return self[index].crcString }
         set { self[index].crcString = newValue }
     }
 
-    public subscript(index: Int) -> Data? {
+    subscript(index: Int) -> Data? {
         get { return self[index].binary }
         set { self[index].binary = newValue }
     }
 
-    public subscript(index: Int) -> BRCrcBinary? {
+    subscript(index: Int) -> BRCrcBinary? {
         get { return self[index].crcBinary }
         set { self[index].crcBinary = newValue }
     }
     
-    public subscript(index: Int) -> UUID? {
+    subscript(index: Int) -> UUID? {
         get { return self[index].uuid }
         set { self[index].uuid = newValue }
     }
 
-    public subscript(index: Int) -> BRFont? {
+    subscript(index: Int) -> BRFont? {
         get { return self[index].font }
         set { self[index].font = newValue }
     }
     
-    public subscript(index: Int) -> BRColor? {
+    subscript(index: Int) -> BRColor? {
         get { return self[index].color }
         set { self[index].color = newValue }
     }

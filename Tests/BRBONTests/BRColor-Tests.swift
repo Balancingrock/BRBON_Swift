@@ -70,7 +70,7 @@ class BRColor_Tests: XCTestCase {
         
         let data = Data(bytesNoCopy: buffer.baseAddress!, count: 4, deallocator: Data.Deallocator.none)
         
-        let exp = Data(bytes: [0x00, 0x00, 0xFE, 0xFF])
+        let exp = Data([0x00, 0x00, 0xFE, 0xFF])
         
         XCTAssertEqual(data, exp)
     }
@@ -105,7 +105,7 @@ class BRColor_Tests: XCTestCase {
         
         // Buffer content
         
-        var exp = Data(bytes: [
+        var exp = Data([
             0x16, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFE, 0xFF
             ])
@@ -118,7 +118,7 @@ class BRColor_Tests: XCTestCase {
         im.root.color = BRColor(NSColor.red) // FB, 0, 06, FF
         XCTAssertEqual(im.root.color, BRColor(NSColor.red))
         
-        exp = Data(bytes: [
+        exp = Data([
             0x16, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0xFB, 0x00, 0x06, 0xFF
             ])

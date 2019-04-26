@@ -3,13 +3,13 @@
 //  File:       Dictionary.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.0
+//  Version:    0.8.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
 //  Git:        https://github.com/Balancingrock/BRBON
 //
-//  Copyright:  (c) 2018 Marinus van der Lugt, All rights reserved.
+//  Copyright:  (c) 2018-2019 Marinus van der Lugt, All rights reserved.
 //
 //  License:    Use or redistribute this code any way you like with the following two provision:
 //
@@ -20,8 +20,8 @@
 //
 //  I also ask you to please leave this header with the source code.
 //
-//  I strongly believe that voluntarism is the way for societies to function optimally. Thus I have choosen to leave it
-//  up to you to determine the price for this code. You pay me whatever you think this code is worth to you.
+//  I strongly believe that voluntarism is the way for societies to function optimally. So you can pay whatever you
+//  think our code is worth to you.
 //
 //   - You can send payment via paypal to: sales@balancingrock.nl
 //   - Or wire bitcoins to: 1GacSREBxPy1yskLMc9de2nofNv2SNdwqH
@@ -33,17 +33,13 @@
 //
 //  (It is always a good idea to check the website http://www.balancingrock.nl before payment)
 //
-//  For private and non-profit use the suggested price is the price of 1 good cup of coffee, say $4.
-//  For commercial use the suggested price is the price of 1 good meal, say $20.
-//
-//  You are however encouraged to pay more ;-)
-//
 //  Prices/Quotes for support, modifications or enhancements can be obtained from: rien@balancingrock.nl
 //
 // =====================================================================================================================
 //
 // History
 //
+// 0.8.0 - Migration to Swift 5
 // 0.7.0 - Code restructuring & simplification
 // 0.4.2 - Added header & general review of access levels
 // =====================================================================================================================
@@ -191,7 +187,7 @@ public extension Portal {
     ///   error(code): if the update could not be made because of an error, the code details the kind of error.
     
     @discardableResult
-    public func updateItem(_ value: Coder?, withNameField nameField: NameField?) -> Result {
+    func updateItem(_ value: Coder?, withNameField nameField: NameField?) -> Result {
         
         guard let nameField = nameField else { return .noAction }
         guard let value = value else { return .success }
@@ -252,7 +248,7 @@ public extension Portal {
     ///   error(code): if the update could not be made because of an error, the code details the kind of error.
     
     @discardableResult
-    public func updateItem(_ value: Coder?, withName name: String) -> Result {
+    func updateItem(_ value: Coder?, withName name: String) -> Result {
         guard let nameField = NameField(name) else { return .error(.nameFieldError) }
         return updateItem(value, withNameField: nameField)
     }
@@ -273,7 +269,7 @@ public extension Portal {
     /// - Returns: 'success' or an error indicator.
     
     @discardableResult
-    public func updateItem(_ value: ItemManager?, withNameField nameField: NameField?) -> Result {
+    func updateItem(_ value: ItemManager?, withNameField nameField: NameField?) -> Result {
         
         guard let value = value else { return .noAction }
         guard (nameField != nil) || value.root.hasName else { return .noAction }
@@ -342,7 +338,7 @@ public extension Portal {
     /// - Returns: 'success' or an error indicator.
     
     @discardableResult
-    public func updateItem(_ value: ItemManager?, withName name: String) -> Result {
+    func updateItem(_ value: ItemManager?, withName name: String) -> Result {
         guard let nameField = NameField(name) else { return .error(.nameFieldError) }
         return updateItem(value, withNameField: nameField)
     }
@@ -364,7 +360,7 @@ public extension Portal {
     ///   error(code): If an error prevented completion of the request, the code will detail the kind of error.
     
     @discardableResult
-    public func replaceItem(_ value: Coder?, withNameField nameField: NameField?) -> Result {
+    func replaceItem(_ value: Coder?, withNameField nameField: NameField?) -> Result {
         
         guard let nameField = nameField else { return .noAction }
         guard let value = value else { return .noAction }
@@ -419,7 +415,7 @@ public extension Portal {
     ///   error(code): If an error prevented completion of the request, the code will detail the kind of error.
     
     @discardableResult
-    public func replaceItem(_ value: Coder?, withName name: String) -> Result {
+    func replaceItem(_ value: Coder?, withName name: String) -> Result {
         guard let nameField = NameField(name) else { return .error(.nameFieldError) }
         return replaceItem(value, withNameField: nameField)
     }
@@ -441,7 +437,7 @@ public extension Portal {
     ///   error(code): If an error prevented completion of the request, the code will detail the kind of error.
 
     @discardableResult
-    public func replaceItem(_ value: ItemManager?, withNameField nameField: NameField?) -> Result {
+    func replaceItem(_ value: ItemManager?, withNameField nameField: NameField?) -> Result {
         
         guard let nameField = nameField else { return .noAction }
         guard let value = value else { return .noAction }
@@ -498,7 +494,7 @@ public extension Portal {
     ///   error(code): If an error prevented completion of the request, the code will detail the kind of error.
     
     @discardableResult
-    public func replaceItem(_ value: ItemManager?, withName name: String) -> Result {
+    func replaceItem(_ value: ItemManager?, withName name: String) -> Result {
         guard let nameField = NameField(name) else { return .error(.nameFieldError) }
         return replaceItem(value, withNameField: nameField)
     }
@@ -513,7 +509,7 @@ public extension Portal {
     /// - Returns: 'success' or an error indicator (including 'itemNotFound').
     
     @discardableResult
-    public func removeItem(withNameField nameField: NameField?) -> Result {
+    func removeItem(withNameField nameField: NameField?) -> Result {
         
         guard let nameField = nameField else { return .error(.missingName) }
         
@@ -571,7 +567,7 @@ public extension Portal {
     /// - Returns: 'success' or an error indicator (including 'itemNotFound').
     
     @discardableResult
-    public func removeItem(withName name: String) -> Result {
+    func removeItem(withName name: String) -> Result {
         guard let nameField = NameField(name) else { return .error(.nameFieldError) }
         return removeItem(withNameField: nameField)
     }
@@ -579,196 +575,196 @@ public extension Portal {
 
 public extension Portal {
     
-    public subscript(name: String) -> Portal { get { return dictionaryFindItem(NameField(name)) ?? Portal.nullPortal } }
+    subscript(name: String) -> Portal { get { return dictionaryFindItem(NameField(name)) ?? Portal.nullPortal } }
 
-    public subscript(nameField: NameField) -> Portal { get { return dictionaryFindItem(nameField) ?? Portal.nullPortal } }
+    subscript(nameField: NameField) -> Portal { get { return dictionaryFindItem(nameField) ?? Portal.nullPortal } }
 
-    public subscript(name: String) -> Bool? {
+    subscript(name: String) -> Bool? {
         get { return dictionaryFindItem(NameField(name))?.bool }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
 
-    public subscript(nameField: NameField) -> Bool? {
+    subscript(nameField: NameField) -> Bool? {
         get { return dictionaryFindItem(nameField)?.bool }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
-    public subscript(name: String) -> Int8? {
+    subscript(name: String) -> Int8? {
         get { return dictionaryFindItem(NameField(name))?.int8 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
-    public subscript(nameField: NameField) -> Int8? {
+    subscript(nameField: NameField) -> Int8? {
         get { return dictionaryFindItem(nameField)?.int8 }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
-    public subscript(name: String) -> Int16? {
+    subscript(name: String) -> Int16? {
         get { return dictionaryFindItem(NameField(name))?.int16 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
-    public subscript(nameField: NameField) -> Int16? {
+    subscript(nameField: NameField) -> Int16? {
         get { return dictionaryFindItem(nameField)?.int16 }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
-    public subscript(name: String) -> Int32? {
+    subscript(name: String) -> Int32? {
         get { return dictionaryFindItem(NameField(name))?.int32 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
-    public subscript(nameField: NameField) -> Int32? {
+    subscript(nameField: NameField) -> Int32? {
         get { return dictionaryFindItem(nameField)?.int32 }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
-    public subscript(name: String) -> Int64? {
+    subscript(name: String) -> Int64? {
         get { return dictionaryFindItem(NameField(name))?.int64 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
-    public subscript(nameField: NameField) -> Int64? {
+    subscript(nameField: NameField) -> Int64? {
         get { return dictionaryFindItem(nameField)?.int64 }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
-    public subscript(name: String) -> UInt8? {
+    subscript(name: String) -> UInt8? {
         get { return dictionaryFindItem(NameField(name))?.uint8 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
-    public subscript(nameField: NameField) -> UInt8? {
+    subscript(nameField: NameField) -> UInt8? {
         get { return dictionaryFindItem(nameField)?.uint8 }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
-    public subscript(name: String) -> UInt16? {
+    subscript(name: String) -> UInt16? {
         get { return dictionaryFindItem(NameField(name))?.uint16 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
-    public subscript(nameField: NameField) -> UInt16? {
+    subscript(nameField: NameField) -> UInt16? {
         get { return dictionaryFindItem(nameField)?.uint16 }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
-    public subscript(name: String) -> UInt32? {
+    subscript(name: String) -> UInt32? {
         get { return dictionaryFindItem(NameField(name))?.uint32 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
-    public subscript(nameField: NameField) -> UInt32? {
+    subscript(nameField: NameField) -> UInt32? {
         get { return dictionaryFindItem(nameField)?.uint32 }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
-    public subscript(name: String) -> UInt64? {
+    subscript(name: String) -> UInt64? {
         get { return dictionaryFindItem(NameField(name))?.uint64 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
-    public subscript(nameField: NameField) -> UInt64? {
+    subscript(nameField: NameField) -> UInt64? {
         get { return dictionaryFindItem(nameField)?.uint64 }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
-    public subscript(name: String) -> Float32? {
+    subscript(name: String) -> Float32? {
         get { return dictionaryFindItem(NameField(name))?.float32 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
-    public subscript(nameField: NameField) -> Float32? {
+    subscript(nameField: NameField) -> Float32? {
         get { return dictionaryFindItem(nameField)?.float32 }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
-    public subscript(name: String) -> Float64? {
+    subscript(name: String) -> Float64? {
         get { return dictionaryFindItem(NameField(name))?.float64 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
-    public subscript(nameField: NameField) -> Float64? {
+    subscript(nameField: NameField) -> Float64? {
         get { return dictionaryFindItem(nameField)?.float64 }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
-    public subscript(name: String) -> String? {
+    subscript(name: String) -> String? {
         get { return dictionaryFindItem(NameField(name))?.string }
         set { updateItem(BRString(newValue), withNameField: NameField(name)) }
     }
     
-    public subscript(nameField: NameField) -> String? {
+    subscript(nameField: NameField) -> String? {
         get { return dictionaryFindItem(nameField)?.string }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
-    public subscript(name: String) -> BRString? {
+    subscript(name: String) -> BRString? {
         get { return dictionaryFindItem(NameField(name))?.brString }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
-    public subscript(nameField: NameField) -> BRString? {
+    subscript(nameField: NameField) -> BRString? {
         get { return dictionaryFindItem(nameField)?.brString }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
-    public subscript(name: String) -> BRCrcString? {
+    subscript(name: String) -> BRCrcString? {
         get { return dictionaryFindItem(NameField(name))?.crcString }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
-    public subscript(nameField: NameField) -> BRCrcString? {
+    subscript(nameField: NameField) -> BRCrcString? {
         get { return dictionaryFindItem(nameField)?.crcString }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
-    public subscript(name: String) -> Data? {
+    subscript(name: String) -> Data? {
         get { return dictionaryFindItem(NameField(name))?.binary }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
-    public subscript(nameField: NameField) -> Data? {
+    subscript(nameField: NameField) -> Data? {
         get { return dictionaryFindItem(nameField)?.binary }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
-    public subscript(name: String) -> BRCrcBinary? {
+    subscript(name: String) -> BRCrcBinary? {
         get { return dictionaryFindItem(NameField(name))?.crcBinary }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
-    public subscript(nameField: NameField) -> BRCrcBinary? {
+    subscript(nameField: NameField) -> BRCrcBinary? {
         get { return dictionaryFindItem(nameField)?.crcBinary }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
-    public subscript(name: String) -> UUID? {
+    subscript(name: String) -> UUID? {
         get { return dictionaryFindItem(NameField(name))?.uuid }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
-    public subscript(nameField: NameField) -> UUID? {
+    subscript(nameField: NameField) -> UUID? {
         get { return dictionaryFindItem(nameField)?.uuid }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
-    public subscript(name: String) -> BRColor? {
+    subscript(name: String) -> BRColor? {
         get { return dictionaryFindItem(NameField(name))?.color }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
-    public subscript(nameField: NameField) -> BRColor? {
+    subscript(nameField: NameField) -> BRColor? {
         get { return dictionaryFindItem(nameField)?.color }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
-    public subscript(name: String) -> BRFont? {
+    subscript(name: String) -> BRFont? {
         get { return dictionaryFindItem(NameField(name))?.font }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
-    public subscript(nameField: NameField) -> BRFont? {
+    subscript(nameField: NameField) -> BRFont? {
         get { return dictionaryFindItem(nameField)?.font }
         set { updateItem(newValue, withNameField: nameField) }
     }

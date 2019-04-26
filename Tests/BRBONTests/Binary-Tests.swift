@@ -25,7 +25,7 @@ class Binary_Tests: XCTestCase {
     
     func testCoder() {
         
-        var b = Data(bytes: [0x01, 0x02, 0x03])
+        var b = Data([0x01, 0x02, 0x03])
         
         XCTAssertEqual(b.itemType, .binary)
         XCTAssertEqual(b.valueByteCount, 7)
@@ -45,7 +45,7 @@ class Binary_Tests: XCTestCase {
         
         let data = Data(bytesNoCopy: buffer.baseAddress!, count: 7, deallocator: Data.Deallocator.none)
         
-        let exp = Data(bytes: [0x03, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03])
+        let exp = Data([0x03, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03])
         
         XCTAssertEqual(data, exp)
     }
@@ -58,7 +58,7 @@ class Binary_Tests: XCTestCase {
         
         // Instance
         
-        let b = Data(bytes: [0x11, 0x22, 0x33])
+        let b = Data([0x11, 0x22, 0x33])
 
         let im = ItemManager.createManager(withValue: b)
         
@@ -72,7 +72,7 @@ class Binary_Tests: XCTestCase {
         XCTAssertNil(im.root.itemNameField)
         
         XCTAssertTrue(im.root.isBinary)
-        XCTAssertEqual(im.root.binary, Data(bytes: [0x11, 0x22, 0x33]))
+        XCTAssertEqual(im.root.binary, Data([0x11, 0x22, 0x33]))
         
         XCTAssertEqual(im.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(im.root.itemFlags, ItemFlags.none)
@@ -81,7 +81,7 @@ class Binary_Tests: XCTestCase {
         
         // Buffer content
         
-        let exp = Data(bytes: [
+        let exp = Data([
             0x0F, 0x00, 0x00, 0x00, 0x18, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x03, 0x00, 0x00, 0x00, 0x11, 0x22, 0x33, 0x00

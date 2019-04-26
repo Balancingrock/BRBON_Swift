@@ -28,7 +28,7 @@ class NameFieldDescriptor_Tests: XCTestCase {
         
         XCTAssertEqual(nfd.crc, 0x56dc) // CRC value from https://www.lammertbies.nl/comm/info/nl_crc-calculation.html. (CRC-16)
         XCTAssertEqual(nfd.byteCount, 8)
-        XCTAssertEqual(nfd.data, Data(bytes: [0x6f, 0x6e, 0x65]))
+        XCTAssertEqual(nfd.data, Data([0x6f, 0x6e, 0x65]))
         XCTAssertEqual(nfd.string, "one")
 
         
@@ -46,7 +46,7 @@ class NameFieldDescriptor_Tests: XCTestCase {
         
         XCTAssertEqual(nfd3.crc, 0x56dc)
         XCTAssertEqual(nfd3.byteCount, 16)
-        XCTAssertEqual(nfd3.data, Data(bytes: [0x6f, 0x6e, 0x65]))
+        XCTAssertEqual(nfd3.data, Data([0x6f, 0x6e, 0x65]))
         XCTAssertEqual(nfd3.string, "one")
         
         XCTAssertNotNil(NameField("012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345"))

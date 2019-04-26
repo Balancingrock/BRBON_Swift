@@ -3,13 +3,13 @@
 //  File:       Bool.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.9
+//  Version:    0.8.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
 //  Git:        https://github.com/Balancingrock/BRBON
 //
-//  Copyright:  (c) 2018 Marinus van der Lugt, All rights reserved.
+//  Copyright:  (c) 2018-2019 Marinus van der Lugt, All rights reserved.
 //
 //  License:    Use or redistribute this code any way you like with the following two provision:
 //
@@ -20,8 +20,8 @@
 //
 //  I also ask you to please leave this header with the source code.
 //
-//  I strongly believe that voluntarism is the way for societies to function optimally. Thus I have choosen to leave it
-//  up to you to determine the price for this code. You pay me whatever you think this code is worth to you.
+//  I strongly believe that voluntarism is the way for societies to function optimally. So you can pay whatever you
+//  think our code is worth to you.
 //
 //   - You can send payment via paypal to: sales@balancingrock.nl
 //   - Or wire bitcoins to: 1GacSREBxPy1yskLMc9de2nofNv2SNdwqH
@@ -33,17 +33,13 @@
 //
 //  (It is always a good idea to check the website http://www.balancingrock.nl before payment)
 //
-//  For private and non-profit use the suggested price is the price of 1 good cup of coffee, say $4.
-//  For commercial use the suggested price is the price of 1 good meal, say $20.
-//
-//  You are however encouraged to pay more ;-)
-//
 //  Prices/Quotes for support, modifications or enhancements can be obtained from: rien@balancingrock.nl
 //
 // =====================================================================================================================
 //
 // History
 //
+// 0.8.0 - Migration to Swift 5
 // 0.7.9 - Changed handling of writing a nil (will now set the bool value to false)
 // 0.7.0 - Code restructuring & simplification
 // 0.4.2 - Added header & general review of access levels
@@ -60,7 +56,7 @@ public extension Portal {
     
     /// Returns true if the portal is valid and the value accessable through this portal is a bool.
     
-    public var isBool: Bool {
+    var isBool: Bool {
         guard isValid else { return false }
         if let column = column { return itemPtr.itemValueFieldPtr.tableColumnType(for: column) == ItemType.bool.rawValue }
         if index != nil { return itemPtr.itemValueFieldPtr.arrayElementType == ItemType.bool.rawValue }
@@ -76,7 +72,7 @@ public extension Portal {
     ///
     /// __On write:__ If the value is false or nil, a zero will be written to the associated memory location. For true the value 1 is written.
     
-    public var bool: Bool? {
+    var bool: Bool? {
         get {
             guard isBool else { return nil }
             return Bool(!(0 == _valuePtr.assumingMemoryBound(to: UInt8.self).pointee))

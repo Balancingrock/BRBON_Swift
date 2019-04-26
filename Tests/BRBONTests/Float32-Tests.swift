@@ -38,7 +38,7 @@ class Float32_Tests: XCTestCase {
         
         let data = Data(bytesNoCopy: buffer.baseAddress!, count: 4, deallocator: Data.Deallocator.none)
         
-        let exp = Data(bytes: [0x00, 0x00, 0x40, 0x41]) // https://www.h-schmidt.net/FloatConverter/IEEE754.html
+        let exp = Data([0x00, 0x00, 0x40, 0x41]) // https://www.h-schmidt.net/FloatConverter/IEEE754.html
         
         XCTAssertEqual(data, exp)
     }
@@ -73,7 +73,7 @@ class Float32_Tests: XCTestCase {
         
         // Buffer content
         
-        var exp = Data(bytes: [
+        var exp = Data([
             0x0B, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x41
             ])
@@ -86,7 +86,7 @@ class Float32_Tests: XCTestCase {
         im.root.float32 = Float32(21.0)
         XCTAssertEqual(im.root.float32, Float(21.0))
         
-        exp = Data(bytes: [
+        exp = Data([
             0x0B, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xa8, 0x41
             ])

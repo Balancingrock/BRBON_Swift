@@ -3,13 +3,13 @@
 //  File:       Array.swift
 //  Project:    BRBON
 //
-//  Version:    0.7.9
+//  Version:    0.8.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
 //  Git:        https://github.com/Balancingrock/BRBON
 //
-//  Copyright:  (c) 2018 Marinus van der Lugt, All rights reserved.
+//  Copyright:  (c) 2018-2019 Marinus van der Lugt, All rights reserved.
 //
 //  License:    Use or redistribute this code any way you like with the following two provision:
 //
@@ -20,8 +20,8 @@
 //
 //  I also ask you to please leave this header with the source code.
 //
-//  I strongly believe that voluntarism is the way for societies to function optimally. Thus I have choosen to leave it
-//  up to you to determine the price for this code. You pay me whatever you think this code is worth to you.
+//  I strongly believe that voluntarism is the way for societies to function optimally. So you can pay whatever you
+//  think our code is worth to you.
 //
 //   - You can send payment via paypal to: sales@balancingrock.nl
 //   - Or wire bitcoins to: 1GacSREBxPy1yskLMc9de2nofNv2SNdwqH
@@ -33,17 +33,13 @@
 //
 //  (It is always a good idea to check the website http://www.balancingrock.nl before payment)
 //
-//  For private and non-profit use the suggested price is the price of 1 good cup of coffee, say $4.
-//  For commercial use the suggested price is the price of 1 good meal, say $20.
-//
-//  You are however encouraged to pay more ;-)
-//
 //  Prices/Quotes for support, modifications or enhancements can be obtained from: rien@balancingrock.nl
 //
 // =====================================================================================================================
 //
 // History
 //
+// 0.8.0 - Migration to Swift 5
 // 0.7.9 - Removed normalizedPortal and fixed arrayOf... accessors.
 // 0.7.8 - Implemented arryOf.... accessor for arrays in elements or fields
 //         Added appendElement:Array<...> operations
@@ -107,7 +103,7 @@ internal extension UnsafeMutableRawPointer {
     
     /// The raw value of the element type assuming self points to the first byte of the value field.
     
-    internal var arrayElementType: UInt8 {
+    var arrayElementType: UInt8 {
         get { return arrayElementTypePtr.assumingMemoryBound(to: UInt8.self).pointee }
         set { arrayElementTypePtr.storeBytes(of: newValue, as: UInt8.self) }
     }
@@ -115,7 +111,7 @@ internal extension UnsafeMutableRawPointer {
     
     /// Returns the number of elements assuming self points to the first byte of the value field.
     
-    internal func arrayElementCount(_ endianness: Endianness) -> UInt32 {
+    func arrayElementCount(_ endianness: Endianness) -> UInt32 {
         if endianness == machineEndianness {
             return arrayElementCountPtr.assumingMemoryBound(to: UInt32.self).pointee
         } else {
@@ -151,7 +147,7 @@ internal extension UnsafeMutableRawPointer {
     
     /// Return the pointer to an array element
     
-    internal func arrayElementPtr(for value: Int, _ endianness: Endianness) -> UnsafeMutableRawPointer {
+    func arrayElementPtr(for value: Int, _ endianness: Endianness) -> UnsafeMutableRawPointer {
         let bc = Int(arrayElementByteCount(endianness))
         return arrayElementBasePtr.advanced(by: value * bc)
     }
