@@ -8,7 +8,7 @@ let package = Package(
         .library(name: "BRBON", targets: ["BRBON"])
     ],
     dependencies: [
-        .package(url: "https://github.com/Balancingrock/BRUtils", from: "0.13.0")
+        .package(url: "https://github.com/Balancingrock/BRUtils", from: "1.0.0")
     ],
     targets: [
         .target(

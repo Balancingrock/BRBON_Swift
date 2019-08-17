@@ -1,0 +1,13 @@
+# BRBON document generator jazzy settings
+
+copyright: Copyright 2016-2017 Rien van der Lugt
+author: Rien van der Lugt
+module: BRBON
+hide_documentation_coverage: true
+xcodebuild_arguments: [-target, BRBON]
+github_url: https://github.com/Balancingrock/BRBON
+output: ~/Documents/Websites/swiftfire.nl/projects/brbon/reference
+clean: true
+theme: fullwidth
+readme: README.md
+documentation: docs/*.md

@@ -1,6 +1,8 @@
-{\rtf1\ansi\ansicpg1252\cocoartf1404\cocoasubrtf470
-{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\rtf1\ansi\ansicpg1252\cocoartf1671\cocoasubrtf400
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fswiss\fcharset0 Helvetica-Bold;\f2\fswiss\fcharset0 Helvetica-Oblique;
+}
 {\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
 \margl1440\margr1440\vieww9000\viewh8400\viewkind0
 \pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
 
@@ -9,44 +11,44 @@
 These are guidelines but should be adhered to. If deviated, the reason should be included in the comments.\
 \
 
-\b Operations limited to a single type
-\b0 \
+\f1\b Operations limited to a single type
+\f0\b0 \
 Operations that are only valid for a specific item type should start with that identifier. E.g. tableRowCount, or arrayElementCount\
 \
 
-\b Potentially dangerous operations
-\b0 \
+\f1\b Potentially dangerous operations
+\f0\b0 \
 Operations that are not protected against overflow/illegal access/out of limits/wrong type etc must start with an '_'. E.g. _tableRowCount.\
 \
 
-\b Speed
-\b0 \
+\f1\b Speed
+\f0\b0 \
 Speed is the most important consideration. Code duplication, non-localized access etc are used to achieve the best possible speed. However, there are still area's of code that can be optimized.\
 \
 - 
-\i Decreasing size\
+\f2\i Decreasing size\
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
 
-\i0 \cf0 When removing things from containers or decreasing the size of data, the free area is not reclaimed. Reclaiming is potentially time-expensive and is thus left as an operation that must be performed explicitly.\
+\f0\i0 \cf0 When removing things from containers or decreasing the size of data, the free area is not reclaimed. Reclaiming is potentially time-expensive and is thus left as an operation that must be performed explicitly.\
 \
 - 
-\i Increasing size
-\i0 \
+\f2\i Increasing size
+\f0\i0 \
 Increasing size is also potentially time-expensive. However there is no way the API can prevent this. It is up to the (API) user to make sure that the original layout of the BRBON data structure allows all possible data to be stored without resorting to run-time restructuring. However the API should automatically increase the size of items when necessary to implement the API request.\
 \
 - 
-\i 'Duplicate' var's locally
-\i0 \
+\f2\i 'Duplicate' var's locally
+\f0\i0 \
 Many functions are implemented as var-accessors. This also means that for each access to these var's the function is executed. It seems preferable that these function execution results are stored as let constants locally inside an operation if needed more than once.\
 \
 
-\b Changing the column index
-\b0 \
+\f1\b Changing the column index
+\f0\b0 \
 Any operation that changes the column index must be clearly documented. Any operation that is not documented to change the column index, may never (in the future) be modified to change the column index.\
 \
 
-\b Naming
-\b0 \
+\f1\b Naming
+\f0\b0 \
 A BRBON structure consist of Items or Items in a Block.\
 An Item may be a value, in which case it is called an Item.\
 An Item may contain an array, in which case a single datum in the array is called an Element.\
@@ -54,7 +56,7 @@ An Item may contain a table with columns and rows. A single datum in the table i
 Note that the a sequence of bytes in the BRBON structure is also called a field, however there is little danger of confusion between these two usages of 'field'.\
 \
 
-\b Portals
-\b0 \
-Portals are used as shortcuts into a BRBON structure. A portal always refers to a single item, and may refer to an element of field in that item. In many ways a portal can be seen as a proxy for the value that is stored in the item. While some operations may shift the data in the BRBON structure around, portals will be kept up-to-date and always refer to the appropriate value. Portals will observe the 'path' when referring to a item. For an array that means that the index is used. If the data the index will remain the same, and may thus refer to a different value. For a dictionary the name is used, and hence the portal will always refer to the same item. A sequence behaves like a dictionary. In a table, the row index will remain unaffected, but a column addition/removal may invalidate the portal.\
-When the item is removed from the BRBON structure, portals are made invalid. Reading a value will then always produce a 'nil'.}
+\f1\b Portals
+\f0\b0 \
+Portals are used as shortcuts into a BRBON structure. A portal always refers to a single item, and may refer to an element or field in an item. In many ways a portal can be seen as a proxy for the value that is stored in the item. While some operations may shift the data in the BRBON structure around, portals will be kept up-to-date and always refer to the appropriate value. Portals will observe the 'path' when referring to an item. For an array that means that the index is used. If data is added or removed the index will remain the same, and may thus refer to a different value. For a dictionary the name is used, and hence the portal will always refer to the same item. A sequence behaves like a dictionary. In a table, the row index will remain unaffected, but a column addition/removal may invalidate the portal.\
+When an item for which there is a portal is removed from the BRBON structure the portal is made invalid. Reading a value from an invalidated portal will always produce a 'nil'.}

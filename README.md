@@ -415,50 +415,7 @@ A table consists of table fields arranged in columns and rows. Each field can co
 
 Note: Planned releases are for information only and subject to change without notice.
 
-#### 0.9.0 (Planned)
+#### 1.0.0 (Current)
 
-- Bugfixes and API upgrades as they happen.
+- Upped to 1.0.0 for Swiftfire
 
-#### 0.8.0 (Current)
-
-- Migrated to Swift 5
-
-#### 0.7.0
-
-- Redesign of API (mostly streamlining)
-- Added new type RGBA and Font
-- Renamed a number of coder files
-
-#### 0.6.0
-
-- Migrated to SPM 4
-
-#### 0.5.0
-
-- Migration to Swift 4
-
-#### 0.4.2
-
-- Added headers
-- Fixed access levels
-
-#### 0.4.1
-
-- Added UUID type
-
-#### 0.4.0
-
-- The BRBON specification has been changed to allow fatser API implementations.
-- The API has been completely re-implemented.
-
-#### 0.3.0
-
-- Complete reworking of the API and some changes in the data structure. Only partly complete.
-
-#### 0.2.0
-
-- Bugfixes and some changes.
-
-#### 0.1.0
-
-- Initial release.
