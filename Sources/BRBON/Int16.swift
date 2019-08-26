@@ -3,7 +3,7 @@
 //  File:       Int16.swift
 //  Project:    BRBON
 //
-//  Version:    1.0.0
+//  Version:    1.0.1
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.0.1 - Documentation update
 // 1.0.0 - Removed older history
 //
 // =====================================================================================================================
@@ -88,10 +89,19 @@ public extension Portal {
 
 extension Int16: Coder {
 
+    
+    /// Implementation of the `Coder` protocol
+
     public var itemType: ItemType { return ItemType.int16 }
 
-    public var valueByteCount: Int { return 2 }
     
+    /// Implementation of the `Coder` protocol
+
+    public var valueByteCount: Int { return 2 }
+
+    
+    /// Implementation of the `Coder` protocol
+
     public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         if endianness == machineEndianness {
             ptr.storeBytes(of: self, as: Int16.self)

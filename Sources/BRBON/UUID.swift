@@ -3,7 +3,7 @@
 //  File:       UUID.swift
 //  Project:    BRBON
 //
-//  Version:    1.0.0
+//  Version:    1.0.1
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.0.1 - Documentation update
 // 1.0.0 - Removed older history
 //
 // =====================================================================================================================
@@ -49,6 +50,9 @@ internal let uuidValueByteCount = 16
 
 internal extension UnsafeMutableRawPointer {
 
+    
+    /// Returns the UUID pointed at by self.
+    
     var uuid: UUID {
         return UUID(uuid: self.bindMemory(to: uuid_t.self, capacity: 1).pointee)
     }
@@ -97,10 +101,19 @@ public extension Portal {
 
 extension UUID: Coder {
     
+    
+    /// Implementation of the `Coder` protocol
+
     public var itemType: ItemType { return ItemType.uuid }
 
+    
+    /// Implementation of the `Coder` protocol
+
     public var valueByteCount: Int { return uuidValueByteCount }
-        
+    
+    
+    /// Implementation of the `Coder` protocol
+
     public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         ptr.storeBytes(of: self.uuid, as: uuid_t.self)
     }

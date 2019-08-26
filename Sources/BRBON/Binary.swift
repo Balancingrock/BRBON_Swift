@@ -3,7 +3,7 @@
 //  File:       Binary.swift
 //  Project:    BRBON
 //
-//  Version:    1.0.0
+//  Version:    1.0.1
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.0.1 - Documentation updates
 // 1.0.0 - Removed older history
 //
 // =====================================================================================================================
@@ -173,10 +174,19 @@ public extension Portal {
 
 extension Data: Coder {
     
+    
+    /// Implementation of the `Coder` protocol
+
     public var itemType: ItemType { return ItemType.binary }
 
-    public var valueByteCount: Int { return binaryDataOffset + self.count }
     
+    /// Implementation of the `Coder` protocol
+
+    public var valueByteCount: Int { return binaryDataOffset + self.count }
+
+    
+    /// Implementation of the `Coder` protocol
+
     public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         ptr.setBinaryData(to: self, endianness)
     }

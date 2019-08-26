@@ -3,7 +3,7 @@
 //  File:       BRColor.swift
 //  Project:    BRBON
 //
-//  Version:    1.0.0
+//  Version:    1.0.1
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.0.1 - Documentation update
 // 1.0.0 - Removed older history
 //
 // =====================================================================================================================
@@ -201,19 +202,37 @@ public extension Portal {
 }
 
 
-// The BRColor class and the Coder protocol
+/// The BRColor structure
 
 public struct BRColor {
     
+    
+    /// The value of the red component
+    
     public let redComponent: UInt8
+    
+    
+    /// The value of the green component
+    
     public let greenComponent: UInt8
+    
+    
+    /// The value of the blue component
+    
     public let blueComponent: UInt8
+    
+    
+    /// The value of the alpha component
+    
     public let alphaComponent: UInt8
+    
+    
+    /// The structure as an NSColor
     
     public var color: NSColor { return NSColor(red: CGFloat(redComponent)/255, green: CGFloat(greenComponent)/255, blue: CGFloat(blueComponent)/255, alpha: CGFloat(alphaComponent)/255)}
     
     
-    /// Create a new BRColor, the color will be assumed to be in the generic RGB colorspace.
+    /// Create a new structure, the color will be assumed to be in the generic RGB colorspace.
     ///
     /// In other words: If the colorspace is not generic RGB, this information will be lost as upon extracting the color information the generic RGB colorspace will be used.
     
@@ -224,6 +243,9 @@ public struct BRColor {
         blueComponent = UInt8(genericRgbColor.blueComponent * 255)
         alphaComponent = UInt8(genericRgbColor.alphaComponent * 255)
     }
+    
+    
+    /// Creates a new structure from the component values
     
     public init(red: UInt8, green: UInt8, blue: UInt8, alpha: UInt8) {
         redComponent = red
@@ -238,6 +260,9 @@ public struct BRColor {
 
 extension BRColor: Equatable {
     
+    
+    /// Implementation of the equatable protocol
+    
     public static func == (lhs: BRColor, rhs: BRColor) -> Bool {
         if lhs.redComponent != rhs.redComponent { return false }
         if lhs.greenComponent != rhs.greenComponent { return false }
@@ -251,10 +276,19 @@ extension BRColor: Equatable {
 
 extension BRColor: Coder {
     
+    
+    /// Implementation of the `Coder` protocol
+    
     public var itemType: ItemType { return ItemType.color }
+
     
+    /// Implementation of the `Coder` protocol
+
     public var valueByteCount: Int { return colorValueByteCount }
+
     
+    /// Implementation of the `Coder` protocol
+
     public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         var ptr = ptr
         ptr.colorRed = redComponent

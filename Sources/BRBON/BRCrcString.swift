@@ -3,7 +3,7 @@
 //  File:       BRCrcString.swift
 //  Project:    BRBON
 //
-//  Version:    1.0.0
+//  Version:    1.0.1
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.0.1 - Documentation updates
 // 1.0.0 - Removed older history
 //
 // =====================================================================================================================
@@ -274,6 +275,9 @@ public struct BRCrcString {
 
 extension BRCrcString: Equatable {
     
+    
+    /// Implementation of the Equatable protocol
+
     public static func == (lhs: BRCrcString, rhs: BRCrcString) -> Bool {
         if lhs.crc != rhs.crc { return false }
         return lhs.utf8Code == rhs.utf8Code
@@ -285,9 +289,18 @@ extension BRCrcString: Equatable {
 
 extension BRCrcString: Coder {
     
+    
+    /// Implementation of the `Coder` protocol
+
     public var itemType: ItemType { return ItemType.crcString }
 
+
+    /// Implementation of the `Coder` protocol
+
     public var valueByteCount: Int { return utf8Code.count + crcStringUtf8CodeOffset }
+
+    
+    /// Implementation of the `Coder` protocol
 
     public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         ptr.setCrcStringCrc(to: crc, endianness)

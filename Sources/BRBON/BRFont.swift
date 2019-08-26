@@ -3,7 +3,7 @@
 //  File:       BRFont.swift
 //  Project:    BRBON
 //
-//  Version:    1.0.0
+//  Version:    1.0.1
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.0.1 - Documentation updates
 // 1.0.0 - Removed older history
 //
 // =====================================================================================================================
@@ -275,15 +276,32 @@ public extension Portal {
 
 public struct BRFont {
     
+    
+    /// The family name of the font
+    
     public let familyNameUtf8Code: Data?
+    
+    
+    /// The name of the font
+    
     public let fontNameUtf8Code: Data
+    
+    
+    /// The size of the font
+    
     public let pointSize: Float32
+    
+    
+    /// The number of bytes needed
     
     public var nofValueBytesNecessary: Int {
         let familySize = familyNameUtf8Code?.count ?? 0
         let fontSize = fontNameUtf8Code.count
         return 4 + 1 + familySize + 1 + fontSize
     }
+    
+    
+    /// The font as an NSFont
     
     public var font: NSFont? {
         guard let name = String(data: fontNameUtf8Code, encoding: .utf8) else { return nil }
@@ -299,6 +317,9 @@ public struct BRFont {
         return nil
     }
     
+    
+    /// Creates a structure from an NSFont.
+    
     public init?(_ font: NSFont?) {
         
         guard let font = font else { return nil }
@@ -313,6 +334,9 @@ public struct BRFont {
         self.pointSize = Float32(font.pointSize)
     }
     
+    
+    /// Creates a new structure
+    
     public init(familyNameUtf8Code: Data, fontNameUtf8Code: Data, pointSize: Float32) {
         self.familyNameUtf8Code = familyNameUtf8Code
         self.fontNameUtf8Code = fontNameUtf8Code
@@ -325,6 +349,9 @@ public struct BRFont {
 
 extension BRFont: Equatable {
     
+    
+    /// Implements the Equatable protocol
+
     public static func == (lhs: BRFont, rhs: BRFont) -> Bool {
         if lhs.pointSize != rhs.pointSize { return false }
         if lhs.fontNameUtf8Code != rhs.fontNameUtf8Code { return false }
@@ -337,10 +364,19 @@ extension BRFont: Equatable {
 
 extension BRFont: Coder {
     
+    
+    /// Implementation of the `Coder` protocol
+
     public var itemType: ItemType { return ItemType.font }
+
     
+    /// Implementation of the `Coder` protocol
+
     public var valueByteCount: Int { return fontFamilyNameUtf8CodeOffset + (familyNameUtf8Code?.count ?? 0) + fontNameUtf8Code.count }
+
     
+    /// Implementation of the `Coder` protocol
+
     public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         var ptr = ptr
         ptr.setFontPointSize(to: pointSize, endianness)

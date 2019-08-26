@@ -3,7 +3,7 @@
 //  File:       ItemType.swift
 //  Project:    BRBON
 //
-//  Version:    1.0.0
+//  Version:    1.0.1
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.0.1 - Documentation update
 // 1.0.0 - Removed older history
 //
 // =====================================================================================================================
@@ -59,47 +60,47 @@ public enum ItemType: UInt8 {
     case bool           = 0x02
     
     
-    /// An integer of 8 bits
+    /// An integer of 8 bits, range -128 .. +127
     
     case int8           = 0x03
 
     
-    /// An integer of 16 bits
+    /// An integer of 16 bits, range -32768 .. +32767
 
     case int16          = 0x04
     
     
-    /// An integer of 32 bits
+    /// An integer of 32 bits, range -2147483648 .. +2147483647
 
     case int32          = 0x05
 
     
-    /// An integer of 64 bits
+    /// An integer of 64 bits, range -9223372036854775808 .. +9223372036854775807
 
     case int64          = 0x06
 
     
-    // An unsigned integer of 8 bits (a byte)
+    /// An unsigned integer of 8 bits (a byte), range 0 .. +255
     
     case uint8          = 0x07
     
     
-    // An unsigned integer of 16 bits
+    /// An unsigned integer of 16 bits, range 0 .. +65535
 
     case uint16         = 0x08
     
     
-    // An unsigned integer of 32 bits
+    /// An unsigned integer of 32 bits, range 0 .. +4294967295
 
     case uint32         = 0x09
 
     
-    /// An unsigned integer of 64 bits
+    /// An unsigned integer of 64 bits, range 0 .. +18446744073709551615
 
     case uint64         = 0x0A
     
     
-    // Floating point value represented in 32 bits
+    /// Floating point value represented in 32 bits
     
     case float32        = 0x0B
 

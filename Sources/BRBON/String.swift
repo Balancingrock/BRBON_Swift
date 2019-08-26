@@ -3,7 +3,7 @@
 //  File:       String.swift
 //  Project:    BRBON
 //
-//  Version:    1.0.0
+//  Version:    1.0.1
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.0.1 - Documentation update
 // 1.0.0 - Removed older history
 //
 // =====================================================================================================================
@@ -187,10 +188,19 @@ extension Portal {
 
 extension String: Coder {
     
+    
+    /// Implementation of the `Coder` protocol
+
     public var itemType: ItemType { return ItemType.string }
+
     
+    /// Implementation of the `Coder` protocol
+
     public var valueByteCount: Int { return stringUtf8CodeOffset + (self.data(using: .utf8)?.count ?? 0) }
+
     
+    /// Implementation of the `Coder` protocol
+
     public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         let code = self.data(using: .utf8) ?? Data()
         ptr.setStringUtf8Code(to: code, endianness)

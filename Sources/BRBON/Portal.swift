@@ -3,7 +3,7 @@
 //  File:       Portal.swift
 //  Project:    BRBON
 //
-//  Version:    1.0.0
+//  Version:    1.0.1
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,20 +36,20 @@
 //
 // History
 //
+// 1.0.1 - Documentation update
 // 1.0.0 - Removed older history
 //
 // =====================================================================================================================
-//
-// A Portal is an object through which access is gained to an item or element in a BRBON data structure.
-// Portals can be used to read & write variables in the BRBON data structure as wel as for traversing the struture.
-// When the data that the portal has access to is shifted, the portal is kept in-sync with the new location.
-// Each BRBON item or element has only one portal instance associated with it. This instance will be shared and a reference count is kept to ensure that it is not removed prematurely. BRBON API users do not need concern themselves with this reference counting.
 
 import Foundation
 import BRUtils
 
 
-/// A portal is an access point for items in the BRBON data structure. It hides the implementation of the BRBON data structure and provides an API to manipulate it at a higher abstraction level.
+/// A portal is an access point for items in the BRBON data structure. It hides the implementation of the BRBON data structure and provides an API to manipulate the contents.
+///
+/// While the BRBON structure will undergo changes and shift in memory, the portal for an item will always point to the correct item. Until the item is removed, then the portal becomes invalid. When a portal is invalid, it will return nil on most operations.
+///
+/// Note that is it not necessary to use portals. But there is a performance advantage for using portals if a BRBON hierachy is largely stable. If however the root item hierachy changes a lot (adding and changing data size) then using a lot of portals may slow down access when items are added or increased in size. See the document on performance issues.
 
 public final class Portal {
     
@@ -119,7 +119,7 @@ public final class Portal {
     }
     
     
-    // The null portal is used to avoid an excess of unwrapping for the API user. API calls that must return a portal can return the null portal instead of returning nil.
+    /// The null portal is used to avoid an excess of unwrapping for the API user. API calls that must return a portal can return the null portal instead of returning nil.
     
     public static var nullPortal: Portal = {
         let p = Portal(itemPtr: UnsafeMutableRawPointer(bitPattern: 1)!, endianness: machineEndianness)

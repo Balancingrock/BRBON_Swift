@@ -3,7 +3,7 @@
 //  File:       BRCrcBinary.swift
 //  Project:    BRBON
 //
-//  Version:    1.0.0
+//  Version:    1.0.1
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.0.1 - Documentation update
 // 1.0.0 - Removed older history
 //
 // =====================================================================================================================
@@ -268,6 +269,9 @@ public struct BRCrcBinary {
 
 extension BRCrcBinary: Equatable {
     
+    
+    /// Implementation of the Equatable protocol
+
     public static func == (lhs: BRCrcBinary, rhs: BRCrcBinary) -> Bool {
         if lhs.crc != rhs.crc { return false }
         return lhs.data == rhs.data
@@ -279,9 +283,18 @@ extension BRCrcBinary: Equatable {
 
 extension BRCrcBinary: Coder {
     
+    
+    /// Implementation of the `Coder` protocol
+
     public var itemType: ItemType { return ItemType.crcBinary }
 
+    
+    /// Implementation of the `Coder` protocol
+
     public var valueByteCount: Int { return crcBinaryDataOffset + data.count }
+
+    
+    /// Implementation of the `Coder` protocol
 
     public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         ptr.setCrcBinaryCrc(to: crc, endianness)

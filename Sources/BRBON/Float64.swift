@@ -3,7 +3,7 @@
 //  File:       Float64.swift
 //  Project:    BRBON
 //
-//  Version:    1.0.0
+//  Version:    1.0.1
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.0.1 - Documentation update
 // 1.0.0 - Removed older history
 //
 // =====================================================================================================================
@@ -91,10 +92,19 @@ extension Portal {
 
 extension Float64: Coder {
 
+    
+    /// Implementation of the `Coder` protocol
+
     public var itemType: ItemType { return ItemType.float64 }
 
-    public var valueByteCount: Int { return float64ValueByteCount }
     
+    /// Implementation of the `Coder` protocol
+
+    public var valueByteCount: Int { return float64ValueByteCount }
+
+    
+    /// Implementation of the `Coder` protocol
+
     public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         if endianness == machineEndianness {
             ptr.storeBytes(of: self.bitPattern, as: UInt64.self)

@@ -3,7 +3,7 @@
 //  File:       NameField.swift
 //  Project:    BRBON
 //
-//  Version:    1.0.0
+//  Version:    1.0.1
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.0.1 - Documentation update
 // 1.0.0 - Removed older history
 //
 // =====================================================================================================================
@@ -46,13 +47,7 @@ import BRUtils
 
 /// The NameField structure contains the name field information for an item name or column name.
 
-public struct NameField: Equatable, Hashable {
-    
-    public static func ==(lhs: NameField, rhs: NameField) -> Bool {
-        if lhs.crc != rhs.crc { return false }
-        if lhs.byteCount != rhs.byteCount { return false }
-        return lhs.data == rhs.data
-    }
+public struct NameField {
 
     
     /// UTF8 code of the name
@@ -73,13 +68,6 @@ public struct NameField: Equatable, Hashable {
     /// Reonstructs the string that was used to create this namefield
     
     public var string: String { return String(data: data, encoding: .utf8)! }
-    
-    
-    /// The hashable protocol
-    
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(data)
-    }
     
     
     /// Create a new NameField.
@@ -154,5 +142,33 @@ public struct NameField: Equatable, Hashable {
         let count = fromPtr.advanced(by: 2).assumingMemoryBound(to: UInt8.self).pointee
         let data = Data(bytes: fromPtr.advanced(by: 3), count: Int(count))
         self.init(data: data, crc: crc, byteCount: withFieldCount)
+    }
+}
+
+
+/// The equatable protocol
+
+extension NameField: Equatable {
+    
+    
+    /// Implementation of the Equatable protocol
+    
+    public static func ==(lhs: NameField, rhs: NameField) -> Bool {
+        if lhs.crc != rhs.crc { return false }
+        if lhs.byteCount != rhs.byteCount { return false }
+        return lhs.data == rhs.data
+    }
+}
+
+
+/// The hashable protocol
+
+extension NameField: Hashable {
+    
+    
+    /// Implementation of the Hasable protocol
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(data)
     }
 }

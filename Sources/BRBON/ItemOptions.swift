@@ -3,7 +3,7 @@
 //  File:       ItemOptions
 //  Project:    BRBON
 //
-//  Version:    1.0.0
+//  Version:    1.0.1
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.0.1 - Documentation update
 // 1.0.0 - Removed older history
 //
 // =====================================================================================================================
@@ -47,8 +48,15 @@ import BRUtils
 /// The options for an item.
 
 public enum ItemOptions: UInt8 {
+    
+    
+    /// Unused
+    
     case none = 0
     
+
+    /// Creates a new enum with the contents from the given memory location
+
     public init?(atPtr: UnsafeMutableRawPointer) {
         self.init(rawValue: atPtr.assumingMemoryBound(to: UInt8.self).pointee)
     }

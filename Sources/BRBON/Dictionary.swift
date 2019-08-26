@@ -3,7 +3,7 @@
 //  File:       Dictionary.swift
 //  Project:    BRBON
 //
-//  Version:    1.0.0
+//  Version:    1.0.1
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.0.1 - Documentation updates
 // 1.0.0 - Removed older history
 //
 // =====================================================================================================================
@@ -160,7 +161,7 @@ extension Portal {
 }
 
 
-// Public operations on the dictionary type
+/// Public operations on the dictionary type
 
 public extension Portal {
     
@@ -569,197 +570,317 @@ public extension Portal {
     }
 }
 
+
 public extension Portal {
+    
+    
+    /// Returns the portal for the name if the item exists. If it does not exists, the null portal is returned.
     
     subscript(name: String) -> Portal { get { return dictionaryFindItem(NameField(name)) ?? Portal.nullPortal } }
 
+    
+    /// Returns the portal for the namefield if the item exists. If it does not exists, the null portal is returned.
+    
     subscript(nameField: NameField) -> Portal { get { return dictionaryFindItem(nameField) ?? Portal.nullPortal } }
 
+    
+    /// Returns the bool value for the name if the item exists and it contains a bool value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+    
     subscript(name: String) -> Bool? {
         get { return dictionaryFindItem(NameField(name))?.bool }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
 
+    
+    /// Return the bool value for the namefield if the item exists and it contains a bool value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+    
     subscript(nameField: NameField) -> Bool? {
         get { return dictionaryFindItem(nameField)?.bool }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
+    
+    /// Returns the Int8 value for the name if the item exists and it contains an Int8 value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(name: String) -> Int8? {
         get { return dictionaryFindItem(NameField(name))?.int8 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
+
     
+    /// Returns the Int8 value for the nameField if the item exists and it contains an Int8 value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(nameField: NameField) -> Int8? {
         get { return dictionaryFindItem(nameField)?.int8 }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
+    
+    /// Returns the Int16 value for the name if the item exists and it contains an Int16 value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(name: String) -> Int16? {
         get { return dictionaryFindItem(NameField(name))?.int16 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
+
     
+    /// Returns the Int16 value for the nameField if the item exists and it contains an Int16 value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(nameField: NameField) -> Int16? {
         get { return dictionaryFindItem(nameField)?.int16 }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
+    
+    /// Returns the Int32 value for the name if the item exists and it contains an Int32 value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(name: String) -> Int32? {
         get { return dictionaryFindItem(NameField(name))?.int32 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
+
     
+    /// Returns the Int32 value for the nameField if the item exists and it contains an Int32 value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(nameField: NameField) -> Int32? {
         get { return dictionaryFindItem(nameField)?.int32 }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
+    
+    /// Returns the Int64 value for the name if the item exists and it contains an Int64 value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(name: String) -> Int64? {
         get { return dictionaryFindItem(NameField(name))?.int64 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
+
     
+    /// Returns the Int64 value for the nameField if the item exists and it contains an Int64 value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(nameField: NameField) -> Int64? {
         get { return dictionaryFindItem(nameField)?.int64 }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
+    
+    /// Returns the UInt8 value for the name if the item exists and it contains an UInt8 value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(name: String) -> UInt8? {
         get { return dictionaryFindItem(NameField(name))?.uint8 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
+
     
+    /// Returns the UInt8 value for the nameField if the item exists and it contains an UInt8 value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(nameField: NameField) -> UInt8? {
         get { return dictionaryFindItem(nameField)?.uint8 }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
+    
+    /// Returns the UInt16 value for the name if the item exists and it contains an UInt16 value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(name: String) -> UInt16? {
         get { return dictionaryFindItem(NameField(name))?.uint16 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
+
     
+    /// Returns the UInt16 value for the nameField if the item exists and it contains an UInt16 value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(nameField: NameField) -> UInt16? {
         get { return dictionaryFindItem(nameField)?.uint16 }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
+    /// Returns the UInt32 value for the name if the item exists and it contains an UInt32 value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(name: String) -> UInt32? {
         get { return dictionaryFindItem(NameField(name))?.uint32 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
+
     
+    /// Returns the UInt32 value for the nameField if the item exists and it contains an UInt32 value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(nameField: NameField) -> UInt32? {
         get { return dictionaryFindItem(nameField)?.uint32 }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
+    
+    /// Returns the UInt64 value for the name if the item exists and it contains an UInt64 value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(name: String) -> UInt64? {
         get { return dictionaryFindItem(NameField(name))?.uint64 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
+
     
+    /// Returns the UInt64 value for the nameField if the item exists and it contains an UInt64 value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(nameField: NameField) -> UInt64? {
         get { return dictionaryFindItem(nameField)?.uint64 }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
+    
+    /// Returns the Float32 value for the name if the item exists and it contains an Float32 value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(name: String) -> Float32? {
         get { return dictionaryFindItem(NameField(name))?.float32 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
+
     
+    /// Returns the Float32 value for the nameField if the item exists and it contains an Float32 value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(nameField: NameField) -> Float32? {
         get { return dictionaryFindItem(nameField)?.float32 }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
+    
+    /// Returns the Float64 value for the name if the item exists and it contains an Float64 value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(name: String) -> Float64? {
         get { return dictionaryFindItem(NameField(name))?.float64 }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
+
     
+    /// Returns the Float64 value for the nameField if the item exists and it contains an Float64 value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(nameField: NameField) -> Float64? {
         get { return dictionaryFindItem(nameField)?.float64 }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
+    
+    /// Returns the String value for the name if the item exists and it contains an String value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(name: String) -> String? {
         get { return dictionaryFindItem(NameField(name))?.string }
         set { updateItem(BRString(newValue), withNameField: NameField(name)) }
     }
+
     
+    /// Returns the String value for the nameField if the item exists and it contains an String value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(nameField: NameField) -> String? {
         get { return dictionaryFindItem(nameField)?.string }
         set { updateItem(newValue, withNameField: nameField) }
     }
+
+    
+    /// Returns the BRString value for the name if the item exists and it contains an BRString value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
 
     subscript(name: String) -> BRString? {
         get { return dictionaryFindItem(NameField(name))?.brString }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
+    
+    /// Returns the BRString value for the nameField if the item exists and it contains an BRString value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(nameField: NameField) -> BRString? {
         get { return dictionaryFindItem(nameField)?.brString }
         set { updateItem(newValue, withNameField: nameField) }
     }
+
+    
+    /// Returns the BRCrcString value for the name if the item exists and it contains an BRCrcString value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
 
     subscript(name: String) -> BRCrcString? {
         get { return dictionaryFindItem(NameField(name))?.crcString }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
+    
+    /// Returns the BRCrcString value for the nameField if the item exists and it contains an BRCrcString value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(nameField: NameField) -> BRCrcString? {
         get { return dictionaryFindItem(nameField)?.crcString }
         set { updateItem(newValue, withNameField: nameField) }
     }
+
+    
+    /// Returns the Data value for the name if the item exists and it contains an Data value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
 
     subscript(name: String) -> Data? {
         get { return dictionaryFindItem(NameField(name))?.binary }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
     
+    
+    /// Returns the Data value for the nameField if the item exists and it contains an Data value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(nameField: NameField) -> Data? {
         get { return dictionaryFindItem(nameField)?.binary }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
+    
+    /// Returns the BRCrcBinary value for the name if the item exists and it contains an BRCrcBinary value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(name: String) -> BRCrcBinary? {
         get { return dictionaryFindItem(NameField(name))?.crcBinary }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
+
     
+    /// Returns the BRCrcBinary value for the nameField if the item exists and it contains an BRCrcBinary value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(nameField: NameField) -> BRCrcBinary? {
         get { return dictionaryFindItem(nameField)?.crcBinary }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
+    
+    /// Returns the UUID value for the name if the item exists and it contains an UUID value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(name: String) -> UUID? {
         get { return dictionaryFindItem(NameField(name))?.uuid }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
+
     
+    /// Returns the UUID value for the nameField if the item exists and it contains an UUID value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(nameField: NameField) -> UUID? {
         get { return dictionaryFindItem(nameField)?.uuid }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
+    
+    /// Returns the BRColor value for the name if the item exists and it contains an BRColor value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(name: String) -> BRColor? {
         get { return dictionaryFindItem(NameField(name))?.color }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
+
     
+    /// Returns the BRColor value for the nameField if the item exists and it contains an BRColor value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(nameField: NameField) -> BRColor? {
         get { return dictionaryFindItem(nameField)?.color }
         set { updateItem(newValue, withNameField: nameField) }
     }
 
+    
+    /// Returns the BRFont value for the name if the item exists and it contains an BRFont value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(name: String) -> BRFont? {
         get { return dictionaryFindItem(NameField(name))?.font }
         set { updateItem(newValue, withNameField: NameField(name)) }
     }
+
     
+    /// Returns the BRFont value for the nameField if the item exists and it contains an BRFont value. Returns nil if the portal is invalid, the items does not exist or the item is not of the right type.
+
     subscript(nameField: NameField) -> BRFont? {
         get { return dictionaryFindItem(nameField)?.font }
         set { updateItem(newValue, withNameField: nameField) }

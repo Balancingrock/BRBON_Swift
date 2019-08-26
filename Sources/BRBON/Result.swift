@@ -3,7 +3,7 @@
 //  File:       Results.swift
 //  Project:    BRBON
 //
-//  Version:    1.0.0
+//  Version:    1.0.1
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.0.1 - Documentation update
 // 1.0.0 - Removed older history
 //
 // =====================================================================================================================
@@ -47,35 +48,153 @@ import Foundation
 
 public enum ErrorCode: Int, CustomStringConvertible {
 
+    
+    /// Generated if a NameField could not be created
+    
     case nameFieldError = 1
+    
+    
+    /// Generated if an attempt is made to increase the storage area of a non-container item
+    
     case outOfStorage = 2
+    
+    
+    /// Generated if an attempt is made to add a non-container item manager to a table
+    
     case dataInconsistency = 3
+    
+    
+    /// Generated if an index is lower than zero
+    
     case indexBelowLowerBound = 5
+    
+    
+    /// Generated if an index is >= count
+    
     case indexAboveHigherBound = 6
+    
+    
+    /// Generated if no item can be found with the given name
+    
     case itemNotFound = 8
+    
+    
+    /// Generated if an optional input value should have had a value
+    
     case missingValue = 9
+    
+    
+    /// Generated if it was necessary to increase a item's size, but this was not possible
+    
     case increaseFailed = 10
+    
+    
+    /// Not used
+    
     case illegalNameField = 11
+    
+    
+    /// Generated if an attempt is made to change the type in an item or element
+    
     case typeConflict = 12
+    
+    
+    /// Generated if an operation is attemped on a type that does not support it
+    
     case operationNotSupported = 13
+    
+    
+    /// Not used
+    
     case arrayMustContainAnElement = 14
+    
+    
+    /// Not used
+    
     case valueByteCountTooLarge = 15
+    
+    
+    /// Not used
+    
     case valueByteCountTooSmall = 16
+    
+    
+    /// Not used
+    
     case cannotConvertStringToUtf8 = 17
+    
+    
+    /// Not used
+    
     case notAnArray = 18
+    
+    
+    /// Not used
+    
     case allDictionaryKeysMustBeString = 19
+    
+    
+    /// Not used
+    
     case emptyKey = 20
+    
+    
+    /// Generated when an attempt is made to use an invalid portal
+    
     case portalInvalid = 21
+    
+    
+    /// Generated if a table column descriptor could not be constructed from the memory contents
+    
     case invalidTableColumnType = 22
+    
+    
+    /// Generated if a column was not present in the table
+    
     case columnNotFound = 23
+    
+    
+    /// Generated if table does not contain a column with the given name
+    
     case nameExists = 24
+    
+    
+    /// Generated if an amount specified cannot be valid (either nagative or < Int32'max)
+    
     case illegalAmount = 25
+    
+    
+    /// Generated if a namefield could not be created
+    
     case missingName = 26
+    
+    
+    /// Not used
+    
     case noNameAllowed = 27
+    
+    
+    /// Generated if an amount is larger than Int32.max
+    
     case itemByteCountOutOfRange = 28
+    
+    
+    /// Generated if a memory content cannot be converted to a type indicator
+    
     case illegalTypeFieldValue = 29
+    
+    
+    /// Generated if the index is missing from a table field portal
+    
     case missingIndex = 30
+    
+    
+    /// Generated if the column is missing from a table field portal
+    
     case missingColumn = 31
+    
+    
+    /// Returns a string describing the enum
     
     public var description: String {
         switch self {
@@ -112,11 +231,28 @@ public enum ErrorCode: Int, CustomStringConvertible {
     }
 }
 
+
+/// The result from some BRBON functions
+
 public enum Result: CustomStringConvertible, Equatable {
+
+    
+    /// The operation succeeded
     
     case success
+    
+    
+    /// If no action could be taken or was taken
+    
     case noAction
+    
+    
+    /// An error condition occured
+    
     case error(ErrorCode)
+    
+    
+    /// The CustomStringConvertible protocol
     
     public var description: String {
         switch self {
@@ -125,6 +261,9 @@ public enum Result: CustomStringConvertible, Equatable {
         case .error(let code): return "En error occured, code = \(code)"
         }
     }
+    
+    
+    /// The Equatable protocol
     
     public static func == (lhs: Result, rhs: Result) -> Bool {
         switch lhs {

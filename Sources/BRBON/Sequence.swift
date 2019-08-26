@@ -3,7 +3,7 @@
 //  File:       Sequence.swift
 //  Project:    BRBON
 //
-//  Version:    1.0.0
+//  Version:    1.0.1
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.0.1 - Replaced var by var internal definitions by internal on the extension
 // 1.0.0 - Removed older history
 //
 // =====================================================================================================================
@@ -77,12 +78,12 @@ fileprivate extension UnsafeMutableRawPointer {
 
 // Item access
 
-extension Portal {
+internal extension Portal {
     
     
     /// The number of items in the dictionary this portal refers to.
     
-    internal var _sequenceItemCount: Int {
+    var _sequenceItemCount: Int {
         get { return Int(_valuePtr.sequenceItemCount(endianness)) }
         set { _valuePtr.setSequenceItemCount(to: UInt32(newValue), endianness) }
     }
@@ -90,7 +91,7 @@ extension Portal {
     
     /// The total area used in the value field.
     
-    internal var _sequenceValueFieldUsedByteCount: Int {
+    var _sequenceValueFieldUsedByteCount: Int {
         var seqItemPtr = itemPtr.itemValueFieldPtr.sequenceItemBasePtr
         for _ in 0 ..< _sequenceItemCount {
             seqItemPtr = seqItemPtr.nextItemPtr(endianness)
@@ -105,7 +106,7 @@ extension Portal {
     ///
     /// - Returns: A pointer to the first unused byte in the value field.
     
-    internal var _sequenceAfterLastItemPtr: UnsafeMutableRawPointer {
+    var _sequenceAfterLastItemPtr: UnsafeMutableRawPointer {
         var ptr = itemPtr.itemValueFieldPtr.sequenceItemBasePtr
         var itterations = _sequenceItemCount
         while itterations > 0 {
@@ -124,7 +125,7 @@ extension Portal {
     ///
     /// - Returns an active portal that refers to the requested item.
     
-    internal func _sequencePortalForItem(at index: Int) -> Portal {
+    func _sequencePortalForItem(at index: Int) -> Portal {
         
         var ptr = itemPtr.itemValueFieldPtr.sequenceItemBasePtr
         var c = 0
@@ -142,7 +143,7 @@ extension Portal {
     ///
     /// - Returns: success or an error indicator.
     
-    internal func _sequenceRemoveItem(atIndex index: Int) -> Result {
+    func _sequenceRemoveItem(atIndex index: Int) -> Result {
         
         let itm = _sequencePortalForItem(at: index)
         let aliPtr = _sequenceAfterLastItemPtr
@@ -172,7 +173,7 @@ extension Portal {
     ///
     /// - Returns: 'success' or an error indicator.
     
-    internal func _sequenceInsertItem(_ value: Coder, atIndex index: Int, withNameField nameField: NameField? = nil) -> Result {
+    func _sequenceInsertItem(_ value: Coder, atIndex index: Int, withNameField nameField: NameField? = nil) -> Result {
         
         
         // Ensure that there is enough space available
@@ -222,7 +223,7 @@ extension Portal {
     ///
     /// - Returns: 'success' or an error indicator.
     
-    internal func _sequenceInsertItem(_ value: ItemManager, atIndex index: Int, withNameField nameField: NameField? = nil) -> Result {
+    func _sequenceInsertItem(_ value: ItemManager, atIndex index: Int, withNameField nameField: NameField? = nil) -> Result {
         
         
         // Ensure that there is enough space available
@@ -263,12 +264,12 @@ extension Portal {
         return .success
     }
 
-    internal func _sequenceEnsureDataStorage(of bytes: Int) -> Result {
+    func _sequenceEnsureDataStorage(of bytes: Int) -> Result {
         let necessaryValueFieldByteCount = sequenceItemBaseOffset + bytes
         return _sequenceEnsureValueFieldByteCount(of: necessaryValueFieldByteCount)
     }
     
-    internal func _sequenceEnsureValueFieldByteCount(of bytes: Int) -> Result {
+    func _sequenceEnsureValueFieldByteCount(of bytes: Int) -> Result {
         if bytes > currentValueFieldByteCount {
             let necessaryItemByteCount = itemHeaderByteCount + _itemNameFieldByteCount + bytes
             return increaseItemByteCount(to: necessaryItemByteCount)
@@ -285,7 +286,7 @@ extension Portal {
     ///
     /// - Returns: Either .success or an error indicator.
     
-    internal func _sequenceUpdateItem(_ value: Coder, atIndex index: Int) -> Result {
+    func _sequenceUpdateItem(_ value: Coder, atIndex index: Int) -> Result {
         
         let item = _sequencePortalForItem(at: index)
         
@@ -304,7 +305,7 @@ extension Portal {
     ///
     /// - Returns: Either .success or an error indicator.
     
-    internal func _sequenceUpdateItem(_ value: ItemManager, atIndex index: Int) -> Result {
+    func _sequenceUpdateItem(_ value: ItemManager, atIndex index: Int) -> Result {
         
         let item = _sequencePortalForItem(at: index)
         

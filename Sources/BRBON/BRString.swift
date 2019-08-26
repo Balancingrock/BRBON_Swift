@@ -3,7 +3,7 @@
 //  File:       BRString.swift
 //  Project:    BRBON
 //
-//  Version:    1.0.0
+//  Version:    1.0.1
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.0.1 - Documentation updates
 // 1.0.0 - Removed older history
 //
 // =====================================================================================================================
@@ -130,6 +131,9 @@ public struct BRString {
 
 extension BRString: Equatable {
     
+    
+    /// Implements the Equatable protocol
+
     public static func == (lhs: BRString, rhs: BRString) -> Bool {
         return lhs.utf8Code == rhs.utf8Code
     }
@@ -140,10 +144,19 @@ extension BRString: Equatable {
 
 extension BRString: Coder {
     
+
+    /// Implementation of the `Coder` protocol
+
     public var itemType: ItemType { return ItemType.string }
+
     
+    /// Implementation of the `Coder` protocol
+
     public var valueByteCount: Int { return stringUtf8CodeOffset + utf8Code.count }
+
     
+    /// Implementation of the `Coder` protocol
+
     public func copyBytes(to ptr: UnsafeMutableRawPointer, _ endianness: Endianness) {
         ptr.setStringUtf8Code(to: utf8Code, endianness)
     }

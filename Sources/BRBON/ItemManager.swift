@@ -3,7 +3,7 @@
 //  File:       ItemManager
 //  Project:    BRBON
 //
-//  Version:    1.0.0
+//  Version:    1.0.1
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.0.1 - Documentation update
 // 1.0.0 - Removed older history
 //
 // =====================================================================================================================
@@ -213,6 +214,12 @@ fileprivate class ActivePortals {
 }
 
 
+/// ItemManagers are the top level objects for BRBON hierarchies.
+///
+/// An item manager contains 1 top level item, this top level item can contain a hierachy of child items. Typically the top level item is either a Dictionary, Sequence, Array or Table. This top level object is accessed by the _root_ member of the item manager.
+///
+/// There are three ways to create an ItemManager, use one of the 'create...' operations, create one from file/data or create a copy from an existing ItemManager.
+
 public final class ItemManager {
 
     
@@ -221,7 +228,7 @@ public final class ItemManager {
     public let endianness: Endianness
     
     
-    /// The number of bytes with which to increment the buffer size if there is insufficient free space available.
+    /// The number of bytes by which to increment the internal buffer if there is insufficient free space available for a new item.
     
     public var bufferIncrements: Int = 1
 

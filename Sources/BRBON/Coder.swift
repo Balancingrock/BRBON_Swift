@@ -3,7 +3,7 @@
 //  File:       Coder.swift
 //  Project:    BRBON
 //
-//  Version:    1.0.0
+//  Version:    1.0.1
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.0.1 - Documentation updates
 // 1.0.0 - Removed older history
 //
 // =====================================================================================================================
@@ -83,6 +84,9 @@ public protocol Coder {
 // Default implementations
 
 extension Coder {
+    
+    
+    /// Default implementation of minimumValueFieldByteCount of the Coder protocol
     
     public var minimumValueFieldByteCount: Int {
         return itemType.usesSmallValue ? 0 : valueByteCount.roundUpToNearestMultipleOf8()

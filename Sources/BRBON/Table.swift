@@ -3,7 +3,7 @@
 //  File:       Table.swift
 //  Project:    BRBON
 //
-//  Version:    1.0.0
+//  Version:    1.0.1
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.0.1 - Documentation update
 // 1.0.0 - Removed older history
 //
 // =====================================================================================================================
@@ -720,7 +721,7 @@ extension Portal {
 extension Portal {
     
     
-    /// Return a portal for the request table value field.
+    /// Return a portal for the requested table value field.
     ///
     /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remain constant over many subscript requests.
     ///
@@ -745,7 +746,7 @@ extension Portal {
     }
     
     
-    /// Return a portal for the request table value field.
+    /// Return a portal for the requested table value field.
     ///
     /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remain constant over many subscript requests.
     ///
@@ -769,7 +770,7 @@ extension Portal {
     }
     
     
-    /// Return a portal for the request table value field.
+    /// Return a portal for the requested table value field.
     ///
     /// - Parameters:
     ///   - row: The row for which to retrieve the portal.
@@ -791,173 +792,591 @@ extension Portal {
     }
     
     
+    /// Return a bool for the requested table value field.
+    ///
+    /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remains constant over many subscript requests.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The namefield for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+
     public subscript(row: Int, column: NameField) -> Bool? {
         get { return self[row, column].bool }
         set { self[row, column].bool = newValue }
     }
+
+    
+    /// Return a bool for the requested table value field.
+    ///
+    /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remains constant over many subscript requests.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The name for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+
     public subscript(row: Int, column: String) -> Bool? {
         get { return self[row, column].bool }
         set { self[row, column].bool = newValue }
     }
+
+    
+    /// Return a bool for the requested table value field.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The index for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: Int) -> Bool? {
         get { return self[row, column].bool }
         set { self[row, column].bool = newValue }
     }
 
     
+    
+    
+    /// Return a UInt8 for the requested table value field.
+    ///
+    /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remains constant over many subscript requests.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The namefield for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: NameField) -> UInt8? {
         get { return self[row, column].uint8 }
         set { self[row, column].uint8 = newValue }
     }
+    
+    
+    /// Return a UInt8 for the requested table value field.
+    ///
+    /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remains constant over many subscript requests.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The name for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: String) -> UInt8? {
         get { return self[row, column].uint8 }
         set { self[row, column].uint8 = newValue }
     }
+    
+    
+    /// Return a UInt8 for the requested table value field.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The index for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: Int) -> UInt8? {
         get { return self[row, column].uint8 }
         set { self[row, column].uint8 = newValue }
     }
 
     
+    
+    
+    /// Return a UInt16 for the requested table value field.
+    ///
+    /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remains constant over many subscript requests.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The namefield for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: NameField) -> UInt16? {
         get { return self[row, column].uint16 }
         set { self[row, column].uint16 = newValue }
     }
+    
+    
+    /// Return a UInt16 for the requested table value field.
+    ///
+    /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remains constant over many subscript requests.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The name for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: String) -> UInt16? {
         get { return self[row, column].uint16 }
         set { self[row, column].uint16 = newValue }
     }
+    
+    
+    /// Return a UInt16 for the requested table value field.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The index for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: Int) -> UInt16? {
         get { return self[row, column].uint16 }
         set { self[row, column].uint16 = newValue }
     }
 
     
+    
+    
+    /// Return a UInt32 for the requested table value field.
+    ///
+    /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remains constant over many subscript requests.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The namefield for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: NameField) -> UInt32? {
         get { return self[row, column].uint32 }
         set { self[row, column].uint32 = newValue }
     }
+
+    
+    /// Return a UInt32 for the requested table value field.
+    ///
+    /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remains constant over many subscript requests.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The name for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: String) -> UInt32? {
         get { return self[row, column].uint32 }
         set { self[row, column].uint32 = newValue }
     }
+
+    
+    /// Return a UInt32 for the requested table value field.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The index for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: Int) -> UInt32? {
         get { return self[row, column].uint32 }
         set { self[row, column].uint32 = newValue }
     }
 
     
+    
+    
+    /// Return a UInt64 for the requested table value field.
+    ///
+    /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remains constant over many subscript requests.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The namefield for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: NameField) -> UInt64? {
         get { return self[row, column].uint64 }
         set { self[row, column].uint64 = newValue }
     }
+    
+    
+    /// Return a UInt64 for the requested table value field.
+    ///
+    /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remains constant over many subscript requests.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The name for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: String) -> UInt64? {
         get { return self[row, column].uint64 }
         set { self[row, column].uint64 = newValue }
     }
+    
+    
+    /// Return a UInt64 for the requested table value field.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The index for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: Int) -> UInt64? {
         get { return self[row, column].uint64 }
         set { self[row, column].uint64 = newValue }
     }
 
     
+    
+    
+    /// Return a Int8 for the requested table value field.
+    ///
+    /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remains constant over many subscript requests.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The namefield for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: NameField) -> Int8? {
         get { return self[row, column].int8 }
         set { self[row, column].int8 = newValue }
     }
+    
+    
+    /// Return a Int8 for the requested table value field.
+    ///
+    /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remains constant over many subscript requests.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The name for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: String) -> Int8? {
         get { return self[row, column].int8 }
         set { self[row, column].int8 = newValue }
     }
+    
+    
+    /// Return a Int8 for the requested table value field.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The index for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: Int) -> Int8? {
         get { return self[row, column].int8 }
         set { self[row, column].int8 = newValue }
     }
     
     
+    
+    
+    /// Return a Int16 for the requested table value field.
+    ///
+    /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remains constant over many subscript requests.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The namefield for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: NameField) -> Int16? {
         get { return self[row, column].int16 }
         set { self[row, column].int16 = newValue }
     }
+    
+    
+    /// Return a Int16 for the requested table value field.
+    ///
+    /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remains constant over many subscript requests.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The name for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: String) -> Int16? {
         get { return self[row, column].int16 }
         set { self[row, column].int16 = newValue }
     }
+    
+    
+    /// Return a Int16 for the requested table value field.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The index for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: Int) -> Int16? {
         get { return self[row, column].int16 }
         set { self[row, column].int16 = newValue }
     }
     
     
+    
+    
+    /// Return a Int32 for the requested table value field.
+    ///
+    /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remains constant over many subscript requests.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The namefield for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: NameField) -> Int32? {
         get { return self[row, column].int32 }
         set { self[row, column].int32 = newValue }
     }
+    
+    
+    /// Return a Int32 for the requested table value field.
+    ///
+    /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remains constant over many subscript requests.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The name for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: String) -> Int32? {
         get { return self[row, column].int32 }
         set { self[row, column].int32 = newValue }
     }
+    
+    
+    /// Return a Int32 for the requested table value field.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The index for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: Int) -> Int32? {
         get { return self[row, column].int32 }
         set { self[row, column].int32 = newValue }
     }
     
     
+    
+    
+    /// Return a Int64 for the requested table value field.
+    ///
+    /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remains constant over many subscript requests.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The namefield for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: NameField) -> Int64? {
         get { return self[row, column].int64 }
         set { self[row, column].int64 = newValue }
     }
+    
+    
+    /// Return a Int64 for the requested table value field.
+    ///
+    /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remains constant over many subscript requests.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The name for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: String) -> Int64? {
         get { return self[row, column].int64 }
         set { self[row, column].int64 = newValue }
     }
+    
+    
+    /// Return a Int64 for the requested table value field.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The index for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: Int) -> Int64? {
         get { return self[row, column].int64 }
         set { self[row, column].int64 = newValue }
     }
     
 
+    
+    
+    /// Return a Float32 for the requested table value field.
+    ///
+    /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remains constant over many subscript requests.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The namefield for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: NameField) -> Float32? {
         get { return self[row, column].float32 }
         set { self[row, column].float32 = newValue }
     }
+    
+    
+    /// Return a Float32 for the requested table value field.
+    ///
+    /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remains constant over many subscript requests.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The name for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: String) -> Float32? {
         get { return self[row, column].float32 }
         set { self[row, column].float32 = newValue }
     }
+    
+    
+    /// Return a Float32 for the requested table value field.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The index for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: Int) -> Float32? {
         get { return self[row, column].float32 }
         set { self[row, column].float32 = newValue }
     }
     
     
+    
+    
+    /// Return a Float64 for the requested table value field.
+    ///
+    /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remains constant over many subscript requests.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The namefield for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: NameField) -> Float64? {
         get { return self[row, column].float64 }
         set { self[row, column].float64 = newValue }
     }
+    
+    
+    /// Return a Float64 for the requested table value field.
+    ///
+    /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remains constant over many subscript requests.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The name for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: String) -> Float64? {
         get { return self[row, column].float64 }
         set { self[row, column].float64 = newValue }
     }
+    
+    
+    /// Return a Float64 for the requested table value field.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The index for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: Int) -> Float64? {
         get { return self[row, column].float64 }
         set { self[row, column].float64 = newValue }
     }
 
     
+    
+    
+    /// Return a String for the requested table value field.
+    ///
+    /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remains constant over many subscript requests.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The namefield for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: NameField) -> String? {
         get { return self[row, column].string }
         set { self[row, column].string = newValue }
     }
+    
+    
+    /// Return a String for the requested table value field.
+    ///
+    /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remains constant over many subscript requests.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The name for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: String) -> String? {
         get { return self[row, column].string }
         set { self[row, column].string = newValue }
     }
+    
+    
+    /// Return a String for the requested table value field.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The index for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: Int) -> String? {
         get { return self[row, column].string }
         set { self[row, column].string = newValue }
     }
 
+    
+    
+    
+    /// Return the Data of the requested table value field.
+    ///
+    /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remains constant over many subscript requests.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The namefield for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
     
     public subscript(row: Int, column: NameField) -> Data? {
         get {
@@ -973,6 +1392,18 @@ extension Portal {
             }
         }
     }
+    
+    
+    /// Return the Data of the requested table value field.
+    ///
+    /// - Note: The 'subscript[Int, Int]' is faster, consider using that version if the column remains constant over many subscript requests.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The name for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: String) -> Data? {
         get {
             if isBinary { return self[row, column].binary }
@@ -987,6 +1418,16 @@ extension Portal {
             }
         }
     }
+    
+    
+    /// Return the Data of the requested table value field.
+    ///
+    /// - Parameters:
+    ///   - row: The row for which to retrieve the portal.
+    ///   - column: The index for the column of the portal to retrieve.
+    ///
+    /// - Returns: The requested value or nil if either column or row could not be matched.
+    
     public subscript(row: Int, column: Int) -> Data? {
         get {
             if isBinary { return self[row, column].binary }
@@ -1019,7 +1460,6 @@ extension Portal {
         guard isTable else { return nil }
         return _tableRowByteCount
     }
-    
     
     
     

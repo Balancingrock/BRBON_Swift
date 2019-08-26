@@ -3,7 +3,7 @@
 //  File:       Array.swift
 //  Project:    BRBON
 //
-//  Version:    1.0.0
+//  Version:    1.0.1
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.0.1 - Documentation update
 // 1.0.0 - Removed older history
 //
 // =====================================================================================================================
@@ -399,11 +400,11 @@ extension Portal {
     /// - Parameter value: The value to be appended.
     ///
     /// - Returns:
-    ///   success: When the value was appended
+    ///   - success: When the value was appended
     ///
-    ///   noAction: If the value was nil or a Null
+    ///   - noAction: If the value was nil or a Null
     ///
-    ///   error(code): If an error prevented the completion, de code details the kind of error.
+    ///   - error(code): If an error prevented the completion, de code details the kind of error.
     
     @discardableResult
     public func appendElement(_ value: Coder?) -> Result {
@@ -441,101 +442,166 @@ extension Portal {
         return .success
     }
     
+    
+    /// Adds an array of elements as an arrayItem to the table
+    
+    @discardableResult
     public func appendElement(_ value: Array<Bool>?) -> Result {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
     }
     
+    
+    /// Adds an array of elements as an arrayItem to the table
+    
+    @discardableResult
     public func appendElement(_ value: Array<Int8>?) -> Result {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
     }
     
+    
+    /// Adds an array of elements as an arrayItem to the table
+    
+    @discardableResult
     public func appendElement(_ value: Array<Int16>?) -> Result {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
     }
     
+    
+    /// Adds an array of elements as an arrayItem to the table
+    
+    @discardableResult
     public func appendElement(_ value: Array<Int32>?) -> Result {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
     }
     
+    
+    /// Adds an array of elements as an arrayItem to the table
+    
+    @discardableResult
     public func appendElement(_ value: Array<Int64>?) -> Result {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
     }
     
+    
+    /// Adds an array of elements as an arrayItem to the table
+    
+    @discardableResult
     public func appendElement(_ value: Array<UInt8>?) -> Result {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
     }
     
+    
+    /// Adds an array of elements as an arrayItem to the table
+    
+    @discardableResult
     public func appendElement(_ value: Array<UInt16>?) -> Result {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
     }
     
+    
+    /// Adds an array of elements as an arrayItem to the table
+    
+    @discardableResult
     public func appendElement(_ value: Array<UInt32>?) -> Result {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
     }
     
+    
+    /// Adds an array of elements as an arrayItem to the table
+    
+    @discardableResult
     public func appendElement(_ value: Array<UInt64>?) -> Result {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
     }
     
+    
+    /// Adds an array of elements as an arrayItem to the table
+    
+    @discardableResult
     public func appendElement(_ value: Array<Float32>?) -> Result {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
     }
     
+    
+    /// Adds an array of elements as an arrayItem to the table
+    
+    @discardableResult
     public func appendElement(_ value: Array<Float64>?) -> Result {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
     }
     
+    
+    /// Adds an array of elements as an arrayItem to the table
+    
+    @discardableResult
     public func appendElement(_ value: Array<String>?) -> Result {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
     }
     
+    
+    /// Adds an array of elements as an arrayItem to the table
+    
+    @discardableResult
     public func appendElement(_ value: Array<Data>?) -> Result {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
     }
     
+    
+    /// Adds an array of elements as an arrayItem to the table
+    
+    @discardableResult
     public func appendElement(_ value: Array<UUID>?) -> Result {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
     }
     
+    
+    /// Adds an array of elements as an arrayItem to the table
+    
+    @discardableResult
     public func appendElement(_ value: Array<NSFont>?) -> Result {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
     }
     
+    
+    /// Adds an array of elements as an arrayItem to the table
+    
+    @discardableResult
     public func appendElement(_ value: Array<NSColor>?) -> Result {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
     }
+    
     
     /// Appends an array of values to the end of an Array item.
     ///
