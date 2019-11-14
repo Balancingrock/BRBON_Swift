@@ -80,6 +80,16 @@ The API will maintain the pointer -used by a portal- to stay in synch with mutat
 
 # Version history
 
+
+#### 1.1.0
+
+- Bugfix: increasing the size of a table caused failures for named tables
+- Added test to invoke bug and show that it is resolved
+
+#### 1.0.1
+
+- Documentation updates
+
 #### 1.0.0
 
 - Upped to 1.0.0 for Swiftfire

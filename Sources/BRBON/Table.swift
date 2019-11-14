@@ -3,7 +3,7 @@
 //  File:       Table.swift
 //  Project:    BRBON
 //
-//  Version:    1.0.1
+//  Version:    1.1.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.1.0 - Bugfix for cases where a table name was not taken into account when increasing the size of a table
 // 1.0.1 - Documentation update
 // 1.0.0 - Removed older history
 //
@@ -564,7 +565,8 @@ extension Portal {
         let oldRowByteCount = _tableRowByteCount
         let newRowByteCount = oldRowByteCount + columnFieldByteCountIncrease
         let newTableContentByteCount = _tableRowCount * newRowByteCount
-        let necessaryItemByteCount = itemHeaderByteCount + _tableRowsOffset + newTableContentByteCount
+//  pre bugfix      let necessaryItemByteCount = itemHeaderByteCount + _tableRowsOffset + newTableContentByteCount
+        let necessaryItemByteCount = itemPtr.itemHeaderAndNameByteCount + _tableRowsOffset + newTableContentByteCount
         
         if _itemByteCount < necessaryItemByteCount {
             let result = increaseItemByteCount(to: necessaryItemByteCount)
@@ -1944,7 +1946,8 @@ extension Portal {
         let necessaryValueFieldByteCount = _tableRowsOffset + ((_tableRowCount + amount) * _tableRowByteCount)
         
         if currentValueFieldByteCount < necessaryValueFieldByteCount {
-            let result = increaseItemByteCount(to: itemHeaderByteCount + necessaryValueFieldByteCount)
+// pre bugfix           let result = increaseItemByteCount(to: itemHeaderByteCount + necessaryValueFieldByteCount)
+            let result = increaseItemByteCount(to: itemPtr.itemHeaderAndNameByteCount + necessaryValueFieldByteCount)
             guard result == .success else { return result }
         }
         
