@@ -3,7 +3,7 @@
 //  File:       Portal.swift
 //  Project:    BRBON
 //
-//  Version:    1.0.1
+//  Version:    1.2.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.2.0 - Added CustomStringConvertable and CustomDebugStringConvertable
 // 1.0.1 - Documentation update
 // 1.0.0 - Removed older history
 //
@@ -599,5 +600,210 @@ extension Portal {
         if let column = column { return _tableGetColumnType(for: column) == ItemType.table }
         if index != nil { return itemPtr.itemValueFieldPtr.arrayElementType == ItemType.table.rawValue }
         return itemPtr.itemType == ItemType.table.rawValue
+    }
+}
+
+
+// MARK: - Text representation
+
+extension Portal: CustomStringConvertible {
+    
+    fileprivate func valueDescription(prefix: String) -> String {
+        switch itemType! {
+        case .null: return "null"
+        case .bool: return "\(bool!)"
+        case .int8: return "\(int8!)"
+        case .int16: return "\(int16!)"
+        case .int32: return "\(int32!)"
+        case .int64: return "\(int64!)"
+        case .uint8: return "\(uint8!)"
+        case .uint16: return "\(uint16!)"
+        case .uint32: return "\(uint32!)"
+        case .uint64: return "\(uint64!)"
+        case .float32: return "\(float32!)"
+        case .float64: return "\(float64!)"
+        case .string: return "\(string!)"
+        case .crcString: return "Crc: \(crc!), String: \(string!)"
+        case .color: return "Red: \(_colorRed), Green: \(_colorGreen), Blue: \(_colorBlue), Alpha: \(_colorAlpha)"
+        case .uuid: return "\(uuid!.uuidString)"
+        case .font: return "Family: \(String(data: font!.familyNameUtf8Code!, encoding: .utf8) ?? "cannot make utf8"), Font: \(String(data: font!.fontNameUtf8Code, encoding: .utf8) ?? "cannot make utf8"), Size: \(font!.pointSize)"
+        case .binary: return "Bytes: \(binary!.count)"
+        case .crcBinary: return "Crc: \(crc!), Bytes: \(binary!.count)"
+        
+        case .array:
+            var txt =
+            """
+            Element type  = \(self._arrayElementType!)
+            Element bytes = \(self._arrayElementByteCount)
+            Element count = \(self._arrayElementCount)
+            Elements:\n
+            """
+            var i = 0
+            forEach { (e) in
+                switch _arrayElementType! {
+                case .null: txt += "\(prefix)\(String(format: "%3d", i)): null\n"
+                case .bool: txt += "\(prefix)\(String(format: "%3d", i)): \(e.bool!)\n"
+                case .int8: txt += "\(prefix)\(String(format: "%3d", i)): \(e.int8!)\n"
+                case .int16: txt += "\(prefix)\(String(format: "%3d", i)): \(e.int16!)\n"
+                case .int32: txt += "\(prefix)\(String(format: "%3d", i)): \(e.int32!)\n"
+                case .int64: txt += "\(prefix)\(String(format: "%3d", i)): \(e.int64!)\n"
+                case .uint8: txt += "\(prefix)\(String(format: "%3d", i)): \(e.uint8!)\n"
+                case .uint16: txt += "\(prefix)\(String(format: "%3d", i)): \(e.uint16!)\n"
+                case .uint32: txt += "\(prefix)\(String(format: "%3d", i)): \(e.uint32!)\n"
+                case .uint64: txt += "\(prefix)\(String(format: "%3d", i)): \(e.uint64!)\n"
+                case .float32: txt += "\(prefix)\(String(format: "%3d", i)): \(e.float32!)\n"
+                case .float64: txt += "\(prefix)\(String(format: "%3d", i)): \(e.float64!)\n"
+                case .string: txt += "\(prefix)\(String(format: "%3d", i)): \(e.string!)\n"
+                case .crcString: txt += "\(prefix)\(String(format: "%3d", i)): Crc: \(e.crc!), String: \(e.string!)\n"
+                case .color: txt += "\(prefix)\(String(format: "%3d", i)): Red: \(e._colorRed), Green: \(e._colorGreen), Blue: \(e._colorBlue), Alpha: \(e._colorAlpha)\n"
+                case .uuid: txt += "\(prefix)\(String(format: "%3d", i)): \(e.uuid!.uuidString)\n"
+                case .font: txt += "\(prefix)\(String(format: "%3d", i)): Family: \(String(data: e.font!.familyNameUtf8Code!, encoding: .utf8) ?? "cannot make utf8"), Font: \(String(data: e.font!.fontNameUtf8Code, encoding: .utf8) ?? "cannot make utf8"), Size: \(font!.pointSize)\n"
+                case .binary: txt += "\(prefix)\(String(format: "%3d", i)): Bytes: \(e.binary!.count)\n"
+                case .crcBinary: txt += "\(prefix)\(String(format: "%3d", i)): Crc: \(e.crc!), Bytes: \(e.binary!.count)\n"
+                case .array, .dictionary, .sequence, .table:
+                    let subs = e.description(prefix: prefix).split(separator: "\n")
+                    let pres = subs.map() { "\(prefix)\(prefix)\($0)" }
+                    let all = pres.joined(separator: "\n")
+                    txt += "\(prefix)\(String(format: "%3d", i)):\n\(all)\n"
+                }
+                i += 1
+            }
+            return txt
+            
+        case .dictionary:
+            var txt =
+            """
+            Item count = \(self.count)
+            Items:\n
+            """
+            forEach { (i) in
+                let id = i.description(prefix: prefix)
+                let subs = id.split(separator: "\n").map { "\(prefix)\($0)" }
+                let tot = subs.joined(separator: "\n")
+                txt += "\(prefix)\(i.itemName!):\n"
+                txt += "\(tot)\n"
+            }
+            return txt
+            
+        case .sequence:
+            var txt =
+            """
+            Item count = \(self.count)
+            Items:\n
+            """
+            var i = 0
+            forEach { (e) in
+                let subs = e.description(prefix: prefix).split(separator: "\n")
+                let pres = subs.map() { "\(prefix)\($0)" }
+                let all = pres.joined(separator: "\n")
+                txt +=
+                """
+                \(prefix)\(i):
+                \(all)\n
+                """
+                i += 1
+            }
+            return txt
+            
+        case .table:
+            var txt =
+            """
+            Row count    = \(self._tableRowCount)
+            Row size     = \(self._tableRowByteCount)
+            Column count = \(self._tableColumnCount)
+            Columns:\n
+            """
+            self.itterateColumnSpecifications { (i, spec) in
+                txt +=
+                """
+                \(prefix)index      = \(i)
+                \(prefix)fieldName  = \(spec.nameField.string)
+                \(prefix)fieldType  = \(spec.fieldType)
+                \(prefix)fieldSize  = \(spec.fieldByteCount)\n
+                """
+            }
+            txt +=
+            """
+            Rows:
+            """
+            var row = 0
+            while row < _tableRowCount {
+                txt +=
+                """
+                \(prefix)\(String(format: "%3d", row)):\n
+                """
+                self.itterateFields(ofRow: row) { (field, col) -> Bool in
+                    txt += "\(prefix)\(prefix)\(_tableGetColumnName(for: col)):"
+                    switch _tableGetColumnType(for: col) {
+                        case .null, .bool, .int8, .int16, .int32, .int64, .uint8, .uint16, .uint32, .uint64, .float32, .float64, .string, .crcString, .binary, .crcBinary, .uuid, .color, .font:
+                            txt += " \(field.valueDescription(prefix: ""))\n"
+                        case .array, .dictionary, .sequence, .table:
+                            let subs = description(prefix: prefix).split(separator: "\n")
+                            let pres = subs.map() { "\(prefix)\(prefix)\(prefix)\($0)" }
+                            let all = pres.joined(separator: "\n")
+                            txt += "\n\(all)\n"
+                    }
+                    return true
+                }
+                row += 1
+            }
+            return txt
+        }
+    }
+    
+    fileprivate func description(prefix: String) -> String {
+        var txt = ""
+        if isValid {
+            txt +=
+            """
+            \(prefix)itemType       = \(itemType!)
+            \(prefix)itemOptions    = \(itemOptions!)
+            \(prefix)itemFlags      = \(itemFlags!)
+            \(prefix)nameByteCount  = \(_itemNameFieldByteCount)
+            \(prefix)itemByteCount  = \(_itemByteCount)
+            \(prefix)itemValueField = \(String(format: "0x%08X", _itemSmallValue(endianness)))
+            \(prefix)itemName       = \(itemName ?? "(none)")\n
+            """
+            switch itemType! {
+            case .null, .bool, .int8, .int16, .int32, .int64, .uint8, .uint16, .uint32, .uint64, .float32, .float64, .string, .crcString, .binary, .crcBinary, .uuid, .color, .font:
+                txt +=
+                """
+                \(prefix)value          = \(valueDescription(prefix: ""))
+                """
+            case .array, .dictionary, .sequence, .table:
+                let subs = valueDescription(prefix: prefix).split(separator: "\n")
+                let pres = subs.map() { "\(prefix)\(prefix)\($0)" }
+                let all = pres.joined(separator: "\n")
+                txt +=
+                """
+                \(prefix)value:
+                \(all)
+                """
+            }
+        }
+        return txt
+    }
+    
+    public var description: String {
+        let prefix = "    "
+        let txt =
+        """
+        Portal:
+        \(prefix)isValid        = \(isValid)
+        \(prefix)endianness     = \(endianness)
+        \(prefix)index          = \(index != nil ? String(index!) : "nil")
+        \(prefix)column         = \(column != nil ? String(column!) : "nil")
+        \(prefix)refCount       = \(refCount)
+        
+        Item:\n
+        """
+        return txt + description(prefix: prefix)
+    }
+}
+
+
+extension Portal: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        return description
     }
 }

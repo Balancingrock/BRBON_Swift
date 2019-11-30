@@ -3,7 +3,7 @@
 //  File:       Table.swift
 //  Project:    BRBON
 //
-//  Version:    1.1.0
+//  Version:    1.2.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.2.0 - Added ColumnSpecificationItterator and itterateColumnSpecifications
 // 1.1.0 - Bugfix for cases where a table name was not taken into account when increasing the size of a table
 // 1.0.1 - Documentation update
 // 1.0.0 - Removed older history
@@ -1496,6 +1497,30 @@ extension Portal {
         }
         
         return dict
+    }
+    
+    
+    /// Signature of closure used to itterate over the column specifications. Itteration starts at column 0.
+    ///
+    /// - Parameters:
+    ///   - index: The index of the column specification.
+    ///   - cspec: The column specification corresponding to the index.
+
+    public typealias ColumnSpecificationItterator = (_ index: Int, _ cspec: ColumnSpecification) -> Void
+    
+    
+    /// Itterate over the columnspecifications for this table. Itteration starts at 0.
+    ///
+    /// - Parameters:
+    ///   - closure: The closure is executed for each column specification. Itteration starts at column index 0.
+
+    public func itterateColumnSpecifications(_ closure: ColumnSpecificationItterator) {
+        var i = 0
+        while i < _tableColumnCount {
+            let cspec = ColumnSpecification(fromPtr: itemPtr.itemValueFieldPtr, forColumn: i, endianness)!
+            closure(i, cspec)
+            i += 1
+        }
     }
     
     

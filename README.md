@@ -80,6 +80,9 @@ The API will maintain the pointer -used by a portal- to stay in synch with mutat
 
 # Version history
 
+#### 1.2.0
+
+- Added CustomStringConvertible and CustomDebugStringConvertible to Portal
 
 #### 1.1.0
 
