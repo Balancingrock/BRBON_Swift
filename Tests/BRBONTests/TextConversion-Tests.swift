@@ -857,4 +857,96 @@ class TextConversion_Tests: XCTestCase {
         let descr = "\(im.root!)"
         XCTAssertEqual(descr, exp)
     }
+    
+    func testTable() {
+        let col1 = ColumnSpecification(type: .int16, nameField: NameField("col1")!, byteCount: 2)
+        let col2 = ColumnSpecification(type: .dictionary, nameField: NameField("col2")!, byteCount: 48)
+        let col3 = ColumnSpecification(type: .string, nameField: NameField("col3")!, byteCount: 32)
+        var colt = [col1, col2, col3]
+        let im = ItemManager.createTableManager(columns: &colt)
+        im.root!.addRows(2) { (p) in
+            switch p.column {
+            case 0: p.int16 = Int16(200)
+            case 1: p.createFieldDictionary(atRow: p.index!, inColumn: p.column!)
+            case 2: p.string = "str"
+            default: XCTFail()
+            }
+        }
+        im.root![1, "col2"].updateItem(Int32(10101), withNameField: NameField("tpp"))
+        let exp =
+        """
+        Portal:
+            isValid        = true
+            endianness     = little
+            index          = nil
+            column         = nil
+            refCount       = 2
+
+        Item:
+            itemType       = table
+            itemOptions    = none
+            itemFlags      = none
+            nameByteCount  = 0
+            itemByteCount  = 280
+            itemValueField = 0x00000000
+            itemName       = (none)
+            value:
+                Row count    = 2
+                Row size     = 88
+                Column count = 3
+                Columns:
+                    index      = 0
+                        fieldName  = col1
+                        fieldType  = int16
+                        fieldSize  = 8
+                    index      = 1
+                        fieldName  = col2
+                        fieldType  = dictionary
+                        fieldSize  = 48
+                    index      = 2
+                        fieldName  = col3
+                        fieldType  = string
+                        fieldSize  = 32
+                Row:
+                      0:
+                        col1: 200
+                        col2:
+                                itemType       = dictionary
+                                itemOptions    = none
+                                itemFlags      = none
+                                nameByteCount  = 0
+                                itemByteCount  = 24
+                                itemValueField = 0x00000000
+                                itemName       = (none)
+                                value:
+                                    Item count = 0
+                                    Items:
+                        col3: str
+                      1:
+                        col1: 200
+                        col2:
+                                itemType       = dictionary
+                                itemOptions    = none
+                                itemFlags      = none
+                                nameByteCount  = 0
+                                itemByteCount  = 24
+                                itemValueField = 0x00000000
+                                itemName       = (none)
+                                value:
+                                    Item count = 1
+                                    Items:
+                                        tpp:
+                                            itemType       = int32
+                                            itemOptions    = none
+                                            itemFlags      = none
+                                            nameByteCount  = 8
+                                            itemByteCount  = 24
+                                            itemValueField = 0x00002775
+                                            itemName       = tpp
+                                            value          = 10101
+                        col3: str
+        """
+        let descr = "\(im.root!)"
+        XCTAssertEqual(descr, exp)
+    }
 }

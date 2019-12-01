@@ -3,7 +3,7 @@
 //  File:       Portal.swift
 //  Project:    BRBON
 //
-//  Version:    1.2.0
+//  Version:    1.2.1
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.2.1 - Bugfix for table output
 // 1.2.0 - Added CustomStringConvertable and CustomDebugStringConvertable
 // 1.0.1 - Documentation update
 // 1.0.0 - Removed older history
@@ -657,7 +658,7 @@ extension Portal: CustomStringConvertible {
                 case .crcString: txt += "\(prefix)\(String(format: "%3d", i)): Crc: \(e.crc!), String: \(e.string!)\n"
                 case .color: txt += "\(prefix)\(String(format: "%3d", i)): Red: \(e._colorRed), Green: \(e._colorGreen), Blue: \(e._colorBlue), Alpha: \(e._colorAlpha)\n"
                 case .uuid: txt += "\(prefix)\(String(format: "%3d", i)): \(e.uuid!.uuidString)\n"
-                case .font: txt += "\(prefix)\(String(format: "%3d", i)): Family: \(String(data: e.font!.familyNameUtf8Code!, encoding: .utf8) ?? "cannot make utf8"), Font: \(String(data: e.font!.fontNameUtf8Code, encoding: .utf8) ?? "cannot make utf8"), Size: \(font!.pointSize)\n"
+                case .font: txt += "\(prefix)\(String(format: "%3d", i)): Family: \(String(data: e.font!.familyNameUtf8Code!, encoding: .utf8) ?? "cannot make utf8"), Font: \(String(data: e.font!.fontNameUtf8Code, encoding: .utf8) ?? "cannot make utf8"), Size: \(e.font!.pointSize)\n"
                 case .binary: txt += "\(prefix)\(String(format: "%3d", i)): Bytes: \(e.binary!.count)\n"
                 case .crcBinary: txt += "\(prefix)\(String(format: "%3d", i)): Crc: \(e.crc!), Bytes: \(e.binary!.count)\n"
                 case .array, .dictionary, .sequence, .table:
@@ -717,14 +718,14 @@ extension Portal: CustomStringConvertible {
                 txt +=
                 """
                 \(prefix)index      = \(i)
-                \(prefix)fieldName  = \(spec.nameField.string)
-                \(prefix)fieldType  = \(spec.fieldType)
-                \(prefix)fieldSize  = \(spec.fieldByteCount)\n
+                \(prefix)\(prefix)fieldName  = \(spec.nameField.string)
+                \(prefix)\(prefix)fieldType  = \(spec.fieldType)
+                \(prefix)\(prefix)fieldSize  = \(spec.fieldByteCount)\n
                 """
             }
             txt +=
             """
-            Rows:
+            Row:\n
             """
             var row = 0
             while row < _tableRowCount {
@@ -735,10 +736,27 @@ extension Portal: CustomStringConvertible {
                 self.itterateFields(ofRow: row) { (field, col) -> Bool in
                     txt += "\(prefix)\(prefix)\(_tableGetColumnName(for: col)):"
                     switch _tableGetColumnType(for: col) {
-                        case .null, .bool, .int8, .int16, .int32, .int64, .uint8, .uint16, .uint32, .uint64, .float32, .float64, .string, .crcString, .binary, .crcBinary, .uuid, .color, .font:
-                            txt += " \(field.valueDescription(prefix: ""))\n"
+                        case .null: txt += " null\n"
+                        case .bool: txt += " \(field.bool!)\n"
+                        case .int8: txt += " \(field.int8!)\n"
+                        case .int16: txt += " \(field.int16!)\n"
+                        case .int32: txt += " \(field.int32!)\n"
+                        case .int64: txt += " \(field.int64!)\n"
+                        case .uint8: txt += " \(field.uint8!)\n"
+                        case .uint16: txt += " \(field.uint16!)\n"
+                        case .uint32: txt += " \(field.uint32!)\n"
+                        case .uint64: txt += " \(field.uint64!)\n"
+                        case .float32: txt += " \(field.float32!)\n"
+                        case .float64: txt += " \(field.float64!)\n"
+                        case .string: txt += " \(field.string!)\n"
+                    case .crcString: txt += " Crc: \(field.crc!), String: \(field.string!)\n"
+                        case .color: txt += " Red: \(field._colorRed), Green: \(field._colorGreen), Blue: \(field._colorBlue), Alpha: \(field._colorAlpha)\n"
+                        case .uuid: txt += " \(field.uuid!.uuidString)\n"
+                    case .font: txt += " Family: \(String(data: field.font!.familyNameUtf8Code!, encoding: .utf8) ?? "cannot make utf8"), Font: \(String(data: field.font!.fontNameUtf8Code, encoding: .utf8) ?? "cannot make utf8"), Size: \(field.font!.pointSize)\n"
+                        case .binary: txt += " Bytes: \(field.binary!.count)\n"
+                        case .crcBinary: txt += " Crc: \(field.crc!), Bytes: \(field.binary!.count)\n"
                         case .array, .dictionary, .sequence, .table:
-                            let subs = description(prefix: prefix).split(separator: "\n")
+                            let subs = field.description(prefix: prefix).split(separator: "\n")
                             let pres = subs.map() { "\(prefix)\(prefix)\(prefix)\($0)" }
                             let all = pres.joined(separator: "\n")
                             txt += "\n\(all)\n"
