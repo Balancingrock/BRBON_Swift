@@ -3,7 +3,7 @@
 //  File:       Portal.swift
 //  Project:    BRBON
 //
-//  Version:    1.2.2
+//  Version:    1.2.3
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.2.3 - Wrapped all ptest functions in conditional compilation
 // 1.2.2 - Added code for runtime pointer checks when compiler condition PTEST is active
 //       - Bugfix for updating the itemByteCount of container fields in tables
 // 1.2.1 - Bugfix for table output
@@ -57,7 +58,7 @@ import BRUtils
 
 public final class Portal {
 
-    
+    #if PTEST
     /// The ptest must be disabled when moving portals
     
     static var ptest_enabled = true
@@ -89,7 +90,7 @@ public final class Portal {
             fatalError("Illegal value: \(ptest_itemPtr) vs range \(manager.bufferPtr) .. \(manager.bufferPtr.advanced(by: manager.buffer.count))")
         }
     }
-    
+    #endif
     
     /// This pointer points to the first byte of the item.
     //

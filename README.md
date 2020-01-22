@@ -80,6 +80,10 @@ The API will maintain the pointer -used by a portal- to stay in synch with mutat
 
 # Version history
 
+#### 1.2.3
+
+- Wrapped all ptest var/functions in conditional compilation
+
 #### 1.2.2
 
 - Bugfix for item size updates that failed in container items in table fileds when their size was increased
