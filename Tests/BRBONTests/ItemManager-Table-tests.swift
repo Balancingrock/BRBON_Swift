@@ -35,13 +35,10 @@ class ItemManager_Table_tests: XCTestCase {
             0x14, 0x00, 0x00, 0x00,  0x20, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00
+            0x10, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00
             ])
-        
-        exp.withUnsafeBytes() { (ptr: UnsafeRawBufferPointer) -> () in
-            let p = tm.getActivePortal(for: UnsafeMutableRawPointer(mutating: ptr.baseAddress!))
-            XCTAssertTrue(p == tm.root)
-        }
+                
+        XCTAssertEqual(tm.data, exp)
         
         
         // Add a column
@@ -67,10 +64,7 @@ class ItemManager_Table_tests: XCTestCase {
             0x02, 0x61, 0x61, 0x00, 0x00,  0x00, 0x00, 0x00 // UTF8 Area
             ])
         
-        exp.withUnsafeBytes() { (ptr: UnsafeRawBufferPointer) -> () in
-            let p = tm.getActivePortal(for: UnsafeMutableRawPointer(mutating: ptr.baseAddress!))
-            XCTAssertTrue(p == tm.root)
-        }
+        XCTAssertEqual(tm.data, exp)
 
         
         // Add a second column
@@ -104,10 +98,7 @@ class ItemManager_Table_tests: XCTestCase {
             0x02, 0x62, 0x62, 0x00, 0x00,  0x00, 0x00, 0x00  // UTF8 Area
             ])
 
-        exp.withUnsafeBytes() { (ptr: UnsafeRawBufferPointer) -> () in
-            let p = tm.getActivePortal(for: UnsafeMutableRawPointer(mutating: ptr.baseAddress!))
-            XCTAssertTrue(p == tm.root)
-        }
+        XCTAssertEqual(tm.data, exp)
 
         
         // Add a third column
@@ -149,10 +140,7 @@ class ItemManager_Table_tests: XCTestCase {
             0x02, 0x63, 0x63, 0x00, 0x00,  0x00, 0x00, 0x00  // UTF8 Area
             ])
         
-        exp.withUnsafeBytes() { (ptr: UnsafeRawBufferPointer) -> () in
-            let p = tm.getActivePortal(for: UnsafeMutableRawPointer(mutating: ptr.baseAddress!))
-            XCTAssertTrue(p == tm.root)
-        }
+        XCTAssertEqual(tm.data, exp)
 
         
         // Add a single row
@@ -198,10 +186,7 @@ class ItemManager_Table_tests: XCTestCase {
             0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00
             ])
 
-        exp.withUnsafeBytes() { (ptr: UnsafeRawBufferPointer) -> () in
-            let p = tm.getActivePortal(for: UnsafeMutableRawPointer(mutating: ptr.baseAddress!))
-            XCTAssertTrue(p == tm.root)
-        }
+        XCTAssertEqual(tm.data, exp)
 
         
         // Set a field value
@@ -249,10 +234,7 @@ class ItemManager_Table_tests: XCTestCase {
             0x66, 0x66, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00
             ])
         
-        exp.withUnsafeBytes() { (ptr: UnsafeRawBufferPointer) -> () in
-            let p = tm.getActivePortal(for: UnsafeMutableRawPointer(mutating: ptr.baseAddress!))
-            XCTAssertTrue(p == tm.root)
-        }
+        XCTAssertEqual(tm.data, exp)
 
         XCTAssertEqual(tm.root[0, "aa"].bool, true)
         XCTAssertEqual(tm.root[0, "bb"].int64, 0x123456789abcdef0)

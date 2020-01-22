@@ -3,7 +3,7 @@
 //  File:       Dictionary.swift
 //  Project:    BRBON
 //
-//  Version:    1.0.1
+//  Version:    1.2.2
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.2.2 - Added code for runtime pointer checks when compiler condition PTEST is active
 // 1.0.1 - Documentation updates
 // 1.0.0 - Removed older history
 //
@@ -216,6 +217,10 @@ public extension Portal {
                         
             let pOffset = UInt32(manager.bufferPtr.distance(to: itemPtr))
             let ptr = _dictionaryAfterLastItemPtr
+            
+            #if PTEST
+            ptest_ptrInItemTest(ptr, value.valueByteCount)
+            #endif
 
             buildItem(withValue: value, withNameField: nameField, atPtr: ptr, endianness)
             ptr.setItemParentOffset(to: pOffset, endianness)
@@ -302,6 +307,9 @@ public extension Portal {
             let pOffset = manager.bufferPtr.distance(to: itemPtr)
             let dstPtr = _dictionaryAfterLastItemPtr
             
+            #if PTEST
+            ptest_ptrInItemTest(dstPtr, value.root._itemByteCount)
+            #endif
             _ = Darwin.memmove(dstPtr, value.bufferPtr, value.root._itemByteCount)
             
             let p = manager.getActivePortal(for: dstPtr)
@@ -383,7 +391,12 @@ public extension Portal {
         manager.removeActivePortals(atAndAbove: ptr, below: ptr.advanced(by: Int(oldByteCount)))
             
         // Zero the bytes if necessary
-        if ItemManager.startWithZeroedBuffers { Darwin.memset(ptr, 0, Int(oldByteCount)) }
+        if ItemManager.startWithZeroedBuffers {
+            #if PTEST
+            ptest_ptrInItemTest(ptr, Int(oldByteCount))
+            #endif
+            Darwin.memset(ptr, 0, Int(oldByteCount))
+        }
             
         // Create the new item
         buildItem(withValue: value, withNameField: nameField, atPtr: ptr, endianness)
@@ -464,6 +477,9 @@ public extension Portal {
             
         // Zero unused bytes in the old item area (after the new item)
         if ItemManager.startWithZeroedBuffers && (newByteCount < oldByteCount) {
+            #if PTEST
+            ptest_ptrInItemTest(ptr.advanced(by: newByteCount), (oldByteCount - newByteCount))
+            #endif
             Darwin.memset(ptr.advanced(by: newByteCount), 0, (oldByteCount - newByteCount))
         }
             

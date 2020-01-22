@@ -84,10 +84,7 @@ class ItemManager_Array_Tests2: XCTestCase {
             
             ])
         
-        exp.withUnsafeBytes() { (ptr: UnsafeRawBufferPointer) -> () in
-            let p = am.getActivePortal(for: UnsafeMutableRawPointer(mutating: ptr.baseAddress!))
-            XCTAssertTrue(p == am.root)
-        }
+        XCTAssertEqual(am.data, exp)
         
         guard let portal1 = am.root[0][1].portal else { XCTFail(); return }
         guard let portal2 = am.root[1][0].portal else { XCTFail(); return }

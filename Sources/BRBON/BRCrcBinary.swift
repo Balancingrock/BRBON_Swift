@@ -3,7 +3,7 @@
 //  File:       BRCrcBinary.swift
 //  Project:    BRBON
 //
-//  Version:    1.0.1
+//  Version:    1.2.2
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.2.2 - Comment line removed
 // 1.0.1 - Documentation update
 // 1.0.0 - Removed older history
 //
@@ -169,7 +170,6 @@ internal extension Portal {
             return BRCrcBinary(data: _valuePtr.crcBinaryData(endianness), crc: _valuePtr.crcBinaryCrc(endianness))
         }
         set {
-            //let result = ensureValueFieldByteCount(of: crcBinaryDataOffset + newValue.data.count)
             let result = ensureStorageAtValuePtr(of: crcBinaryDataOffset + newValue.data.count)
             guard result == .success else { return }
             

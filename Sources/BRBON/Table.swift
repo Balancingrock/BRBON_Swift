@@ -3,7 +3,7 @@
 //  File:       Table.swift
 //  Project:    BRBON
 //
-//  Version:    1.2.0
+//  Version:    1.2.2
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,8 @@
 //
 // History
 //
+// 1.2.2 - Removed unneeded comment lines
+//       - Renamed a variable for better code readability
 // 1.2.0 - Added ColumnSpecificationItterator and itterateColumnSpecifications
 // 1.1.0 - Bugfix for cases where a table name was not taken into account when increasing the size of a table
 // 1.0.1 - Documentation update
@@ -566,11 +568,10 @@ extension Portal {
         let oldRowByteCount = _tableRowByteCount
         let newRowByteCount = oldRowByteCount + columnFieldByteCountIncrease
         let newTableContentByteCount = _tableRowCount * newRowByteCount
-//  pre bugfix      let necessaryItemByteCount = itemHeaderByteCount + _tableRowsOffset + newTableContentByteCount
-        let necessaryItemByteCount = itemPtr.itemHeaderAndNameByteCount + _tableRowsOffset + newTableContentByteCount
+        let newTableItemByteCount = itemPtr.itemHeaderAndNameByteCount + _tableRowsOffset + newTableContentByteCount
         
-        if _itemByteCount < necessaryItemByteCount {
-            let result = increaseItemByteCount(to: necessaryItemByteCount)
+        if _itemByteCount < newTableItemByteCount {
+            let result = increaseItemByteCount(to: newTableItemByteCount)
             guard result == .success else { return result }
         }
         
@@ -1971,7 +1972,6 @@ extension Portal {
         let necessaryValueFieldByteCount = _tableRowsOffset + ((_tableRowCount + amount) * _tableRowByteCount)
         
         if currentValueFieldByteCount < necessaryValueFieldByteCount {
-// pre bugfix           let result = increaseItemByteCount(to: itemHeaderByteCount + necessaryValueFieldByteCount)
             let result = increaseItemByteCount(to: itemPtr.itemHeaderAndNameByteCount + necessaryValueFieldByteCount)
             guard result == .success else { return result }
         }

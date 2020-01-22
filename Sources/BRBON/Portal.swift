@@ -3,7 +3,7 @@
 //  File:       Portal.swift
 //  Project:    BRBON
 //
-//  Version:    1.2.1
+//  Version:    1.2.2
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,8 @@
 //
 // History
 //
+// 1.2.2 - Added code for runtime pointer checks when compiler condition PTEST is active
+//       - Bugfix for updating the itemByteCount of container fields in tables
 // 1.2.1 - Bugfix for table output
 // 1.2.0 - Added CustomStringConvertable and CustomDebugStringConvertable
 // 1.0.1 - Documentation update
@@ -54,14 +56,61 @@ import BRUtils
 /// Note that is it not necessary to use portals. But there is a performance advantage for using portals if a BRBON hierachy is largely stable. If however the root item hierachy changes a lot (adding and changing data size) then using a lot of portals may slow down access when items are added or increased in size. See the document on performance issues.
 
 public final class Portal {
+
+    
+    /// The ptest must be disabled when moving portals
+    
+    static var ptest_enabled = true
+    
+    
+    /// Tests if the ptr is between itemPtr and itemPtr + _itemByteCount
+    
+    func ptest_ptrInItemTest(_ ptr: UnsafeMutableRawPointer) {
+        if ptest_itemPtr > ptr {
+            fatalError("Illegal value: \(ptr) vs range \(ptest_itemPtr) .. \(ptest_itemPtr.advanced(by: Int(ptest_itemPtr.itemByteCount(machineEndianness))))")
+        }
+        if ptr > ptest_itemPtr.advanced(by: Int(ptest_itemPtr.itemByteCount(machineEndianness))) {
+            fatalError("Illegal value: \(ptr) vs range \(ptest_itemPtr) .. \(ptest_itemPtr.advanced(by: Int(ptest_itemPtr.itemByteCount(machineEndianness))))")
+        }
+    }
+    
+    func ptest_ptrInItemTest(_ ptr: UnsafeMutableRawPointer, _ count: Int) {
+        ptest_ptrInItemTest(ptr)
+        ptest_ptrInItemTest(ptr.advanced(by: count))
+    }
+
+    func ptest_itemPtrValidTest() {
+        if !isValid { return }
+        if manager == nil { fatalError("Manager should not be nil") }
+        if ptest_itemPtr < manager.bufferPtr {
+            fatalError("Illegal value: \(ptest_itemPtr) vs range \(manager.bufferPtr) .. \(manager.bufferPtr.advanced(by: manager.buffer.count))")
+        }
+        if ptest_itemPtr.advanced(by: Int(ptest_itemPtr.itemByteCount(machineEndianness))) > manager.bufferPtr.advanced(by: manager.buffer.count) {
+            fatalError("Illegal value: \(ptest_itemPtr) vs range \(manager.bufferPtr) .. \(manager.bufferPtr.advanced(by: manager.buffer.count))")
+        }
+    }
     
     
     /// This pointer points to the first byte of the item.
     //
     // It is a 'var' because the pointer value must be updated when the data is shifted around by insert/add/remove operations.
-    
+
+    #if PTEST
     internal var itemPtr: UnsafeMutableRawPointer
-    
+    {
+        get {
+            if Portal.ptest_enabled { ptest_itemPtrValidTest() }
+            return ptest_itemPtr
+        }
+        set {
+            ptest_itemPtr = newValue
+            if Portal.ptest_enabled { ptest_itemPtrValidTest() }
+        }
+    }
+    private var ptest_itemPtr: UnsafeMutableRawPointer
+    #else
+    internal var itemPtr: UnsafeMutableRawPointer
+    #endif
     
     /// If the portal refers to an element of an array, or a row in a table, then this is the index of that element/row.
 
@@ -103,7 +152,11 @@ public final class Portal {
     ///   - endianness: The endianness of the data in the item.
     
     internal init(itemPtr: UnsafeMutableRawPointer, index: Int? = nil, column: Int? = nil, manager: ItemManager, endianness: Endianness) {
+        #if PTEST
+        self.ptest_itemPtr = itemPtr
+        #else
         self.itemPtr = itemPtr
+        #endif
         self.endianness = endianness
         self.manager = manager
         self.isValid = true
@@ -137,7 +190,11 @@ public final class Portal {
         index = nil
         column = nil
         self.endianness = endianness
+        #if PTEST
+        self.ptest_itemPtr = itemPtr
+        #else
         self.itemPtr = itemPtr
+        #endif
     }
     
     
@@ -183,15 +240,39 @@ extension Portal {
         get {
             if let index = index {
                 if let column = column {
+                    #if PTEST
+                    let ptr = itemPtr.itemValueFieldPtr.tableFieldPtr(row: index, column: column, endianness)
+                    ptest_ptrInItemTest(ptr)
+                    return ptr
+                    #else
                     return itemPtr.itemValueFieldPtr.tableFieldPtr(row: index, column: column, endianness)
+                    #endif
                 } else {
+                    #if PTEST
+                    let ptr = itemPtr.itemValueFieldPtr.arrayElementPtr(for: index, endianness)
+                    ptest_ptrInItemTest(ptr)
+                    return ptr
+                    #else
                     return itemPtr.itemValueFieldPtr.arrayElementPtr(for: index, endianness)
+                    #endif
                 }
             } else {
                 if itemType!.usesSmallValue {
+                    #if PTEST
+                    let ptr = itemPtr.itemSmallValuePtr
+                    ptest_ptrInItemTest(ptr)
+                    return ptr
+                    #else
                     return itemPtr.itemSmallValuePtr
+                    #endif
                 } else {
+                    #if PTEST
+                    let ptr = itemPtr.itemValueFieldPtr
+                    ptest_ptrInItemTest(ptr)
+                    return ptr
+                    #else
                     return itemPtr.itemValueFieldPtr
+                    #endif
                 }
             }
         }
@@ -383,7 +464,7 @@ extension Portal {
             } else if parent.isTable {
                 
                 // The column index could be nil if the column contains a container and the container must grow in size.
-                // So determine the column index by searching for it.
+                // Determine the column index by searching for it.
                 
                 let rowColOffset = parent.itemPtr.itemValueFieldPtr.distance(to: itemPtr) - parent._tableRowsOffset
                 let colOffset = rowColOffset % parent._tableRowByteCount
@@ -398,8 +479,13 @@ extension Portal {
                 
                 // Check if the column is big enough (or is made bigger)
                 
-                return parent._tableEnsureColumnValueByteCount(of: newByteCount, in: columnIndex!)
+                let result = parent._tableEnsureColumnValueByteCount(of: newByteCount, in: columnIndex!)
+                
+                if result == .success {
+                    _itemByteCount = newByteCount
+                }
 
+                return result
                 
             } else {
                 

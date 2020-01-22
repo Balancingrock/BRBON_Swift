@@ -3,7 +3,7 @@
 //  File:       ItemManager
 //  Project:    BRBON
 //
-//  Version:    1.0.1
+//  Version:    1.2.2
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,8 @@
 //
 // History
 //
+// 1.2.2 - Added code for runtime pointer checks when compiler condition PTEST is active
+//         Fixed a bug in an assert statement
 // 1.0.1 - Documentation update
 // 1.0.0 - Removed older history
 //
@@ -1551,7 +1553,7 @@ public final class ItemManager {
     /// Portal management
     
     internal func getActivePortal(for ptr: UnsafeMutableRawPointer, index: Int? = nil, column: Int? = nil) -> Portal {
-        assert(ptr >= bufferPtr || ptr < bufferPtr.advanced(by: buffer.count), "Pointer points outside buffer area")
+        assert(ptr >= bufferPtr && ptr < bufferPtr.advanced(by: buffer.count), "Pointer points outside buffer area")
         return activePortals.getPortal(for: ptr, index: index, column: column)
     }
         
@@ -1587,8 +1589,16 @@ extension ItemManager {
 
         _ = Darwin.memmove(newBuffer.baseAddress!, buffer.baseAddress!, buffer.count)
         
+        #if PTEST
+        Portal.ptest_enabled = false
+        #endif
+        
         activePortals.updatePointers(atAndAbove: bufferPtr, below: bufferPtr.advanced(by: buffer.count), toNewBase: newBuffer.baseAddress!)
         
+        #if PTEST
+        Portal.ptest_enabled = true
+        #endif
+
         buffer.deallocate()
         
         buffer = newBuffer
@@ -1618,6 +1628,10 @@ extension ItemManager {
         updateMovedPortals: Bool,
         updateRemovedPortals: Bool) {
         
+        #if PTEST
+        if dstPtr < bufferPtr { fatalError("Destination is outside the buffer (lower)") }
+        if dstPtr.advanced(by: moveCount) > bufferPtr.advanced(by: buffer.count) { fatalError("Destination is outside the buffer (higher)") }
+        #endif
         _ = Darwin.memmove(dstPtr, srcPtr, moveCount)
         
         if updateRemovedPortals {

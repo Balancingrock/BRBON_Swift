@@ -611,14 +611,15 @@ class TextConversion_Tests: XCTestCase {
             value:
                 Item count = 1
                 Items:
-                    itemType       = int8
-                    itemOptions    = none
-                    itemFlags      = none
-                    nameByteCount  = 8
-                    itemByteCount  = 24
-                    itemValueField = 0x0000002C
-                    itemName       = one
-                    value          = 44
+                    one:
+                        itemType       = int8
+                        itemOptions    = none
+                        itemFlags      = none
+                        nameByteCount  = 8
+                        itemByteCount  = 24
+                        itemValueField = 0x0000002C
+                        itemName       = one
+                        value          = 44
         """
         let descr2 = "\(im.root!)"
         XCTAssertEqual(descr2, exp2)
@@ -929,7 +930,7 @@ class TextConversion_Tests: XCTestCase {
                                 itemOptions    = none
                                 itemFlags      = none
                                 nameByteCount  = 0
-                                itemByteCount  = 24
+                                itemByteCount  = 48
                                 itemValueField = 0x00000000
                                 itemName       = (none)
                                 value:

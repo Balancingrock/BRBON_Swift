@@ -3,7 +3,7 @@
 //  File:       Array.swift
 //  Project:    BRBON
 //
-//  Version:    1.0.1
+//  Version:    1.2.2
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.2.2 - Added code for runtime pointer checks when compiler condition PTEST is active
 // 1.0.1 - Documentation update
 // 1.0.0 - Removed older history
 //
@@ -236,6 +237,9 @@ extension Portal {
             if ItemManager.startWithZeroedBuffers {
                 let startPtr = dstPtr.advanced(by: oldByteCount)
                 let len = newByteCount - oldByteCount
+                #if PTEST
+                ptest_ptrInItemTest(startPtr, len)
+                #endif
                 Darwin.memset(startPtr, 0, len)
             }
         }
@@ -286,6 +290,9 @@ extension Portal {
         
         if ItemManager.startWithZeroedBuffers {
             let ptr = itemPtr.itemValueFieldPtr.arrayElementPtr(for: _arrayElementCount - 1, endianness)
+            #if PTEST
+            ptest_ptrInItemTest(ptr, _arrayElementByteCount)
+            #endif
             Darwin.memset(ptr, 0, _arrayElementByteCount)
         }
         
@@ -343,11 +350,19 @@ extension Portal {
         
         // Zero bytes - if necessary
         
-        if ItemManager.startWithZeroedBuffers { Darwin.memset(srcPtr, 0, _arrayElementByteCount) }
+        if ItemManager.startWithZeroedBuffers {
+            #if PTEST
+            ptest_ptrInItemTest(srcPtr, _arrayElementByteCount)
+            #endif
+            Darwin.memset(srcPtr, 0, _arrayElementByteCount)
+        }
         
         
         // Insert the new element
         
+        #if PTEST
+        ptest_ptrInItemTest(itemPtr.itemValueFieldPtr.arrayElementPtr(for: index, endianness), value.valueByteCount)
+        #endif
         value.copyBytes(to: itemPtr.itemValueFieldPtr.arrayElementPtr(for: index, endianness), endianness)
         
         
@@ -432,6 +447,9 @@ extension Portal {
         
         // The new value can be added
         
+        #if PTEST
+        ptest_ptrInItemTest(itemPtr.itemValueFieldPtr.arrayElementPtr(for: _arrayElementCount, endianness), value.valueByteCount)
+        #endif
         value.copyBytes(to: itemPtr.itemValueFieldPtr.arrayElementPtr(for: _arrayElementCount, endianness), endianness)
         
         
@@ -653,6 +671,9 @@ extension Portal {
         if ItemManager.startWithZeroedBuffers {
             let startPtr = itemPtr.itemValueFieldPtr.arrayElementPtr(for: _arrayElementCount, endianness)
             let length = startPtr.distance(to: itemPtr.nextItemPtr(endianness))
+            #if PTEST
+            ptest_ptrInItemTest(startPtr, length)
+            #endif
             Darwin.memset(startPtr, 0, length)
         }
         
@@ -661,6 +682,9 @@ extension Portal {
         
         var elementIndex = _arrayElementCount
         for value in values {
+            #if PTEST
+            ptest_ptrInItemTest(itemPtr.itemValueFieldPtr.arrayElementPtr(for: elementIndex, endianness), value.valueByteCount)
+            #endif
             value.copyBytes(to: itemPtr.itemValueFieldPtr.arrayElementPtr(for: elementIndex, endianness), endianness)
             elementIndex += 1
         }
@@ -770,7 +794,11 @@ extension Portal {
         
         
         // Initialize the area of the new elements to zero
-        
+
+        #if PTEST
+        ptest_ptrInItemTest(itemPtr.itemValueFieldPtr.arrayElementPtr(for: _arrayElementCount, endianness), amount * _arrayElementByteCount)
+        #endif
+
         _ = Darwin.memset(itemPtr.itemValueFieldPtr.arrayElementPtr(for: _arrayElementCount, endianness), 0, amount * _arrayElementByteCount)
         
         
@@ -779,6 +807,9 @@ extension Portal {
         if let value = value {
             var loopCount = amount
             repeat {
+                #if PTEST
+                ptest_ptrInItemTest(itemPtr.itemValueFieldPtr.arrayElementPtr(for: _arrayElementCount + loopCount - 1, endianness), value.valueByteCount)
+                #endif
                 value.copyBytes(to: itemPtr.itemValueFieldPtr.arrayElementPtr(for: _arrayElementCount + loopCount - 1, endianness), endianness)
                 loopCount -= 1
             } while loopCount > 0
@@ -832,12 +863,18 @@ extension Portal {
         // Add the new item
         
         let newElementPtr = itemPtr.itemValueFieldPtr.arrayElementPtr(for: _arrayElementCount, endianness)
+        #if PTEST
+        ptest_ptrInItemTest(newElementPtr, itemManager.root._itemByteCount)
+        #endif
         _ = Darwin.memcpy(newElementPtr, itemManager.bufferPtr, itemManager.root._itemByteCount)
         
         
         // Add parent offset to new element
         
         let parentOffset = manager!.bufferPtr.distance(to: itemPtr)
+        #if PTEST
+        ptest_ptrInItemTest(newElementPtr.advanced(by: itemParentOffsetOffset), 4)
+        #endif
         UInt32(parentOffset).copyBytes(to: newElementPtr.advanced(by: itemParentOffsetOffset), endianness)
         
         
@@ -894,6 +931,9 @@ extension Portal {
         if ItemManager.startWithZeroedBuffers {
             let startPtr = itemPtr.itemValueFieldPtr.arrayElementPtr(for: _arrayElementCount, endianness)
             let length = startPtr.distance(to: itemPtr.nextItemPtr(endianness))
+            #if PTEST
+            ptest_ptrInItemTest(startPtr, length)
+            #endif
             Darwin.memset(startPtr, 0, length)
         }
         
@@ -905,9 +945,15 @@ extension Portal {
             let srcPtr = $0.bufferPtr
             let dstPtr = itemPtr.itemValueFieldPtr.arrayElementPtr(for: _arrayElementCount, endianness)
             let length = $0.root._itemByteCount
+            #if PTEST
+            ptest_ptrInItemTest(dstPtr, length)
+            #endif
             _ = Darwin.memcpy(dstPtr, srcPtr, length)
             
             // Add parent offset to new element
+            #if PTEST
+            ptest_ptrInItemTest(dstPtr.advanced(by: itemParentOffsetOffset), 4)
+            #endif
             UInt32(parentOffset).copyBytes(to: dstPtr.advanced(by: itemParentOffsetOffset), endianness)
             
             // Increase number of elements
@@ -966,18 +1012,29 @@ extension Portal {
         
         // Zero bytes - if necessary
         
-        if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(srcPtr, 0, _arrayElementByteCount) }
+        if ItemManager.startWithZeroedBuffers {
+            #if PTEST
+            ptest_ptrInItemTest(srcPtr, _arrayElementByteCount)
+            #endif
+            _ = Darwin.memset(srcPtr, 0, _arrayElementByteCount)
+        }
         
         
         // Insert the new element
         
         let targetPtr = itemPtr.itemValueFieldPtr.arrayElementPtr(for: index, endianness)
+        #if PTEST
+        ptest_ptrInItemTest(targetPtr.assumingMemoryBound(to: UInt8.self), value.count)
+        #endif
         value.copyBytes(to: targetPtr.assumingMemoryBound(to: UInt8.self), count: value.count)
         
         
         // Add the parent offset to the new element
         
         let parentOffset = manager!.bufferPtr.distance(to: itemPtr)
+        #if PTEST
+        ptest_ptrInItemTest(targetPtr.advanced(by: itemParentOffsetOffset), 4)
+        #endif
         UInt32(parentOffset).copyBytes(to: targetPtr.advanced(by: itemParentOffsetOffset), endianness)
         
         

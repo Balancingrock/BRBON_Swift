@@ -80,6 +80,13 @@ The API will maintain the pointer -used by a portal- to stay in synch with mutat
 
 # Version history
 
+#### 1.2.2
+
+- Bugfix for item size updates that failed in container items in table fileds when their size was increased
+- Bugfix in an assert statement (no runtime relevance)
+- Added PTEST compiler condition to add runtime pointer tests before/after use/update/access. Aid in debugging, not recommended for release.
+- A few tests were updated
+
 #### 1.2.1
 
 - Bugfix for table output
