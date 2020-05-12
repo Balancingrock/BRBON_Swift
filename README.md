@@ -80,6 +80,10 @@ The API will maintain the pointer -used by a portal- to stay in synch with mutat
 
 # Version history
 
+#### 1.2.4
+
+- Updated BRUtils version.
+
 #### 1.2.3
 
 - Wrapped all ptest var/functions in conditional compilation
