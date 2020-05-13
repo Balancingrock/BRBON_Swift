@@ -3,14 +3,14 @@
 //  File:       Dictionary.swift
 //  Project:    BRBON
 //
-//  Version:    1.2.2
+//  Version:    1.3.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
 //  Git:        https://github.com/Balancingrock/BRBON
 //  Website:    http://swiftfire.nl/projects/brbon/brbon.html
 //
-//  Copyright:  (c) 2018-2019 Marinus van der Lugt, All rights reserved.
+//  Copyright:  (c) 2018-2020 Marinus van der Lugt, All rights reserved.
 //
 //  License:    Use or redistribute this code any way you like with the following two provision:
 //
@@ -36,6 +36,8 @@
 //
 // History
 //
+// 1.3.0 - Renamed Result to ResultCode to avoid confusion due to Swift's Result type
+//       - Symplified the ResultCode to make it easier to use.
 // 1.2.2 - Added code for runtime pointer checks when compiler condition PTEST is active
 // 1.0.1 - Documentation updates
 // 1.0.0 - Removed older history
@@ -185,20 +187,20 @@ public extension Portal {
     ///   error(code): if the update could not be made because of an error, the code details the kind of error.
     
     @discardableResult
-    func updateItem(_ value: Coder?, withNameField nameField: NameField?) -> Result {
+    func updateItem(_ value: Coder?, withNameField nameField: NameField?) -> ResultCode {
         
         guard let nameField = nameField else { return .noAction }
         guard let value = value else { return .success }
 
-        guard isValid else { return .error(.portalInvalid) }
-        guard isDictionary else { return .error(.operationNotSupported) }
+        guard isValid else { return .portalInvalid }
+        guard isDictionary else { return .operationNotSupported }
         
         
         // Update an exiting item
         
         if let item = dictionaryFindItem(nameField), item.isValid {
         
-            guard item.itemType! == value.itemType else { return .error(.typeConflict) }
+            guard item.itemType! == value.itemType else { return .typeConflict }
 
             return item._updateItemValue(value)
 
@@ -250,8 +252,8 @@ public extension Portal {
     ///   error(code): if the update could not be made because of an error, the code details the kind of error.
     
     @discardableResult
-    func updateItem(_ value: Coder?, withName name: String) -> Result {
-        guard let nameField = NameField(name) else { return .error(.nameFieldError) }
+    func updateItem(_ value: Coder?, withName name: String) -> ResultCode {
+        guard let nameField = NameField(name) else { return .nameFieldError }
         return updateItem(value, withNameField: nameField)
     }
 
@@ -271,17 +273,17 @@ public extension Portal {
     /// - Returns: 'success' or an error indicator.
     
     @discardableResult
-    func updateItem(_ value: ItemManager?, withNameField nameField: NameField?) -> Result {
+    func updateItem(_ value: ItemManager?, withNameField nameField: NameField?) -> ResultCode {
         
         guard let value = value else { return .noAction }
         guard (nameField != nil) || value.root.hasName else { return .noAction }
 
-        guard isValid else { return .error(.portalInvalid) }
-        guard isDictionary else { return .error(.operationNotSupported) }
+        guard isValid else { return .portalInvalid }
+        guard isDictionary else { return .operationNotSupported }
 
         if let item = dictionaryFindItem(nameField), item.isValid {
         
-            guard item.itemType! == value.root.itemType else { return .error(.typeConflict) }
+            guard item.itemType! == value.root.itemType else { return .typeConflict }
 
             return item._updateItemValue(value)
 
@@ -343,8 +345,8 @@ public extension Portal {
     /// - Returns: 'success' or an error indicator.
     
     @discardableResult
-    func updateItem(_ value: ItemManager?, withName name: String) -> Result {
-        guard let nameField = NameField(name) else { return .error(.nameFieldError) }
+    func updateItem(_ value: ItemManager?, withName name: String) -> ResultCode {
+        guard let nameField = NameField(name) else { return .nameFieldError }
         return updateItem(value, withNameField: nameField)
     }
 
@@ -365,15 +367,15 @@ public extension Portal {
     ///   error(code): If an error prevented completion of the request, the code will detail the kind of error.
     
     @discardableResult
-    func replaceItem(_ value: Coder?, withNameField nameField: NameField?) -> Result {
+    func replaceItem(_ value: Coder?, withNameField nameField: NameField?) -> ResultCode {
         
         guard let nameField = nameField else { return .noAction }
         guard let value = value else { return .noAction }
         
-        guard isValid else { return .error(.portalInvalid) }
-        guard isDictionary else { return .error(.operationNotSupported) }
+        guard isValid else { return .portalInvalid }
+        guard isDictionary else { return .operationNotSupported }
         
-        guard let item = dictionaryFindItem(nameField) else { return .error(.itemNotFound) }
+        guard let item = dictionaryFindItem(nameField) else { return .itemNotFound }
         
         // Ensure sufficient storage
         let newItemByteCount = itemHeaderByteCount + nameField.byteCount + value.minimumValueFieldByteCount
@@ -425,8 +427,8 @@ public extension Portal {
     ///   error(code): If an error prevented completion of the request, the code will detail the kind of error.
     
     @discardableResult
-    func replaceItem(_ value: Coder?, withName name: String) -> Result {
-        guard let nameField = NameField(name) else { return .error(.nameFieldError) }
+    func replaceItem(_ value: Coder?, withName name: String) -> ResultCode {
+        guard let nameField = NameField(name) else { return .nameFieldError }
         return replaceItem(value, withNameField: nameField)
     }
 
@@ -447,15 +449,15 @@ public extension Portal {
     ///   error(code): If an error prevented completion of the request, the code will detail the kind of error.
 
     @discardableResult
-    func replaceItem(_ value: ItemManager?, withNameField nameField: NameField?) -> Result {
+    func replaceItem(_ value: ItemManager?, withNameField nameField: NameField?) -> ResultCode {
         
         guard let nameField = nameField else { return .noAction }
         guard let value = value else { return .noAction }
         
-        guard isValid else { return .error(.portalInvalid) }
-        guard isDictionary else { return .error(.operationNotSupported) }
+        guard isValid else { return .portalInvalid }
+        guard isDictionary else { return .operationNotSupported }
         
-        guard let item = dictionaryFindItem(nameField), item.isValid else { return .error(.itemNotFound) }
+        guard let item = dictionaryFindItem(nameField), item.isValid else { return .itemNotFound }
         
         // Ensure sufficient storage
         let newItemByteCount = value.root._itemByteCount - value.root._itemNameFieldByteCount + nameField.byteCount
@@ -507,8 +509,8 @@ public extension Portal {
     ///   error(code): If an error prevented completion of the request, the code will detail the kind of error.
     
     @discardableResult
-    func replaceItem(_ value: ItemManager?, withName name: String) -> Result {
-        guard let nameField = NameField(name) else { return .error(.nameFieldError) }
+    func replaceItem(_ value: ItemManager?, withName name: String) -> ResultCode {
+        guard let nameField = NameField(name) else { return .nameFieldError }
         return replaceItem(value, withNameField: nameField)
     }
 
@@ -522,14 +524,14 @@ public extension Portal {
     /// - Returns: 'success' or an error indicator (including 'itemNotFound').
     
     @discardableResult
-    func removeItem(withNameField nameField: NameField?) -> Result {
+    func removeItem(withNameField nameField: NameField?) -> ResultCode {
         
-        guard let nameField = nameField else { return .error(.missingName) }
+        guard let nameField = nameField else { return .missingName }
         
-        guard isValid else { return .error(.portalInvalid) }
-        guard isDictionary else { return .error(.operationNotSupported) }
+        guard isValid else { return .portalInvalid }
+        guard isDictionary else { return .operationNotSupported }
         
-        guard let item = dictionaryFindItem(nameField) else { return .error(.itemNotFound) }
+        guard let item = dictionaryFindItem(nameField) else { return .itemNotFound }
         
         let itemStartPtr = item.itemPtr
         let ibc = item._itemByteCount
@@ -580,8 +582,8 @@ public extension Portal {
     /// - Returns: 'success' or an error indicator (including 'itemNotFound').
     
     @discardableResult
-    func removeItem(withName name: String) -> Result {
-        guard let nameField = NameField(name) else { return .error(.nameFieldError) }
+    func removeItem(withName name: String) -> ResultCode {
+        guard let nameField = NameField(name) else { return .nameFieldError }
         return removeItem(withNameField: nameField)
     }
 }

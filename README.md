@@ -80,6 +80,11 @@ The API will maintain the pointer -used by a portal- to stay in synch with mutat
 
 # Version history
 
+#### 1.3.0
+
+- Changed Result to ResultCode to avoid confusion with Swift.Result
+- Simplified the usage of ResultCode
+
 #### 1.2.4
 
 - Updated BRUtils version.

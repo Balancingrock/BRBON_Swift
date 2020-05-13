@@ -23,7 +23,7 @@ class CrcBinary_Tests: XCTestCase {
 
     func testCoder() {
         
-        var b = BRCrcBinary(Data([0x01, 0x02, 0x03]))
+        let b = BRCrcBinary(Data([0x01, 0x02, 0x03]))
         
         XCTAssertEqual(b.itemType, .crcBinary)
         XCTAssertEqual(b.valueByteCount, 11)

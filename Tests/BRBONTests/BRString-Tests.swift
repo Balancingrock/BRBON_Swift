@@ -43,7 +43,7 @@ class BRString_Tests: XCTestCase {
     
     func testCoder() {
         
-        var b = BRString("one")
+        let b = BRString("one")
         
         XCTAssertEqual(b?.itemType, .string)
         XCTAssertEqual(b?.valueByteCount, 7)

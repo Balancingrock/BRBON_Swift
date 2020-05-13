@@ -3,14 +3,14 @@
 //  File:       Array.swift
 //  Project:    BRBON
 //
-//  Version:    1.2.2
+//  Version:    1.3.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
 //  Git:        https://github.com/Balancingrock/BRBON
 //  Website:    http://swiftfire.nl/projects/brbon/brbon.html
 //
-//  Copyright:  (c) 2018-2019 Marinus van der Lugt, All rights reserved.
+//  Copyright:  (c) 2018-2020 Marinus van der Lugt, All rights reserved.
 //
 //  License:    Use or redistribute this code any way you like with the following two provision:
 //
@@ -36,6 +36,8 @@
 //
 // History
 //
+// 1.3.0 - Renamed Result to ResultCode to avoid confusion due to Swift's Result type
+//       - Symplified the ResultCode to make it easier to use.
 // 1.2.2 - Added code for runtime pointer checks when compiler condition PTEST is active
 // 1.0.1 - Documentation update
 // 1.0.0 - Removed older history
@@ -196,7 +198,7 @@ extension Portal {
     ///
     /// - Returns: Success if the value can be allocated, an error identifier when not.
     
-    fileprivate func _arrayEnsureElementByteCount(for value: Coder) -> Result {
+    fileprivate func _arrayEnsureElementByteCount(for value: Coder) -> ResultCode {
         if value.itemType.hasFlexibleLength {
             return _arrayEnsureElementByteCount(of: value.valueByteCount.roundUpToNearestMultipleOf8())
         } else {
@@ -204,7 +206,7 @@ extension Portal {
         }
     }
     
-    internal func _arrayEnsureElementByteCount(of bytes: Int) -> Result {
+    internal func _arrayEnsureElementByteCount(of bytes: Int) -> ResultCode {
         
         if bytes > _arrayElementByteCount {
             let necessaryValueFieldByteCount = arrayElementBaseOffset + (_arrayElementCount * bytes).roundUpToNearestMultipleOf8()
@@ -269,7 +271,7 @@ extension Portal {
     ///
     /// - Returns: success or an error indicator.
     
-    internal func _arrayRemove(at index: Int) -> Result {
+    internal func _arrayRemove(at index: Int) -> ResultCode {
         
         
         // Remove the active portals for the items inside the element to be removed.
@@ -320,13 +322,13 @@ extension Portal {
     ///
     /// - Returns: 'success' or an error indicator.
     
-    internal func _arrayInsert(_ value: Coder, atIndex index: Int) -> Result {
+    internal func _arrayInsert(_ value: Coder, atIndex index: Int) -> ResultCode {
         
         
         // Ensure that the element byte count is sufficient
         
         let result = _arrayEnsureElementByteCount(for: value)
-        guard result == .success else { return result }
+        guard case .success = result else { return result }
         
         
         // Ensure that the item storage capacity is sufficient
@@ -336,7 +338,7 @@ extension Portal {
         let necessaryItemByteCount = itemPtr.itemHeaderAndNameByteCount + neccesaryValueByteCount
         if necessaryItemByteCount > _itemByteCount {
             let result = increaseItemByteCount(to: necessaryItemByteCount)
-            guard result == .success else { return result }
+            guard case .success = result else { return result }
         }
         
         
@@ -422,17 +424,17 @@ extension Portal {
     ///   - error(code): If an error prevented the completion, de code details the kind of error.
     
     @discardableResult
-    public func appendElement(_ value: Coder?) -> Result {
+    public func appendElement(_ value: Coder?) -> ResultCode {
         
         guard let value = value else { return .success }
-        guard isArray else { return .error(.operationNotSupported) }
-        guard _arrayElementType == value.itemType else { return .error(.typeConflict) }
+        guard isArray else { return .operationNotSupported }
+        guard _arrayElementType == value.itemType else { return .typeConflict }
         
         
         // Ensure that the element byte count is sufficient
         
         let result = _arrayEnsureElementByteCount(for: value)
-        guard result == .success else { return result }
+        guard case .success = result else { return result }
         
         
         // Ensure that the new value can be added
@@ -441,7 +443,7 @@ extension Portal {
         let necessaryItemByteCount = itemPtr.itemHeaderAndNameByteCount + neccesaryValueByteCount
         if necessaryItemByteCount > _itemByteCount {
             let result = increaseItemByteCount(to: necessaryItemByteCount)
-            guard result == .success else { return result }
+            guard case .success = result else { return result }
         }
         
         
@@ -464,7 +466,7 @@ extension Portal {
     /// Adds an array of elements as an arrayItem to the table
     
     @discardableResult
-    public func appendElement(_ value: Array<Bool>?) -> Result {
+    public func appendElement(_ value: Array<Bool>?) -> ResultCode {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
@@ -474,7 +476,7 @@ extension Portal {
     /// Adds an array of elements as an arrayItem to the table
     
     @discardableResult
-    public func appendElement(_ value: Array<Int8>?) -> Result {
+    public func appendElement(_ value: Array<Int8>?) -> ResultCode {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
@@ -484,7 +486,7 @@ extension Portal {
     /// Adds an array of elements as an arrayItem to the table
     
     @discardableResult
-    public func appendElement(_ value: Array<Int16>?) -> Result {
+    public func appendElement(_ value: Array<Int16>?) -> ResultCode {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
@@ -494,7 +496,7 @@ extension Portal {
     /// Adds an array of elements as an arrayItem to the table
     
     @discardableResult
-    public func appendElement(_ value: Array<Int32>?) -> Result {
+    public func appendElement(_ value: Array<Int32>?) -> ResultCode {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
@@ -504,7 +506,7 @@ extension Portal {
     /// Adds an array of elements as an arrayItem to the table
     
     @discardableResult
-    public func appendElement(_ value: Array<Int64>?) -> Result {
+    public func appendElement(_ value: Array<Int64>?) -> ResultCode {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
@@ -514,7 +516,7 @@ extension Portal {
     /// Adds an array of elements as an arrayItem to the table
     
     @discardableResult
-    public func appendElement(_ value: Array<UInt8>?) -> Result {
+    public func appendElement(_ value: Array<UInt8>?) -> ResultCode {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
@@ -524,7 +526,7 @@ extension Portal {
     /// Adds an array of elements as an arrayItem to the table
     
     @discardableResult
-    public func appendElement(_ value: Array<UInt16>?) -> Result {
+    public func appendElement(_ value: Array<UInt16>?) -> ResultCode {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
@@ -534,7 +536,7 @@ extension Portal {
     /// Adds an array of elements as an arrayItem to the table
     
     @discardableResult
-    public func appendElement(_ value: Array<UInt32>?) -> Result {
+    public func appendElement(_ value: Array<UInt32>?) -> ResultCode {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
@@ -544,7 +546,7 @@ extension Portal {
     /// Adds an array of elements as an arrayItem to the table
     
     @discardableResult
-    public func appendElement(_ value: Array<UInt64>?) -> Result {
+    public func appendElement(_ value: Array<UInt64>?) -> ResultCode {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
@@ -554,7 +556,7 @@ extension Portal {
     /// Adds an array of elements as an arrayItem to the table
     
     @discardableResult
-    public func appendElement(_ value: Array<Float32>?) -> Result {
+    public func appendElement(_ value: Array<Float32>?) -> ResultCode {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
@@ -564,7 +566,7 @@ extension Portal {
     /// Adds an array of elements as an arrayItem to the table
     
     @discardableResult
-    public func appendElement(_ value: Array<Float64>?) -> Result {
+    public func appendElement(_ value: Array<Float64>?) -> ResultCode {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
@@ -574,7 +576,7 @@ extension Portal {
     /// Adds an array of elements as an arrayItem to the table
     
     @discardableResult
-    public func appendElement(_ value: Array<String>?) -> Result {
+    public func appendElement(_ value: Array<String>?) -> ResultCode {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
@@ -584,7 +586,7 @@ extension Portal {
     /// Adds an array of elements as an arrayItem to the table
     
     @discardableResult
-    public func appendElement(_ value: Array<Data>?) -> Result {
+    public func appendElement(_ value: Array<Data>?) -> ResultCode {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
@@ -594,7 +596,7 @@ extension Portal {
     /// Adds an array of elements as an arrayItem to the table
     
     @discardableResult
-    public func appendElement(_ value: Array<UUID>?) -> Result {
+    public func appendElement(_ value: Array<UUID>?) -> ResultCode {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
@@ -604,7 +606,7 @@ extension Portal {
     /// Adds an array of elements as an arrayItem to the table
     
     @discardableResult
-    public func appendElement(_ value: Array<NSFont>?) -> Result {
+    public func appendElement(_ value: Array<NSFont>?) -> ResultCode {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
@@ -614,7 +616,7 @@ extension Portal {
     /// Adds an array of elements as an arrayItem to the table
     
     @discardableResult
-    public func appendElement(_ value: Array<NSColor>?) -> Result {
+    public func appendElement(_ value: Array<NSColor>?) -> ResultCode {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
@@ -635,12 +637,12 @@ extension Portal {
     ///   error(code): If an error prevented the completion, de code details the kind of error.
     
     @discardableResult
-    public func appendElements<T>(_ values: Array<T>?) -> Result where T: Coder{
+    public func appendElements<T>(_ values: Array<T>?) -> ResultCode where T: Coder{
         
         guard let values = values else { return .success }
         guard values.count > 0 else { return .success }
-        guard isArray else { return .error(.operationNotSupported) }
-        guard _arrayElementType!.sameType(as: (T.self as! Coder)) else { return .error(.typeConflict) }
+        guard isArray else { return .operationNotSupported }
+        guard _arrayElementType!.sameType(as: (T.self as! Coder)) else { return .typeConflict }
         
         
         // Ensure that the element byte count is sufficient
@@ -712,11 +714,11 @@ extension Portal {
     ///   error(code): If an error prevented the removal, the code details the kind of error.
     
     @discardableResult
-    public func removeElement(atIndex index: Int) -> Result {
+    public func removeElement(atIndex index: Int) -> ResultCode {
         
-        guard isArray else { return .error(.portalInvalid) }
-        guard index >= 0 else { return .error(.indexBelowLowerBound) }
-        guard index < _arrayElementCount else { return .error(.indexAboveHigherBound) }
+        guard isArray else { return .portalInvalid }
+        guard index >= 0 else { return .indexBelowLowerBound }
+        guard index < _arrayElementCount else { return .indexAboveHigherBound }
         
         return _arrayRemove(at: index)
     }
@@ -736,15 +738,15 @@ extension Portal {
     ///   error(code): If an error prevented the insertion, the code details the kind of error.
     
     @discardableResult
-    public func insertElement(_ value: Coder?, atIndex index: Int) -> Result {
+    public func insertElement(_ value: Coder?, atIndex index: Int) -> ResultCode {
         
         guard let value = value else { return .noAction }
         guard value.itemType != .null else { return .noAction }
         
-        guard isArray else { return .error(.portalInvalid) }
-        guard index >= 0 else { return .error(.indexBelowLowerBound) }
-        guard index < _arrayElementCount else { return .error(.indexAboveHigherBound) }
-        guard value.itemType == _arrayElementType else { return .error(.typeConflict) }
+        guard isArray else { return .portalInvalid }
+        guard index >= 0 else { return .indexBelowLowerBound }
+        guard index < _arrayElementCount else { return .indexAboveHigherBound }
+        guard value.itemType == _arrayElementType else { return .typeConflict }
         
         return _arrayInsert(value, atIndex: index)
     }
@@ -763,22 +765,22 @@ extension Portal {
     /// - Returns: 'success' or an error indicator.
     
     @discardableResult
-    public func createNewElements(amount: Int = 1, value: Coder? = nil) -> Result {
+    public func createNewElements(amount: Int = 1, value: Coder? = nil) -> ResultCode {
         
-        guard isArray else { return .error(.operationNotSupported) }
-        if let value = value, value.itemType != _arrayElementType { return .error(.typeConflict) }
+        guard isArray else { return .operationNotSupported }
+        if let value = value, value.itemType != _arrayElementType { return .typeConflict }
         
         
         // The number of new elements must be positive
         
-        guard amount > 0 else { return .error(.illegalAmount) }
+        guard amount > 0 else { return .illegalAmount }
         
         
         // A default value should fit the element byte count
         
         if let value = value {
             let result = _arrayEnsureElementByteCount(for: value)
-            guard result == .success else { return result }
+            guard case .success = result else { return result }
         }
         
         
@@ -837,19 +839,19 @@ extension Portal {
     ///   error(code): If the append failed, the code will detail the kind of error.
     
     @discardableResult
-    public func appendElement(_ itemManager: ItemManager?) -> Result {
+    public func appendElement(_ itemManager: ItemManager?) -> ResultCode {
         
-        guard let itemManager = itemManager else { return .error(.missingValue) }
-        guard isValid else { return .error(.portalInvalid) }
-        guard isArray else { return .error(.operationNotSupported) }
-        guard _arrayElementType! == itemManager.root.itemType! else { return .error(.typeConflict) }
+        guard let itemManager = itemManager else { return .missingValue }
+        guard isValid else { return .portalInvalid }
+        guard isArray else { return .operationNotSupported }
+        guard _arrayElementType! == itemManager.root.itemType! else { return .typeConflict }
         
         
         // Ensure that the new element can be accomodated
         
         let result = _arrayEnsureElementByteCount(of: itemManager.root._itemByteCount)
         guard result == .success else { return result }
-        
+
         
         // Ensure that all elements (including the new one) can be accomodated
         
@@ -898,11 +900,11 @@ extension Portal {
     ///   error(code): If the append failed, the code will detail the kind of error.
     
     @discardableResult
-    public func appendElements(_ arr: Array<ItemManager>) -> Result {
+    public func appendElements(_ arr: Array<ItemManager>) -> ResultCode {
         
-        guard isValid else { return .error(.portalInvalid) }
-        guard isArray else { return .error(.operationNotSupported) }
-        for im in arr { guard im.root.itemType == _arrayElementType! else { return .error(.typeConflict) }}
+        guard isValid else { return .portalInvalid }
+        guard isArray else { return .operationNotSupported }
+        for im in arr { guard im.root.itemType == _arrayElementType! else { return .typeConflict }}
         
         
         // Determine the largest new byte count of the elements
@@ -978,13 +980,13 @@ extension Portal {
     ///   error(code): If an error prevented the insertion, the code details the kind of error.
     
     @discardableResult
-    public func insertElement(_ itemManager: ItemManager?, atIndex index: Int) -> Result {
+    public func insertElement(_ itemManager: ItemManager?, atIndex index: Int) -> ResultCode {
         
         guard let value = itemManager?.data else { return .noAction }
-        guard isArray else { return .error(.portalInvalid) }
-        guard index >= 0 else { return .error(.indexBelowLowerBound) }
-        guard index < _arrayElementCount else { return .error(.indexAboveHigherBound) }
-        guard _arrayElementType! == itemManager!.root.itemType! else { return .error(.typeConflict) }
+        guard isArray else { return .portalInvalid }
+        guard index >= 0 else { return .indexBelowLowerBound }
+        guard index < _arrayElementCount else { return .indexAboveHigherBound }
+        guard _arrayElementType! == itemManager!.root.itemType! else { return .typeConflict }
         
         
         // Ensure that the element byte count is sufficient

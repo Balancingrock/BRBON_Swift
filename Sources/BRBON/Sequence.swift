@@ -3,14 +3,14 @@
 //  File:       Sequence.swift
 //  Project:    BRBON
 //
-//  Version:    1.0.1
+//  Version:    1.3.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
 //  Git:        https://github.com/Balancingrock/BRBON
 //  Website:    http://swiftfire.nl/projects/brbon/brbon.html
 //
-//  Copyright:  (c) 2018-2019 Marinus van der Lugt, All rights reserved.
+//  Copyright:  (c) 2018-2020 Marinus van der Lugt, All rights reserved.
 //
 //  License:    Use or redistribute this code any way you like with the following two provision:
 //
@@ -36,6 +36,8 @@
 //
 // History
 //
+// 1.3.0 - Renamed Result to ResultCode to avoid confusion due to Swift's Result type
+//       - Symplified the ResultCode to make it easier to use.
 // 1.0.1 - Replaced var by var internal definitions by internal on the extension
 // 1.0.0 - Removed older history
 //
@@ -143,7 +145,7 @@ internal extension Portal {
     ///
     /// - Returns: success or an error indicator.
     
-    func _sequenceRemoveItem(atIndex index: Int) -> Result {
+    func _sequenceRemoveItem(atIndex index: Int) -> ResultCode {
         
         let itm = _sequencePortalForItem(at: index)
         let aliPtr = _sequenceAfterLastItemPtr
@@ -173,7 +175,7 @@ internal extension Portal {
     ///
     /// - Returns: 'success' or an error indicator.
     
-    func _sequenceInsertItem(_ value: Coder, atIndex index: Int, withNameField nameField: NameField? = nil) -> Result {
+    func _sequenceInsertItem(_ value: Coder, atIndex index: Int, withNameField nameField: NameField? = nil) -> ResultCode {
         
         
         // Ensure that there is enough space available
@@ -223,7 +225,7 @@ internal extension Portal {
     ///
     /// - Returns: 'success' or an error indicator.
     
-    func _sequenceInsertItem(_ value: ItemManager, atIndex index: Int, withNameField nameField: NameField? = nil) -> Result {
+    func _sequenceInsertItem(_ value: ItemManager, atIndex index: Int, withNameField nameField: NameField? = nil) -> ResultCode {
         
         
         // Ensure that there is enough space available
@@ -264,12 +266,12 @@ internal extension Portal {
         return .success
     }
 
-    func _sequenceEnsureDataStorage(of bytes: Int) -> Result {
+    func _sequenceEnsureDataStorage(of bytes: Int) -> ResultCode {
         let necessaryValueFieldByteCount = sequenceItemBaseOffset + bytes
         return _sequenceEnsureValueFieldByteCount(of: necessaryValueFieldByteCount)
     }
     
-    func _sequenceEnsureValueFieldByteCount(of bytes: Int) -> Result {
+    func _sequenceEnsureValueFieldByteCount(of bytes: Int) -> ResultCode {
         if bytes > currentValueFieldByteCount {
             let necessaryItemByteCount = itemHeaderByteCount + _itemNameFieldByteCount + bytes
             return increaseItemByteCount(to: necessaryItemByteCount)
@@ -286,12 +288,12 @@ internal extension Portal {
     ///
     /// - Returns: Either .success or an error indicator.
     
-    func _sequenceUpdateItem(_ value: Coder, atIndex index: Int) -> Result {
+    func _sequenceUpdateItem(_ value: Coder, atIndex index: Int) -> ResultCode {
         
         let item = _sequencePortalForItem(at: index)
         
-        guard let it = item.itemType else { return .error(.illegalTypeFieldValue) }
-        guard it == value.itemType else { return .error(.typeConflict) }
+        guard let it = item.itemType else { return .illegalTypeFieldValue }
+        guard it == value.itemType else { return .typeConflict }
         
         return item._updateItemValue(value)
     }
@@ -305,11 +307,11 @@ internal extension Portal {
     ///
     /// - Returns: Either .success or an error indicator.
     
-    func _sequenceUpdateItem(_ value: ItemManager, atIndex index: Int) -> Result {
+    func _sequenceUpdateItem(_ value: ItemManager, atIndex index: Int) -> ResultCode {
         
         let item = _sequencePortalForItem(at: index)
         
-        guard item.itemType! == value.root.itemType else { return .error(.typeConflict) }
+        guard item.itemType! == value.root.itemType else { return .typeConflict }
         
         
         // Save important data for later
@@ -369,7 +371,7 @@ public extension Portal {
     /// - Returns: Either .success or an error indicator.
     
     @discardableResult
-    func insertItem(atIndex index: Int, withValue value: Coder) -> Result {
+    func insertItem(atIndex index: Int, withValue value: Coder) -> ResultCode {
         return insertItem(atIndex: index, withValue: value, withNameField: nil)
     }
 
@@ -386,8 +388,8 @@ public extension Portal {
     /// - Returns: Either .success or an error indicator.
     
     @discardableResult
-    func insertItem(atIndex index: Int, withValue value: Coder, withName name: String) -> Result {
-        guard let nameField = NameField(name) else { return .error(.nameFieldError) }
+    func insertItem(atIndex index: Int, withValue value: Coder, withName name: String) -> ResultCode {
+        guard let nameField = NameField(name) else { return .nameFieldError }
         return insertItem(atIndex: index, withValue: value, withNameField: nameField)
     }
 
@@ -404,12 +406,12 @@ public extension Portal {
     /// - Returns: Either .success or an error indicator.
     
     @discardableResult
-    func insertItem(atIndex index: Int, withValue value: Coder, withNameField nameField: NameField?) -> Result {
+    func insertItem(atIndex index: Int, withValue value: Coder, withNameField nameField: NameField?) -> ResultCode {
         
-        guard isValid else { return .error(.portalInvalid) }
-        guard isSequence else { return .error(.operationNotSupported) }
-        guard index >= 0 else { return .error(.indexBelowLowerBound) }
-        guard index < count else { return .error(.indexAboveHigherBound) }
+        guard isValid else { return .portalInvalid }
+        guard isSequence else { return .operationNotSupported }
+        guard index >= 0 else { return .indexBelowLowerBound }
+        guard index < count else { return .indexAboveHigherBound }
 
         return _sequenceInsertItem(value, atIndex: index, withNameField: nameField)
     }
@@ -427,7 +429,7 @@ public extension Portal {
     /// - Returns: Either .success or an error indicator.
     
     @discardableResult
-    func insertItem(atIndex index: Int, withValue value: ItemManager) -> Result {
+    func insertItem(atIndex index: Int, withValue value: ItemManager) -> ResultCode {
         return insertItem(atIndex: index, withValue: value, withNameField: nil)
     }
     
@@ -444,8 +446,8 @@ public extension Portal {
     /// - Returns: Either .success or an error indicator.
     
     @discardableResult
-    func insertItem(atIndex index: Int, withValue value: ItemManager, withName name: String) -> Result {
-        guard let nameField = NameField(name) else { return .error(.nameFieldError) }
+    func insertItem(atIndex index: Int, withValue value: ItemManager, withName name: String) -> ResultCode {
+        guard let nameField = NameField(name) else { return .nameFieldError }
         return insertItem(atIndex: index, withValue: value, withNameField: nameField)
     }
     
@@ -462,12 +464,12 @@ public extension Portal {
     /// - Returns: Either .success or an error indicator.
     
     @discardableResult
-    func insertItem(atIndex index: Int, withValue value: ItemManager, withNameField nameField: NameField?) -> Result {
+    func insertItem(atIndex index: Int, withValue value: ItemManager, withNameField nameField: NameField?) -> ResultCode {
         
-        guard isValid else { return .error(.portalInvalid) }
-        guard isSequence else { return .error(.operationNotSupported) }
-        guard index >= 0 else { return .error(.indexBelowLowerBound) }
-        guard index < count else { return .error(.indexAboveHigherBound) }
+        guard isValid else { return .portalInvalid }
+        guard isSequence else { return .operationNotSupported }
+        guard index >= 0 else { return .indexBelowLowerBound }
+        guard index < count else { return .indexAboveHigherBound }
         
         return _sequenceInsertItem(value, atIndex: index, withNameField: nameField)
     }
@@ -486,12 +488,12 @@ public extension Portal {
     /// - Returns: Either .success or an error indicator.
 
     @discardableResult
-    func updateItem(atIndex index: Int, withValue value: Coder) -> Result {
+    func updateItem(atIndex index: Int, withValue value: Coder) -> ResultCode {
         
-        guard isValid else { return .error(.portalInvalid) }
-        guard isSequence else { return .error(.operationNotSupported) }
-        guard index >= 0 else { return .error(.indexBelowLowerBound) }
-        guard index < count else { return .error(.indexAboveHigherBound) }
+        guard isValid else { return .portalInvalid }
+        guard isSequence else { return .operationNotSupported }
+        guard index >= 0 else { return .indexBelowLowerBound }
+        guard index < count else { return .indexAboveHigherBound }
         
         return _sequenceUpdateItem(value, atIndex: index)
     }
@@ -508,12 +510,12 @@ public extension Portal {
     /// - Returns: Either .success or an error indicator.
     
     @discardableResult
-    func updateItem(atIndex index: Int, withValue value: ItemManager) -> Result {
+    func updateItem(atIndex index: Int, withValue value: ItemManager) -> ResultCode {
         
-        guard isValid else { return .error(.portalInvalid) }
-        guard isSequence else { return .error(.operationNotSupported) }
-        guard index >= 0 else { return .error(.indexBelowLowerBound) }
-        guard index < count else { return .error(.indexAboveHigherBound) }
+        guard isValid else { return .portalInvalid }
+        guard isSequence else { return .operationNotSupported }
+        guard index >= 0 else { return .indexBelowLowerBound }
+        guard index < count else { return .indexAboveHigherBound }
         
         return _sequenceUpdateItem(value, atIndex: index)
     }
@@ -531,12 +533,12 @@ public extension Portal {
     /// - Returns: Either .success or an error indicator.
 
     @discardableResult
-    func replaceItem(atIndex index: Int, withValue value: Coder, withNameField nameField: NameField? = nil) -> Result {
+    func replaceItem(atIndex index: Int, withValue value: Coder, withNameField nameField: NameField? = nil) -> ResultCode {
         
-        guard isValid else { return .error(.portalInvalid) }
-        guard isSequence else { return .error(.operationNotSupported) }
-        guard index >= 0 else { return .error(.indexBelowLowerBound) }
-        guard index < count else { return .error(.indexAboveHigherBound) }
+        guard isValid else { return .portalInvalid }
+        guard isSequence else { return .operationNotSupported }
+        guard index >= 0 else { return .indexBelowLowerBound }
+        guard index < count else { return .indexAboveHigherBound }
         
         let oldItem = _sequencePortalForItem(at: index)
         let oldNameField = oldItem.itemNameField
@@ -587,12 +589,12 @@ public extension Portal {
     /// - Returns: Either .success or an error indicator.
     
     @discardableResult
-    func replaceItem(atIndex index: Int, withValue value: ItemManager, withNameField nameField: NameField? = nil) -> Result {
+    func replaceItem(atIndex index: Int, withValue value: ItemManager, withNameField nameField: NameField? = nil) -> ResultCode {
         
-        guard isValid else { return .error(.portalInvalid) }
-        guard isSequence else { return .error(.operationNotSupported) }
-        guard index >= 0 else { return .error(.indexBelowLowerBound) }
-        guard index < count else { return .error(.indexAboveHigherBound) }
+        guard isValid else { return .portalInvalid }
+        guard isSequence else { return .operationNotSupported }
+        guard index >= 0 else { return .indexBelowLowerBound }
+        guard index < count else { return .indexAboveHigherBound }
 
         
         let oldItem = _sequencePortalForItem(at: index)
@@ -649,12 +651,12 @@ public extension Portal {
     /// - Returns: Either .success or an error indicator.
 
     @discardableResult
-    func removeItem(atIndex index: Int) -> Result {
+    func removeItem(atIndex index: Int) -> ResultCode {
         
-        guard isValid else { return .error(.portalInvalid) }
-        guard isSequence else { return .error(.operationNotSupported) }
-        guard index >= 0 else { return .error(.indexBelowLowerBound) }
-        guard index < count else { return .error(.indexAboveHigherBound) }
+        guard isValid else { return .portalInvalid }
+        guard isSequence else { return .operationNotSupported }
+        guard index >= 0 else { return .indexBelowLowerBound }
+        guard index < count else { return .indexAboveHigherBound }
 
         let itm = _sequencePortalForItem(at: index)
         let aliPtr = _sequenceAfterLastItemPtr
@@ -685,7 +687,7 @@ public extension Portal {
     /// - Returns: 'success' or an error indicator.
     
     @discardableResult
-    func appendItem(_ value: Coder) -> Result {
+    func appendItem(_ value: Coder) -> ResultCode {
         return appendItem(value, withNameField: nil)
     }
 
@@ -701,9 +703,9 @@ public extension Portal {
     /// - Returns: 'success' or an error indicator.
     
     @discardableResult
-    func appendItem(_ value: Coder, withName name: String) -> Result {
+    func appendItem(_ value: Coder, withName name: String) -> ResultCode {
         
-        guard let nameField = NameField(name) else { return .error(.nameFieldError) }
+        guard let nameField = NameField(name) else { return .nameFieldError }
         return appendItem(value, withNameField: nameField)
     }
     
@@ -719,10 +721,10 @@ public extension Portal {
     /// - Returns: 'success' or an error indicator.
     
     @discardableResult
-    func appendItem(_ value: Coder, withNameField nameField: NameField?) -> Result {
+    func appendItem(_ value: Coder, withNameField nameField: NameField?) -> ResultCode {
         
-        guard isValid else { return .error(.portalInvalid) }
-        guard isSequence else { return .error(.operationNotSupported) }
+        guard isValid else { return .portalInvalid }
+        guard isSequence else { return .operationNotSupported }
         
         let neededItemByteCount = _sequenceValueFieldUsedByteCount + itemHeaderByteCount + (nameField?.byteCount ?? 0) + value.minimumValueFieldByteCount
         let result = _sequenceEnsureValueFieldByteCount(of: neededItemByteCount)
@@ -750,7 +752,7 @@ public extension Portal {
     /// - Returns: 'success' or an error indicator.
     
     @discardableResult
-    func appendItem(_ value: ItemManager) -> Result {
+    func appendItem(_ value: ItemManager) -> ResultCode {
         return appendItem(value, withNameField: nil)
     }
     
@@ -766,9 +768,9 @@ public extension Portal {
     /// - Returns: 'success' or an error indicator.
     
     @discardableResult
-    func appendItem(_ value: ItemManager, withName name: String) -> Result {
+    func appendItem(_ value: ItemManager, withName name: String) -> ResultCode {
         
-        guard let nameField = NameField(name) else { return .error(.nameFieldError) }
+        guard let nameField = NameField(name) else { return .nameFieldError }
         return appendItem(value, withNameField: nameField)
     }
     
@@ -784,10 +786,10 @@ public extension Portal {
     /// - Returns: 'success' or an error indicator.
     
     @discardableResult
-    func appendItem(_ value: ItemManager, withNameField nameField: NameField?) -> Result {
+    func appendItem(_ value: ItemManager, withNameField nameField: NameField?) -> ResultCode {
         
-        guard isValid else { return .error(.portalInvalid) }
-        guard isSequence else { return .error(.operationNotSupported) }
+        guard isValid else { return .portalInvalid }
+        guard isSequence else { return .operationNotSupported }
         
         let neededItemByteCount =  _sequenceValueFieldUsedByteCount + value.root._itemByteCount
         let result = _sequenceEnsureValueFieldByteCount(of: neededItemByteCount)

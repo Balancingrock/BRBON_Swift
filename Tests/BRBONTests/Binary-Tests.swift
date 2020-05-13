@@ -25,7 +25,7 @@ class Binary_Tests: XCTestCase {
     
     func testCoder() {
         
-        var b = Data([0x01, 0x02, 0x03])
+        let b = Data([0x01, 0x02, 0x03])
         
         XCTAssertEqual(b.itemType, .binary)
         XCTAssertEqual(b.valueByteCount, 7)

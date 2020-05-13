@@ -3,14 +3,14 @@
 //  File:       Portal.swift
 //  Project:    BRBON
 //
-//  Version:    1.2.3
+//  Version:    1.3.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
 //  Git:        https://github.com/Balancingrock/BRBON
 //  Website:    http://swiftfire.nl/projects/brbon/brbon.html
 //
-//  Copyright:  (c) 2018-2019 Marinus van der Lugt, All rights reserved.
+//  Copyright:  (c) 2018-2020 Marinus van der Lugt, All rights reserved.
 //
 //  License:    Use or redistribute this code any way you like with the following two provision:
 //
@@ -36,6 +36,8 @@
 //
 // History
 //
+// 1.3.0 - Renamed Result to ResultCode to avoid confusion due to Swift's Result type
+//       - Symplified the ResultCode to make it easier to use.
 // 1.2.3 - Wrapped all ptest functions in conditional compilation
 // 1.2.2 - Added code for runtime pointer checks when compiler condition PTEST is active
 //       - Bugfix for updating the itemByteCount of container fields in tables
@@ -310,7 +312,7 @@ extension Portal {
     
     /// Ensures that the specified number of bytes can be stored at the value pointer.
     
-    internal func ensureStorageAtValuePtr(of bytes: Int) -> Result {
+    internal func ensureStorageAtValuePtr(of bytes: Int) -> ResultCode {
         if index == nil {
             if currentValueFieldByteCount < bytes {
                 return increaseItemByteCount(to: itemHeaderByteCount + _itemNameFieldByteCount + bytes)
@@ -338,11 +340,11 @@ extension Portal {
     ///
     ///   error(code): When the operation failed, the code indicates the cause.
     
-    internal func increaseItemByteCount(to bytes: Int) -> Result {
+    internal func increaseItemByteCount(to bytes: Int) -> ResultCode {
         
         let newByteCount = bytes.roundUpToNearestMultipleOf8()
         
-        if newByteCount > Int(Int32.max) { return .error(.itemByteCountOutOfRange) }
+        if newByteCount > Int(Int32.max) { return .itemByteCountOutOfRange }
         
         if let parent = parentPortal {
             
@@ -367,7 +369,7 @@ extension Portal {
                     if parent._itemByteCount < necessaryParentItemByteCount {
                         
                         let result = parent.increaseItemByteCount(to: necessaryParentItemByteCount)
-                        guard result == .success else { return result }
+                        guard case .success = result else { return result }
                     }
                     
                     
@@ -392,7 +394,7 @@ extension Portal {
                 
                 if parent._itemByteCount < necessaryParentItemByteCount {
                     let result = parent.increaseItemByteCount(to: necessaryParentItemByteCount)
-                    guard result == .success else { return result }
+                    guard case .success = result else { return result }
                 }
                 
                 
@@ -431,7 +433,7 @@ extension Portal {
                 if parent._itemByteCount < necessaryParentItemByteCount {
                     
                     let result = parent.increaseItemByteCount(to: necessaryParentItemByteCount)
-                    guard result == .success else { return result }
+                    guard case .success = result else { return result }
                 }
                 
                 
@@ -490,7 +492,7 @@ extension Portal {
                 
             } else {
                 
-                return .error(.outOfStorage)
+                return .outOfStorage
             }
             
             
@@ -505,7 +507,7 @@ extension Portal {
                 
                 // Note: The following operation also updates all active portals
                 
-                guard manager.increaseBufferSize(to: newByteCount) else { return .error(.increaseFailed) }
+                guard manager.increaseBufferSize(to: newByteCount) else { return .increaseFailed }
             }
             
             

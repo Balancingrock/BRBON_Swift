@@ -3,14 +3,14 @@
 //  File:       Results.swift
 //  Project:    BRBON
 //
-//  Version:    1.0.1
+//  Version:    1.3.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
 //  Git:        https://github.com/Balancingrock/BRBON
 //  Website:    http://swiftfire.nl/projects/brbon/brbon.html
 //
-//  Copyright:  (c) 2018-2019 Marinus van der Lugt, All rights reserved.
+//  Copyright:  (c) 2018-2020 Marinus van der Lugt, All rights reserved.
 //
 //  License:    Use or redistribute this code any way you like with the following two provision:
 //
@@ -36,6 +36,8 @@
 //
 // History
 //
+// 1.3.0 - Renamed Result to ResultCode to avoid confusion due to Swift's Result type
+//       - Symplified the ResultCode to make it easier to use.
 // 1.0.1 - Documentation update
 // 1.0.0 - Removed older history
 //
@@ -46,158 +48,170 @@ import Foundation
 
 /// Results for some of the operations provided by the API
 
-public enum ErrorCode: Int, CustomStringConvertible {
+public enum ResultCode: CustomStringConvertible {
 
+    
+    /// The action concluded sucessfully
+    
+    case success
+    
+    
+    /// No action was taken, no error occured
+    
+    case noAction
+    
     
     /// Generated if a NameField could not be created
     
-    case nameFieldError = 1
+    case nameFieldError
     
     
     /// Generated if an attempt is made to increase the storage area of a non-container item
     
-    case outOfStorage = 2
+    case outOfStorage
     
     
     /// Generated if an attempt is made to add a non-container item manager to a table
     
-    case dataInconsistency = 3
+    case dataInconsistency
     
     
     /// Generated if an index is lower than zero
     
-    case indexBelowLowerBound = 5
+    case indexBelowLowerBound
     
     
     /// Generated if an index is >= count
     
-    case indexAboveHigherBound = 6
+    case indexAboveHigherBound
     
     
     /// Generated if no item can be found with the given name
     
-    case itemNotFound = 8
+    case itemNotFound
     
     
     /// Generated if an optional input value should have had a value
     
-    case missingValue = 9
+    case missingValue
     
     
     /// Generated if it was necessary to increase a item's size, but this was not possible
     
-    case increaseFailed = 10
+    case increaseFailed
     
     
     /// Not used
     
-    case illegalNameField = 11
+    case illegalNameField
     
     
     /// Generated if an attempt is made to change the type in an item or element
     
-    case typeConflict = 12
+    case typeConflict
     
     
     /// Generated if an operation is attemped on a type that does not support it
     
-    case operationNotSupported = 13
+    case operationNotSupported
     
     
     /// Not used
     
-    case arrayMustContainAnElement = 14
+    case arrayMustContainAnElement
     
     
     /// Not used
     
-    case valueByteCountTooLarge = 15
+    case valueByteCountTooLarge
     
     
     /// Not used
     
-    case valueByteCountTooSmall = 16
+    case valueByteCountTooSmall
     
     
     /// Not used
     
-    case cannotConvertStringToUtf8 = 17
+    case cannotConvertStringToUtf8
     
     
     /// Not used
     
-    case notAnArray = 18
+    case notAnArray
     
     
     /// Not used
     
-    case allDictionaryKeysMustBeString = 19
+    case allDictionaryKeysMustBeString
     
     
     /// Not used
     
-    case emptyKey = 20
+    case emptyKey
     
     
     /// Generated when an attempt is made to use an invalid portal
     
-    case portalInvalid = 21
+    case portalInvalid
     
     
     /// Generated if a table column descriptor could not be constructed from the memory contents
     
-    case invalidTableColumnType = 22
+    case invalidTableColumnType
     
     
     /// Generated if a column was not present in the table
     
-    case columnNotFound = 23
+    case columnNotFound
     
     
     /// Generated if table does not contain a column with the given name
     
-    case nameExists = 24
+    case nameExists
     
     
     /// Generated if an amount specified cannot be valid (either nagative or < Int32'max)
     
-    case illegalAmount = 25
+    case illegalAmount
     
     
     /// Generated if a namefield could not be created
     
-    case missingName = 26
+    case missingName
     
     
     /// Not used
     
-    case noNameAllowed = 27
+    case noNameAllowed
     
     
     /// Generated if an amount is larger than Int32.max
     
-    case itemByteCountOutOfRange = 28
+    case itemByteCountOutOfRange
     
     
     /// Generated if a memory content cannot be converted to a type indicator
     
-    case illegalTypeFieldValue = 29
+    case illegalTypeFieldValue
     
     
     /// Generated if the index is missing from a table field portal
     
-    case missingIndex = 30
+    case missingIndex
     
     
     /// Generated if the column is missing from a table field portal
     
-    case missingColumn = 31
+    case missingColumn
     
     
     /// Returns a string describing the enum
     
     public var description: String {
         switch self {
+        case .success: return "Success"
+        case .noAction: return "No action was taken"
         case .nameFieldError: return "Name field error"
         case .outOfStorage: return "Out of storage"
         case .dataInconsistency: return "Data inconsistency"
@@ -226,61 +240,7 @@ public enum ErrorCode: Int, CustomStringConvertible {
         case .itemByteCountOutOfRange: return "Item byte count out of range"
         case .illegalTypeFieldValue: return "Illegal type field value"
         case .missingIndex: return "Missing index"
-        case .missingColumn: return "MIssing column"
+        case .missingColumn: return "Missing column"
         }
     }
 }
-
-
-/// The result from some BRBON functions
-
-public enum Result: CustomStringConvertible, Equatable {
-
-    
-    /// The operation succeeded
-    
-    case success
-    
-    
-    /// If no action could be taken or was taken
-    
-    case noAction
-    
-    
-    /// An error condition occured
-    
-    case error(ErrorCode)
-    
-    
-    /// The CustomStringConvertible protocol
-    
-    public var description: String {
-        switch self {
-        case .success: return "Succesful execution"
-        case .noAction: return "There was no error, but nothing was done either"
-        case .error(let code): return "En error occured, code = \(code)"
-        }
-    }
-    
-    
-    /// The Equatable protocol
-    
-    public static func == (lhs: Result, rhs: Result) -> Bool {
-        switch lhs {
-        case .success:
-            switch rhs {
-            case .success: return true
-            default: return false
-            }
-        case .noAction:
-            switch rhs {
-            case .noAction: return true
-            default: return false
-            }
-        case .error(let lcode):
-            if case let .error(rcode) = rhs { return lcode == rcode }
-            return false
-        }
-    }
-}
-

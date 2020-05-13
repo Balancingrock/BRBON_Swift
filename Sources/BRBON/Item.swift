@@ -3,14 +3,14 @@
 //  File:       Item.swift
 //  Project:    BRBON
 //
-//  Version:    1.0.0
+//  Version:    1.3.0
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
 //  Git:        https://github.com/Balancingrock/BRBON
 //  Website:    http://swiftfire.nl/projects/brbon/brbon.html
 //
-//  Copyright:  (c) 2018-2019 Marinus van der Lugt, All rights reserved.
+//  Copyright:  (c) 2018-2020 Marinus van der Lugt, All rights reserved.
 //
 //  License:    Use or redistribute this code any way you like with the following two provision:
 //
@@ -36,6 +36,8 @@
 //
 // History
 //
+// 1.3.0 - Renamed Result to ResultCode to avoid confusion due to Swift's Result type
+//       - Symplified the ResultCode to make it easier to use.
 // 1.0.0 - Removed older history
 //
 // =====================================================================================================================
@@ -545,7 +547,7 @@ public extension Portal {
     ///
     /// Setting the name to nil will remove the name and the name-field from the item. Setting a smaller name will not reduce the size of the name-field however.
     
-    func updateItemName(to nameField: NameField?) -> Result {
+    func updateItemName(to nameField: NameField?) -> ResultCode {
         
         if let nameField = nameField {
         
@@ -605,7 +607,7 @@ public extension Portal {
     ///
     ///   error(code): if something prevented the update, the code details the reason.
     
-    internal func _updateItemValue(_ value: Coder) -> Result {
+    internal func _updateItemValue(_ value: Coder) -> ResultCode {
         
         
         // Update the proper region
@@ -659,7 +661,7 @@ public extension Portal {
     ///
     ///   error(code): if something prevented the update, the code details the reason.
 
-    internal func _updateItemValue(_ value: ItemManager) -> Result {
+    internal func _updateItemValue(_ value: ItemManager) -> ResultCode {
         
         let newByteCount = value.root._itemByteCount
         let oldByteCount = _itemByteCount

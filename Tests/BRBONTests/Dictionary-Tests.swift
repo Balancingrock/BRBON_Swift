@@ -2067,7 +2067,7 @@ class Dictionary_Tests: XCTestCase {
             ])
 
         
-        XCTAssertEqual(dm.root.removeItem(withNameField: NameField("44")), .error(.itemNotFound))
+        XCTAssertEqual(dm.root.removeItem(withNameField: NameField("44")), .itemNotFound)
 
         XCTAssertEqual(dm.data, exp)
 

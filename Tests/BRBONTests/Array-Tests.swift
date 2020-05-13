@@ -95,7 +95,7 @@ class Array_Tests: XCTestCase {
         
         // Append a new element
         
-        XCTAssertEqual(am.root.appendElement(false), Result.success)
+        XCTAssertEqual(am.root.appendElement(false), ResultCode.success)
         
         XCTAssertEqual(am.root.count, 4)
         XCTAssertEqual(am.root[3], false)
@@ -103,7 +103,7 @@ class Array_Tests: XCTestCase {
         
         // Create more elements, overflow value field byte count
         
-        XCTAssertEqual(am.root.createNewElements(amount: 5, value: true), Result.success)
+        XCTAssertEqual(am.root.createNewElements(amount: 5, value: true), ResultCode.success)
 
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 16)
         XCTAssertEqual(am.root.count, 9)
@@ -122,7 +122,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), ResultCode.success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 16)
         XCTAssertEqual(am.root.count, 8)
@@ -141,7 +141,7 @@ class Array_Tests: XCTestCase {
         
         // Insert an element
         
-        XCTAssertEqual(am.root.insertElement(false, atIndex: 6), Result.success)
+        XCTAssertEqual(am.root.insertElement(false, atIndex: 6), ResultCode.success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 16)
         XCTAssertEqual(am.root.count, 9)
@@ -230,7 +230,7 @@ class Array_Tests: XCTestCase {
         
         // Append a new element
         
-        XCTAssertEqual(am.root.appendElement(Int8(4)), Result.success)
+        XCTAssertEqual(am.root.appendElement(Int8(4)), ResultCode.success)
         
         XCTAssertEqual(am.root.count, 4)
         XCTAssertEqual(am.root[3], Int8(4))
@@ -238,7 +238,7 @@ class Array_Tests: XCTestCase {
         
         // Create more elements, overflow value field byte count
         
-        XCTAssertEqual(am.root.createNewElements(amount: 5, value: Int8(5)), Result.success)
+        XCTAssertEqual(am.root.createNewElements(amount: 5, value: Int8(5)), ResultCode.success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 16)
         XCTAssertEqual(am.root.count, 9)
@@ -257,7 +257,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), ResultCode.success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 16)
         XCTAssertEqual(am.root.count, 8)
@@ -276,7 +276,7 @@ class Array_Tests: XCTestCase {
         
         // Insert an element
         
-        XCTAssertEqual(am.root.insertElement(Int8(0), atIndex: 6), Result.success)
+        XCTAssertEqual(am.root.insertElement(Int8(0), atIndex: 6), ResultCode.success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 16)
         XCTAssertEqual(am.root.count, 9)
@@ -365,7 +365,7 @@ class Array_Tests: XCTestCase {
         
         // Append a new element
         
-        XCTAssertEqual(am.root.appendElement(Int16(4)), Result.success)
+        XCTAssertEqual(am.root.appendElement(Int16(4)), ResultCode.success)
         
         XCTAssertEqual(am.root.count, 4)
         XCTAssertEqual(am.root[3], Int16(4))
@@ -373,7 +373,7 @@ class Array_Tests: XCTestCase {
         
         // Create more elements, overflow value field byte count
         
-        XCTAssertEqual(am.root.createNewElements(amount: 5, value: Int16(5)), Result.success)
+        XCTAssertEqual(am.root.createNewElements(amount: 5, value: Int16(5)), ResultCode.success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 24)
         XCTAssertEqual(am.root.count, 9)
@@ -393,7 +393,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), ResultCode.success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 24)
         XCTAssertEqual(am.root.count, 8)
@@ -413,7 +413,7 @@ class Array_Tests: XCTestCase {
         
         // Insert an element
         
-        XCTAssertEqual(am.root.insertElement(Int16(0), atIndex: 6), Result.success)
+        XCTAssertEqual(am.root.insertElement(Int16(0), atIndex: 6), ResultCode.success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 24)
         XCTAssertEqual(am.root.count, 9)
@@ -504,7 +504,7 @@ class Array_Tests: XCTestCase {
         
         // Append a new element
         
-        XCTAssertEqual(am.root.appendElement(Int32(4)), Result.success)
+        XCTAssertEqual(am.root.appendElement(Int32(4)), ResultCode.success)
         
         XCTAssertEqual(am.root.count, 4)
         XCTAssertEqual(am.root[3], Int32(4))
@@ -512,7 +512,7 @@ class Array_Tests: XCTestCase {
         
         // Create more elements, overflow value field byte count
         
-        XCTAssertEqual(am.root.createNewElements(amount: 5, value: Int32(5)), Result.success)
+        XCTAssertEqual(am.root.createNewElements(amount: 5, value: Int32(5)), ResultCode.success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 40)
         XCTAssertEqual(am.root.count, 9)
@@ -534,7 +534,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), ResultCode.success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 40)
         XCTAssertEqual(am.root.count, 8)
@@ -556,7 +556,7 @@ class Array_Tests: XCTestCase {
         
         // Insert an element
         
-        XCTAssertEqual(am.root.insertElement(Int32(0), atIndex: 6), Result.success)
+        XCTAssertEqual(am.root.insertElement(Int32(0), atIndex: 6), ResultCode.success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 40)
         XCTAssertEqual(am.root.count, 9)
@@ -650,7 +650,7 @@ class Array_Tests: XCTestCase {
         
         // Append a new element
         
-        XCTAssertEqual(am.root.appendElement(Int64(4)), Result.success)
+        XCTAssertEqual(am.root.appendElement(Int64(4)), .success)
         
         XCTAssertEqual(am.root.count, 4)
         XCTAssertEqual(am.root[3], Int64(4))
@@ -658,7 +658,7 @@ class Array_Tests: XCTestCase {
         
         // Create more elements, overflow value field byte count
         
-        XCTAssertEqual(am.root.createNewElements(amount: 5, value: Int64(5)), Result.success)
+        XCTAssertEqual(am.root.createNewElements(amount: 5, value: Int64(5)), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 72)
         XCTAssertEqual(am.root.count, 9)
@@ -684,7 +684,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 72)
         XCTAssertEqual(am.root.count, 8)
@@ -710,7 +710,7 @@ class Array_Tests: XCTestCase {
         
         // Insert an element
         
-        XCTAssertEqual(am.root.insertElement(Int64(0), atIndex: 6), Result.success)
+        XCTAssertEqual(am.root.insertElement(Int64(0), atIndex: 6), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 72)
         XCTAssertEqual(am.root.count, 9)
@@ -807,7 +807,7 @@ class Array_Tests: XCTestCase {
         
         // Append a new element
         
-        XCTAssertEqual(am.root.appendElement(UInt8(4)), Result.success)
+        XCTAssertEqual(am.root.appendElement(UInt8(4)), .success)
         
         XCTAssertEqual(am.root.count, 4)
         XCTAssertEqual(am.root[3], UInt8(4))
@@ -815,7 +815,7 @@ class Array_Tests: XCTestCase {
         
         // Create more elements, overflow value field byte count
         
-        XCTAssertEqual(am.root.createNewElements(amount: 5, value: UInt8(5)), Result.success)
+        XCTAssertEqual(am.root.createNewElements(amount: 5, value: UInt8(5)), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 16)
         XCTAssertEqual(am.root.count, 9)
@@ -834,7 +834,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 16)
         XCTAssertEqual(am.root.count, 8)
@@ -853,7 +853,7 @@ class Array_Tests: XCTestCase {
         
         // Insert an element
         
-        XCTAssertEqual(am.root.insertElement(UInt8(0), atIndex: 6), Result.success)
+        XCTAssertEqual(am.root.insertElement(UInt8(0), atIndex: 6), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 16)
         XCTAssertEqual(am.root.count, 9)
@@ -943,7 +943,7 @@ class Array_Tests: XCTestCase {
         
         // Append a new element
         
-        XCTAssertEqual(am.root.appendElement(UInt16(4)), Result.success)
+        XCTAssertEqual(am.root.appendElement(UInt16(4)), .success)
         
         XCTAssertEqual(am.root.count, 4)
         XCTAssertEqual(am.root[3], UInt16(4))
@@ -951,7 +951,7 @@ class Array_Tests: XCTestCase {
         
         // Create more elements, overflow value field byte count
         
-        XCTAssertEqual(am.root.createNewElements(amount: 5, value: UInt16(5)), Result.success)
+        XCTAssertEqual(am.root.createNewElements(amount: 5, value: UInt16(5)), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 24)
         XCTAssertEqual(am.root.count, 9)
@@ -971,7 +971,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 24)
         XCTAssertEqual(am.root.count, 8)
@@ -991,7 +991,7 @@ class Array_Tests: XCTestCase {
         
         // Insert an element
         
-        XCTAssertEqual(am.root.insertElement(UInt16(0), atIndex: 6), Result.success)
+        XCTAssertEqual(am.root.insertElement(UInt16(0), atIndex: 6), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 24)
         XCTAssertEqual(am.root.count, 9)
@@ -1082,7 +1082,7 @@ class Array_Tests: XCTestCase {
         
         // Append a new element
         
-        XCTAssertEqual(am.root.appendElement(UInt32(4)), Result.success)
+        XCTAssertEqual(am.root.appendElement(UInt32(4)), .success)
         
         XCTAssertEqual(am.root.count, 4)
         XCTAssertEqual(am.root[3], UInt32(4))
@@ -1090,7 +1090,7 @@ class Array_Tests: XCTestCase {
         
         // Create more elements, overflow value field byte count
         
-        XCTAssertEqual(am.root.createNewElements(amount: 5, value: UInt32(5)), Result.success)
+        XCTAssertEqual(am.root.createNewElements(amount: 5, value: UInt32(5)), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 40)
         XCTAssertEqual(am.root.count, 9)
@@ -1112,7 +1112,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 40)
         XCTAssertEqual(am.root.count, 8)
@@ -1134,7 +1134,7 @@ class Array_Tests: XCTestCase {
         
         // Insert an element
         
-        XCTAssertEqual(am.root.insertElement(UInt32(0), atIndex: 6), Result.success)
+        XCTAssertEqual(am.root.insertElement(UInt32(0), atIndex: 6), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 40)
         XCTAssertEqual(am.root.count, 9)
@@ -1228,7 +1228,7 @@ class Array_Tests: XCTestCase {
         
         // Append a new element
         
-        XCTAssertEqual(am.root.appendElement(UInt64(4)), Result.success)
+        XCTAssertEqual(am.root.appendElement(UInt64(4)), .success)
         
         XCTAssertEqual(am.root.count, 4)
         XCTAssertEqual(am.root[3], UInt64(4))
@@ -1236,7 +1236,7 @@ class Array_Tests: XCTestCase {
         
         // Create more elements
         
-        XCTAssertEqual(am.root.createNewElements(amount: 5, value: UInt64(5)), Result.success)
+        XCTAssertEqual(am.root.createNewElements(amount: 5, value: UInt64(5)), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 72)
         XCTAssertEqual(am.root.count, 9)
@@ -1262,7 +1262,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 72)
         XCTAssertEqual(am.root.count, 8)
@@ -1288,7 +1288,7 @@ class Array_Tests: XCTestCase {
         
         // Insert an element
         
-        XCTAssertEqual(am.root.insertElement(UInt64(0), atIndex: 6), Result.success)
+        XCTAssertEqual(am.root.insertElement(UInt64(0), atIndex: 6), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 72)
         XCTAssertEqual(am.root.count, 9)
@@ -1386,7 +1386,7 @@ class Array_Tests: XCTestCase {
         
         // Append a new element
         
-        XCTAssertEqual(am.root.appendElement(BRString("444444")), Result.success)
+        XCTAssertEqual(am.root.appendElement(BRString("444444")), .success)
         
         XCTAssertEqual(am.root._arrayElementByteCount, 16)
         XCTAssertEqual(am.root.count, 4)
@@ -1409,7 +1409,7 @@ class Array_Tests: XCTestCase {
         
         // Create more elements
         
-        XCTAssertEqual(am.root.createNewElements(amount: 5, value: BRString("55555")), Result.success)
+        XCTAssertEqual(am.root.createNewElements(amount: 5, value: BRString("55555")), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 144)
         XCTAssertEqual(am.root.count, 9)
@@ -1435,7 +1435,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 144)
         XCTAssertEqual(am.root.count, 8)
@@ -1461,7 +1461,7 @@ class Array_Tests: XCTestCase {
         
         // Insert an element
         
-        XCTAssertEqual(am.root.insertElement(BRString("0000"), atIndex: 6), Result.success)
+        XCTAssertEqual(am.root.insertElement(BRString("0000"), atIndex: 6), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 144)
         XCTAssertEqual(am.root.count, 9)
@@ -1559,7 +1559,7 @@ class Array_Tests: XCTestCase {
         
         // Append a new element
         
-        XCTAssertEqual(am.root.appendElement(Data([0x41, 0x42, 0x43, 0x44, 0x45, 0x46])), Result.success)
+        XCTAssertEqual(am.root.appendElement(Data([0x41, 0x42, 0x43, 0x44, 0x45, 0x46])), .success)
         
         XCTAssertEqual(am.root._arrayElementByteCount, 16)
         XCTAssertEqual(am.root.count, 4)
@@ -1582,7 +1582,7 @@ class Array_Tests: XCTestCase {
         
         // Create more elements
         
-        XCTAssertEqual(am.root.createNewElements(amount: 5, value: Data([0x51, 0x52])), Result.success)
+        XCTAssertEqual(am.root.createNewElements(amount: 5, value: Data([0x51, 0x52])), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 144)
         XCTAssertEqual(am.root.count, 9)
@@ -1608,7 +1608,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 144)
         XCTAssertEqual(am.root.count, 8)
@@ -1634,7 +1634,7 @@ class Array_Tests: XCTestCase {
         
         // Insert an element
         
-        XCTAssertEqual(am.root.insertElement(Data([0x00, 0x00]), atIndex: 6), Result.success)
+        XCTAssertEqual(am.root.insertElement(Data([0x00, 0x00]), atIndex: 6), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 144)
         XCTAssertEqual(am.root.count, 9)
@@ -1693,7 +1693,7 @@ class Array_Tests: XCTestCase {
         
         // Append a new element
         
-        XCTAssertEqual(am.root.appendElement(UUID(uuidString: "11111111-2222-3333-4444-555555555555")), Result.success)
+        XCTAssertEqual(am.root.appendElement(UUID(uuidString: "11111111-2222-3333-4444-555555555555")), .success)
         
         XCTAssertEqual(am.root._arrayElementByteCount, 16)
         XCTAssertEqual(am.root.count, 1)
@@ -1713,7 +1713,7 @@ class Array_Tests: XCTestCase {
         
         // Create more elements
         
-        XCTAssertEqual(am.root.createNewElements(amount: 3, value: UUID(uuidString: "22222222-3333-4444-5555-666666666666")), Result.success)
+        XCTAssertEqual(am.root.createNewElements(amount: 3, value: UUID(uuidString: "22222222-3333-4444-5555-666666666666")), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 64)
         XCTAssertEqual(am.root.count, 4)
@@ -1734,7 +1734,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 64)
         XCTAssertEqual(am.root.count, 3)
@@ -1755,7 +1755,7 @@ class Array_Tests: XCTestCase {
         
         // Insert an element
         
-        XCTAssertEqual(am.root.insertElement(UUID(uuidString: "00000000-0000-0000-0000-000000000000"), atIndex: 2), Result.success)
+        XCTAssertEqual(am.root.insertElement(UUID(uuidString: "00000000-0000-0000-0000-000000000000"), atIndex: 2), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 64)
         XCTAssertEqual(am.root.count, 4)
@@ -1809,7 +1809,7 @@ class Array_Tests: XCTestCase {
         
         // Append a new element
         
-        XCTAssertEqual(am.root.appendElement(BRFont(NSFont(name: "Courier", size: 12.0))), Result.success)
+        XCTAssertEqual(am.root.appendElement(BRFont(NSFont(name: "Courier", size: 12.0))), .success)
         
         XCTAssertEqual(am.root._arrayElementByteCount, 24)
         XCTAssertEqual(am.root.count, 1)
@@ -1828,7 +1828,7 @@ class Array_Tests: XCTestCase {
         
         // Create more elements
         
-        XCTAssertEqual(am.root.createNewElements(amount: 3, value: BRFont(NSFont(name: "Helvetica", size: 11.0))), Result.success)
+        XCTAssertEqual(am.root.createNewElements(amount: 3, value: BRFont(NSFont(name: "Helvetica", size: 11.0))), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 96)
         XCTAssertEqual(am.root.count, 4)
@@ -1849,7 +1849,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 96)
         XCTAssertEqual(am.root.count, 3)
@@ -1870,7 +1870,7 @@ class Array_Tests: XCTestCase {
         
         // Insert an element
         
-        XCTAssertEqual(am.root.insertElement(BRFont(NSFont(name: "Courier", size: 12.0)), atIndex: 2), Result.success)
+        XCTAssertEqual(am.root.insertElement(BRFont(NSFont(name: "Courier", size: 12.0)), atIndex: 2), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 96)
         XCTAssertEqual(am.root.count, 4)
@@ -1924,7 +1924,7 @@ class Array_Tests: XCTestCase {
         
         // Append a new element
         
-        XCTAssertEqual(am.root.appendElement(BRColor(NSColor.red)), Result.success)
+        XCTAssertEqual(am.root.appendElement(BRColor(NSColor.red)), .success)
         
         XCTAssertEqual(am.root._arrayElementByteCount, 4)
         XCTAssertEqual(am.root.count, 1)
@@ -1943,7 +1943,7 @@ class Array_Tests: XCTestCase {
         
         // Create more elements
         
-        XCTAssertEqual(am.root.createNewElements(amount: 3, value: BRColor(NSColor.blue)), Result.success)
+        XCTAssertEqual(am.root.createNewElements(amount: 3, value: BRColor(NSColor.blue)), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 4 * 4)
         XCTAssertEqual(am.root.count, 4)
@@ -1964,7 +1964,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 4 * 4)
         XCTAssertEqual(am.root.count, 3)
@@ -1985,7 +1985,7 @@ class Array_Tests: XCTestCase {
         
         // Insert an element
         
-        XCTAssertEqual(am.root.insertElement(BRColor(NSColor.green), atIndex: 2), Result.success)
+        XCTAssertEqual(am.root.insertElement(BRColor(NSColor.green), atIndex: 2), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 4 * 4)
         XCTAssertEqual(am.root.count, 4)
@@ -2039,7 +2039,7 @@ class Array_Tests: XCTestCase {
         
         // Append a new element
         
-        XCTAssertEqual(am.root.appendElement(BRCrcString("111")), Result.success)
+        XCTAssertEqual(am.root.appendElement(BRCrcString("111")), .success)
         
         XCTAssertEqual(am.root._arrayElementByteCount, 16)
         XCTAssertEqual(am.root.count, 1)
@@ -2060,7 +2060,7 @@ class Array_Tests: XCTestCase {
         
         // Create more elements
         
-        XCTAssertEqual(am.root.createNewElements(amount: 3, value: BRCrcString("22")), Result.success)
+        XCTAssertEqual(am.root.createNewElements(amount: 3, value: BRCrcString("22")), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 4 * 16)
         XCTAssertEqual(am.root.count, 4)
@@ -2082,7 +2082,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 4 * 16)
         XCTAssertEqual(am.root.count, 3)
@@ -2104,7 +2104,7 @@ class Array_Tests: XCTestCase {
         
         // Insert an element
         
-        XCTAssertEqual(am.root.insertElement(BRCrcString("333333333"), atIndex: 2), Result.success)
+        XCTAssertEqual(am.root.insertElement(BRCrcString("333333333"), atIndex: 2), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 4 * 24)
         XCTAssertEqual(am.root.count, 4)
@@ -2159,7 +2159,7 @@ class Array_Tests: XCTestCase {
         
         // Append a new element
         
-        XCTAssertEqual(am.root.appendElement(BRCrcBinary(Data([0x11, 0x11, 0x11]))), Result.success)
+        XCTAssertEqual(am.root.appendElement(BRCrcBinary(Data([0x11, 0x11, 0x11]))), .success)
         
         XCTAssertEqual(am.root._arrayElementByteCount, 16)
         XCTAssertEqual(am.root.count, 1)
@@ -2180,7 +2180,7 @@ class Array_Tests: XCTestCase {
         
         // Create more elements
         
-        XCTAssertEqual(am.root.createNewElements(amount: 3, value: BRCrcBinary(Data([0x22, 0x22]))), Result.success)
+        XCTAssertEqual(am.root.createNewElements(amount: 3, value: BRCrcBinary(Data([0x22, 0x22]))), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 4 * 16)
         XCTAssertEqual(am.root.count, 4)
@@ -2202,7 +2202,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 4 * 16)
         XCTAssertEqual(am.root.count, 3)
@@ -2224,7 +2224,7 @@ class Array_Tests: XCTestCase {
         
         // Insert an element
         
-        XCTAssertEqual(am.root.insertElement(BRCrcBinary(Data([0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33])), atIndex: 2), Result.success)
+        XCTAssertEqual(am.root.insertElement(BRCrcBinary(Data([0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33])), atIndex: 2), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 4 * 24)
         XCTAssertEqual(am.root.count, 4)
@@ -2281,7 +2281,7 @@ class Array_Tests: XCTestCase {
         
         let am1 = ItemManager.createArrayManager(values: [true, true, false, false])
         
-        XCTAssertEqual(am.root.appendElement(am1), Result.success)
+        XCTAssertEqual(am.root.appendElement(am1), .success)
         
         XCTAssertEqual(am.root._arrayElementByteCount, 40)
         XCTAssertEqual(am.root.count, 1)
@@ -2313,7 +2313,7 @@ class Array_Tests: XCTestCase {
 
         let arr: Array<ItemManager> = [am2, am3, am4]
         
-        XCTAssertEqual(am.root.appendElements(arr), Result.success)
+        XCTAssertEqual(am.root.appendElements(arr), .success)
                 
         
         exp = Data([
@@ -2358,7 +2358,7 @@ class Array_Tests: XCTestCase {
         
         // Remove an element
         
-        XCTAssertEqual(am.root.removeElement(atIndex: 0), Result.success)
+        XCTAssertEqual(am.root.removeElement(atIndex: 0), .success)
         
         XCTAssertEqual(am.root.count, 3)
         
@@ -2404,7 +2404,7 @@ class Array_Tests: XCTestCase {
         
         let am5 = ItemManager.createArrayManager(values: [Int8(0x11), Int8(0x22)])
 
-        XCTAssertEqual(am.root.insertElement(am5, atIndex: 2), Result.success)
+        XCTAssertEqual(am.root.insertElement(am5, atIndex: 2), .success)
         
         XCTAssertEqual(am.root.count, 4)
         
@@ -2448,11 +2448,11 @@ class Array_Tests: XCTestCase {
         
         // Extra test: Add to the first array such that its size must increase, but the elementcount of the root array does not increase
         
-        XCTAssertEqual(am.root[0].appendElement(true), Result.success)
-        XCTAssertEqual(am.root[0].appendElement(true), Result.success)
-        XCTAssertEqual(am.root[0].appendElement(true), Result.success)
-        XCTAssertEqual(am.root[0].appendElement(true), Result.success)
-        XCTAssertEqual(am.root[0].appendElement(true), Result.success)
+        XCTAssertEqual(am.root[0].appendElement(true), .success)
+        XCTAssertEqual(am.root[0].appendElement(true), .success)
+        XCTAssertEqual(am.root[0].appendElement(true), .success)
+        XCTAssertEqual(am.root[0].appendElement(true), .success)
+        XCTAssertEqual(am.root[0].appendElement(true), .success)
         
         exp = Data([
             0x11, 0x00, 0x00, 0x00, 0xe0, 0x00, 0x00, 0x00,

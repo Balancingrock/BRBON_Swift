@@ -199,7 +199,7 @@ class Table_Tests: XCTestCase {
         
         guard let tm = createTableWith3Columns() else { XCTFail(); return }
         
-        XCTAssertEqual(tm.root.addColumn(type: .int64, nameField: NameField("dd")!, byteCount: 8), Result.success)
+        XCTAssertEqual(tm.root.addColumn(type: .int64, nameField: NameField("dd")!, byteCount: 8), .success)
         
         // Basic portal properties
         
@@ -281,7 +281,7 @@ class Table_Tests: XCTestCase {
         
         guard let tm = createTableWith3Columns() else { XCTFail(); return }
         
-        XCTAssertEqual(tm.root.removeColumn("ee"), .error(.columnNotFound))
+        XCTAssertEqual(tm.root.removeColumn("ee"), .columnNotFound)
         XCTAssertEqual(tm.root.removeColumn("bb"), .success)
         
         
@@ -343,7 +343,7 @@ class Table_Tests: XCTestCase {
         
         guard let tm = createTableWith3Columns() else { XCTFail(); return }
 
-        XCTAssertEqual(tm.root.addRows(1), Result.success)
+        XCTAssertEqual(tm.root.addRows(1), .success)
         
         
         // Basic portal properties
@@ -427,7 +427,7 @@ class Table_Tests: XCTestCase {
         
         guard let tm = createTableWith3Columns() else { XCTFail(); return }
         
-        XCTAssertEqual(tm.root.addRows(3), Result.success)
+        XCTAssertEqual(tm.root.addRows(3), .success)
         
         
         // Basic portal properties
@@ -517,7 +517,7 @@ class Table_Tests: XCTestCase {
         
         guard let tm = createTableWith3Columns() else { XCTFail(); return }
         
-        XCTAssertEqual(tm.root.addRows(3), Result.success)
+        XCTAssertEqual(tm.root.addRows(3), .success)
         
         
         // Basic portal properties
@@ -631,7 +631,7 @@ class Table_Tests: XCTestCase {
         
         guard let tm = createTableWith3Columns() else { XCTFail(); return }
         
-        XCTAssertEqual(tm.root.addRows(3), Result.success)
+        XCTAssertEqual(tm.root.addRows(3), .success)
         
         tm.root[0, "aa"] = UInt8(0x78)
         tm.root[1, "aa"] = UInt8(0x9A)
@@ -645,7 +645,7 @@ class Table_Tests: XCTestCase {
         tm.root[1, "cc"] = "2222"
         tm.root[2, "cc"] = "3333"
 
-        XCTAssertEqual(tm.root.removeRow(1), Result.success)
+        XCTAssertEqual(tm.root.removeRow(1), .success)
 
         
         // Table item properties
@@ -676,7 +676,7 @@ class Table_Tests: XCTestCase {
         
         // Remove first row
         
-        XCTAssertEqual(tm.root.removeRow(0), Result.success)
+        XCTAssertEqual(tm.root.removeRow(0), .success)
         
         // Table item properties
         
@@ -703,7 +703,7 @@ class Table_Tests: XCTestCase {
         
         // Remove first row (again)
         
-        XCTAssertEqual(tm.root.removeRow(0), Result.success)
+        XCTAssertEqual(tm.root.removeRow(0), .success)
         
         // Table item properties
         
@@ -717,7 +717,7 @@ class Table_Tests: XCTestCase {
         
         guard let tm = createTableWith3Columns() else { XCTFail(); return }
         
-        XCTAssertEqual(tm.root.addRows(3), Result.success)
+        XCTAssertEqual(tm.root.addRows(3), .success)
         
         tm.root[0, "aa"] = UInt8(0x78)
         tm.root[1, "aa"] = UInt8(0x9A)
@@ -731,7 +731,7 @@ class Table_Tests: XCTestCase {
         tm.root[1, "cc"] = "2222"
         tm.root[2, "cc"] = "3333"
 
-        XCTAssertEqual(tm.root.removeColumn("bb"), Result.success)
+        XCTAssertEqual(tm.root.removeColumn("bb"), .success)
         
         
         // Table item properties
@@ -778,7 +778,7 @@ class Table_Tests: XCTestCase {
         
         // Remove the first column
         
-        XCTAssertEqual(tm.root.removeColumn("aa"), Result.success)
+        XCTAssertEqual(tm.root.removeColumn("aa"), .success)
         
         
         // Table item properties
@@ -808,7 +808,7 @@ class Table_Tests: XCTestCase {
         
         // Remove the first column again
         
-        XCTAssertEqual(tm.root.removeColumn("cc"), Result.success)
+        XCTAssertEqual(tm.root.removeColumn("cc"), .success)
         
         
         // Table item properties
@@ -823,7 +823,7 @@ class Table_Tests: XCTestCase {
         
         guard let tm = createTableWith3Columns() else { XCTFail(); return }
         
-        XCTAssertEqual(tm.root.addRows(3), Result.success)
+        XCTAssertEqual(tm.root.addRows(3), .success)
         
         tm.root[0, "aa"] = UInt8(0x78)
         tm.root[1, "aa"] = UInt8(0x9A)
@@ -837,7 +837,7 @@ class Table_Tests: XCTestCase {
         tm.root[1, "cc"] = "2222"
         tm.root[2, "cc"] = "3333"
         
-        XCTAssertEqual(tm.root.insertRows(atIndex: 1), Result.success)
+        XCTAssertEqual(tm.root.insertRows(atIndex: 1), .success)
         
         
         // Table item properties
