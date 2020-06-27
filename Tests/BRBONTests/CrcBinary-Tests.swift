@@ -39,7 +39,7 @@ class CrcBinary_Tests: XCTestCase {
         
         let buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: 128, alignment: 8)
         #if swift(>=5.0)
-        _ = memset(buffer!.baseAddress!, 0, 128)
+        _ = memset(buffer.baseAddress!, 0, 128)
         #else
         _ = memset(buffer.baseAddress, 0, 128)
         #endif
