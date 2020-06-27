@@ -287,7 +287,11 @@ public final class ItemManager {
     public init(from data: Data) {
         self.buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: data.count, alignment: 8)
         self.buffer.copyBytes(from: data)
-        self.bufferPtr = buffer.baseAddress!
+        #if swift(>=5.0)
+            self.bufferPtr = buffer!.baseAddress!
+        #else
+            self.bufferPtr = buffer.baseAddress!
+        #endif
         self.endianness = machineEndianness
         self.activePortals = ActivePortals(manager: self)
         self.root = getActivePortal(for: self.bufferPtr)
@@ -305,7 +309,11 @@ public final class ItemManager {
         self.endianness = endianness
         
         self.buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: actualByteCount, alignment: 8)
-        self.bufferPtr = buffer.baseAddress!
+        #if swift(>=5.0)
+            self.bufferPtr = buffer!.baseAddress!
+        #else
+            self.bufferPtr = buffer.baseAddress!
+        #endif
         
         if ItemManager.startWithZeroedBuffers {
             _ = memset(self.bufferPtr, 0, buffer.count)
@@ -1607,8 +1615,12 @@ extension ItemManager {
         let increase = max(bytes, bufferIncrements).roundUpToNearestMultipleOf8()
         let newBuffer = UnsafeMutableRawBufferPointer.allocate(byteCount: increase, alignment: 8)
         
-        if ItemManager.startWithZeroedBuffers { _ = memset(newBuffer.baseAddress!, 0, newBuffer.count) }
-
+        #if swift(>=5.0)
+            if ItemManager.startWithZeroedBuffers { _ = memset(newBuffer!.baseAddress!, 0, newBuffer.count) }
+        #else
+            if ItemManager.startWithZeroedBuffers { _ = memset(newBuffer.baseAddress!, 0, newBuffer.count) }
+        #endif
+        
         _ = memmove(newBuffer.baseAddress!, buffer.baseAddress!, buffer.count)
         
         #if PTEST
