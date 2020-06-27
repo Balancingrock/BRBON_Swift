@@ -3,14 +3,14 @@
 //  File:       BRFont.swift
 //  Project:    BRBON
 //
-//  Version:    1.0.1
+//  Version:    1.3.1
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
 //  Git:        https://github.com/Balancingrock/BRBON
 //  Website:    http://swiftfire.nl/projects/brbon/brbon.html
 //
-//  Copyright:  (c) 2018-2019 Marinus van der Lugt, All rights reserved.
+//  Copyright:  (c) 2018-2020 Marinus van der Lugt, All rights reserved.
 //
 //  License:    Use or redistribute this code any way you like with the following two provision:
 //
@@ -36,14 +36,16 @@
 //
 // History
 //
+// 1.3.1 - Linux compatibility
 // 1.0.1 - Documentation updates
 // 1.0.0 - Removed older history
 //
 // =====================================================================================================================
 
 import Foundation
+#if os(macOS) || os(iOS) || os(tvOS)
 import Cocoa
-
+#endif
 import BRUtils
 
 
@@ -301,6 +303,8 @@ public struct BRFont {
     }
     
     
+    #if os(macOS) || os(iOS) || os(tvOS)
+
     /// The font as an NSFont
     
     public var font: NSFont? {
@@ -317,7 +321,11 @@ public struct BRFont {
         return nil
     }
     
+    #endif
     
+    
+    #if os(macOS) || os(iOS) || os(tvOS)
+
     /// Creates a structure from an NSFont.
     
     public init?(_ font: NSFont?) {
@@ -333,6 +341,8 @@ public struct BRFont {
         
         self.pointSize = Float32(font.pointSize)
     }
+    
+    #endif
     
     
     /// Creates a new structure

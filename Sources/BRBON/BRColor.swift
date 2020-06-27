@@ -3,14 +3,14 @@
 //  File:       BRColor.swift
 //  Project:    BRBON
 //
-//  Version:    1.0.1
+//  Version:    1.3.1
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
 //  Git:        https://github.com/Balancingrock/BRBON
 //  Website:    http://swiftfire.nl/projects/brbon/brbon.html
 //
-//  Copyright:  (c) 2018-2019 Marinus van der Lugt, All rights reserved.
+//  Copyright:  (c) 2018-2020 Marinus van der Lugt, All rights reserved.
 //
 //  License:    Use or redistribute this code any way you like with the following two provision:
 //
@@ -36,13 +36,16 @@
 //
 // History
 //
+// 1.3.1 - Linux compatibility
 // 1.0.1 - Documentation update
 // 1.0.0 - Removed older history
 //
 // =====================================================================================================================
 
 import Foundation
+#if os(macOS) || os(iOS) || os(tvOS)
 import Cocoa
+#endif
 import BRUtils
 
 
@@ -228,14 +231,14 @@ public struct BRColor {
     
     
     /// The structure as an NSColor
-    
+    #if os(macOS) || os(iOS) || os(tvOS)
     public var color: NSColor { return NSColor(red: CGFloat(redComponent)/255, green: CGFloat(greenComponent)/255, blue: CGFloat(blueComponent)/255, alpha: CGFloat(alphaComponent)/255)}
-    
+    #endif
     
     /// Create a new structure, the color will be assumed to be in the generic RGB colorspace.
     ///
     /// In other words: If the colorspace is not generic RGB, this information will be lost as upon extracting the color information the generic RGB colorspace will be used.
-    
+    #if os(macOS) || os(iOS) || os(tvOS)
     public init(_ color: NSColor) {
         let genericRgbColor = color.usingColorSpace(NSColorSpace.genericRGB) ?? NSColor(genericGamma22White: 0, alpha: 1)
         redComponent = UInt8(genericRgbColor.redComponent * 255)
@@ -243,6 +246,7 @@ public struct BRColor {
         blueComponent = UInt8(genericRgbColor.blueComponent * 255)
         alphaComponent = UInt8(genericRgbColor.alphaComponent * 255)
     }
+    #endif
     
     
     /// Creates a new structure from the component values
