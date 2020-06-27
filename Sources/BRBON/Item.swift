@@ -3,7 +3,7 @@
 //  File:       Item.swift
 //  Project:    BRBON
 //
-//  Version:    1.3.0
+//  Version:    1.3.1
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.3.1 - Linux compatibility
 // 1.3.0 - Renamed Result to ResultCode to avoid confusion due to Swift's Result type
 //       - Symplified the ResultCode to make it easier to use.
 // 1.0.0 - Removed older history
@@ -45,6 +46,9 @@
 import Foundation
 import BRUtils
 
+#if os(Linux)
+    import GLibc
+#endif
 
 internal let itemTypeOffset = 0
 internal let itemOptionsOffset = 1
@@ -568,7 +572,7 @@ public extension Portal {
                 _itemNameFieldByteCount = nameField.byteCount
             }
             if ItemManager.startWithZeroedBuffers {
-                _ = Darwin.memset(itemPtr.itemNameFieldPtr, 0, _itemNameFieldByteCount)
+                _ = memset(itemPtr.itemNameFieldPtr, 0, _itemNameFieldByteCount)
             }
             _itemNameCrc = nameField.crc
             _itemNameUtf8CodeByteCount = nameField.data.count
@@ -588,7 +592,7 @@ public extension Portal {
                 if ItemManager.startWithZeroedBuffers {
                     let zerosize = dstPtr.distance(to: srcPtr)
                     let targetPtr = _itemValueFieldPtr.advanced(by: shiftSize)
-                    _ = Darwin.memset(targetPtr, 0, zerosize)
+                    _ = memset(targetPtr, 0, zerosize)
                 }
             }
         }
@@ -636,7 +640,7 @@ public extension Portal {
             // Reset the value field to zero - when necessary
             
             if ItemManager.startWithZeroedBuffers {
-                _ = Darwin.memset(_itemValueFieldPtr, 0, _itemValueFieldPtr.distance(to: itemPtr.advanced(by: _itemByteCount)))
+                _ = memset(_itemValueFieldPtr, 0, _itemValueFieldPtr.distance(to: itemPtr.advanced(by: _itemByteCount)))
             }
             
             
@@ -677,7 +681,7 @@ public extension Portal {
             _itemByteCount = oldByteCount
 
             if ItemManager.startWithZeroedBuffers {
-                _ = Darwin.memset(itemPtr.advanced(by: newByteCount), 0, (oldByteCount - newByteCount))
+                _ = memset(itemPtr.advanced(by: newByteCount), 0, (oldByteCount - newByteCount))
             }
             
         } else if oldByteCount == newByteCount {
@@ -690,7 +694,7 @@ public extension Portal {
             let result = increaseItemByteCount(to: newByteCount)
             guard result == .success else { return result }
             
-            _ = Darwin.memmove(itemPtr, value.bufferPtr, newByteCount)
+            _ = memmove(itemPtr, value.bufferPtr, newByteCount)
         }
         
         _itemParentOffset = pOffset

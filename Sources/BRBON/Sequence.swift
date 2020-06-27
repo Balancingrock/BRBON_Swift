@@ -3,7 +3,7 @@
 //  File:       Sequence.swift
 //  Project:    BRBON
 //
-//  Version:    1.3.0
+//  Version:    1.3.1
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.3.1 - Linux compatibility
 // 1.3.0 - Renamed Result to ResultCode to avoid confusion due to Swift's Result type
 //       - Symplified the ResultCode to make it easier to use.
 // 1.0.1 - Replaced var by var internal definitions by internal on the extension
@@ -45,6 +46,10 @@
 
 import Foundation
 import BRUtils
+
+#if os(Linux)
+    import Glibc
+#endif
 
 
 // Type offsets
@@ -201,7 +206,7 @@ internal extension Portal {
         
         // Zero the new space
         
-        if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(srcPtr, 0, newItemByteCount) }
+        if ItemManager.startWithZeroedBuffers { _ = memset(srcPtr, 0, newItemByteCount) }
         
         
         // Insert the new element
@@ -251,7 +256,7 @@ internal extension Portal {
         
         // Zero the new space
         
-        if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(srcPtr, 0, newItemByteCount) }
+        if ItemManager.startWithZeroedBuffers { _ = memset(srcPtr, 0, newItemByteCount) }
         
         
         // Insert the new element
@@ -336,7 +341,7 @@ internal extension Portal {
         
         // Zero bytes - if necessary
         
-        if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(ptr, 0, bc) }
+        if ItemManager.startWithZeroedBuffers { _ = memset(ptr, 0, bc) }
         
         
         // Move bytes into place
@@ -562,7 +567,7 @@ public extension Portal {
         
         // Clear the old item
         
-        if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(oldItem.itemPtr, 0, oldItemByteCount) }
+        if ItemManager.startWithZeroedBuffers { _ = memset(oldItem.itemPtr, 0, oldItemByteCount) }
         
         
         // Write the new value as an item
@@ -621,7 +626,7 @@ public extension Portal {
         if ItemManager.startWithZeroedBuffers {
             let zeroLength = oldItemByteCount - newItemByteCount
             if zeroLength > 0 {
-                _ = Darwin.memset(oldItem.itemPtr.advanced(by: newItemByteCount), 0, zeroLength)
+                _ = memset(oldItem.itemPtr.advanced(by: newItemByteCount), 0, zeroLength)
             }
         }
         
