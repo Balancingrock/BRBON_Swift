@@ -1809,11 +1809,11 @@ class Array_Tests: XCTestCase {
         
         // Append a new element
         
-        XCTAssertEqual(am.root.appendElement(BRFont(NSFont(name: "Courier", size: 12.0))), .success)
+        XCTAssertEqual(am.root.appendElement(BRFont(familyNameUtf8Code: "Courier".data(using: .utf8)!, fontNameUtf8Code: "Courier".data(using: .utf8)!, pointSize: 12.0)), .success)
         
         XCTAssertEqual(am.root._arrayElementByteCount, 24)
         XCTAssertEqual(am.root.count, 1)
-        XCTAssertEqual(am.root[0], BRFont(NSFont(name: "Courier", size: 12.0))!)
+        XCTAssertEqual(am.root[0], BRFont(familyNameUtf8Code: "Courier".data(using: .utf8)!, fontNameUtf8Code: "Courier".data(using: .utf8)!, pointSize: 12.0))
         
         exp = Data([
             0x11, 0x00, 0x00, 0x00, 0x38, 0x00, 0x00, 0x00,
@@ -1828,7 +1828,7 @@ class Array_Tests: XCTestCase {
         
         // Create more elements
         
-        XCTAssertEqual(am.root.createNewElements(amount: 3, value: BRFont(NSFont(name: "Helvetica", size: 11.0))), .success)
+        XCTAssertEqual(am.root.createNewElements(amount: 3, value: BRFont(familyNameUtf8Code: "Helvetica".data(using: .utf8)!, fontNameUtf8Code: "Helvetica".data(using: .utf8)!, pointSize: 11.0)), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 96)
         XCTAssertEqual(am.root.count, 4)
@@ -1870,7 +1870,7 @@ class Array_Tests: XCTestCase {
         
         // Insert an element
         
-        XCTAssertEqual(am.root.insertElement(BRFont(NSFont(name: "Courier", size: 12.0)), atIndex: 2), .success)
+        XCTAssertEqual(am.root.insertElement(BRFont(familyNameUtf8Code: "Courier".data(using: .utf8)!, fontNameUtf8Code: "Courier".data(using: .utf8)!, pointSize: 12.0), atIndex: 2), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 96)
         XCTAssertEqual(am.root.count, 4)
@@ -1924,11 +1924,11 @@ class Array_Tests: XCTestCase {
         
         // Append a new element
         
-        XCTAssertEqual(am.root.appendElement(BRColor(NSColor.red)), .success)
+        XCTAssertEqual(am.root.appendElement(BRColor(red: 0xFB, green: 0, blue: 6, alpha: 255)), .success)
         
         XCTAssertEqual(am.root._arrayElementByteCount, 4)
         XCTAssertEqual(am.root.count, 1)
-        XCTAssertEqual(am.root[0], BRColor(NSColor.red))
+        XCTAssertEqual(am.root[0], BRColor(red: 0xFB, green: 0, blue: 6, alpha: 255))
         
         exp = Data([
             0x11, 0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00,
@@ -1943,7 +1943,7 @@ class Array_Tests: XCTestCase {
         
         // Create more elements
         
-        XCTAssertEqual(am.root.createNewElements(amount: 3, value: BRColor(NSColor.blue)), .success)
+        XCTAssertEqual(am.root.createNewElements(amount: 3, value: BRColor(red: 0, green: 0, blue: 254, alpha: 255)), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 4 * 4)
         XCTAssertEqual(am.root.count, 4)
@@ -1985,7 +1985,7 @@ class Array_Tests: XCTestCase {
         
         // Insert an element
         
-        XCTAssertEqual(am.root.insertElement(BRColor(NSColor.green), atIndex: 2), .success)
+        XCTAssertEqual(am.root.insertElement(BRColor(red: 0x22, green: 255, blue: 6, alpha: 255), atIndex: 2), .success)
         
         XCTAssertEqual(am.root._itemByteCount, itemHeaderByteCount + arrayElementBaseOffset + 4 * 4)
         XCTAssertEqual(am.root.count, 4)

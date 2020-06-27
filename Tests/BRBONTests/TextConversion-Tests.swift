@@ -464,7 +464,11 @@ class TextConversion_Tests: XCTestCase {
     }
 
     func testBinary() {
-        let im = ItemManager.createManager(withValue: Data(bytes: [UInt8(0), UInt8(0x55), UInt8(0xAA), UInt8(0xFF), UInt8(0x80)]))
+        #if swift(>=5.0)
+            let im = ItemManager.createManager(withValue: Data([UInt8(0), UInt8(0x55), UInt8(0xAA), UInt8(0xFF), UInt8(0x80)]))
+        #else
+            let im = ItemManager.createManager(withValue: Data(bytes: [UInt8(0), UInt8(0x55), UInt8(0xAA), UInt8(0xFF), UInt8(0x80)]))
+        #endif
         let exp =
         """
         Portal:
@@ -489,7 +493,11 @@ class TextConversion_Tests: XCTestCase {
     }
 
     func testCrcBinary() {
-        let im = ItemManager.createManager(withValue: BRCrcBinary(Data(bytes: [UInt8(0), UInt8(0x55), UInt8(0xAA), UInt8(0xFF), UInt8(0x80)])))
+        #if swift(>=5.0)
+            let im = ItemManager.createManager(withValue: BRCrcBinary(Data([UInt8(0), UInt8(0x55), UInt8(0xAA), UInt8(0xFF), UInt8(0x80)])))
+        #else
+            let im = ItemManager.createManager(withValue: BRCrcBinary(Data(bytes: [UInt8(0), UInt8(0x55), UInt8(0xAA), UInt8(0xFF), UInt8(0x80)])))
+        #endif
         let exp =
         """
         Portal:
@@ -539,7 +547,7 @@ class TextConversion_Tests: XCTestCase {
     }
 
     func testFont() {
-        let font = BRFont(NSFont(name: "Times", size: CGFloat(12.0))!)!
+        let font = BRFont(familyNameUtf8Code: "Times".data(using: .utf8)!, fontNameUtf8Code: "Times-Roman".data(using: .utf8)!, pointSize: 12.0)
         let im = ItemManager.createManager(withValue: font)
         let exp =
         """
