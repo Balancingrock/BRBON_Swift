@@ -45,11 +45,15 @@
 // =====================================================================================================================
 
 import Foundation
-#if os(macOS) || os(iOS) || os(tvOS)
-import Cocoa
-#endif
 import BRUtils
 
+#if os(macOS) || os(iOS) || os(tvOS)
+    import Cocoa
+#endif
+
+#if os(Linux)
+    import Glibc
+#endif
 
 /// This key is used to keep track of active portals. Active portals are tracked by the item manager to update the portals when data is shifted and to invalidate them when the data has been removed.
 
@@ -304,7 +308,7 @@ public final class ItemManager {
         self.bufferPtr = buffer.baseAddress!
         
         if ItemManager.startWithZeroedBuffers {
-            _ = Darwin.memset(self.bufferPtr, 0, buffer.count)
+            _ = memset(self.bufferPtr, 0, buffer.count)
         }
         
         self.activePortals = ActivePortals(manager: self)
@@ -350,7 +354,7 @@ public final class ItemManager {
         
         // Copy the data from other
         
-        _ = Darwin.memcpy(newManager.bufferPtr, bufferPtr, root._itemByteCount)
+        _ = memcpy(newManager.bufferPtr, bufferPtr, root._itemByteCount)
         
         
         // Setup the root portal
@@ -1322,7 +1326,7 @@ public final class ItemManager {
             let srcPtr = $0.bufferPtr
             let dstPtr = im.root._valuePtr.arrayElementPtr(for: im.root._arrayElementCount, endianness)
             let length = $0.root._itemByteCount
-            _ = Darwin.memcpy(dstPtr, srcPtr, length)
+            _ = memcpy(dstPtr, srcPtr, length)
             UInt32(0).copyBytes(to: dstPtr.advanced(by: itemParentOffsetOffset), endianness)
             im.root._arrayElementCount += 1
         }
@@ -1603,9 +1607,9 @@ extension ItemManager {
         let increase = max(bytes, bufferIncrements).roundUpToNearestMultipleOf8()
         let newBuffer = UnsafeMutableRawBufferPointer.allocate(byteCount: increase, alignment: 8)
         
-        if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(newBuffer.baseAddress!, 0, newBuffer.count) }
+        if ItemManager.startWithZeroedBuffers { _ = memset(newBuffer.baseAddress!, 0, newBuffer.count) }
 
-        _ = Darwin.memmove(newBuffer.baseAddress!, buffer.baseAddress!, buffer.count)
+        _ = memmove(newBuffer.baseAddress!, buffer.baseAddress!, buffer.count)
         
         #if PTEST
         Portal.ptest_enabled = false
@@ -1650,7 +1654,7 @@ extension ItemManager {
         if dstPtr < bufferPtr { fatalError("Destination is outside the buffer (lower)") }
         if dstPtr.advanced(by: moveCount) > bufferPtr.advanced(by: buffer.count) { fatalError("Destination is outside the buffer (higher)") }
         #endif
-        _ = Darwin.memmove(dstPtr, srcPtr, moveCount)
+        _ = memmove(dstPtr, srcPtr, moveCount)
         
         if updateRemovedPortals {
             activePortals.removePortals(atAndAbove: dstPtr, below: dstPtr.advanced(by: removeCount))
