@@ -3,7 +3,7 @@
 //  File:       Dictionary.swift
 //  Project:    BRBON
 //
-//  Version:    1.3.0
+//  Version:    1.3.1
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.3.1 - Linux compatibility
 // 1.3.0 - Renamed Result to ResultCode to avoid confusion due to Swift's Result type
 //       - Symplified the ResultCode to make it easier to use.
 // 1.2.2 - Added code for runtime pointer checks when compiler condition PTEST is active
@@ -46,6 +47,9 @@
 
 import Foundation
 import BRUtils
+#if os(Linux)
+import Glibc
+#endif
 
 
 internal let dictionaryReservedOffset = 0
@@ -312,7 +316,7 @@ public extension Portal {
             #if PTEST
             ptest_ptrInItemTest(dstPtr, value.root._itemByteCount)
             #endif
-            _ = Darwin.memmove(dstPtr, value.bufferPtr, value.root._itemByteCount)
+            _ = memmove(dstPtr, value.bufferPtr, value.root._itemByteCount)
             
             let p = manager.getActivePortal(for: dstPtr)
             p._itemParentOffset = pOffset
@@ -397,7 +401,7 @@ public extension Portal {
             #if PTEST
             ptest_ptrInItemTest(ptr, Int(oldByteCount))
             #endif
-            Darwin.memset(ptr, 0, Int(oldByteCount))
+            memset(ptr, 0, Int(oldByteCount))
         }
             
         // Create the new item
@@ -482,7 +486,7 @@ public extension Portal {
             #if PTEST
             ptest_ptrInItemTest(ptr.advanced(by: newByteCount), (oldByteCount - newByteCount))
             #endif
-            Darwin.memset(ptr.advanced(by: newByteCount), 0, (oldByteCount - newByteCount))
+            memset(ptr.advanced(by: newByteCount), 0, (oldByteCount - newByteCount))
         }
             
         // Restore the saved parameters
@@ -551,7 +555,7 @@ public extension Portal {
                 
             // Zero the 'removed' bytes
             
-            if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(itemStartPtr, 0, ibc) }
+            if ItemManager.startWithZeroedBuffers { _ = memset(itemStartPtr, 0, ibc) }
                 
         } else {
                 
@@ -564,7 +568,7 @@ public extension Portal {
                 
             // Zero the freed bytes
                 
-            if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(itemStartPtr.advanced(by: len), 0, ibc) }
+            if ItemManager.startWithZeroedBuffers { _ = memset(itemStartPtr.advanced(by: len), 0, ibc) }
         }
         
         itemPtr.itemValueFieldPtr.dictionaryItemCountDecrement(endianness)
