@@ -43,11 +43,15 @@
 // =====================================================================================================================
 
 import Foundation
-#if os(macOS) || os(iOS) || os(tvOS)
-import Cocoa
-#endif
 import BRUtils
 
+#if os(macOS) || os(iOS) || os(tvOS)
+    import Cocoa
+#endif
+
+#if os(Linux)
+    import Glibc
+#endif
 
 // Offset definitions
 
@@ -191,7 +195,7 @@ extension Portal {
             let sourceFontNamePtr = _valuePtr.fontFontNameUtf8CodePtr
             _valuePtr.fontFamilyNameUtf8ByteCount = UInt8(newValue.count)
             let destinationNamePtr = _valuePtr.fontFontNameUtf8CodePtr
-            Darwin.memmove(destinationNamePtr, sourceFontNamePtr, Int(_valuePtr.fontFontNameUtf8ByteCount))
+            memmove(destinationNamePtr, sourceFontNamePtr, Int(_valuePtr.fontFontNameUtf8ByteCount))
             // store the new family name
             _valuePtr.fontFamilyNameUtf8Code = newValue
         }

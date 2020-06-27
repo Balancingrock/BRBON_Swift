@@ -8,6 +8,11 @@
 
 import XCTest
 import BRUtils
+
+#if os(Linux)
+    import Glibc
+#endif
+
 @testable import BRBON
 
 class BRString_Tests: XCTestCase {
@@ -53,7 +58,7 @@ class BRString_Tests: XCTestCase {
         // Storing
         
         let buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: 128, alignment: 8)
-        _ = Darwin.memset(buffer.baseAddress, 0, 128)
+        _ = memset(buffer.baseAddress, 0, 128)
         defer { buffer.deallocate() }
         
         

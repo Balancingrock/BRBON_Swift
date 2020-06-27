@@ -8,6 +8,11 @@
 
 import XCTest
 import BRUtils
+
+#if os(Linux)
+    import Glibc
+#endif
+
 @testable import BRBON
 
 class UInt16_Tests: XCTestCase {
@@ -31,7 +36,7 @@ class UInt16_Tests: XCTestCase {
         XCTAssertEqual(i.minimumValueFieldByteCount, 0)
         
         let buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: 128, alignment: 8)
-        _ = Darwin.memset(buffer.baseAddress, 0, 128)
+        _ = memset(buffer.baseAddress, 0, 128)
         defer { buffer.deallocate() }
         
         i.copyBytes(to: buffer.baseAddress!, Endianness.little)

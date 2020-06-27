@@ -3,7 +3,7 @@
 //  File:       Table.swift
 //  Project:    BRBON
 //
-//  Version:    1.3.0
+//  Version:    1.3.1
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.3.1 - Linux compatibility
 // 1.3.0 - Renamed Result to ResultCode to avoid confusion due to Swift's Result type
 //       - Symplified the ResultCode to make it easier to use.
 // 1.2.2 - Removed unneeded comment lines
@@ -49,6 +50,10 @@
 
 import Foundation
 import BRUtils
+
+#if os(Linux)
+    import Glibc
+#endif
 
 
 /// This is the signature of a closure that can be used to provide default values for table fields.
@@ -1476,7 +1481,7 @@ extension Portal {
     public func tableReset(clear: Bool = false) {
         guard isValid, isTable else { return }
         if clear {
-            _ = Darwin.memset(itemPtr.itemValueFieldPtr.tableRowPtr(for: 0, endianness), 0, _tableRowCount * _tableRowByteCount)
+            _ = memset(itemPtr.itemValueFieldPtr.tableRowPtr(for: 0, endianness), 0, _tableRowCount * _tableRowByteCount)
         }
         _tableRowCount = 0
     }
@@ -1634,7 +1639,7 @@ extension Portal {
         
         let ptr = itemPtr.itemValueFieldPtr.tableFieldPtr(row: _tableRowCount, column: 0, endianness)
         
-        _ = Darwin.memset(ptr, 0, amount * _tableRowByteCount)
+        _ = memset(ptr, 0, amount * _tableRowByteCount)
         
         
         // Increase the row count
@@ -1987,7 +1992,7 @@ extension Portal {
         
         // Init the new area to zero.
         
-        _ = Darwin.memset(srcPtr, 0, amount * _tableRowByteCount)
+        _ = memset(srcPtr, 0, amount * _tableRowByteCount)
         
         
         // Increase the row count
@@ -2051,7 +2056,7 @@ extension Portal {
         
         let ptr = itemPtr.itemValueFieldPtr.tableFieldPtr(row: row, column: column, endianness)
         
-        _ = Darwin.memmove(ptr, source.bufferPtr, source.root._itemByteCount)
+        _ = memmove(ptr, source.bufferPtr, source.root._itemByteCount)
 
         
         // Adjust the parent offset

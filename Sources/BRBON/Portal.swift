@@ -3,7 +3,7 @@
 //  File:       Portal.swift
 //  Project:    BRBON
 //
-//  Version:    1.3.0
+//  Version:    1.3.1
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.3.1 - Linux compatibility
 // 1.3.0 - Renamed Result to ResultCode to avoid confusion due to Swift's Result type
 //       - Symplified the ResultCode to make it easier to use.
 // 1.2.3 - Wrapped all ptest functions in conditional compilation
@@ -50,6 +51,10 @@
 
 import Foundation
 import BRUtils
+
+#if os(Linux)
+    import Glibc
+#endif
 
 
 /// A portal is an access point for items in the BRBON data structure. It hides the implementation of the BRBON data structure and provides an API to manipulate the contents.
@@ -413,7 +418,7 @@ extension Portal {
 
                     // Set extra bytes in self conditionally to zero
                     
-                    if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(srcPtr, 0, srcPtr.distance(to: dstPtr)) }
+                    if ItemManager.startWithZeroedBuffers { _ = memset(srcPtr, 0, srcPtr.distance(to: dstPtr)) }
                 }
                 
                 
@@ -452,7 +457,7 @@ extension Portal {
                     
                     // Set extra bytes in self conditionally to zero
                     
-                    if ItemManager.startWithZeroedBuffers { _ = Darwin.memset(srcPtr, 0, srcPtr.distance(to: dstPtr)) }
+                    if ItemManager.startWithZeroedBuffers { _ = memset(srcPtr, 0, srcPtr.distance(to: dstPtr)) }
                 }
 
                 
@@ -515,7 +520,7 @@ extension Portal {
             
             if ItemManager.startWithZeroedBuffers {
                 let extraBytes = newByteCount - _itemByteCount
-                _ = Darwin.memset(itemPtr.advanced(by: _itemByteCount), 0, extraBytes)
+                _ = memset(itemPtr.advanced(by: _itemByteCount), 0, extraBytes)
             }
             
             

@@ -62,10 +62,14 @@
 
 import Foundation
 import BRUtils
+
 #if os(macOS) || os(iOS) || os(tvOS)
-import Cocoa
+    import Cocoa
 #endif
 
+#if os(Linux)
+    import Glibc
+#endif
 
 internal let arrayReservedOffset = 0
 internal let arrayElementTypeOffset = arrayReservedOffset + 4
@@ -245,7 +249,7 @@ extension Portal {
                 #if PTEST
                 ptest_ptrInItemTest(startPtr, len)
                 #endif
-                Darwin.memset(startPtr, 0, len)
+                memset(startPtr, 0, len)
             }
         }
         
@@ -298,7 +302,7 @@ extension Portal {
             #if PTEST
             ptest_ptrInItemTest(ptr, _arrayElementByteCount)
             #endif
-            Darwin.memset(ptr, 0, _arrayElementByteCount)
+            memset(ptr, 0, _arrayElementByteCount)
         }
         
         
@@ -359,7 +363,7 @@ extension Portal {
             #if PTEST
             ptest_ptrInItemTest(srcPtr, _arrayElementByteCount)
             #endif
-            Darwin.memset(srcPtr, 0, _arrayElementByteCount)
+            memset(srcPtr, 0, _arrayElementByteCount)
         }
         
         
@@ -683,7 +687,7 @@ extension Portal {
             #if PTEST
             ptest_ptrInItemTest(startPtr, length)
             #endif
-            Darwin.memset(startPtr, 0, length)
+            memset(startPtr, 0, length)
         }
         
         
@@ -808,7 +812,7 @@ extension Portal {
         ptest_ptrInItemTest(itemPtr.itemValueFieldPtr.arrayElementPtr(for: _arrayElementCount, endianness), amount * _arrayElementByteCount)
         #endif
 
-        _ = Darwin.memset(itemPtr.itemValueFieldPtr.arrayElementPtr(for: _arrayElementCount, endianness), 0, amount * _arrayElementByteCount)
+        _ = memset(itemPtr.itemValueFieldPtr.arrayElementPtr(for: _arrayElementCount, endianness), 0, amount * _arrayElementByteCount)
         
         
         // Use the default value if provided
@@ -875,7 +879,7 @@ extension Portal {
         #if PTEST
         ptest_ptrInItemTest(newElementPtr, itemManager.root._itemByteCount)
         #endif
-        _ = Darwin.memcpy(newElementPtr, itemManager.bufferPtr, itemManager.root._itemByteCount)
+        _ = memcpy(newElementPtr, itemManager.bufferPtr, itemManager.root._itemByteCount)
         
         
         // Add parent offset to new element
@@ -943,7 +947,7 @@ extension Portal {
             #if PTEST
             ptest_ptrInItemTest(startPtr, length)
             #endif
-            Darwin.memset(startPtr, 0, length)
+            memset(startPtr, 0, length)
         }
         
         
@@ -957,7 +961,7 @@ extension Portal {
             #if PTEST
             ptest_ptrInItemTest(dstPtr, length)
             #endif
-            _ = Darwin.memcpy(dstPtr, srcPtr, length)
+            _ = memcpy(dstPtr, srcPtr, length)
             
             // Add parent offset to new element
             #if PTEST
@@ -1025,7 +1029,7 @@ extension Portal {
             #if PTEST
             ptest_ptrInItemTest(srcPtr, _arrayElementByteCount)
             #endif
-            _ = Darwin.memset(srcPtr, 0, _arrayElementByteCount)
+            _ = memset(srcPtr, 0, _arrayElementByteCount)
         }
         
         
