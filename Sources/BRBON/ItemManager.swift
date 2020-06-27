@@ -3,14 +3,14 @@
 //  File:       ItemManager
 //  Project:    BRBON
 //
-//  Version:    1.2.2
+//  Version:    1.3.1
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
 //  Git:        https://github.com/Balancingrock/BRBON
 //  Website:    http://swiftfire.nl/projects/brbon/brbon.html
 //
-//  Copyright:  (c) 2018-2019 Marinus van der Lugt, All rights reserved.
+//  Copyright:  (c) 2018-2020 Marinus van der Lugt, All rights reserved.
 //
 //  License:    Use or redistribute this code any way you like with the following two provision:
 //
@@ -36,6 +36,7 @@
 //
 // History
 //
+// 1.3.1 - Linux compatibility
 // 1.2.2 - Added code for runtime pointer checks when compiler condition PTEST is active
 //         Fixed a bug in an assert statement
 // 1.0.1 - Documentation update
@@ -44,8 +45,9 @@
 // =====================================================================================================================
 
 import Foundation
+#if os(macOS) || os(iOS) || os(tvOS)
 import Cocoa
-
+#endif
 import BRUtils
 
 
@@ -1174,6 +1176,8 @@ public final class ItemManager {
     }
 
     
+    #if os(macOS) || os(iOS) || os(tvOS)
+    
     /// Create an Array item manager with the contents of the given array.
     ///
     /// - Parameters:
@@ -1204,7 +1208,11 @@ public final class ItemManager {
         return im
     }
     
+    #endif
     
+    
+    #if os(macOS) || os(iOS) || os(tvOS)
+
     /// Create an Array item manager with the contents of the given array.
     ///
     /// - Parameters:
@@ -1217,7 +1225,11 @@ public final class ItemManager {
         return ItemManager.createArrayManager(withName: nil, values: array, endianness: endianness)!
     }
 
+    #endif
     
+    
+    #if os(macOS) || os(iOS) || os(tvOS)
+
     /// Create an Array item manager with the contents of the given array.
     ///
     /// - Parameters:
@@ -1254,7 +1266,11 @@ public final class ItemManager {
         return im
     }
     
+    #endif
     
+    
+    #if os(macOS) || os(iOS) || os(tvOS)
+
     /// Create an Array item manager with the contents of the given array.
     ///
     /// - Parameters:
@@ -1266,6 +1282,8 @@ public final class ItemManager {
     public static func createArrayManager(values array: Array<NSFont>, endianness: Endianness = machineEndianness) -> ItemManager {
         return ItemManager.createArrayManager(withName: nil, values: array, endianness: endianness)!
     }
+    
+    #endif
 
     
     /// Create an Array item manager with the contents of the given array.
