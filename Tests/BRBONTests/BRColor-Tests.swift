@@ -30,7 +30,7 @@ class BRColor_Tests: XCTestCase {
 
     func testBrColor() {
         
-        let b = BRColor(NSColor.blue)
+        let b = BRColor(red: 0, green: 0, blue: 254, alpha: 255)
         
         XCTAssertEqual(b.redComponent, UInt8(0))
         XCTAssertEqual(b.greenComponent, UInt8(0))
@@ -43,9 +43,9 @@ class BRColor_Tests: XCTestCase {
     
     func testEquatable() {
         
-        let b = BRColor(NSColor.blue)
-        let c = BRColor(NSColor(red: 0, green: 0, blue: 1, alpha: 1))
-        let d = BRColor(NSColor.red)
+        let b = BRColor(red: 0, green: 0, blue: 255, alpha: 255)
+        let c = BRColor(red: 0, green: 0, blue: 255, alpha: 255)
+        let d = BRColor(red: 255, green: 0, blue: 0, alpha: 255)
 
         
         XCTAssertEqual(b, c)
@@ -55,7 +55,7 @@ class BRColor_Tests: XCTestCase {
     
     func testCoder() {
         
-        let b = BRColor(NSColor.blue)
+        let b = BRColor(red: 0, green: 0, blue: 255, alpha: 255)
 
         XCTAssertEqual(b.itemType, .color)
         XCTAssertEqual(b.valueByteCount, 4)
@@ -79,7 +79,7 @@ class BRColor_Tests: XCTestCase {
         
         let data = Data(bytesNoCopy: buffer.baseAddress!, count: 4, deallocator: Data.Deallocator.none)
         
-        let exp = Data([0x00, 0x00, 0xFE, 0xFF])
+        let exp = Data([0x00, 0x00, 0xFF, 0xFF])
         
         XCTAssertEqual(data, exp)
     }
@@ -92,7 +92,7 @@ class BRColor_Tests: XCTestCase {
         
         // Instance
         
-        let b = BRColor(NSColor.blue)
+        let b = BRColor(red: 0, green: 0, blue: 255, alpha: 255)
 
         let im = ItemManager.createManager(withValue: b)
         
@@ -106,7 +106,7 @@ class BRColor_Tests: XCTestCase {
         XCTAssertNil(im.root.itemNameField)
         
         XCTAssertTrue(im.root.isColor)
-        XCTAssertEqual(im.root.color, BRColor(NSColor.blue))
+        XCTAssertEqual(im.root.color, BRColor(red: 0, green: 0, blue: 255, alpha: 255))
         
         XCTAssertEqual(im.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(im.root.itemFlags, ItemFlags.none)
@@ -116,7 +116,7 @@ class BRColor_Tests: XCTestCase {
         
         var exp = Data([
             0x16, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFE, 0xFF
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF
             ])
         
         XCTAssertEqual(exp, im.data)
@@ -124,12 +124,12 @@ class BRColor_Tests: XCTestCase {
         
         // Assignment
         
-        im.root.color = BRColor(NSColor.red) // FB, 0, 06, FF
-        XCTAssertEqual(im.root.color, BRColor(NSColor.red))
+        im.root.color = BRColor(red: 255, green: 0, blue: 0, alpha: 255)
+        XCTAssertEqual(im.root.color, BRColor(red: 255, green: 0, blue: 0, alpha: 255))
         
         exp = Data([
             0x16, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0xFB, 0x00, 0x06, 0xFF
+            0x00, 0x00, 0x00, 0x00, 0xFF, 0x00, 0x00, 0xFF
             ])
 
         XCTAssertEqual(exp, im.data)

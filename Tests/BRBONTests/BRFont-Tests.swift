@@ -29,19 +29,19 @@ class BRFont_Tests: XCTestCase {
 
     func testBrFont() {
         
-        let b = BRFont(NSFont(name: "Courier", size: 12.0)!)
+        let b = BRFont(familyNameUtf8Code: "Courier".data(using: .utf8)!, fontNameUtf8Code: "Courier".data(using: .utf8)!, pointSize: 12.0)
         
-        XCTAssertEqual(b?.fontNameUtf8Code, "Courier".data(using: .utf8))
-        XCTAssertEqual(b?.familyNameUtf8Code, "Courier".data(using: .utf8))
-        XCTAssertEqual(b?.pointSize, Float32(12.0))
+        XCTAssertEqual(b.fontNameUtf8Code, "Courier".data(using: .utf8))
+        XCTAssertEqual(b.familyNameUtf8Code, "Courier".data(using: .utf8))
+        XCTAssertEqual(b.pointSize, Float32(12.0))
     }
     
     
     func testEquatable() {
         
-        let b = BRFont(NSFont(name: "Courier", size: 12.0)!)
-        let c = BRFont(NSFont(name: "Courier", size: 12.0)!)
-        let d = BRFont(NSFont(name: "Courier", size: 11.0)!)
+        let b = BRFont(familyNameUtf8Code: "Courier".data(using: .utf8)!, fontNameUtf8Code: "Courier".data(using: .utf8)!, pointSize: 12.0)
+        let c = BRFont(familyNameUtf8Code: "Courier".data(using: .utf8)!, fontNameUtf8Code: "Courier".data(using: .utf8)!, pointSize: 12.0)
+        let d = BRFont(familyNameUtf8Code: "Courier".data(using: .utf8)!, fontNameUtf8Code: "Courier".data(using: .utf8)!, pointSize: 11.0)
 
 
         XCTAssertEqual(b, c)
@@ -51,11 +51,11 @@ class BRFont_Tests: XCTestCase {
     
     func testCoder() {
         
-        let b = BRFont(NSFont(name: "Courier", size: 12.0)!)
+        let b = BRFont(familyNameUtf8Code: "Courier".data(using: .utf8)!, fontNameUtf8Code: "Courier".data(using: .utf8)!, pointSize: 12.0)
 
-        XCTAssertEqual(b?.itemType, .font)
-        XCTAssertEqual(b?.valueByteCount, 20)
-        XCTAssertEqual(b?.minimumValueFieldByteCount, 24)
+        XCTAssertEqual(b.itemType, .font)
+        XCTAssertEqual(b.valueByteCount, 20)
+        XCTAssertEqual(b.minimumValueFieldByteCount, 24)
         
         
         // Storing
@@ -71,7 +71,7 @@ class BRFont_Tests: XCTestCase {
         
         // Store as value
         
-        b?.copyBytes(to: buffer.baseAddress!, machineEndianness)
+        b.copyBytes(to: buffer.baseAddress!, machineEndianness)
         
         let data = Data(bytesNoCopy: buffer.baseAddress!, count: 20, deallocator: Data.Deallocator.none)
         
@@ -88,7 +88,7 @@ class BRFont_Tests: XCTestCase {
         
         // Instance
         
-        guard let b = BRFont(NSFont(name: "Courier", size: 12.0)!) else { XCTFail(); return }
+        let b = BRFont(familyNameUtf8Code: "Courier".data(using: .utf8)!, fontNameUtf8Code: "Courier".data(using: .utf8)!, pointSize: 12.0)
 
         let im = ItemManager.createManager(withValue: b)
         
@@ -102,7 +102,7 @@ class BRFont_Tests: XCTestCase {
         XCTAssertNil(im.root.itemNameField)
         
         XCTAssertTrue(im.root.isFont)
-        XCTAssertEqual(im.root.font, BRFont(NSFont(name: "Courier", size: 12.0)!))
+        XCTAssertEqual(im.root.font, BRFont(familyNameUtf8Code: "Courier".data(using: .utf8)!, fontNameUtf8Code: "Courier".data(using: .utf8)!, pointSize: 12.0))
         
         XCTAssertEqual(im.root.itemOptions, ItemOptions.none)
         XCTAssertEqual(im.root.itemFlags, ItemFlags.none)
