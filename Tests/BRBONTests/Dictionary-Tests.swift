@@ -1630,6 +1630,8 @@ class Dictionary_Tests: XCTestCase {
         XCTAssertEqual(dm.data, exp)
 
         
+        #if os(macOS) || os(iOS) || os(tvOS)
+        
         // Add a Color
         
         let c = BRColor(NSColor.blue)
@@ -1796,6 +1798,10 @@ class Dictionary_Tests: XCTestCase {
         
         XCTAssertEqual(dm.data, exp)
 
+        #endif
+        
+        
+        #if os(macOS) || os(iOS) || os(tvOS)
         
         // Add a Font
         
@@ -1971,6 +1977,8 @@ class Dictionary_Tests: XCTestCase {
             ])
         
         XCTAssertEqual(dm.data, exp)
+        
+        #endif
     }
 
     
