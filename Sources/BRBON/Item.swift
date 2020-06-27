@@ -47,7 +47,7 @@ import Foundation
 import BRUtils
 
 #if os(Linux)
-    import GLibc
+    import Glibc
 #endif
 
 internal let itemTypeOffset = 0
