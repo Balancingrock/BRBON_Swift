@@ -3,7 +3,7 @@
 //  File:       Array.swift
 //  Project:    BRBON
 //
-//  Version:    1.3.2
+//  Version:    1.3.4
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -29,6 +29,7 @@
 //
 // History
 //
+// 1.3.4 - Limited Cocoa dependency to macOS only
 // 1.3.2 - Updated LICENSE
 // 1.3.1 - Linux compatibility
 // 1.3.0 - Renamed Result to ResultCode to avoid confusion due to Swift's Result type
@@ -57,7 +58,7 @@
 import Foundation
 import BRUtils
 
-#if os(macOS) || os(iOS) || os(tvOS)
+#if os(macOS)
     import Cocoa
 #endif
 
@@ -606,25 +607,29 @@ extension Portal {
     
     /// Adds an array of elements as an arrayItem to the table
     
-    #if os(macOS) || os(iOS) || os(tvOS)
+    #if os(macOS)
+    
     @discardableResult
     public func appendElement(_ value: Array<NSFont>?) -> ResultCode {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
     }
+    
     #endif
     
     
     /// Adds an array of elements as an arrayItem to the table
     
-    #if os(macOS) || os(iOS) || os(tvOS)
+    #if os(macOS)
+    
     @discardableResult
     public func appendElement(_ value: Array<NSColor>?) -> ResultCode {
         guard let value = value else { return .success }
         appendElement(ItemManager.createArrayManager(values: value))
         return .success
     }
+    
     #endif
     
     
@@ -1355,7 +1360,8 @@ extension Portal {
     
     /// - Returns: The content of the array as an array of BRFont. Returns nil if the portal is invalid, not an array, or when the element type is not a font.
     
-    #if os(macOS) || os(iOS) || os(tvOS)
+    #if os(macOS)
+    
     public var arrayOfFont: Array<NSFont>? {
         get {
             guard isArray, _arrayElementType == ItemType.font else { return nil }
@@ -1371,12 +1377,14 @@ extension Portal {
             newValue.forEach({ appendElement(BRFont($0)) })
         }
     }
+    
     #endif
     
     
     /// - Returns: The content of the array as an array of BRColor. Returns nil if the portal is invalid, not an array, or when the element type is not a color.
     
-    #if os(macOS) || os(iOS) || os(tvOS)
+    #if os(macOS)
+    
     public var arrayOfColor: Array<NSColor>? {
         get {
             guard isArray, _arrayElementType == ItemType.color else { return nil }
@@ -1392,6 +1400,7 @@ extension Portal {
             newValue.forEach({ appendElement(BRColor($0)) })
         }
     }
+    
     #endif
     
     

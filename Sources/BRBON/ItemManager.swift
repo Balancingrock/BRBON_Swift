@@ -3,7 +3,7 @@
 //  File:       ItemManager
 //  Project:    BRBON
 //
-//  Version:    1.3.2
+//  Version:    1.3.4
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -29,6 +29,7 @@
 //
 // History
 //
+// 1.3.4 - Limited Cocoa dependency to macOS only
 // 1.3.2 - Updated LICENSE
 // 1.3.1 - Linux compatibility
 // 1.2.2 - Added code for runtime pointer checks when compiler condition PTEST is active
@@ -41,12 +42,16 @@
 import Foundation
 import BRUtils
 
-#if os(macOS) || os(iOS) || os(tvOS)
+#if os(macOS)
+
     import Cocoa
+
 #endif
 
 #if os(Linux)
+
     import Glibc
+
 #endif
 
 /// This key is used to keep track of active portals. Active portals are tracked by the item manager to update the portals when data is shifted and to invalidate them when the data has been removed.
@@ -1174,7 +1179,7 @@ public final class ItemManager {
     }
 
     
-    #if os(macOS) || os(iOS) || os(tvOS)
+    #if os(macOS)
     
     /// Create an Array item manager with the contents of the given array.
     ///
@@ -1209,7 +1214,7 @@ public final class ItemManager {
     #endif
     
     
-    #if os(macOS) || os(iOS) || os(tvOS)
+    #if os(macOS)
 
     /// Create an Array item manager with the contents of the given array.
     ///
@@ -1226,7 +1231,7 @@ public final class ItemManager {
     #endif
     
     
-    #if os(macOS) || os(iOS) || os(tvOS)
+    #if os(macOS)
 
     /// Create an Array item manager with the contents of the given array.
     ///
@@ -1267,7 +1272,7 @@ public final class ItemManager {
     #endif
     
     
-    #if os(macOS) || os(iOS) || os(tvOS)
+    #if os(macOS)
 
     /// Create an Array item manager with the contents of the given array.
     ///

@@ -3,7 +3,7 @@
 //  File:       BRColor.swift
 //  Project:    BRBON
 //
-//  Version:    1.3.2
+//  Version:    1.3.4
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -29,6 +29,7 @@
 //
 // History
 //
+// 1.3.4 - Limited Cocoa dependency to macOS only
 // 1.3.2 - Updated LICENSE
 // 1.3.1 - Linux compatibility
 // 1.0.1 - Documentation update
@@ -37,9 +38,13 @@
 // =====================================================================================================================
 
 import Foundation
-#if os(macOS) || os(iOS) || os(tvOS)
-import Cocoa
+
+#if os(macOS)
+
+    import Cocoa
+
 #endif
+
 import BRUtils
 
 
@@ -226,7 +231,7 @@ public struct BRColor {
     
     /// The structure as an NSColor
     
-    #if os(macOS) || os(iOS) || os(tvOS)
+    #if os(macOS)
     
     public var color: NSColor { return NSColor(red: CGFloat(redComponent)/255, green: CGFloat(greenComponent)/255, blue: CGFloat(blueComponent)/255, alpha: CGFloat(alphaComponent)/255)}
     
@@ -237,7 +242,7 @@ public struct BRColor {
     ///
     /// In other words: If the colorspace is not generic RGB, this information will be lost as upon extracting the color information the generic RGB colorspace will be used.
     
-    #if os(macOS) || os(iOS) || os(tvOS)
+    #if os(macOS)
     
     public init(_ color: NSColor) {
         let genericRgbColor = color.usingColorSpace(NSColorSpace.genericRGB) ?? NSColor(genericGamma22White: 0, alpha: 1)

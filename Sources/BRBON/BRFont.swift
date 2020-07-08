@@ -3,7 +3,7 @@
 //  File:       BRFont.swift
 //  Project:    BRBON
 //
-//  Version:    1.3.2
+//  Version:    1.3.4
 //
 //  Author:     Marinus van der Lugt
 //  Company:    http://balancingrock.nl
@@ -29,6 +29,7 @@
 //
 // History
 //
+// 1.3.4 - Limited Cocoa dependency to macOS only
 // 1.3.2 - Updated LICENSE
 // 1.3.1 - Linux compatibility
 // 1.0.1 - Documentation updates
@@ -39,8 +40,10 @@
 import Foundation
 import BRUtils
 
-#if os(macOS) || os(iOS) || os(tvOS)
+#if os(macOS)
+
     import Cocoa
+
 #endif
 
 #if os(Linux)
@@ -301,7 +304,7 @@ public struct BRFont {
     }
     
     
-    #if os(macOS) || os(iOS) || os(tvOS)
+    #if os(macOS)
 
     /// The font as an NSFont
     
@@ -322,7 +325,7 @@ public struct BRFont {
     #endif
     
     
-    #if os(macOS) || os(iOS) || os(tvOS)
+    #if os(macOS)
 
     /// Creates a structure from an NSFont.
     

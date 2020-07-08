@@ -80,7 +80,12 @@ The API will maintain the pointer -used by a portal- to stay in synch with mutat
 
 # Version history
 
-#### 1.3.2
+#### 1.3.4
+
+- Limited Cocoa dependency to macOS only
+
+
+#### 1.3.2, 1.3.3
 
 - Added swift version, platforms and a LICENSE file.
 
