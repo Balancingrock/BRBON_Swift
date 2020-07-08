@@ -4,7 +4,7 @@ import PackageDescription
 
 let package = Package(
     name: "BRBON",
-    products: [library(name: "BRBON", targets: ["BRBON"])],
+    products: [.library(name: "BRBON", targets: ["BRBON"])],
     dependencies: [
         .package(url: "https://github.com/Balancingrock/BRUtils", from: "1.1.5")
     ],
