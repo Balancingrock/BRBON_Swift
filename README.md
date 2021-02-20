@@ -1,39 +1,10 @@
-# BRBON
+# BRBON - Swift
 
-An Binary Object Notation by Balancing Rock.
+An API for the Binary Object Notation file/memory format by Balancing Rock.
 
-BRBON is an in-memory storage manager that has been optimized for speed. The result is a fast loading and fast access binary object manager. Loading is fast because the entire BRBON structure is loaded at once, and does not need conversion before use. Access is fast because all access is vectored and optimizations have been build in to speed up name comparisons. On top of that, static hierarchies can use an access mechanism (Portals) that allow near instantenious access of the underlying data.
+This Swift API was created for BRBON specification v0.4. Form more on the BRBON specification see: [BRBON](https://github.com/Balancingrock/BRBON)
 
-The name BRBON appies to both the specification and the API presented in this project.
-
-BRBON is used by the [Swiftfire webserver](http://swiftfire.nl) project.
-
-The [API Reference manual](http://swiftfire.nl/projects/brbon/reference/index.html).
-
-## Status
-
-The BRBON Item specification is considered stable, no changes are planned or expected. Extensions are planned but will be compatible to the current definitions.
-
-The API passes all tests. But is still missing a lot of conveniance operators and even some core operations. However it is usable and future development is expected to be backwards compatible.
-
-The BRBON Block specification is not finished (and lacking from the provided documentation). Blocks are intended for communication and very large data structures. The (finished) Item specification deals with access of objects in a single file, on a single computer.
-
-## Description
-
-BRBON is a binary storage format specification. It started out as a binary version for JSON but the requirement for speed has rendered some JSON aspects obsolete. Still, the JSON origins can be recognised in the object oriented approach.
-
-Talking points:
-
-- Vectored access: The format includes vectors that can be used to quickly traverse the entire structure (in both directions).
-- Named objects: Objects may be named for identification, a hash value is included for faster name recognition.
-- Aligned to 8 byte boundaries: Most of the elements in the structure are aligned to 8 byte boundaries. This ensures alignment for al types.
-- All standard types are supported: Bool, Int8, Int16, Int32, Int64, UInt8, UInt16, UInt32, UInt64, Float32, Float64, String, Binary.
-- Collection types: Array, Dictionary, Sequence, Table.
-- Special types: Null, Font, RGB(A), UUID, CrcString, CrcBinary
-- Array’s are packed for optimal storage density.
-- The maximum Item capacity is 2GB (Int32.max). (The unfinished Block specification will include the capability for larger structures)
-
-Two alternatives for BRBON have been considered: BSON and BinSON. However both were found lacking with respect to the capabilities for high speed (memory mapped) access.
+Status: Frozen. (We have switched to Linux/Ada from our Mac/Swift environment. A new ADA API is under construction)
 
 ## Usage
 
@@ -80,7 +51,7 @@ The API will maintain the pointer -used by a portal- to stay in synch with mutat
 
 # Version history
 
-#### 1.3.4
+#### 1.3.4 (Frozen)
 
 - Limited Cocoa dependency to macOS only
 
